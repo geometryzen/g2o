@@ -218,7 +218,7 @@ export class Group extends Shape {
          * @description A list of all the children in the scenegraph.
          * @nota-bene Ther order of this list indicates the order each element is rendered to the screen.
          */
-        this._children = Array.isArray(children) ? children : Array.prototype.slice.call(arguments);
+        this.children = Array.isArray(children) ? children : Array.prototype.slice.call(arguments);
     }
 
     static Children = Children;
@@ -738,6 +738,12 @@ export class Group extends Shape {
         return this;
 
     }
+    /**
+     * @name Two.Group#children
+     * @property {Two.Group.Children}
+     * @description A list of all the children in the scenegraph.
+     * @nota-bene Ther order of this list indicates the order each element is rendered to the screen.
+     */
     get children() {
         return this._children;
     }
