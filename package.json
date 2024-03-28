@@ -1,6 +1,6 @@
 {
     "name": "@geometryzen/two",
-    "version": "0.9.37",
+    "version": "0.9.38",
     "description": "Template TypeScript Library",
     "exports": {
         ".": {
