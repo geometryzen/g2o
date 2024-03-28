@@ -908,14 +908,13 @@ export class Two {
      * @param {Number} y1
      * @param {Number} x2
      * @param {Number} y2
-     * @param {...Two.Stop} args - Any number of color stops sometimes referred to as ramp stops. If none are supplied then the default black-to-white two stop gradient is applied.
+     * @param {...Two.Stop} stops - Any number of color stops sometimes referred to as ramp stops. If none are supplied then the default black-to-white two stop gradient is applied.
      * @returns {Two.LinearGradient}
      * @description Creates a Two.js linear gradient and adds it to the scene. In the case of an effect it's added to an invisible "definitions" group.
      */
-    makeLinearGradient(x1: number, y1: number, x2: number, y2: number /* stops */): LinearGradient {
+    makeLinearGradient(x1: number, y1: number, x2: number, y2: number, ...stops: Stop[]): LinearGradient {
 
-        const stops = Array.prototype.slice.call(arguments, 4);
-        const gradient = new LinearGradient(x1, y1, x2, y2, stops);
+        const gradient = new LinearGradient(x1, y1, x2, y2, ...stops);
 
         this.add(gradient);
 
@@ -933,9 +932,8 @@ export class Two {
      * @returns {Two.RadialGradient}
      * @description Creates a Two.js linear-gradient object and adds it to the scene. In the case of an effect it's added to an invisible "definitions" group.
      */
-    makeRadialGradient(x1: number, y1: number, radius: number /* stops */): RadialGradient {
+    makeRadialGradient(x1: number, y1: number, radius: number, ...stops: Stop[]): RadialGradient {
 
-        const stops = Array.prototype.slice.call(arguments, 3);
         const gradient = new RadialGradient(x1, y1, radius, stops);
 
         this.add(gradient);
