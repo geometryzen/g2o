@@ -186,7 +186,7 @@ export class Two {
             fitted: false,
             width: 640,
             height: 480,
-            type: Types.svg,
+            type: Two.Types.svg,
             autostart: false
         });
 
