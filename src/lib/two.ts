@@ -12,7 +12,7 @@ import { Sprite } from './effects/sprite.js';
 // Effects
 import { Stop } from './effects/stop.js';
 import { Texture } from './effects/texture.js';
-import { Events } from './events.js';
+import { EventHandler, Events } from './events.js';
 import { Group } from './group.js';
 import { Matrix } from './matrix.js';
 import { Path } from './path.js';
@@ -79,45 +79,50 @@ export class Two {
     /**
      * @private
      */
-    _events = new Events();
+    #events = new Events();
 
     // Getters and setters aren't enumerable
     get _bound() {
-        return this._events._bound;
+        return this.#events._bound;
     }
     set _bound(v) {
-        this._events._bound = v;
+        this.#events._bound = v;
     }
 
     addEventListener() {
-        return this._events.addEventListener.apply(this, arguments);
+        return this.#events.addEventListener.apply(this, arguments);
     }
     on() {
-        return this._events.addEventListener.apply(this, arguments);
+        return this.#events.addEventListener.apply(this, arguments);
     }
-    bind() {
-        return this._events.addEventListener.apply(this, arguments);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    bind(name: 'update', handler: EventHandler): this {
+        this.#events.addEventListener.apply(this, arguments);
+        return this;
     }
     removeEventListener() {
-        return this._events.removeEventListener.apply(this, arguments);
+        return this.#events.removeEventListener.apply(this, arguments);
     }
     off() {
-        return this._events.removeEventListener.apply(this, arguments);
+        return this.#events.removeEventListener.apply(this, arguments);
     }
-    unbind() {
-        return this._events.removeEventListener.apply(this, arguments);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    unbind(name: 'update', handler: EventHandler): this {
+        this.#events.removeEventListener.apply(this, arguments);
+        return this;
     }
     dispatchEvent() {
-        return this._events.dispatchEvent.apply(this, arguments);
+        return this.#events.dispatchEvent.apply(this, arguments);
     }
-    trigger() {
-        return this._events.dispatchEvent.apply(this, arguments);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    trigger(type: 'pause' | 'play' | 'render' | 'update', ...args: unknown[]) {
+        return this.#events.dispatchEvent.apply(this, arguments);
     }
     listen() {
-        return this._events.listen.apply(this, arguments);
+        return this.#events.listen.apply(this, arguments);
     }
     ignore() {
-        return this._events.ignore.apply(this, arguments);
+        return this.#events.ignore.apply(this, arguments);
     }
 
     /**

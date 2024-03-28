@@ -177,7 +177,7 @@ export class Events {
         insert: 'insert',
         order: 'order',
         load: 'load'
-    };
+    } as const;
 
     static Methods = [
         'addEventListener', 'on', 'removeEventListener', 'off', 'unbind',
