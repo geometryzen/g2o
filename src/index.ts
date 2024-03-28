@@ -17,6 +17,7 @@ export { BindVertices, FlagFill, FlagStroke, FlagVertices, Path, UnbindVertices 
 export { Registry } from './lib/registry';
 export { Renderer as CanvasRenderer } from './lib/renderers/canvas';
 export { Renderer as SVGRenderer } from './lib/renderers/svg';
+export { View as Renderer } from './lib/renderers/View';
 export { Renderer as WebGLRenderer } from './lib/renderers/webgl';
 export { Shape } from './lib/shape';
 export { ArcSegment } from './lib/shapes/arc-segment';

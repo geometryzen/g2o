@@ -20,6 +20,7 @@ import { Registry } from './registry.js';
 // Renderers
 import { Renderer as CanvasRenderer } from './renderers/canvas.js';
 import { Renderer as SVGRenderer } from './renderers/svg.js';
+import { View } from './renderers/View.js';
 import { Renderer as WebGLRenderer } from './renderers/webgl.js';
 import { Shape } from './shape.js';
 // Secondary Classes
@@ -129,7 +130,7 @@ export class Two {
      * @name Two#renderer
      * @property {(Two.SVGRenderer|Two.CanvasRenderer|Two.WebGLRenderer)} - The instantiated rendering class for the instance. For a list of possible rendering types check out Two.Types.
      */
-    renderer = null;
+    renderer: View = null;
 
     /**
      * @name Two#scene
