@@ -1,3 +1,4 @@
+import Two from './lib/two';
 
 export { Anchor } from './lib/anchor';
 export { Children } from './lib/children';
@@ -30,7 +31,7 @@ export { Rectangle } from './lib/shapes/rectangle';
 export { RoundedRectangle } from './lib/shapes/rounded-rectangle';
 export { Star } from './lib/shapes/star';
 export { Text } from './lib/text';
-export { Two } from './lib/two';
+export * from './lib/two';
 export { CanvasShim } from './lib/utils/canvas-shim';
 export { Curve } from './lib/utils/curves';
 export { getRatio } from './lib/utils/device-pixel-ratio';
@@ -45,4 +46,5 @@ export { contains, getCurveLength, getIdByLength, getSubdivisions } from './lib/
 export { _ } from './lib/utils/underscore';
 export { xhr } from './lib/utils/xhr';
 export { Vector } from './lib/vector';
+export { Two };
 
