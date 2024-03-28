@@ -1005,7 +1005,7 @@ export class Two {
      * @returns {Two.Group}
      * @description Creates a Two.js group object and adds it to the scene.
      */
-    makeGroup(objects?) {
+    makeGroup(...objects: Shape[]) {
 
         if (!(objects instanceof Array)) {
             objects = Array.prototype.slice.call(arguments);

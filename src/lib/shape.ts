@@ -34,21 +34,21 @@ export class Shape extends Element {
      * @private
      * @property {Two.Matrix} - The matrix value of the shape's position, rotation, and scale.
      */
-    _matrix = null;
+    _matrix: Matrix = null;
 
     /**
      * @name Two.Shape#_worldMatrix
      * @private
      * @property {Two.Matrix} - The matrix value of the shape's position, rotation, and scale in the scene.
      */
-    _worldMatrix = null;
+    _worldMatrix: Matrix = null;
 
     /**
      * @name Two.Shape#_position
      * @private
      * @property {Two.Vector} - The translation values as a {@link Two.Vector}.
      */
-    _position = null;
+    _position: Vector = null;
 
     /**
      * @name Two.Shape#_rotation

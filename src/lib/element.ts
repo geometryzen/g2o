@@ -1,4 +1,5 @@
 import { Events } from './events.js';
+import { View } from './renderers/View.js';
 
 /**
  * @name Two.Element
@@ -27,7 +28,7 @@ export class Element extends Events {
    * @property {Object} - Object access to store relevant renderer specific variables. Warning: manipulating this object can create unintended consequences.
    * @nota-bene With the {@link Two.SVGRenderer} you can access the underlying SVG element created via `shape.renderer.elem`.
    */
-  _renderer = {};
+  _renderer: View = {};
 
   /**
    * @name Two.Element#id
