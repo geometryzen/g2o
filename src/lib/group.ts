@@ -738,6 +738,16 @@ export class Group extends Shape {
         return this;
 
     }
+    get cap(): string {
+        return this._cap;
+    }
+    set cap(v: string) {
+        this._cap = v;
+        for (let i = 0; i < this.children.length; i++) {
+            const child = this.children[i];
+            child.cap = v;
+        }
+    }
     /**
      * @name Two.Group#children
      * @property {Two.Group.Children}
@@ -780,7 +790,16 @@ export class Group extends Shape {
             child.fill = v;
         }
     }
-
+    get join(): string {
+        return this._join;
+    }
+    set join(v: string) {
+        this._join = v;
+        for (let i = 0; i < this.children.length; i++) {
+            const child = this.children[i];
+            child.join = v;
+        }
+    }
     get linewidth(): number {
         return this._linewidth;
     }
@@ -857,42 +876,16 @@ const proto = {
             }
         }
     },
-    join: {
-        enumerable: true,
-        get: function () {
-            return this._join;
-        },
-        set: function (v) {
-            this._join = v;
-            for (let i = 0; i < this.children.length; i++) {
-                const child = this.children[i];
-                child.join = v;
-            }
-        }
-    },
     miter: {
         enumerable: true,
-        get: function () {
+        get: function (this: Group) {
             return this._miter;
         },
-        set: function (v) {
+        set: function (this: Group, v: number) {
             this._miter = v;
             for (let i = 0; i < this.children.length; i++) {
                 const child = this.children[i];
                 child.miter = v;
-            }
-        }
-    },
-    cap: {
-        enumerable: true,
-        get: function () {
-            return this._cap;
-        },
-        set: function (v) {
-            this._cap = v;
-            for (let i = 0; i < this.children.length; i++) {
-                const child = this.children[i];
-                child.cap = v;
             }
         }
     },

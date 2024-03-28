@@ -27,7 +27,7 @@ export class LinearGradient extends Gradient {
     _left = null;
     _right = null;
 
-    constructor(x1 = 0, y1 = 0, x2 = 0, y2 = 0, ...stops: Stop[]) {
+    constructor(x1 = 0, y1 = 0, x2 = 0, y2 = 0, stops: Stop[]) {
 
         super(stops);
 

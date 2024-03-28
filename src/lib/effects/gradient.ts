@@ -23,7 +23,7 @@ export class Gradient extends Element {
     _units = '';
     _stops: Collection;
 
-    constructor(stops: Stop[]) {
+    constructor(stops?: Stop[]) {
 
         super();
 

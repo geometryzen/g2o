@@ -1041,7 +1041,7 @@ export class Two {
      * @returns {Two.Group}
      * @description Interpret an SVG Node and add it to this instance's scene. The distinction should be made that this doesn't `import` svg's, it solely interprets them into something compatible for Two.js - this is slightly different than a direct transcription.
      */
-    interpret(svg: SVGElement, shallow: boolean, add: boolean): Group {
+    interpret(svg: SVGElement, shallow?: boolean, add?: boolean): Group {
 
         const tag = svg.tagName.toLowerCase();
 
@@ -1055,7 +1055,8 @@ export class Two {
 
         if (add) {
             this.add(shallow && node instanceof Group ? node.children : node);
-        } else if (node.parent) {
+        }
+        else if (node.parent) {
             // Remove `g` tags that have been added to scenegraph / DOM
             // in order to be compatible with `getById` methods.
             node.remove();
