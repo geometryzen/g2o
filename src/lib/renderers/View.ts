@@ -1,4 +1,4 @@
 export interface View {
     elem: HTMLElement;
-    type: 'gradient' | 'group';
+    type: 'gradient' | 'group' | 'path';
 }

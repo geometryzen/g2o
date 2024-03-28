@@ -1,9 +1,9 @@
-import { Commands } from '../utils/path-commands.js';
+import { Anchor } from '../anchor.js';
+import { Path } from '../path.js';
 import { TwoError } from '../utils/error.js';
+import { Commands } from '../utils/path-commands.js';
 import { _ } from '../utils/underscore.js';
 
-import { Path } from '../path.js';
-import { Anchor } from '../anchor.js';
 
 /**
  * @name Two.Line
@@ -16,54 +16,54 @@ import { Anchor } from '../anchor.js';
  */
 export class Line extends Path {
 
-  constructor(x1, y1, x2, y2) {
+    constructor(x1 = 0, y1 = 0, x2 = 0, y2 = 0) {
 
-    const points = [
-        new Anchor(x1, y1),
-        new Anchor(x2, y2)
-    ];
-    super(points);
+        const points = [
+            new Anchor(x1, y1),
+            new Anchor(x2, y2)
+        ];
+        super(points);
 
-    for (let prop in proto) {
-      Object.defineProperty(this, prop, proto[prop]);
+        for (let prop in proto) {
+            Object.defineProperty(this, prop, proto[prop]);
+        }
+
+        this.vertices[0].command = Commands.move;
+        this.vertices[1].command = Commands.line;
+
+        this.automatic = false;
+
     }
-
-    this.vertices[0].command = Commands.move;
-    this.vertices[1].command = Commands.line;
-
-    this.automatic = false;
-
-  }
 
 }
 
 const proto = {
-  left: {
-    enumerable: true,
-    get: function() {
-      return this.vertices[0];
+    left: {
+        enumerable: true,
+        get: function () {
+            return this.vertices[0];
+        },
+        set: function (v) {
+            if (_.isObject(v)) {
+                this.vertices.splice(0, 1, v);
+            } else {
+                const error = new TwoError('Two.Line.x argument is not an object.');
+                console.warn(error.name, error.message);
+            }
+        }
     },
-    set: function(v) {
-      if (_.isObject(v)) {
-        this.vertices.splice(0, 1, v);
-      } else {
-        const error = new TwoError('Two.Line.x argument is not an object.');
-        console.warn(error.name, error.message);
-      }
+    right: {
+        enumerable: true,
+        get: function () {
+            return this.vertices[1];
+        },
+        set: function (v) {
+            if (_.isObject(v)) {
+                this.vertices.splice(1, 1, v);
+            } else {
+                const error = new TwoError('Two.Line.y argument is not an object.');
+                console.warn(error.name, error.message);
+            }
+        }
     }
-  },
-  right: {
-    enumerable: true,
-    get: function() {
-      return this.vertices[1];
-    },
-    set: function(v) {
-      if (_.isObject(v)) {
-        this.vertices.splice(1, 1, v);
-      } else {
-        const error = new TwoError('Two.Line.y argument is not an object.');
-        console.warn(error.name, error.message);
-      }
-    }
-  }
 };

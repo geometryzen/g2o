@@ -100,7 +100,7 @@ export class Two {
         return this.#events.addEventListener.apply(this, arguments);
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    bind(name: 'update', handler: EventHandler): this {
+    bind(name: 'resize' | 'update', handler: EventHandler): this {
         this.#events.addEventListener(name, handler);
         return this;
     }
@@ -534,7 +534,7 @@ export class Two {
      * @param {(Two.Shape[]|...Two.Shape)} [objects] - An array of Two.js objects. Alternatively can add objects as individual arguments.
      * @description A shorthand method to add specific Two.js objects to the scene.
      */
-    add(objects) {
+    add(...objects: Shape[]) {
 
         if (!(objects instanceof Array)) {
             objects = Array.prototype.slice.call(arguments);

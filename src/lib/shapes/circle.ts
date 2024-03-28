@@ -1,4 +1,5 @@
 import { Anchor } from '../anchor.js';
+import { Group } from '../group.js';
 import { Path } from '../path.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
@@ -16,7 +17,6 @@ const cos = Math.cos, sin = Math.sin;
  * @param {Number} [resolution=4] - The number of vertices used to construct the circle.
  */
 export class Circle extends Path {
-
     /**
      * @name Two.Circle#_flagRadius
      * @private
@@ -33,13 +33,13 @@ export class Circle extends Path {
 
     /**
      * DGH: Wouldn't 1 be a better default for a circle radius.
-     * DGH: A vector for the position would sow that x and y have a relationship AND be more geometric.
-     * @param ox 
-     * @param oy 
+     * DGH: A vector for the position would show that x and y have a relationship AND be more geometric.
+     * @param x 
+     * @param y 
      * @param r 
      * @param resolution 
      */
-    constructor(ox = 0, oy = 0, r = 0, resolution = 4) {
+    constructor(x = 0, y = 0, r = 0, resolution = 4) {
 
         // At least 2 vertices are required for proper circlage
         const amount = resolution ? Math.max(resolution, 2) : 4;
@@ -49,10 +49,6 @@ export class Circle extends Path {
         }
 
         super(points, true, true, true);
-
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
 
         /**
          * @name Two.Circle#radius
@@ -64,11 +60,11 @@ export class Circle extends Path {
 
         this._update();
 
-        if (typeof ox === 'number') {
-            this.translation.x = ox;
+        if (typeof x === 'number') {
+            this.translation.x = x;
         }
-        if (typeof oy === 'number') {
-            this.translation.y = oy;
+        if (typeof y === 'number') {
+            this.translation.y = y;
         }
 
     }
@@ -126,7 +122,6 @@ export class Circle extends Path {
 
         super._update.call(this);
         return this;
-
     }
 
     /**
@@ -136,12 +131,9 @@ export class Circle extends Path {
      * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
      */
     flagReset() {
-
         this._flagRadius = false;
-
         super.flagReset.call(this);
         return this;
-
     }
 
     /**
@@ -151,7 +143,7 @@ export class Circle extends Path {
      * @returns {Two.Circle}
      * @description Create a new instance of {@link Two.Circle} with the same properties of the current path.
      */
-    clone(parent) {
+    clone(parent?: Group): Circle {
 
         const clone = new Circle(0, 0, this.radius, this.vertices.length);
 
@@ -196,18 +188,12 @@ export class Circle extends Path {
         return object;
 
     }
+    get radius(): number {
+        return this._radius;
+    }
+    set radius(v: number) {
+        this._radius = v;
+        this._flagRadius = true;
+    }
 
 }
-
-const proto = {
-    radius: {
-        enumerable: true,
-        get: function () {
-            return this._radius;
-        },
-        set: function (v) {
-            this._radius = v;
-            this._flagRadius = true;
-        }
-    }
-};

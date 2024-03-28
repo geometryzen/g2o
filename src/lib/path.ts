@@ -237,9 +237,9 @@ export class Path extends Shape {
      * @private
      * @see {@link Two.Path#dashes}
      */
-    _dashes = null;
+    _dashes: number[] = null;
 
-    constructor(vertices, closed, curved, manual) {
+    constructor(vertices, closed?: boolean, curved?: boolean, manual?: boolean) {
 
         super();
 
@@ -1145,6 +1145,21 @@ export class Path extends Shape {
 
         return this;
 
+    }
+    /**
+     * @name Two.Path#dashes
+     * @property {Number[]} - Array of numbers. Odd indices represent dash length. Even indices represent dash space.
+     * @description A list of numbers that represent the repeated dash length and dash space applied to the stroke of the text.
+     * @see {@link https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray} for more information on the SVG stroke-dasharray attribute.
+     */
+    get dashes(): number[] {
+        return this._dashes;
+    }
+    set dashes(v: number[]) {
+        if (typeof v.offset !== 'number') {
+            v.offset = (this.dashes && this._dashes.offset) || 0;
+        }
+        this._dashes = v;
     }
     get fill(): string | Gradient | Texture {
         return this._fill;

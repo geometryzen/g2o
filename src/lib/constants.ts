@@ -19,7 +19,7 @@ export const Constants = {
     webgl: 'WebGLRenderer',
     svg: 'SVGRenderer',
     canvas: 'CanvasRenderer'
-  },
+  } as const,
 
   /**
    * @name Two.Version
