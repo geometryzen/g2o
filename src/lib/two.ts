@@ -114,9 +114,9 @@ export class Two {
     dispatchEvent() {
         return this.#events.dispatchEvent.apply(this, arguments);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    trigger(type: 'pause' | 'play' | 'render' | 'update', ...args: unknown[]) {
-        return this.#events.dispatchEvent.apply(this, arguments);
+    trigger(type: 'pause' | 'play' | 'render' | 'update', ...args: unknown[]): this {
+        this.#events.dispatchEvent(type, ...args);
+        return this;
     }
     listen() {
         return this.#events.listen.apply(this, arguments);
@@ -141,7 +141,7 @@ export class Two {
      * @name Two#scene
      * @property {Two.Group} - The base level {@link Two.Group} which houses all objects for the instance. Because it is a {@link Two.Group} transformations can be applied to it that will affect all objects in the instance. This is handy as a makeshift inverted camera.
      */
-    scene = null;
+    scene: Group = null;
 
     /**
      * @name Two#width
