@@ -5,7 +5,7 @@
     "exports": {
         "default": {
             "types": "./dist/index.d.ts",
-            "system": "./dist/system/index.min.js",
+            "system": "./dist/system/index.js",
             "default": "./dist/esm/index.min.js"
         },
         "node": {
