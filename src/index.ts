@@ -46,5 +46,5 @@ export { contains, getCurveLength, getIdByLength, getSubdivisions } from './lib/
 export { _ } from './lib/utils/underscore';
 export { xhr } from './lib/utils/xhr';
 export { Vector } from './lib/vector';
-export { Two };
+export default Two;
 
