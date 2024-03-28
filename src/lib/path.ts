@@ -462,7 +462,8 @@ export class Path extends Shape {
             if (typeof this[k] !== 'undefined') {
                 if (this[k].toObject) {
                     result[k] = this[k].toObject();
-                } else {
+                }
+                else {
                     result[k] = this[k];
                 }
             }
@@ -570,7 +571,7 @@ export class Path extends Shape {
      * @returns {Object} - Returns object with top, left, right, bottom, width, height attributes.
      * @description Return an object with top, left, right, bottom, width, and height parameters of the path.
      */
-    getBoundingClientRect(shallow) {
+    getBoundingClientRect(shallow?: boolean): { width: number; height: number; top?: number; left?: number; right?: number; bottom?: number } {
 
         let matrix, border, l, i, v0, v1;
 
@@ -594,7 +595,8 @@ export class Path extends Shape {
                 if (typeof scaleX === 'number' && typeof scaleY === 'number') {
                     border = Math.max(scaleX, scaleY) * (this.linewidth || 0) / 2;
                 }
-            } else {
+            }
+            else {
                 border *= typeof this.scale === 'number'
                     ? this.scale : Math.max(this.scale.x, this.scale.y);
             }
@@ -627,7 +629,7 @@ export class Path extends Shape {
                     ry += v0.y;
                 }
 
-                let [c0x, c0y] = matrix.multiply(rx, ry);
+                const [c0x, c0y] = matrix.multiply(rx, ry);
 
                 let lx = v1.controls.left.x;
                 let ly = v1.controls.left.y;
@@ -637,7 +639,7 @@ export class Path extends Shape {
                     ly += v1.y;
                 }
 
-                let [c1x, c1y] = matrix.multiply(lx, ly);
+                const [c1x, c1y] = matrix.multiply(lx, ly);
 
                 const bb = getCurveBoundingBox(
                     v0x, v0y,
@@ -651,7 +653,8 @@ export class Path extends Shape {
                 right = max(bb.max.x + border, right);
                 bottom = max(bb.max.y + border, bottom);
 
-            } else {
+            }
+            else {
 
                 if (i <= 1) {
 
@@ -712,7 +715,8 @@ export class Path extends Shape {
                         ia = ib;
                         ib = i;
                     }
-                } else {
+                }
+                else {
                     ia = i;
                     ib = Math.min(Math.max(i - 1, 0), last);
                 }
@@ -722,7 +726,8 @@ export class Path extends Shape {
                 target -= sum;
                 if (this._lengths[i] !== 0) {
                     t = target / this._lengths[i];
-                } else {
+                }
+                else {
                     t = 0;
                 }
 
@@ -740,7 +745,8 @@ export class Path extends Shape {
 
         if (!a) {
             return b;
-        } else if (!b) {
+        }
+        else if (!b) {
             return a;
         }
 
@@ -880,7 +886,8 @@ export class Path extends Shape {
             _.each(verts, function (v, i) {
                 if (i <= 0 && b.command === Commands.move) {
                     v.command = Commands.move;
-                } else {
+                }
+                else {
                     v.command = Commands.line;
                 }
             });
@@ -899,12 +906,14 @@ export class Path extends Shape {
                     _.each(verts, function (v, i) {
                         if (i <= 0 && b.command === Commands.move) {
                             v.command = Commands.move;
-                        } else {
+                        }
+                        else {
                             v.command = Commands.line;
                         }
                     });
 
-                } else if (closed) {
+                }
+                else if (closed) {
                     points.push(new Anchor(a.x, a.y));
                 }
 
@@ -1040,7 +1049,8 @@ export class Path extends Shape {
 
                         if (v.relative) {
                             v.controls.right.clear();
-                        } else {
+                        }
+                        else {
                             v.controls.right.copy(v);
                         }
 
@@ -1048,7 +1058,8 @@ export class Path extends Shape {
                             this._renderer.collection[i - 1].controls.right
                                 .copy(prev.controls.right)
                                 .lerp(Vector.zero, 1 - v.t);
-                        } else {
+                        }
+                        else {
                             this._renderer.collection[i - 1].controls.right
                                 .copy(prev.controls.right)
                                 .lerp(prev, 1 - v.t);
@@ -1056,7 +1067,8 @@ export class Path extends Shape {
 
                     }
 
-                } else if (i >= low && i <= high) {
+                }
+                else if (i >= low && i <= high) {
 
                     v = this._renderer.collection[i]
                         .copy(this._collection[i]);
@@ -1067,17 +1079,20 @@ export class Path extends Shape {
                         if (!closed && right.controls) {
                             if (right.relative) {
                                 right.controls.right.clear();
-                            } else {
+                            }
+                            else {
                                 right.controls.right.copy(right);
                             }
                         }
-                    } else if (i === low && contains(this, beginning)) {
+                    }
+                    else if (i === low && contains(this, beginning)) {
                         left = v;
                         left.command = Commands.move;
                         if (!closed && left.controls) {
                             if (left.relative) {
                                 left.controls.left.clear();
-                            } else {
+                            }
+                            else {
                                 left.controls.left.copy(left);
                             }
                         }
@@ -1109,7 +1124,8 @@ export class Path extends Shape {
                         this._renderer.collection[i + 1].controls.left
                             .copy(next.controls.left)
                             .lerp(Vector.zero, v.t);
-                    } else {
+                    }
+                    else {
                         vector.copy(next);
                         this._renderer.collection[i + 1].controls.left
                             .copy(next.controls.left)
@@ -1237,7 +1253,8 @@ export class Path extends Shape {
         // Create new Collection with copy of vertices
         if (vertices instanceof Collection) {
             this._collection = vertices;
-        } else {
+        }
+        else {
             this._collection = new Collection(vertices || []);
         }
 
@@ -1390,7 +1407,8 @@ const proto = {
             // Create new Collection with copy of vertices
             if (vertices instanceof Collection) {
                 this._collection = vertices;
-            } else {
+            }
+            else {
                 this._collection = new Collection(vertices || []);
             }
 
