@@ -72,7 +72,7 @@ const Utils = _.extend({
  * @param {Element} [options.domElement] - The canvas or SVG element to draw into. This overrides the `options.type` argument.
  * @description The entrypoint for Two.js. Instantiate a `new Two` in order to setup a scene to render to. `Two` is also the publicly accessible namespace that all other sub-classes, functions, and utilities attach to.
  */
-export default class Two {
+export class Two {
 
     // Warning: inherit events while overriding static properties
     /**
