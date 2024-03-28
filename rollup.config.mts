@@ -27,31 +27,31 @@ const options: RollupOptions[] = [
         output: [
             {
                 banner,
-                file: non_minified_file(pkg.exports.default.default),
+                file: non_minified_file(pkg.exports['.'].default),
                 format: 'esm',
                 sourcemap: true
             },
             {
-                file: pkg.exports.default.default,
+                file: pkg.exports['.'].default,
                 format: 'esm',
                 sourcemap: true,
                 plugins: [terser()]
             },
             {
                 banner,
-                file: non_minified_file(pkg.exports.default.system),
+                file: non_minified_file(pkg.exports['.'].system),
                 format: 'system',
                 sourcemap: true
             },
             {
-                file: pkg.exports.default.system,
+                file: pkg.exports['.'].system,
                 format: 'system',
                 sourcemap: true,
                 plugins: [terser()]
             },
             {
                 banner,
-                file: pkg.exports.node.require,
+                file: pkg.main,
                 format: 'commonjs',
                 sourcemap: true
             },
