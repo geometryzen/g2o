@@ -1134,7 +1134,7 @@ export class Path extends Shape {
      * @private
      * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
      */
-    flagReset() {
+    flagReset(): this {
 
         this._flagVertices = this._flagLength = this._flagFill = this._flagStroke =
             this._flagLinewidth = this._flagOpacity = this._flagVisible =
@@ -1146,21 +1146,61 @@ export class Path extends Shape {
         return this;
 
     }
+    get linewidth(): number {
+        return this._linewidth;
+    }
+    set linewidth(v: number) {
+        this._linewidth = v;
+        this._flagLinewidth = true;
+    }
+    get fill() {
+        return this._fill;
+    }
+    set fill(f: string) {
 
+        if (this._fill instanceof Gradient
+            || this._fill instanceof LinearGradient
+            || this._fill instanceof RadialGradient
+            || this._fill instanceof Texture) {
+            this._fill.unbind(Events.Types.change, this._renderer.flagFill);
+        }
+
+        this._fill = f;
+        this._flagFill = true;
+
+        if (this._fill instanceof Gradient
+            || this._fill instanceof LinearGradient
+            || this._fill instanceof RadialGradient
+            || this._fill instanceof Texture) {
+            this._fill.bind(Events.Types.change, this._renderer.flagFill);
+        }
+
+    }
+    get stroke(): string {
+        return this._stroke;
+    }
+    set stroke(f: string) {
+        if (this._stroke instanceof Gradient
+            || this._stroke instanceof LinearGradient
+            || this._stroke instanceof RadialGradient
+            || this._stroke instanceof Texture) {
+            this._stroke.unbind(Events.Types.change, this._renderer.flagStroke);
+        }
+
+        this._stroke = f;
+        this._flagStroke = true;
+
+        if (this._stroke instanceof Gradient
+            || this._stroke instanceof LinearGradient
+            || this._stroke instanceof RadialGradient
+            || this._stroke instanceof Texture) {
+            this._stroke.bind(Events.Types.change, this._renderer.flagStroke);
+        }
+    }
 }
 
 const proto = {
 
-    linewidth: {
-        enumerable: true,
-        get: function () {
-            return this._linewidth;
-        },
-        set: function (v) {
-            this._linewidth = v;
-            this._flagLinewidth = true;
-        }
-    },
     opacity: {
         enumerable: true,
         get: function () {
@@ -1209,60 +1249,6 @@ const proto = {
         set: function (v) {
             this._miter = v;
             this._flagMiter = true;
-        }
-    },
-
-    fill: {
-        enumerable: true,
-        get: function () {
-            return this._fill;
-        },
-        set: function (f) {
-
-            if (this._fill instanceof Gradient
-                || this._fill instanceof LinearGradient
-                || this._fill instanceof RadialGradient
-                || this._fill instanceof Texture) {
-                this._fill.unbind(Events.Types.change, this._renderer.flagFill);
-            }
-
-            this._fill = f;
-            this._flagFill = true;
-
-            if (this._fill instanceof Gradient
-                || this._fill instanceof LinearGradient
-                || this._fill instanceof RadialGradient
-                || this._fill instanceof Texture) {
-                this._fill.bind(Events.Types.change, this._renderer.flagFill);
-            }
-
-        }
-    },
-
-    stroke: {
-        enumerable: true,
-        get: function () {
-            return this._stroke;
-        },
-        set: function (f) {
-
-            if (this._stroke instanceof Gradient
-                || this._stroke instanceof LinearGradient
-                || this._stroke instanceof RadialGradient
-                || this._stroke instanceof Texture) {
-                this._stroke.unbind(Events.Types.change, this._renderer.flagStroke);
-            }
-
-            this._stroke = f;
-            this._flagStroke = true;
-
-            if (this._stroke instanceof Gradient
-                || this._stroke instanceof LinearGradient
-                || this._stroke instanceof RadialGradient
-                || this._stroke instanceof Texture) {
-                this._stroke.bind(Events.Types.change, this._renderer.flagStroke);
-            }
-
         }
     },
 
