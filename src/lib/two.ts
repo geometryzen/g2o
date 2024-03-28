@@ -97,7 +97,7 @@ export class Two {
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     bind(name: 'update', handler: EventHandler): this {
-        this.#events.addEventListener.apply(this, arguments);
+        this.#events.addEventListener(name, handler);
         return this;
     }
     removeEventListener() {
@@ -108,7 +108,7 @@ export class Two {
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     unbind(name: 'update', handler: EventHandler): this {
-        this.#events.removeEventListener.apply(this, arguments);
+        this.#events.removeEventListener(name, handler);
         return this;
     }
     dispatchEvent() {
