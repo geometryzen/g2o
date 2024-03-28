@@ -184,6 +184,8 @@ export class Group extends Shape {
      */
     _mask = null;
 
+    readonly _children: Shape[];
+
     constructor(children: Shape[]) {
 
         super();
@@ -216,8 +218,7 @@ export class Group extends Shape {
          * @description A list of all the children in the scenegraph.
          * @nota-bene Ther order of this list indicates the order each element is rendered to the screen.
          */
-        this.children = Array.isArray(children) ? children : Array.prototype.slice.call(arguments);
-
+        this._children = Array.isArray(children) ? children : Array.prototype.slice.call(arguments);
     }
 
     static Children = Children;
@@ -737,6 +738,42 @@ export class Group extends Shape {
         return this;
 
     }
+    get children() {
+        return this._children;
+    }
+    set children(children) {
+
+        const insertChildren = Group.InsertChildren.bind(this);
+        const removeChildren = Group.RemoveChildren.bind(this);
+        const orderChildren = Group.OrderChildren.bind(this);
+
+        if (this._children) {
+            this._children.unbind();
+            if (this._children.length > 0) {
+                removeChildren(this._children);
+            }
+        }
+
+        this._children = new Children(children);
+        this._children.bind(Events.Types.insert, insertChildren);
+        this._children.bind(Events.Types.remove, removeChildren);
+        this._children.bind(Events.Types.order, orderChildren);
+
+        if (children.length > 0) {
+            insertChildren(children);
+        }
+
+    }
+    get linewidth(): number {
+        return this._linewidth;
+    }
+    set linewidth(v: number) {
+        this._linewidth = v;
+        for (let i = 0; i < this.children.length; i++) {
+            const child = this.children[i];
+            child.linewidth = v;
+        }
+    }
     get visible(): boolean {
         return this._visible;
     }
@@ -816,19 +853,6 @@ const proto = {
             }
         }
     },
-    linewidth: {
-        enumerable: true,
-        get: function () {
-            return this._linewidth;
-        },
-        set: function (v) {
-            this._linewidth = v;
-            for (let i = 0; i < this.children.length; i++) {
-                const child = this.children[i];
-                child.linewidth = v;
-            }
-        }
-    },
     join: {
         enumerable: true,
         get: function () {
@@ -905,35 +929,6 @@ const proto = {
                 const child = this.children[i];
                 child.automatic = v;
             }
-        }
-    },
-    children: {
-        enumerable: true,
-        get: function () {
-            return this._children;
-        },
-        set: function (children) {
-
-            const insertChildren = Group.InsertChildren.bind(this);
-            const removeChildren = Group.RemoveChildren.bind(this);
-            const orderChildren = Group.OrderChildren.bind(this);
-
-            if (this._children) {
-                this._children.unbind();
-                if (this._children.length > 0) {
-                    removeChildren(this._children);
-                }
-            }
-
-            this._children = new Children(children);
-            this._children.bind(Events.Types.insert, insertChildren);
-            this._children.bind(Events.Types.remove, removeChildren);
-            this._children.bind(Events.Types.order, orderChildren);
-
-            if (children.length > 0) {
-                insertChildren(children);
-            }
-
         }
     },
     mask: {
