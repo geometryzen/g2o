@@ -873,45 +873,22 @@ export class Two {
     }
 
     /**
-     * @name Two#makePath
-     * @function
-     * @param {Two.Anchor[]} [points] - An array of {@link Two.Anchor} points
-     * @param {...Number} - Alternatively you can pass alternating `x` / `y` coordinate values as individual arguments. These will be combined into {@link Two.Anchor}s for use in the path.
-     * @returns {Two.Path}
-     * @description Creates a Two.js path and adds it to the scene.
-     * @nota-bene In either case of passing an array or passing numbered arguments the last argument is an optional `Boolean` that defines whether the path should be open or closed.
+     * Creates a Path and adds it to the scene.
+     * @param closed Determines whether the path should be open or closed.
+     * @param points The points making up the Path.
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    makePath(p: any): Path {
+    makePath(closed: boolean, ...points: Anchor[]): Path {
 
-        const l = arguments.length;
-        let points = p;
-
-        if (!Array.isArray(p)) {
-            points = [];
-            for (let i = 0; i < l; i += 2) {
-                const x = arguments[i];
-                if (typeof x !== 'number') {
-                    break;
-                }
-                const y = arguments[i + 1];
-                points.push(new Anchor(x, y));
-            }
-        }
-
-        const last = arguments[l - 1];
-        const path = new Path(points, !(typeof last === 'boolean' ? last : undefined));
+        const path = new Path(points, closed);
         const rect = path.getBoundingClientRect();
         if (typeof rect.top === 'number' && typeof rect.left === 'number' &&
             typeof rect.right === 'number' && typeof rect.bottom === 'number') {
-            path.center().translation
-                .set(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            path.center().translation.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
         }
 
         this.scene.add(path);
 
         return path;
-
     }
 
     /**

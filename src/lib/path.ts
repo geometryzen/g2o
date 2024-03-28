@@ -239,7 +239,7 @@ export class Path extends Shape {
      */
     _dashes: number[] = null;
 
-    constructor(vertices, closed?: boolean, curved?: boolean, manual?: boolean) {
+    constructor(vertices?: Anchor[], closed?: boolean, curved?: boolean, manual?: boolean) {
 
         super();
 

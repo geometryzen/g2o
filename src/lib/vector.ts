@@ -143,9 +143,7 @@ export class Vector extends Events {
      * @returns {Number} The ratio betwen two points `v1` and `v2`.
      */
     static ratioBetween(v1: Vector, v2: Vector): number {
-
         return (v1.x * v2.x + v1.y * v2.y) / (v1.length() * v2.length());
-
     }
 
     /**
@@ -158,19 +156,15 @@ export class Vector extends Events {
     static angleBetween(v1: Vector, v2: Vector): number {
 
         if (arguments.length >= 4) {
-
             const dx = arguments[0] - arguments[2];
             const dy = arguments[1] - arguments[3];
-
             return Math.atan2(dy, dx);
-
         }
 
         const dx = v1.x - v2.x;
         const dy = v1.y - v2.y;
 
         return Math.atan2(dy, dx);
-
     }
 
     /**
@@ -497,7 +491,7 @@ export class Vector extends Events {
      * @param {Number} s - The scalar to divide by.
      * @description Divide the vector by a single number. Shorthand to call {@link Two.Vector#divide} directly.
      */
-    divideScalar(s) {
+    divideScalar(s: number) {
         return this.divide(s);
     }
 
@@ -545,7 +539,7 @@ export class Vector extends Events {
      * @function
      * @description Normalize the vector from negative one to one.
      */
-    normalize() {
+    normalize(): this {
         return this.divideScalar(this.length());
     }
 
@@ -555,7 +549,7 @@ export class Vector extends Events {
      * @returns {Number}
      * @description Get the distance between two vectors.
      */
-    distanceTo(v) {
+    distanceTo(v: Vector): number {
         return Math.sqrt(this.distanceToSquared(v));
     }
 
@@ -565,7 +559,7 @@ export class Vector extends Events {
      * @returns {Number}
      * @description Get the distance between two vectors to the power of two. Widely used as less expensive than {@link Two.Vector#distanceTo} because it isn't square-rooting any numbers.
      */
-    distanceToSquared(v) {
+    distanceToSquared(v: Vector): number {
         const dx = this.x - v.x;
         const dy = this.y - v.y;
         return dx * dx + dy * dy;
@@ -577,7 +571,7 @@ export class Vector extends Events {
      * @param {Number} l - length to set vector to.
      * @description Set the length of a vector.
      */
-    setLength(l) {
+    setLength(l: number): this {
         return this.normalize().multiplyScalar(l);
     }
 
@@ -589,7 +583,7 @@ export class Vector extends Events {
      * @returns {Boolean}
      * @description Qualify if one vector roughly equal another. With a margin of error defined by epsilon.
      */
-    equals(v: Vector, eps?: number) {
+    equals(v: Vector, eps?: number): boolean {
         eps = (typeof eps === 'undefined') ? 0.0001 : eps;
         return (this.distanceTo(v) < eps);
     }
@@ -602,7 +596,7 @@ export class Vector extends Events {
      * @description Linear interpolate one vector to another by an amount `t` defined as a zero to one number.
      * @see [Matt DesLauriers](https://twitter.com/mattdesl/status/1031305279227478016) has a good thread about this.
      */
-    lerp(v, t) {
+    lerp(v: Vector, t: number): this {
         const x = (v.x - this.x) * t + this.x;
         const y = (v.y - this.y) * t + this.y;
         return this.set(x, y);
@@ -615,7 +609,7 @@ export class Vector extends Events {
      * @returns {Boolean}
      * @description Check to see if vector is roughly zero, based on the `epsilon` precision value.
      */
-    isZero(eps) {
+    isZero(eps: number): boolean {
         eps = (typeof eps === 'undefined') ? 0.0001 : eps;
         return (this.length() < eps);
     }
@@ -626,7 +620,7 @@ export class Vector extends Events {
      * @returns {String}
      * @description Return a comma-separated string of x, y value. Great for storing in a database.
      */
-    toString() {
+    toString(): string {
         return this.x + ', ' + this.y;
     }
 
@@ -636,7 +630,7 @@ export class Vector extends Events {
      * @returns {Object}
      * @description Return a JSON compatible plain object that represents the vector.
      */
-    toObject() {
+    toObject(): { x: number, y: number } {
         return { x: this.x, y: this.y };
     }
 
@@ -646,7 +640,7 @@ export class Vector extends Events {
      * @param {Number} radians - The amount to rotate the vector by in radians.
      * @description Rotate a vector.
      */
-    rotate(radians: number) {
+    rotate(radians: number): this {
         const x = this.x;
         const y = this.y;
         const cos = Math.cos(radians);
@@ -655,5 +649,4 @@ export class Vector extends Events {
         this.y = x * sin + y * cos;
         return this;
     }
-
 }
