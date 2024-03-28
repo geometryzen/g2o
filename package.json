@@ -1,5 +1,5 @@
 {
-    "name": "@geometryzen/my-lib",
+    "name": "@geometryzen/two",
     "version": "0.9.13",
     "description": "Template TypeScript Library",
     "exports": {
@@ -57,7 +57,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/geometryzen/my-lib.git"
+        "url": "git+https://github.com/geometryzen/two.git"
     },
     "author": {
         "name": "David Geo Holmes",
@@ -65,9 +65,9 @@
     },
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/geometryzen/my-lib/issues"
+        "url": "https://github.com/geometryzen/two/issues"
     },
-    "homepage": "https://github.com/geometryzen/my-lib#readme",
+    "homepage": "https://github.com/geometryzen/two#readme",
     "devDependencies": {
         "@rollup/plugin-commonjs": "^25.0.7",
         "@rollup/plugin-node-resolve": "^15.2.3",

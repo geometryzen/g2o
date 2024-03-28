@@ -1,10 +1,10 @@
-# my-lib
+# @geometryzen/two
 
 Template TypeScript Library
 
-[![version](https://img.shields.io/npm/v/@geometryzen/my-lib.svg)](https://www.npmjs.com/package/@geometryzen/my-lib) 
+[![version](https://img.shields.io/npm/v/@geometryzen/two.svg)](https://www.npmjs.com/package/@geometryzen/two) 
 
-[![npm downloads](https://img.shields.io/npm/dm/@geometryzen/my-lib.svg)](https://npm-stat.com/charts.html?package=@geometryzen/my-lib&from=2022-09-01)
+[![npm downloads](https://img.shields.io/npm/dm/@geometryzen/two.svg)](https://npm-stat.com/charts.html?package=@geometryzen/two&from=2024-03-27)
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
