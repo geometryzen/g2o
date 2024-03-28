@@ -164,10 +164,10 @@ export class Shape extends Element {
      * @description Alias for {@link Two.Shape#position}.
      */
     get translation() {
-        return proto.position.get.apply(this, arguments);
+        return this.position;
     }
     set translation(v) {
-        proto.position.set.apply(this, arguments);
+        this.position = v;
     }
 
     /**

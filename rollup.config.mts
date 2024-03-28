@@ -8,7 +8,11 @@ import peer_deps_external from 'rollup-plugin-peer-deps-external';
 import pkg from './package.json' assert { type: 'json' };
 
 function non_minified_file(path: string): string {
-    return path.replace(".min.js", ".js");
+    return path.replace("index.min.js", "index.js");
+}
+
+function minified_file(path: string): string {
+    return path.replace("index.js", "index.min.js");
 }
 
 /**
@@ -32,7 +36,7 @@ const options: RollupOptions[] = [
                 sourcemap: true
             },
             {
-                file: pkg.module,
+                file: minified_file(pkg.module),
                 format: 'esm',
                 sourcemap: true,
                 plugins: [terser()]
@@ -44,19 +48,19 @@ const options: RollupOptions[] = [
                 sourcemap: true
             },
             {
-                file: pkg.exports['.'].system,
+                file: minified_file(pkg.exports['.'].system),
                 format: 'system',
                 sourcemap: true,
                 plugins: [terser()]
             },
             {
                 banner,
-                file: pkg.main,
+                file: non_minified_file(pkg.main),
                 format: 'commonjs',
                 sourcemap: true
             },
             {
-                file: pkg.browser,
+                file: non_minified_file(pkg.browser),
                 format: 'umd',
                 name: 'MYLIB',
                 sourcemap: true
