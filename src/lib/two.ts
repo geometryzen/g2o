@@ -53,13 +53,41 @@ const Utils = _.extend({
     xhr
 }, _, CanvasShim, Curves, math);
 
+export type RendererType = 'CanvasRenderer' | 'SVGRenderer' | 'WebGLRenderer';
+
 export interface TwoOptions {
+    /**
+     * Set to `true` to automatically make the stage adapt to the width and height of the parent document.
+     * This parameter overrides `width` and `height` parameters if set to `true`.
+     * This overrides `options.fitted` as well.
+     */
     fullscreen: boolean;
+    /**
+     * Set to `true` to automatically make the stage adapt to the width and height of the parent element.
+     * This parameter overrides `width` and `height` parameters if set to `true`.
+     */
     fitted: boolean;
+    /**
+     * The height of the stage on construction. This can be set at a later time.
+     */
     height: number;
+    /**
+     * The width of the stage on construction. This can be set at a later time.
+     */
     width: number;
-    type: 'canvas' | 'svg' | 'webgl';
+    /**
+     * The type of renderer to setup drawing with.
+     */
+    type: RendererType;
+    /**
+     * Set to `true` to add the instance to draw on `requestAnimationFrame`.
+     * This is a convenient substitute for {@link Two#play}.
+     */
     autostart: boolean;
+    /**
+     * The canvas or SVG element to draw into. This overrides the `options.type` argument.
+     */
+    domElement: Element;
 }
 
 /**
@@ -604,7 +632,7 @@ export class Two {
      * @returns {Two.Path}
      * @description Creates a Two.js arrow and adds it to the scene.
      */
-    makeArrow(x1: number, y1: number, x2: number, y2: number, size): Path {
+    makeArrow(x1: number, y1: number, x2: number, y2: number, size?: number): Path {
 
         const headlen = typeof size === 'number' ? size : 10;
 

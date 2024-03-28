@@ -1219,6 +1219,38 @@ export class Path extends Shape {
             this._stroke.bind(Events.Types.change, this._renderer.flagStroke);
         }
     }
+    get vertices() {
+        return this._collection;
+    }
+    set vertices(vertices) {
+
+        const bindVertices = this._renderer.bindVertices;
+        const unbindVertices = this._renderer.unbindVertices;
+
+        // Remove previous listeners
+        if (this._collection) {
+            this._collection
+                .unbind(Events.Types.insert, bindVertices)
+                .unbind(Events.Types.remove, unbindVertices);
+        }
+
+        // Create new Collection with copy of vertices
+        if (vertices instanceof Collection) {
+            this._collection = vertices;
+        } else {
+            this._collection = new Collection(vertices || []);
+        }
+
+
+        // Listen for Collection changes and bind / unbind
+        this._collection
+            .bind(Events.Types.insert, bindVertices)
+            .bind(Events.Types.remove, unbindVertices);
+
+        // Bind Initial Vertices
+        bindVertices(this._collection);
+
+    }
     get visible(): boolean {
         return this._visible;
     }
