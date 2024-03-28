@@ -132,7 +132,7 @@ export class Path extends Shape {
      * @private
      * @see {@link Two.Path#fill}
      */
-    _fill = '#fff';
+    _fill: string | Gradient | Texture = '#fff';
 
     /**
      * @name Two.Path#_stroke
@@ -1146,10 +1146,10 @@ export class Path extends Shape {
         return this;
 
     }
-    get fill() {
+    get fill(): string | Gradient | Texture {
         return this._fill;
     }
-    set fill(f: string) {
+    set fill(f: string | Gradient | Texture) {
 
         if (this._fill instanceof Gradient
             || this._fill instanceof LinearGradient
