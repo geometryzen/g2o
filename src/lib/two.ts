@@ -881,7 +881,8 @@ export class Two {
      * @description Creates a Two.js path and adds it to the scene.
      * @nota-bene In either case of passing an array or passing numbered arguments the last argument is an optional `Boolean` that defines whether the path should be open or closed.
      */
-    makePath(...p: number[]): Path {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    makePath(p: any): Path {
 
         const l = arguments.length;
         let points = p;
