@@ -266,7 +266,7 @@ export class Text extends Shape {
      */
     _dashes = null;
 
-    constructor(message, x, y, styles) {
+    constructor(message: string, x: number = 0, y: number = 0, styles?: object) {
 
         super();
 

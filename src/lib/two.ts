@@ -901,7 +901,7 @@ export class Two {
      * @returns {Two.Text}
      * @description Creates a Two.js text object and adds it to the scene.
      */
-    makeText(message: string, x: number, y: number, styles: object): Text {
+    makeText(message: string, x: number, y: number, styles?: object): Text {
         const text = new Text(message, x, y, styles);
         this.add(text);
         return text;
@@ -920,7 +920,7 @@ export class Two {
      */
     makeLinearGradient(x1: number, y1: number, x2: number, y2: number, ...stops: Stop[]): LinearGradient {
 
-        const gradient = new LinearGradient(x1, y1, x2, y2, ...stops);
+        const gradient = new LinearGradient(x1, y1, x2, y2, stops);
 
         this.add(gradient);
 
@@ -934,7 +934,7 @@ export class Two {
      * @param {Number} x1
      * @param {Number} y1
      * @param {Number} radius
-     * @param {...Two.Stop} args - Any number of color stops sometimes referred to as ramp stops. If none are supplied then the default black-to-white two stop gradient is applied.
+     * @param {...Two.Stop} stops - Any number of color stops sometimes referred to as ramp stops. If none are supplied then the default black-to-white two stop gradient is applied.
      * @returns {Two.RadialGradient}
      * @description Creates a Two.js linear-gradient object and adds it to the scene. In the case of an effect it's added to an invisible "definitions" group.
      */
