@@ -575,7 +575,7 @@ export default class Two {
      * @returns {Two.Line}
      * @description Creates a Two.js line and adds it to the scene.
      */
-    makeLine(x1, y1, x2, y2) {
+    makeLine(x1: number, y1: number, x2: number, y2: number): Line {
 
         const line = new Line(x1, y1, x2, y2);
         this.scene.add(line);
@@ -639,7 +639,7 @@ export default class Two {
      * @returns {Two.Rectangle}
      * @description Creates a Two.js rectangle and adds it to the scene.
      */
-    makeRectangle(x, y, width, height) {
+    makeRectangle(x: number, y: number, width: number, height: number): Rectangle {
 
         const rect = new Rectangle(x, y, width, height);
         this.scene.add(rect);
@@ -678,7 +678,7 @@ export default class Two {
      * @returns {Two.Circle}
      * @description Creates a Two.js circle and adds it to the scene.
      */
-    makeCircle(x, y, radius, resolution) {
+    makeCircle(x: number, y: number, radius: number, resolution = 4): Circle {
 
         const circle = new Circle(x, y, radius, resolution);
         this.scene.add(circle);
@@ -1005,7 +1005,7 @@ export default class Two {
      * @returns {Two.Group}
      * @description Creates a Two.js group object and adds it to the scene.
      */
-    makeGroup(objects) {
+    makeGroup(objects?) {
 
         if (!(objects instanceof Array)) {
             objects = Array.prototype.slice.call(arguments);
