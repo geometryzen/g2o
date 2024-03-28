@@ -770,6 +770,17 @@ export class Group extends Shape {
         }
 
     }
+    get fill() {
+        return this._fill;
+    }
+    set fill(v) {
+        this._fill = v;
+        for (let i = 0; i < this.children.length; i++) {
+            const child = this.children[i];
+            child.fill = v;
+        }
+    }
+
     get linewidth(): number {
         return this._linewidth;
     }
@@ -831,19 +842,6 @@ const proto = {
                 }
             }
             return this._length;
-        }
-    },
-    fill: {
-        enumerable: true,
-        get: function () {
-            return this._fill;
-        },
-        set: function (v) {
-            this._fill = v;
-            for (let i = 0; i < this.children.length; i++) {
-                const child = this.children[i];
-                child.fill = v;
-            }
         }
     },
     stroke: {
