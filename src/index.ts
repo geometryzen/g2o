@@ -30,7 +30,7 @@ export { Rectangle } from './lib/shapes/rectangle';
 export { RoundedRectangle } from './lib/shapes/rounded-rectangle';
 export { Star } from './lib/shapes/star';
 export { Text } from './lib/text';
-export { Two } from './lib/two';
+export { Two, TwoOptions } from './lib/two';
 export { CanvasShim } from './lib/utils/canvas-shim';
 export { Curve } from './lib/utils/curves';
 export { getRatio } from './lib/utils/device-pixel-ratio';

@@ -46,17 +46,21 @@ import { _ } from './utils/underscore.js';
 import { xhr } from './utils/xhr.js';
 import { Vector } from './vector.js';
 
-
-
-
-
-
 const Utils = _.extend({
     Error: TwoError,
     getRatio,
     read,
     xhr
 }, _, CanvasShim, Curves, math);
+
+export interface TwoOptions {
+    fullscreen: boolean;
+    fitted: boolean;
+    height: number;
+    width: number;
+    type: 'canvas' | 'svg' | 'webgl';
+    autostart: boolean;
+}
 
 /**
  * @name Two
@@ -173,16 +177,16 @@ export class Two {
      */
     playing = false;
 
-    constructor(options) {
+    constructor(options: Partial<TwoOptions>) {
 
         // Determine what Renderer to use and setup a scene.
 
-        const params = _.defaults(options || {}, {
+        const params: TwoOptions = _.defaults(options || {}, {
             fullscreen: false,
             fitted: false,
             width: 640,
             height: 480,
-            type: Two.Types.svg,
+            type: Types.svg,
             autostart: false
         });
 
@@ -370,7 +374,7 @@ export class Two {
      * @param {Element} elem - The DOM element to append the Two.js stage to.
      * @description Shorthand method to append your instance of Two.js to the `document`.
      */
-    appendTo(elem) {
+    appendTo(elem: Element) {
 
         elem.appendChild(this.renderer.domElement);
 
@@ -425,7 +429,7 @@ export class Two {
      * @returns {Object} The object passed for event deallocation.
      * @description Release an arbitrary class' events from the Two.js corpus and recurse through its children and or vertices.
      */
-    release(obj) {
+    release(obj: object): object {
 
         let i, v, child;
 
@@ -600,7 +604,7 @@ export class Two {
      * @returns {Two.Path}
      * @description Creates a Two.js arrow and adds it to the scene.
      */
-    makeArrow(x1, y1, x2, y2, size) {
+    makeArrow(x1: number, y1: number, x2: number, y2: number, size): Path {
 
         const headlen = typeof size === 'number' ? size : 10;
 
@@ -665,7 +669,7 @@ export class Two {
      * @returns {Two.RoundedRectangle}
      * @description Creates a Two.js rounded rectangle and adds it to the scene.
      */
-    makeRoundedRectangle(x, y, width, height, sides) {
+    makeRoundedRectangle(x: number, y: number, width: number, height: number, sides: number): RoundedRectangle {
 
         const rect = new RoundedRectangle(x, y, width, height, sides);
         this.scene.add(rect);
@@ -684,7 +688,7 @@ export class Two {
      * @returns {Two.Circle}
      * @description Creates a Two.js circle and adds it to the scene.
      */
-    makeCircle(x: number, y: number, radius: number, resolution = 4): Circle {
+    makeCircle(x: number, y: number, radius: number, resolution: number = 4): Circle {
 
         const circle = new Circle(x, y, radius, resolution);
         this.scene.add(circle);
@@ -704,13 +708,12 @@ export class Two {
      * @returns {Two.Ellipse}
      * @description Creates a Two.js ellipse and adds it to the scene.
      */
-    makeEllipse(x, y, rx, ry, resolution) {
+    makeEllipse(x: number, y: number, rx: number, ry: number, resolution: number = 4): Ellipse {
 
         const ellipse = new Ellipse(x, y, rx, ry, resolution);
         this.scene.add(ellipse);
 
         return ellipse;
-
     }
 
     /**
@@ -724,7 +727,7 @@ export class Two {
      * @returns {Two.Star}
      * @description Creates a Two.js star and adds it to the scene.
      */
-    makeStar(x, y, outerRadius, innerRadius, sides) {
+    makeStar(x: number, y: number, outerRadius: number, innerRadius: number, sides: number): Star {
 
         const star = new Star(x, y, outerRadius, innerRadius, sides);
         this.scene.add(star);
@@ -742,7 +745,7 @@ export class Two {
      * @description Creates a Two.js path that is curved and adds it to the scene.
      * @nota-bene In either case of passing an array or passing numbered arguments the last argument is an optional `Boolean` that defines whether the path should be open or closed.
      */
-    makeCurve(points) {
+    makeCurve(points: Anchor[]): Path {
 
         const l = arguments.length;
 
@@ -780,7 +783,7 @@ export class Two {
      * @returns {Two.Polygon}
      * @description Creates a Two.js polygon and adds it to the scene.
      */
-    makePolygon(x, y, radius, sides) {
+    makePolygon(x: number, y: number, radius: number, sides: number): Polygon {
 
         const poly = new Polygon(x, y, radius, sides);
         this.scene.add(poly);
@@ -801,7 +804,7 @@ export class Two {
      * @param {Number} [resolution=Two.Resolution] - The number of vertices that should comprise the arc segment.
      * @returns {Two.ArcSegment}
      */
-    makeArcSegment(x, y, innerRadius, outerRadius, startAngle, endAngle, resolution) {
+    makeArcSegment(x: number, y: number, innerRadius: number, outerRadius: number, startAngle: number, endAngle: number, resolution: number = Two.Resolution): ArcSegment {
         const arcSegment = new ArcSegment(
             x, y, innerRadius, outerRadius, startAngle, endAngle, resolution);
         this.scene.add(arcSegment);
@@ -816,7 +819,7 @@ export class Two {
      * @returns {Two.Points}
      * @description Creates a Two.js points object and adds it to the current scene.
      */
-    makePoints(p) {
+    makePoints(p): Points {
 
         const l = arguments.length;
         let vertices = p;
@@ -850,7 +853,7 @@ export class Two {
      * @description Creates a Two.js path and adds it to the scene.
      * @nota-bene In either case of passing an array or passing numbered arguments the last argument is an optional `Boolean` that defines whether the path should be open or closed.
      */
-    makePath(p) {
+    makePath(p): Path {
 
         const l = arguments.length;
         let points = p;
@@ -892,7 +895,7 @@ export class Two {
      * @returns {Two.Text}
      * @description Creates a Two.js text object and adds it to the scene.
      */
-    makeText(message, x, y, styles) {
+    makeText(message: string, x: number, y: number, styles: object): Text {
         const text = new Text(message, x, y, styles);
         this.add(text);
         return text;
@@ -909,7 +912,7 @@ export class Two {
      * @returns {Two.LinearGradient}
      * @description Creates a Two.js linear gradient and adds it to the scene. In the case of an effect it's added to an invisible "definitions" group.
      */
-    makeLinearGradient(x1, y1, x2, y2 /* stops */) {
+    makeLinearGradient(x1: number, y1: number, x2: number, y2: number /* stops */): LinearGradient {
 
         const stops = Array.prototype.slice.call(arguments, 4);
         const gradient = new LinearGradient(x1, y1, x2, y2, stops);
@@ -930,7 +933,7 @@ export class Two {
      * @returns {Two.RadialGradient}
      * @description Creates a Two.js linear-gradient object and adds it to the scene. In the case of an effect it's added to an invisible "definitions" group.
      */
-    makeRadialGradient(x1, y1, radius /* stops */) {
+    makeRadialGradient(x1: number, y1: number, radius: number /* stops */): RadialGradient {
 
         const stops = Array.prototype.slice.call(arguments, 3);
         const gradient = new RadialGradient(x1, y1, radius, stops);
@@ -954,7 +957,7 @@ export class Two {
      * @returns {Two.Sprite}
      * @description Creates a Two.js sprite object and adds it to the scene. Sprites can be used for still images as well as animations.
      */
-    makeSprite(pathOrTexture, x, y, columns, rows, frameRate, autostart) {
+    makeSprite(pathOrTexture: (string | Texture), x: number, y: number, columns: number, rows: number, frameRate: number, autostart: boolean): Sprite {
 
         const sprite = new Sprite(pathOrTexture, x, y, columns, rows, frameRate);
         if (autostart) {
@@ -977,7 +980,7 @@ export class Two {
      * @returns {Two.ImageSequence}
      * @description Creates a Two.js image sequence object and adds it to the scene.
      */
-    makeImageSequence(pathsOrTextures, x, y, frameRate, autostart) {
+    makeImageSequence(pathsOrTextures: (string[] | Texture[]), x: number, y: number, frameRate: number, autostart: boolean): ImageSequence {
 
         const imageSequence = new ImageSequence(pathsOrTextures, x, y, frameRate);
         if (autostart) {
@@ -997,7 +1000,7 @@ export class Two {
      * @returns {Two.Texture}
      * @description Creates a Two.js texture object.
      */
-    makeTexture(pathOrSource, callback) {
+    makeTexture(pathOrSource: (string | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement), callback: Function): Texture {
 
         const texture = new Texture(pathOrSource, callback);
         return texture;
@@ -1011,7 +1014,7 @@ export class Two {
      * @returns {Two.Group}
      * @description Creates a Two.js group object and adds it to the scene.
      */
-    makeGroup(...objects: Shape[]) {
+    makeGroup(...objects: Shape[]): Group {
 
         if (!(objects instanceof Array)) {
             objects = Array.prototype.slice.call(arguments);
@@ -1034,7 +1037,7 @@ export class Two {
      * @returns {Two.Group}
      * @description Interpret an SVG Node and add it to this instance's scene. The distinction should be made that this doesn't `import` svg's, it solely interprets them into something compatible for Two.js - this is slightly different than a direct transcription.
      */
-    interpret(svg, shallow, add) {
+    interpret(svg: SVGElement, shallow: boolean, add: boolean): Group {
 
         const tag = svg.tagName.toLowerCase();
 
@@ -1066,7 +1069,7 @@ export class Two {
      * @returns {Two.Group}
      * @description Load an SVG file or SVG text and interpret it into Two.js legible objects.
      */
-    load(pathOrSVGContent, callback) {
+    load(pathOrSVGContent: string | SVGElement, callback: Function): Group {
 
         const group = new Group();
         let elem, i, child;
