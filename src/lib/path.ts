@@ -1146,13 +1146,6 @@ export class Path extends Shape {
         return this;
 
     }
-    get linewidth(): number {
-        return this._linewidth;
-    }
-    set linewidth(v: number) {
-        this._linewidth = v;
-        this._flagLinewidth = true;
-    }
     get fill() {
         return this._fill;
     }
@@ -1176,6 +1169,20 @@ export class Path extends Shape {
         }
 
     }
+    get linewidth(): number {
+        return this._linewidth;
+    }
+    set linewidth(v: number) {
+        this._linewidth = v;
+        this._flagLinewidth = true;
+    }
+    get opacity(): number {
+        return this._opacity;
+    }
+    set opacity(v) {
+        this._opacity = v;
+        this._flagOpacity = true;
+    }
     get stroke(): string {
         return this._stroke;
     }
@@ -1197,30 +1204,17 @@ export class Path extends Shape {
             this._stroke.bind(Events.Types.change, this._renderer.flagStroke);
         }
     }
+    get visible(): boolean {
+        return this._visible;
+    }
+    set visible(v: boolean) {
+        this._visible = v;
+        this._flagVisible = true;
+    }
 }
 
 const proto = {
 
-    opacity: {
-        enumerable: true,
-        get: function () {
-            return this._opacity;
-        },
-        set: function (v) {
-            this._opacity = v;
-            this._flagOpacity = true;
-        }
-    },
-    visible: {
-        enumerable: true,
-        get: function () {
-            return this._visible;
-        },
-        set: function (v) {
-            this._visible = v;
-            this._flagVisible = true;
-        }
-    },
     cap: {
         enumerable: true,
         get: function () {
