@@ -575,30 +575,6 @@ export class Matrix extends Events {
         ];
 
     }
-
-    /**
-     * @name Two.Matrix#toObject
-     * @function
-     * @description Create a JSON compatible object that represents information of the matrix.
-     */
-    toObject() {
-        return {
-            elements: this.toArray(true),
-            manual: !!this.manual
-        };
-    }
-
-    /**
-     * @name Two.Matrix#clone
-     * @function
-     * @description Clone the current matrix.
-     */
-    clone() {
-
-        return new Matrix().copy(this);
-
-    }
-
 }
 
 setMatrix(Matrix);

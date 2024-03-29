@@ -277,52 +277,6 @@ export class Sprite extends Rectangle {
   }
 
   /**
-   * @name Two.Sprite#clone
-   * @function
-   * @param {Two.Group} [parent] - The parent group or scene to add the clone to.
-   * @returns {Two.Sprite}
-   * @description Create a new instance of {@link Two.Sprite} with the same properties of the current sprite.
-   */
-  clone(parent) {
-
-    const clone = new Sprite(
-      this.texture, this.translation.x, this.translation.y,
-      this.columns, this.rows, this.frameRate
-    );
-
-    if (this.playing) {
-      clone.play(this._firstFrame, this._lastFrame);
-      clone._loop = this._loop;
-    }
-
-    if (parent) {
-      parent.add(clone);
-    }
-
-    return clone;
-
-  }
-
-  /**
-   * @name Two.Sprite#toObject
-   * @function
-   * @returns {Object}
-   * @description Return a JSON compatible plain object that represents the path.
-   */
-  toObject() {
-    const object = super.toObject.call(this);
-    object.texture = this.texture.toObject();
-    object.columns = this.columns;
-    object.rows = this.rows;
-    object.frameRate = this.frameRate;
-    object.index = this.index;
-    object._firstFrame = this._firstFrame;
-    object._lastFrame = this._lastFrame;
-    object._loop = this._loop;
-    return object;
-  }
-
-  /**
    * @name Two.Sprite#_update
    * @function
    * @private

@@ -196,35 +196,6 @@ export abstract class Shape extends Element {
     }
 
     /**
-     * @name Two.Shape#clone
-     * @function
-     * @param {Two.Group} [parent] - Optional argument to automatically add the shape to a scenegraph.
-     * @returns {Two.Shape}
-     * @description Create a new {@link Two.Shape} with the same values as the current shape.
-     */
-    clone(parent?: Group): Shape {
-
-        const clone = new Shape();
-
-        clone.position.copy(this.position);
-        clone.rotation = this.rotation;
-        clone.scale = this.scale;
-        clone.skewX = this.skewX;
-        clone.skewY = this.skewY;
-
-        if (this.matrix.manual) {
-            clone.matrix.copy(this.matrix);
-        }
-
-        if (parent) {
-            parent.add(clone);
-        }
-
-        return clone._update();
-
-    }
-
-    /**
      * @name Two.Shape#_update
      * @function
      * @private

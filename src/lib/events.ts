@@ -1,4 +1,4 @@
-export type EventHandler<T extends Events> = (this: T, ...args: unknown[]) => void;
+export type EventHandler = (...args: unknown[]) => void;
 /**
  * @name Two.Events
  * @class
@@ -8,7 +8,7 @@ export class Events {
 
     // Being a base class, we have to be careful when creating private members.
     // Containment may be a better approach.
-    $event_type_to_handlers: { [name: string]: EventHandler<Events>[] } = {};
+    readonly $event_type_to_handlers: { [name: string]: EventHandler[] } = {};
     $bound = false;
 
     constructor() { }
@@ -27,7 +27,7 @@ export class Events {
      * @param {Function} [handler] - The function to be invoked when the event is dispatched.
      * @description Call to add a listener to a specific event name.
      */
-    addEventListener(name: string, handler: EventHandler<Events>): this {
+    addEventListener(name: string, handler: EventHandler): this {
 
         const handlers = this.$event_type_to_handlers[name] || (this.$event_type_to_handlers[name] = []);
         handlers.push(handler);
@@ -40,7 +40,7 @@ export class Events {
      * @function
      * @description Alias for {@link Two.Events#addEventListener}.
      */
-    on(name: string, handler: EventHandler<Events>) {
+    on(name: string, handler: EventHandler) {
         return this.addEventListener(name, handler);
     }
     /**
@@ -48,7 +48,7 @@ export class Events {
      * @function
      * @description Alias for {@link Two.Events#addEventListener}.
      */
-    bind(name: string, handler: EventHandler<Events>): this {
+    bind(name: string, handler: EventHandler): this {
         return this.addEventListener(name, handler);
     }
 
@@ -59,7 +59,7 @@ export class Events {
      * @param {Function} [handler] - The handler intended to be removed.
      * @description Call to remove listeners from a specific event. If only `name` is passed then all the handlers attached to that `name` will be removed. If no arguments are passed then all handlers for every event on the obejct are removed.
      */
-    removeEventListener(name: string, handler: EventHandler<Events>) {
+    removeEventListener(name: string, handler: EventHandler) {
 
         if (!this.$event_type_to_handlers) {
             return this;
@@ -77,7 +77,7 @@ export class Events {
             const list = this.$event_type_to_handlers[name];
 
             if (list) {
-                const events = [];
+                const events:EventHandler[] = [];
                 if (handler) {
                     for (let j = 0, k = list.length; j < k; j++) {
                         let e = list[j];
@@ -100,7 +100,7 @@ export class Events {
      * @function
      * @description Alias for {@link Two.Events#removeEventListener}.
      */
-    off(name: string, handler: EventHandler<Events>) {
+    off(name: string, handler: EventHandler) {
         return this.removeEventListener(name, handler);
     }
     /**

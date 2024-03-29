@@ -359,64 +359,6 @@ export class Text extends Shape {
     }
 
     /**
-     * @name Two.Text#clone
-     * @function
-     * @param {Two.Group} [parent] - The parent group or scene to add the clone to.
-     * @returns {Two.Text}
-     * @description Create a new instance of {@link Two.Text} with the same properties of the current text object.
-     */
-    clone(parent) {
-
-        const clone = new Text(this.value);
-        clone.translation.copy(this.translation);
-        clone.rotation = this.rotation;
-        clone.scale = this.scale;
-
-        for (let i = 0; i < Text.Properties.length; i++) {
-            const prop = Text.Properties[i];
-            clone[prop] = this[prop];
-        }
-
-        if (this.matrix.manual) {
-            clone.matrix.copy(this.matrix);
-        }
-
-        if (parent) {
-            parent.add(clone);
-        }
-
-        return clone._update();
-
-    }
-
-    /**
-     * @name Two.Text#toObject
-     * @function
-     * @returns {Object}
-     * @description Return a JSON compatible plain object that represents the text object.
-     */
-    toObject() {
-
-        const result = {
-            translation: this.translation.toObject(),
-            rotation: this.rotation,
-            scale: this.scale
-        };
-
-        if (this.matrix.manual) {
-            result.matrix = this.matrix.toObject();
-        }
-
-        for (let i = 0; i < Text.Properties.length; i++) {
-            const prop = Text.Properties[i];
-            result[prop] = this[prop];
-        }
-
-        return result;
-
-    }
-
-    /**
      * @name Two.Text#noFill
      * @function
      * @description Short hand method to set fill to `none`.

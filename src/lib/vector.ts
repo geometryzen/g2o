@@ -207,15 +207,6 @@ export class Vector extends Events {
     }
 
     /**
-     * @name Two.Vector#clone
-     * @function
-     * @description Create a new vector and copy the existing values onto the newly created instance.
-     */
-    clone(): Vector {
-        return new Vector(this.x, this.y);
-    }
-
-    /**
      * @name Two.Vector#add
      * @function
      * @param {Two.Vector} v
@@ -602,16 +593,6 @@ export class Vector extends Events {
      */
     toString(): string {
         return this.x + ', ' + this.y;
-    }
-
-    /**
-     * @name Two.Vector#toObject
-     * @function
-     * @returns {Object}
-     * @description Return a JSON compatible plain object that represents the vector.
-     */
-    toObject(): { x: number, y: number } {
-        return { x: this.x, y: this.y };
     }
 
     /**

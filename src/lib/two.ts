@@ -98,49 +98,6 @@ export class Two {
      */
     #events = new Events();
 
-    // Getters and setters aren't enumerable
-    get _bound() {
-        return this.#events.bound;
-    }
-    set _bound(v) {
-        this.#events.bound = v;
-    }
-
-    addEventListener() {
-        return this.#events.addEventListener.apply(this, arguments);
-    }
-    on() {
-        return this.#events.addEventListener.apply(this, arguments);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    bind(name: 'resize' | 'update', handler: EventHandler): this {
-        this.#events.addEventListener(name, handler);
-        return this;
-    }
-    removeEventListener() {
-        return this.#events.removeEventListener.apply(this, arguments);
-    }
-    off() {
-        return this.#events.removeEventListener.apply(this, arguments);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    unbind(name: 'update', handler: EventHandler): this {
-        this.#events.removeEventListener(name, handler);
-        return this;
-    }
-    dispatchEvent() {
-        return this.#events.dispatchEvent.apply(this, arguments);
-    }
-    trigger(type: 'pause' | 'play' | 'render' | 'resize' | 'update', ...args: unknown[]): this {
-        this.#events.dispatchEvent(type, ...args);
-        return this;
-    }
-    listen() {
-        return this.#events.listen.apply(this, arguments);
-    }
-    ignore() {
-        return this.#events.ignore.apply(this, arguments);
-    }
 
     /**
      * @name Two#type
@@ -281,6 +238,46 @@ export class Two {
             raf.init();
         }
 
+    }
+    // Getters and setters aren't enumerable
+    get _bound() {
+        return this.#events.bound;
+    }
+    set _bound(v) {
+        this.#events.bound = v;
+    }
+
+    addEventListener() {
+        return this.#events.addEventListener.apply(this, arguments);
+    }
+    on() {
+        return this.#events.addEventListener.apply(this, arguments);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    bind(name: 'resize' | 'update', handler: EventHandler): this {
+        this.#events.addEventListener(name, handler);
+        return this;
+    }
+    removeEventListener() {
+        return this.#events.removeEventListener.apply(this, arguments);
+    }
+    off() {
+        return this.#events.removeEventListener.apply(this, arguments);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    unbind(name: 'update', handler: EventHandler): this {
+        this.#events.removeEventListener(name, handler);
+        return this;
+    }
+    dispatchEvent() {
+        return this.#events.dispatchEvent.apply(this, arguments);
+    }
+    trigger(type: 'pause' | 'play' | 'render' | 'resize' | 'update', ...args: unknown[]): this {
+        this.#events.dispatchEvent(type, ...args);
+        return this;
+    }
+    ignore() {
+        return this.#events.ignore.apply(this, arguments);
     }
 
 

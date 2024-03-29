@@ -140,7 +140,6 @@ declare module "two.js/src/events" {
          */
         dispatchEvent(name: string, ...args: any[]): Events;
         trigger(...args: any[]): any;
-        listen(obj: any, name: any, handler: any): Events;
         ignore(obj: any, name: any, handler: any): Events;
     }
 }
@@ -254,12 +253,6 @@ declare module "two.js/src/vector" {
          * @description Set the x / y component values of the vector to zero.
          */
         clear(): Vector;
-        /**
-         * @name Two.Vector#clone
-         * @function
-         * @description Create a new vector and copy the existing values onto the newly created instance.
-         */
-        clone(): Vector;
         /**
          * @name Two.Vector#add
          * @function
@@ -500,13 +493,6 @@ declare module "two.js/src/vector" {
          * @description Check to see if vector is roughly zero, based on the `epsilon` precision value.
          */
         isZero(eps?: number): boolean;
-        /**
-         * @name Two.Vector#toObject
-         * @function
-         * @returns {Object}
-         * @description Return a JSON compatible plain object that represents the vector.
-         */
-        toObject(): any;
         /**
          * @name Two.Vector#rotate
          * @function
@@ -958,21 +944,6 @@ declare module "two.js/src/matrix" {
          * @description Create a transform array. Used for the Two.js rendering APIs.
          */
         toArray(fullMatrix?: boolean, output?: number[]): any[];
-        /**
-         * @name Two.Matrix#toObject
-         * @function
-         * @description Create a JSON compatible object that represents information of the matrix.
-         */
-        toObject(): {
-            elements: any[];
-            manual: boolean;
-        };
-        /**
-         * @name Two.Matrix#clone
-         * @function
-         * @description Clone the current matrix.
-         */
-        clone(): any;
     }
     import { Events } from "two.js/src/events";
 }
@@ -1108,14 +1079,6 @@ declare module "two.js/src/shape" {
          */
         remove(): Shape;
         /**
-         * @name Two.Shape#clone
-         * @function
-         * @param {Group} [parent] - Optional argument to automatically add the shape to a scenegraph.
-         * @returns {Shape}
-         * @description Create a new {@link Two.Shape} with the same values as the current shape.
-         */
-        clone(parent?: Group): Shape;
-        /**
          * @name Two.Shape#_update
          * @function
          * @private
@@ -1153,7 +1116,6 @@ declare module "two.js/src/collection" {
         unbind(...args: any[]): any;
         dispatchEvent(...args: any[]): any;
         trigger(...args: any[]): any;
-        listen(...args: any[]): any;
         ignore(...args: any[]): any;
     }
 }
@@ -1387,13 +1349,6 @@ declare module "two.js/src/group" {
          */
         children: Children;
         /**
-         * @name Two.Group#toObject
-         * @function
-         * @returns {Object}
-         * @description Return a JSON compatible plain object that represents the group.
-         */
-        toObject(): Object;
-        /**
          * @name Two.Group#corner
          * @function
          * @description Orient the children of the group to the upper left-hand corner of that group.
@@ -1481,14 +1436,6 @@ declare module "two.js/src/group" {
          * @description Apply `subdivide` method to all child shapes.
          */
         subdivide(limit?: number): Group;
-        /**
-         * @name Two.Group#clone
-         * @function
-         * @param {Two.Group} [parent] - The parent group or scene to add the clone to.
-         * @returns {Two.Group}
-         * @description Create a new instance of {@link Two.Group} with the same properties of the current group.
-         */
-        clone(parent?: Group): Group;
     }
     import { Shape } from "two.js/src/shape";
     import { Children } from "two.js/src/children";
@@ -1746,24 +1693,8 @@ declare module "two.js/src/effects/stop" {
          * @property {String} - The color of the stop.
          */
         color: string;
-        /**
-         * @name Two.Stop#clone
-         * @function
-         * @param {Gradient} [parent] - The parent group or scene to add the clone to.
-         * @returns {Stop}
-         * @description Create a new instance of {@link Two.Stop} with the same properties of the current path.
-         */
-        clone(parent: Gradient): Stop;
-        /**
-         * @name Two.Stop#toObject
-         * @function
-         * @returns {Object}
-         * @description Return a JSON compatible plain object that represents the path.
-         */
-        toObject(): any;
     }
     import { Element as TwoElement } from "two.js/src/element";
-    import { Gradient } from "two.js/src/effects/gradient";
 }
 declare module "two.js/src/effects/gradient" {
     /**
@@ -1816,21 +1747,6 @@ declare module "two.js/src/effects/gradient" {
         units: "userSpaceOnUse" | "objectBoundingBox";
         stops: any;
         /**
-         * @name Two.Gradient#clone
-         * @function
-         * @param {Group} [parent] - The parent group or scene to add the clone to.
-         * @returns {Gradient}
-         * @description Create a new instance of {@link Two.Gradient} with the same properties of the current path.
-         */
-        clone(parent?: Group): Gradient;
-        /**
-         * @name Two.Gradient#toObject
-         * @function
-         * @returns {Object}
-         * @description Return a JSON compatible plain object that represents the path.
-         */
-        toObject(): any;
-        /**
          * @name Two.Gradient#_update
          * @function
          * @private
@@ -1842,7 +1758,6 @@ declare module "two.js/src/effects/gradient" {
     }
     import { Element as TwoElement } from "two.js/src/element";
     import { Stop } from "two.js/src/effects/stop";
-    import { Group } from "two.js/src/group";
 }
 declare module "two.js/src/effects/linear-gradient" {
     /**
@@ -2113,20 +2028,6 @@ declare module "two.js/src/effects/texture" {
          * @nota-bene In headless environments this is a `Canvas.Image` object. See {@link https://github.com/Automattic/node-canvas} for more information on headless image objects.
          */
         image: any;
-        /**
-         * @name Two.Texture#clone
-         * @function
-         * @returns {Texture}
-         * @description Create a new instance of {@link Two.Texture} with the same properties of the current texture.
-         */
-        clone(): Texture;
-        /**
-         * @name Two.Texture#toObject
-         * @function
-         * @returns {Object}
-         * @description Return a JSON compatible plain object that represents the texture.
-         */
-        toObject(): any;
         /**
          * @name Two.Texture#_update
          * @function
@@ -2432,13 +2333,6 @@ declare module "two.js/src/path" {
          * @see {@link https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray} for more information on the SVG stroke-dasharray attribute.
          */
         dashes: number[];
-        /**
-         * @name Two.Path#toObject
-         * @function
-         * @returns {Object}
-         * @description Return a JSON compatible plain object that represents the path.
-         */
-        toObject(): any;
         /**
          * @name Two.Path#noFill
          * @function
@@ -3163,13 +3057,6 @@ declare module "two.js/src/text" {
          */
         dashes: number[];
         /**
-         * @name Two.Text#toObject
-         * @function
-         * @returns {Object}
-         * @description Return a JSON compatible plain object that represents the text object.
-         */
-        toObject(): any;
-        /**
          * @name Two.Text#noFill
          * @function
          * @description Short hand method to set fill to `none`.
@@ -3526,13 +3413,6 @@ declare module "two.js/src/shapes/points" {
          * @see {@link https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray} for more information on the SVG stroke-dasharray attribute.
          */
         dashes: number[];
-        /**
-         * @name Two.Points#toObject
-         * @function
-         * @returns {Object}
-         * @description Return a JSON compatible plain object that represents the points object.
-         */
-        toObject(): any;
         /**
          * @name Two.Points#noFill
          * @function
@@ -4074,7 +3954,6 @@ declare module "two.js" {
         unbind(...args: any[]): any;
         dispatchEvent(...args: any[]): any;
         trigger(...args: any[]): any;
-        listen(...args: any[]): any;
         ignore(...args: any[]): any;
         /**
          * @name Two#type
@@ -4444,7 +4323,7 @@ declare module "two.js" {
          * @function
          * @param {SVGElement} svg - The SVG node to be parsed.
          * @param {Boolean} shallow - Don't create a top-most group but append all content directly.
-         * @param {Boolean} [add=true] – Automatically add the reconstructed SVG node to scene.
+         * @param {Boolean} [add=true] ï¿½ Automatically add the reconstructed SVG node to scene.
          * @returns {Group}
          * @description Interpret an SVG Node and add it to this instance's scene. The distinction should be made that this doesn't `import` svg's, it solely interprets them into something compatible for Two.js - this is slightly different than a direct transcription.
          */

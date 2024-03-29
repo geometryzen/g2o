@@ -248,51 +248,6 @@ export class ImageSequence extends Rectangle {
   }
 
   /**
-   * @name Two.ImageSequence#clone
-   * @function
-   * @param {Two.Group} [parent] - The parent group or scene to add the clone to.
-   * @returns {Two.ImageSequence}
-   * @description Create a new instance of {@link Two.ImageSequence} with the same properties of the current image sequence.
-   */
-  clone(parent) {
-
-    const clone = new ImageSequence(this.textures, this.translation.x,
-      this.translation.y, this.frameRate);
-
-    clone._loop = this._loop;
-
-    if (this._playing) {
-      clone.play();
-    }
-
-    if (parent) {
-      parent.add(clone);
-    }
-
-    return clone;
-
-  }
-
-  /**
-   * @name Two.ImageSequence#toObject
-   * @function
-   * @returns {Object}
-   * @description Return a JSON compatible plain object that represents the path.
-   */
-  toObject() {
-    const object = super.toObject.call(this);
-    object.textures = this.textures.map(function(texture) {
-      return texture.toObject();
-    });
-    object.frameRate = this.frameRate;
-    object.index = this.index;
-    object._firstFrame = this._firstFrame;
-    object._lastFrame = this._lastFrame;
-    object._loop = this._loop;
-    return object;
-  }
-
-  /**
    * @name Two.ImageSequence#_update
    * @function
    * @private

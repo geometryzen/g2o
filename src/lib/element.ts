@@ -69,6 +69,9 @@ export abstract class Element extends Events implements Child {
     get renderer(): View {
         return this._renderer;
     }
+    set renderer(renderer: View) {
+        this._renderer = renderer;
+    }
     get id(): string {
         return this._id;
     }

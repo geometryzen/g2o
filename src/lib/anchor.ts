@@ -98,50 +98,6 @@ export class Anchor extends Vector {
         return this;
 
     }
-
-    /**
-     * @name Two.Anchor#clone
-     * @function
-     * @returns {Two.Anchor}
-     * @description Create a new {@link Two.Anchor}, set all its values to the current instance and return it for use.
-     */
-    clone() {
-        return new Anchor().copy(this);
-    }
-
-    /**
-     * @name Two.Anchor#toObject
-     * @function
-     * @returns {Object} - An object with properties filled out to mirror {@link Two.Anchor}.
-     * @description Create a JSON compatible plain object of the current instance. Intended for use with storing values in a database.
-     */
-    toObject() {
-        return {
-            x: this.x,
-            y: this.y,
-            command: this.command,
-            relative: this.relative,
-            controls: {
-                left: this.controls.left.toObject(),
-                right: this.controls.right.toObject()
-            },
-            rx: this.rx,
-            ry: this.ry,
-            xAxisRotation: this.xAxisRotation,
-            largeArcFlag: this.largeArcFlag,
-            sweepFlag: this.sweepFlag
-        };
-    }
-
-    /**
-     * @name Two.Anchor#toString
-     * @function
-     * @returns {String} - A String with comma-separated values reflecting the various values on the current instance.
-     * @description Create a string form of the current instance. Intended for use with storing values in a database. This is lighter to store than the JSON compatible {@link Two.Anchor#toObject}.
-     */
-    toString() {
-        return JSON.stringify(this.toObject());
-    }
     get command() {
         return this.#command;
     }

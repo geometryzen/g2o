@@ -439,36 +439,6 @@ export class Texture extends Element {
   }
 
   /**
-   * @name Two.Texture#clone
-   * @function
-   * @returns {Two.Texture}
-   * @description Create a new instance of {@link Two.Texture} with the same properties of the current texture.
-   */
-  clone() {
-    const clone = new Texture(this.src);
-    clone.repeat = this.repeat;
-    clone.offset.copy(this.origin);
-    clone.scale = this.scale;
-    return clone;
-  }
-
-  /**
-   * @name Two.Texture#toObject
-   * @function
-   * @returns {Object}
-   * @description Return a JSON compatible plain object that represents the texture.
-   */
-  toObject() {
-    return {
-      src: this.src,
-      // image: this.image,
-      repeat: this.repeat,
-      origin: this.origin.toObject(),
-      scale: typeof this.scale === 'number' ? this.scale : this.scale.toObject()
-    };
-  }
-
-  /**
    * @name Two.Texture#_update
    * @function
    * @private

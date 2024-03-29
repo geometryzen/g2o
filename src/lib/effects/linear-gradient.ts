@@ -73,51 +73,6 @@ export class LinearGradient extends Gradient {
     static Stop = Stop;
 
     /**
-     * @name Two.LinearGradient#clone
-     * @function
-     * @param {Two.Group} [parent] - The parent group or scene to add the clone to.
-     * @returns {Two.Gradient}
-     * @description Create a new instance of {@link Two.LinearGradient} with the same properties of the current path.
-     */
-    clone(parent) {
-
-        const stops = this.stops.map(function (stop) {
-            return stop.clone();
-        });
-
-        const clone = new LinearGradient(this.left._x, this.left._y,
-            this.right._x, this.right._y, stops);
-
-        _.each(Gradient.Properties, function (k) {
-            clone[k] = this[k];
-        }, this);
-
-        if (parent) {
-            parent.add(clone);
-        }
-
-        return clone;
-
-    }
-
-    /**
-     * @name Two.LinearGradient#toObject
-     * @function
-     * @returns {Object}
-     * @description Return a JSON compatible plain object that represents the path.
-     */
-    toObject() {
-
-        const result = super.toObject.call(this);
-
-        result.left = this.left.toObject();
-        result.right = this.right.toObject();
-
-        return result;
-
-    }
-
-    /**
      * @name Two.LinearGradient#_update
      * @function
      * @private

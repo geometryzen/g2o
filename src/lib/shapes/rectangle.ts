@@ -141,56 +141,6 @@ export class Rectangle extends Path {
         return this;
 
     }
-
-    /**
-     * @name Two.Rectangle#clone
-     * @function
-     * @param {Two.Group} [parent] - The parent group or scene to add the clone to.
-     * @returns {Two.Rectangle}
-     * @description Create a new instance of {@link Two.Rectangle} with the same properties of the current path.
-     */
-    clone(parent?: Group) {
-
-        const clone = new Rectangle(0, 0, this.width, this.height);
-
-        clone.translation.copy(this.translation);
-        clone.rotation = this.rotation;
-        clone.scale = this.scale;
-        clone.skewX = this.skewX;
-        clone.skewY = this.skewY;
-
-        if (this.matrix.manual) {
-            clone.matrix.copy(this.matrix);
-        }
-
-        for (let i = 0; i < Path.Properties.length; i++) {
-            const k = Path.Properties[i];
-            clone[k] = this[k];
-        }
-
-        if (parent) {
-            parent.add(clone);
-        }
-
-        return clone;
-
-    }
-
-    /**
-     * @name Two.Rectangle#toObject
-     * @function
-     * @returns {Object}
-     * @description Return a JSON compatible plain object that represents the path.
-     */
-    toObject() {
-
-        const object = super.toObject.call(this) as Rectangle;
-        object.width = this.width;
-        object.height = this.height;
-        object.origin = this.origin.toObject();
-        return object;
-
-    }
     get height(): number {
         return this._height;
     }

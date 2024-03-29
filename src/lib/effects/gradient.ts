@@ -2,6 +2,7 @@ import { Collection } from '../collection.js';
 import { Constants } from '../constants.js';
 import { Element } from '../element.js';
 import { Events } from '../events.js';
+import { Group } from '../group.js';
 import { _ } from '../utils/underscore.js';
 import { Stop } from './stop.js';
 
@@ -26,10 +27,6 @@ export class Gradient extends Element {
     constructor(stops?: Stop[]) {
 
         super();
-
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
 
         this._renderer.type = 'gradient';
 
@@ -89,55 +86,6 @@ export class Gradient extends Element {
     static Properties = ['spread', 'stops', 'renderer', 'units'];
 
     /**
-     * @name Two.Gradient#clone
-     * @function
-     * @param {Two.Group} [parent] - The parent group or scene to add the clone to.
-     * @returns {Two.Gradient}
-     * @description Create a new instance of {@link Two.Gradient} with the same properties of the current path.
-     */
-    clone(parent) {
-
-        const stops = this.stops.map(function (s) {
-            return s.clone();
-        });
-
-        const clone = new Gradient(stops);
-
-        _.each(Gradient.Properties, function (k) {
-            clone[k] = this[k];
-        }, this);
-
-        if (parent) {
-            parent.add(clone);
-        }
-
-        return clone;
-
-    }
-
-    /**
-     * @name Two.Gradient#toObject
-     * @function
-     * @returns {Object}
-     * @description Return a JSON compatible plain object that represents the path.
-     */
-    toObject() {
-
-        const result = {
-            stops: this.stops.map(function (s) {
-                return s.toObject();
-            })
-        };
-
-        _.each(Gradient.Properties, function (k) {
-            result[k] = this[k];
-        }, this);
-
-        return result;
-
-    }
-
-    /**
      * @name Two.Gradient#_update
      * @function
      * @private
@@ -170,6 +118,13 @@ export class Gradient extends Element {
         return this;
 
     }
+    get spread(): string {
+        return this._spread;
+    }
+    set spread(v: string) {
+        this._spread = v;
+        this._flagSpread = true;
+    }
     get stops() {
         return this._stops;
     }
@@ -196,30 +151,14 @@ export class Gradient extends Element {
         // Bind Initial Stops
         bindStops(this._stops);
     }
-}
-
-const proto = {
-    spread: {
-        enumerable: true,
-        get: function () {
-            return this._spread;
-        },
-        set: function (v) {
-            this._spread = v;
-            this._flagSpread = true;
-        }
-    },
-    units: {
-        enumerable: true,
-        get: function () {
-            return this._units;
-        },
-        set: function (v) {
-            this._units = v;
-            this._flagUnits = true;
-        }
+    get units(): string {
+        return this._units;
     }
-};
+    set units(v: string) {
+        this._units = v;
+        this._flagUnits = true;
+    }
+}
 
 /**
  * @name FlagStops
@@ -227,7 +166,7 @@ const proto = {
  * @function
  * @description Cached method to let renderers know stops have been updated on a {@link Two.Gradient}.
  */
-function FlagStops() {
+function FlagStops(this: Gradient) {
     this._flagStops = true;
 }
 
@@ -237,7 +176,7 @@ function FlagStops() {
  * @function
  * @description Cached method to let {@link Two.Gradient} know vertices have been added to the instance.
  */
-function BindStops(items) {
+function BindStops(this: Gradient, items) {
 
     // This function is called a lot
     // when importing a large SVG
@@ -257,7 +196,7 @@ function BindStops(items) {
  * @function
  * @description Cached method to let {@link Two.Gradient} know vertices have been removed from the instance.
  */
-function UnbindStops(items) {
+function UnbindStops(this: Gradient, items) {
 
     let i = items.length;
     while (i--) {

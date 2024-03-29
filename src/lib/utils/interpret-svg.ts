@@ -1199,7 +1199,7 @@ export const read = {
 
     },
 
-    lineargradient: function (node, parentStyles) {
+    lineargradient: function (node:HTMLElement, parentStyles) {
 
         let units = node.getAttribute('gradientUnits');
         let spread = node.getAttribute('spreadMethod');
@@ -1211,10 +1211,10 @@ export const read = {
             spread = 'pad';
         }
 
-        let x1 = parseFloat(node.getAttribute('x1') || 0);
-        let y1 = parseFloat(node.getAttribute('y1') || 0);
-        let x2 = parseFloat(node.getAttribute('x2') || 0);
-        let y2 = parseFloat(node.getAttribute('y2') || 0);
+        let x1 = parseFloat(node.getAttribute('x1') || '0');
+        let y1 = parseFloat(node.getAttribute('y1') || '0');
+        let x2 = parseFloat(node.getAttribute('x2') || '0');
+        let y2 = parseFloat(node.getAttribute('y2') || '0');
 
         const ox = (x2 + x1) / 2;
         const oy = (y2 + y1) / 2;
@@ -1231,28 +1231,32 @@ export const read = {
 
             const child = node.children[i];
 
-            let offset = child.getAttribute('offset');
-            if (/%/ig.test(offset)) {
-                offset = parseFloat(offset.replace(/%/ig, '')) / 100;
+            const offsetAttr = child.getAttribute('offset');
+            let offset: number;
+            if (/%/ig.test(offsetAttr)) {
+                offset = parseFloat(offsetAttr.replace(/%/ig, '')) / 100;
             }
-            offset = parseFloat(offset);
+            else {
+                offset = parseFloat(offsetAttr);
+            }
 
             let color = child.getAttribute('stop-color');
-            let opacity = child.getAttribute('stop-opacity');
-            let style = child.getAttribute('style');
+            const opacityAttr = child.getAttribute('stop-opacity');
+            const style = child.getAttribute('style');
 
-            let matches;
+            let matches: RegExpMatchArray|false;
             if (color === null) {
                 matches = style ? style.match(/stop-color:\s?([#a-fA-F0-9]*)/) : false;
                 color = matches && matches.length > 1 ? matches[1] : undefined;
             }
 
-            if (opacity === null) {
+            let opacity: number;
+            if (opacityAttr === null) {
                 matches = style ? style.match(/stop-opacity:\s?([0-9.-]*)/) : false;
                 opacity = matches && matches.length > 1 ? parseFloat(matches[1]) : 1;
             }
             else {
-                opacity = parseFloat(opacity);
+                opacity = parseFloat(opacityAttr);
             }
 
             stops.push(new Stop(offset, color, opacity));
@@ -1267,10 +1271,9 @@ export const read = {
         applySvgAttributes.call(this, node, gradient, parentStyles);
 
         return gradient;
-
     },
 
-    radialgradient: function (node, parentStyles) {
+    radialgradient: function (node: HTMLElement, parentStyles) {
 
         let units = node.getAttribute('gradientUnits');
         let spread = node.getAttribute('spreadMethod');

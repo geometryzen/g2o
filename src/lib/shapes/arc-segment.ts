@@ -302,66 +302,6 @@ export class ArcSegment extends Path {
         return this;
 
     }
-
-    /**
-     * @name Two.ArcSegment#clone
-     * @function
-     * @param {Two.Group} [parent] - The parent group or scene to add the clone to.
-     * @returns {Two.ArcSegment}
-     * @description Create a new instance of {@link Two.ArcSegment} with the same properties of the current path.
-     */
-    clone(parent) {
-
-        const ir = this.innerRadius;
-        const or = this.outerRadius;
-        const sa = this.startAngle;
-        const ea = this.endAngle;
-        const resolution = this.vertices.length;
-
-        const clone = new ArcSegment(0, 0, ir, or, sa, ea, resolution);
-
-        clone.translation.copy(this.translation);
-        clone.rotation = this.rotation;
-        clone.scale = this.scale;
-        clone.skewX = this.skewX;
-        clone.skewY = this.skewY;
-
-        if (this.matrix.manual) {
-            clone.matrix.copy(this.matrix);
-        }
-
-        for (let i = 0; i < Path.Properties.length; i++) {
-            const k = Path.Properties[i];
-            clone[k] = this[k];
-        }
-
-        if (parent) {
-            parent.add(clone);
-        }
-
-        return clone;
-
-    }
-
-    /**
-     * @name Two.ArcSegment#toObject
-     * @function
-     * @returns {Object}
-     * @description Return a JSON compatible plain object that represents the path.
-     */
-    toObject() {
-
-        const object = super.toObject.call(this);
-
-        for (let i = 0; i < ArcSegment.Properties.length; i++) {
-            const k = ArcSegment.Properties[i];
-            object[k] = this[k];
-        }
-
-        return object;
-
-    }
-
 }
 
 const proto = {

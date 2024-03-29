@@ -57,9 +57,6 @@ export class Collection<T> extends Array<T> {
     trigger() {
         return this.$events.trigger.apply(this, arguments);
     }
-    listen() {
-        return this.$events.listen.apply(this, arguments);
-    }
     ignore() {
         return this.$events.ignore.apply(this, arguments);
     }
@@ -131,5 +128,4 @@ export class Collection<T> extends Array<T> {
         }
         return results;
     }
-
 }

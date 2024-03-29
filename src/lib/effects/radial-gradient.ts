@@ -100,55 +100,6 @@ export class RadialGradient extends Gradient {
     static Properties = ['center', 'radius', 'focal'];
 
     /**
-     * @name Two.RadialGradient#clone
-     * @function
-     * @param {Two.Group} [parent] - The parent group or scene to add the clone to.
-     * @returns {Two.Gradient}
-     * @description Create a new instance of {@link Two.RadialGradient} with the same properties of the current path.
-     */
-    clone(parent) {
-
-        const stops = this.stops.map(function (stop) {
-            return stop.clone();
-        });
-
-        const clone = new RadialGradient(this.center._x, this.center._y,
-            this._radius, stops, this.focal._x, this.focal._y);
-
-        _.each(Gradient.Properties.concat(RadialGradient.Properties), function (k) {
-            clone[k] = this[k];
-        }, this);
-
-        if (parent) {
-            parent.add(clone);
-        }
-
-        return clone;
-
-    }
-
-    /**
-     * @name Two.RadialGradient#toObject
-     * @function
-     * @returns {Object}
-     * @description Return a JSON compatible plain object that represents the path.
-     */
-    toObject() {
-
-        const result = super.toObject.call(this);
-
-        _.each(RadialGradient.Properties, function (k) {
-            result[k] = this[k];
-        }, this);
-
-        result.center = this.center.toObject();
-        result.focal = this.focal.toObject();
-
-        return result;
-
-    }
-
-    /**
      * @name Two.RadialGradient#_update
      * @function
      * @private
