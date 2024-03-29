@@ -995,7 +995,7 @@ export class Renderer extends Events implements View {
      * @param {Number} [ratio] - The new pixel ratio (pixel density) of the renderer. Defaults to calculate the pixel density of the user's screen.
      * @description Change the size of the renderer.
      */
-    setSize(width, height, ratio) {
+    setSize(width: number, height: number, ratio: number) {
 
         this.width = width;
         this.height = height;

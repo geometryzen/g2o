@@ -20,7 +20,8 @@ export const _ = {
         const type = typeof obj;
         return type === 'function' || type === 'object' && !!obj;
     },
-    extend: function (base) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    extend: function (base: any, override: any) {
         const sources = slice.call(arguments, 1);
         for (let i = 0; i < sources.length; i++) {
             const obj = sources[i];
@@ -42,7 +43,7 @@ export const _ = {
         }
         return base;
     },
-    each: function (obj, iteratee, context) {
+    each: function (obj, iteratee, context?: unknown) {
         const ctx = context || this;
         const keys = !isArrayLike(obj) && Object.keys(obj);
         const length = (keys || obj).length;

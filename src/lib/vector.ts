@@ -10,58 +10,38 @@ import { Events } from './events';
  */
 export class Vector extends Events {
 
-    /**
-     * @name Two.Vector#_x
-     * @private
-     */
-    _x = 0;
-    /**
-     * @name Two.Vector#_y
-     * @private
-     */
-    _y = 0;
+    #x = 0;
+    #y = 0;
 
     constructor(x = 0, y = 0) {
 
         super();
 
-        /**
-         * @name Two.Vector#x
-         * @property {Number} - The horizontal x-component of the vector.
-         * @type {Number}
-         */
         this.x = x;
-
-        /**
-         * @name Two.Vector#y
-         * @property {Number} - The vertical y-component of the vector.
-         * @type {Number}
-         */
         this.y = y;
-
     }
 
     get x(): number {
-        return this._x;
+        return this.#x;
     }
 
     set x(x: number) {
-        if (this._x !== x) {
-            this._x = x;
-            if (this._bound) {
+        if (this.#x !== x) {
+            this.#x = x;
+            if (this.bound) {
                 this.dispatchEvent(Events.Types.change);
             }
         }
     }
 
     get y(): number {
-        return this._y;
+        return this.#y;
     }
 
     set y(y: number) {
-        if (this._y !== y) {
-            this._y = y;
-            if (this._bound) {
+        if (this.#y !== y) {
+            this.#y = y;
+            if (this.bound) {
                 this.dispatchEvent(Events.Types.change);
             }
         }

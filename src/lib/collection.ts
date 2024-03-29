@@ -3,7 +3,7 @@ import { EventHandler, Events } from './events.js';
 /**
  * @description An `Array` like object with additional event propagation on actions. `pop`, `shift`, and `splice` trigger `removed` events. `push`, `unshift`, and `splice` with more than 2 arguments trigger 'inserted'. Finally, `sort` and `reverse` trigger `order` events.
  */
-export class Collection extends Array {
+export class Collection<T> extends Array<T> {
 
     // Warning: Multiple inheritance hack
     /**
@@ -28,10 +28,10 @@ export class Collection extends Array {
 
     // Getters and setters aren't enumerable
     get _bound() {
-        return this._events._bound;
+        return this._events.bound;
     }
     set _bound(v) {
-        this._events._bound = v;
+        this._events.bound = v;
     }
 
     addEventListener() {

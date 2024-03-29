@@ -1172,7 +1172,7 @@ export class Renderer extends Events implements View {
      * @description Change the size of the renderer.
      * @nota-bene Triggers a `Two.Events.resize`.
      */
-    setSize(width, height) {
+    setSize(width: number, height: number) {
 
         this.width = width;
         this.height = height;

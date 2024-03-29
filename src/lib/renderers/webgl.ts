@@ -1524,7 +1524,7 @@ export class Renderer extends Events implements View {
 
         super();
 
-        let gl, program, vs, fs;
+        let program, vs, fs;
 
         /**
          * @name Two.WebGLRenderer#domElement
@@ -1574,7 +1574,7 @@ export class Renderer extends Events implements View {
          * @name Two.WebGLRenderer#ctx
          * @property {WebGLContext} - Associated two dimensional context to render on the `<canvas />`.
          */
-        gl = this.ctx = this.domElement.getContext('webgl', params) ||
+        const gl = this.ctx = this.domElement.getContext('webgl', params) ||
             this.domElement.getContext('experimental-webgl', params);
 
         if (!this.ctx) {
@@ -1660,7 +1660,7 @@ export class Renderer extends Events implements View {
      * @param {Number} [ratio] - The new pixel ratio (pixel density) of the renderer. Defaults to calculate the pixel density of the user's screen.
      * @description Change the size of the renderer.
      */
-    setSize(width, height, ratio) {
+    setSize(width: number, height: number, ratio: number) {
 
         let w, h;
         const ctx = this.ctx;

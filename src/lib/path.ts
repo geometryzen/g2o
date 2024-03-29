@@ -5,6 +5,7 @@ import { LinearGradient } from './effects/linear-gradient';
 import { RadialGradient } from './effects/radial-gradient';
 import { Texture } from './effects/texture';
 import { Events } from './events';
+import { Group } from './group';
 import { Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
 import { decomposeMatrix, lerp, mod } from './utils/math';
@@ -223,7 +224,7 @@ export class Path extends Shape {
      * @private
      * @see {@link Two.Path#mask}
      */
-    _mask = null;
+    _mask: Shape = null;
 
     /**
      * @name Two.Path#_clip
@@ -239,13 +240,11 @@ export class Path extends Shape {
      */
     _dashes: number[] = null;
 
+    _collection: Collection<Anchor>;
+
     constructor(vertices?: Anchor[], closed?: boolean, curved?: boolean, manual?: boolean) {
 
         super();
-
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
 
         this._renderer.type = 'path';
         this._renderer.flagVertices = FlagVertices.bind(this);
@@ -411,7 +410,7 @@ export class Path extends Shape {
      * @returns {Two.Path}
      * @description Create a new instance of {@link Two.Path} with the same properties of the current path.
      */
-    clone(parent) {
+    clone(parent?: Group): Path {
 
         const clone = new Path();
 
@@ -854,12 +853,12 @@ export class Path extends Shape {
      * @param {Number} limit - How many times to recurse subdivisions.
      * @description Insert a {@link Two.Anchor} at the midpoint between every item in {@link Two.Path#vertices}.
      */
-    subdivide(limit) {
+    subdivide(limit: number) {
         // TODO: DRYness (function below)
         this._update();
 
         const last = this.vertices.length - 1;
-        const closed = this._closed || this.vertices[last]._command === Commands.close;
+        const closed = this._closed || this.vertices[last].command === Commands.close;
         let b = this.vertices[last];
         let points = [], verts;
 
@@ -959,7 +958,7 @@ export class Path extends Shape {
             this._lengths = [];
         }
 
-        _.each(this.vertices, function (a, i) {
+        _.each(this.vertices, function (a: Anchor, i: number) {
 
             if ((i <= 0 && !closed) || a.command === Commands.move) {
                 b = a;
@@ -1162,12 +1161,39 @@ export class Path extends Shape {
         return this;
 
     }
+    get automatic(): boolean {
+        return this._automatic;
+    }
+    set automatic(v: boolean) {
+        if (v === this._automatic) {
+            return;
+        }
+        this._automatic = !!v;
+        const method = this._automatic ? 'ignore' : 'listen';
+        _.each(this.vertices, function (v) {
+            v[method]();
+        });
+    }
+    get beginning(): number {
+        return this._beginning;
+    }
+    set beginning(v: number) {
+        this._beginning = v;
+        this._flagVertices = true;
+    }
     get cap(): string {
         return this._cap;
     }
     set cap(v: string) {
         this._cap = v;
         this._flagCap = true;
+    }
+    get clip(): boolean {
+        return this._clip;
+    }
+    set clip(v: boolean) {
+        this._clip = v;
+        this._flagClip = true;
     }
     get closed(): boolean {
         return this._closed;
@@ -1191,6 +1217,13 @@ export class Path extends Shape {
             v.offset = (this.dashes && this._dashes.offset) || 0;
         }
         this._dashes = v;
+    }
+    get ending(): number {
+        return this._ending;
+    }
+    set ending(v: number) {
+        this._ending = v;
+        this._flagVertices = true;
     }
     get fill(): string | Gradient | Texture {
         return this._fill;
@@ -1234,6 +1267,16 @@ export class Path extends Shape {
     set linewidth(v: number) {
         this._linewidth = v;
         this._flagLinewidth = true;
+    }
+    get mask() {
+        return this._mask;
+    }
+    set mask(v: Shape) {
+        this._mask = v;
+        this._flagMask = true;
+        if (_.isObject(v) && !v.clip) {
+            v.clip = true;
+        }
     }
     get miter(): number {
         return this._miter;
@@ -1311,140 +1354,6 @@ export class Path extends Shape {
     }
 }
 
-const proto = {
-    automatic: {
-        enumerable: true,
-        get: function () {
-            return this._automatic;
-        },
-        set: function (v) {
-            if (v === this._automatic) {
-                return;
-            }
-            this._automatic = !!v;
-            const method = this._automatic ? 'ignore' : 'listen';
-            _.each(this.vertices, function (v) {
-                v[method]();
-            });
-        }
-    },
-
-    beginning: {
-        enumerable: true,
-        get: function () {
-            return this._beginning;
-        },
-        set: function (v) {
-            this._beginning = v;
-            this._flagVertices = true;
-        }
-    },
-
-    ending: {
-        enumerable: true,
-        get: function () {
-            return this._ending;
-        },
-        set: function (v) {
-            this._ending = v;
-            this._flagVertices = true;
-        }
-    },
-
-    vertices: {
-
-        enumerable: true,
-
-        get: function () {
-            return this._collection;
-        },
-
-        set: function (vertices) {
-
-            const bindVertices = this._renderer.bindVertices;
-            const unbindVertices = this._renderer.unbindVertices;
-
-            // Remove previous listeners
-            if (this._collection) {
-                this._collection
-                    .unbind(Events.Types.insert, bindVertices)
-                    .unbind(Events.Types.remove, unbindVertices);
-            }
-
-            // Create new Collection with copy of vertices
-            if (vertices instanceof Collection) {
-                this._collection = vertices;
-            }
-            else {
-                this._collection = new Collection(vertices || []);
-            }
-
-
-            // Listen for Collection changes and bind / unbind
-            this._collection
-                .bind(Events.Types.insert, bindVertices)
-                .bind(Events.Types.remove, unbindVertices);
-
-            // Bind Initial Vertices
-            bindVertices(this._collection);
-
-        }
-
-    },
-
-    /**
-     * @name Two.Path#mask
-     * @property {Two.Shape} - The shape whose alpha property becomes a clipping area for the path.
-     * @nota-bene This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
-     */
-    mask: {
-
-        enumerable: true,
-
-        get: function () {
-            return this._mask;
-        },
-
-        set: function (v) {
-            this._mask = v;
-            this._flagMask = true;
-            if (_.isObject(v) && !v.clip) {
-                v.clip = true;
-            }
-        }
-
-    },
-
-    /**
-     * @name Two.Path#clip
-     * @property {Boolean} - Tells Two.js renderer if this object represents a mask for another object (or not).
-     */
-    clip: {
-        enumerable: true,
-        get: function () {
-            return this._clip;
-        },
-        set: function (v) {
-            this._clip = v;
-            this._flagClip = true;
-        }
-    },
-
-    dashes: {
-        enumerable: true,
-        get: function () {
-            return this._dashes;
-        },
-        set: function (v) {
-            if (typeof v.offset !== 'number') {
-                v.offset = (this.dashes && this._dashes.offset) || 0;
-            }
-            this._dashes = v;
-        }
-    }
-
-};
-
 // Utility functions
 
 /**
@@ -1467,7 +1376,7 @@ function FlagVertices(this: Path) {
  * @function
  * @description Cached method to let {@link Two.Path} know vertices have been added to the instance.
  */
-function BindVertices(items) {
+function BindVertices(this: Path, items) {
 
     // This function is called a lot
     // when importing a large SVG
@@ -1486,7 +1395,7 @@ function BindVertices(items) {
  * @function
  * @description Cached method to let {@link Two.Path} know vertices have been removed from the instance.
  */
-function UnbindVertices(items) {
+function UnbindVertices(this: Path, items) {
 
     let i = items.length;
     while (i--) {

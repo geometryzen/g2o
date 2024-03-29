@@ -1,5 +1,6 @@
 import { Anchor } from '../anchor.js';
 import { Events } from '../events.js';
+import { Group } from '../group.js';
 import { Path } from '../path.js';
 import { Commands } from '../utils/path-commands.js';
 import { Vector } from '../vector.js';
@@ -27,10 +28,6 @@ export class Rectangle extends Path {
         ];
 
         super(points, true, false, true);
-
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
 
         /**
          * @name Two.Rectangle#width
@@ -71,13 +68,13 @@ export class Rectangle extends Path {
      * @private
      * @property {Boolean} - Determines whether the {@link Two.Rectangle#width} needs updating.
      */
-    _flagWidth = 0;
+    _flagWidth = false;
     /**
      * @name Two.Rectangle#_flagHeight
      * @private
      * @property {Boolean} - Determines whether the {@link Two.Rectangle#height} needs updating.
      */
-    _flagHeight = 0;
+    _flagHeight = false;
 
     /**
      * @name Two.Rectangle#_width
@@ -92,7 +89,7 @@ export class Rectangle extends Path {
      */
     _height = 0;
 
-    _origin = null;
+    _origin: Vector = null;
 
     /**
      * @name Two.Rectangle#_update
@@ -152,7 +149,7 @@ export class Rectangle extends Path {
      * @returns {Two.Rectangle}
      * @description Create a new instance of {@link Two.Rectangle} with the same properties of the current path.
      */
-    clone(parent) {
+    clone(parent?: Group) {
 
         const clone = new Rectangle(0, 0, this.width, this.height);
 
@@ -187,49 +184,36 @@ export class Rectangle extends Path {
      */
     toObject() {
 
-        const object = super.toObject.call(this);
+        const object = super.toObject.call(this) as Rectangle;
         object.width = this.width;
         object.height = this.height;
         object.origin = this.origin.toObject();
         return object;
 
     }
-
-}
-
-const proto = {
-    width: {
-        enumerable: true,
-        get: function () {
-            return this._width;
-        },
-        set: function (v) {
-            this._width = v;
-            this._flagWidth = true;
-        }
-    },
-    height: {
-        enumerable: true,
-        get: function () {
-            return this._height;
-        },
-        set: function (v) {
-            this._height = v;
-            this._flagHeight = true;
-        }
-    },
-    origin: {
-        enumerable: true,
-        get: function () {
-            return this._origin;
-        },
-        set: function (v) {
-            if (this._origin) {
-                this._origin.unbind(Events.Types.change, this._renderer.flagVertices);
-            }
-            this._origin = v;
-            this._origin.bind(Events.Types.change, this._renderer.flagVertices);
-            this._renderer.flagVertices();
-        }
+    get height(): number {
+        return this._height;
     }
-};
+    set height(v: number) {
+        this._height = v;
+        this._flagHeight = true;
+    }
+    get origin(): Vector {
+        return this._origin;
+    }
+    set origin(v: Vector) {
+        if (this._origin) {
+            this._origin.unbind(Events.Types.change, this._renderer.flagVertices);
+        }
+        this._origin = v;
+        this._origin.bind(Events.Types.change, this._renderer.flagVertices);
+        this._renderer.flagVertices();
+    }
+    get width(): number {
+        return this._width;
+    }
+    set width(v: number) {
+        this._width = v;
+        this._flagWidth = true;
+    }
+}

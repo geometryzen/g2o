@@ -100,10 +100,10 @@ export class Two {
 
     // Getters and setters aren't enumerable
     get _bound() {
-        return this.#events._bound;
+        return this.#events.bound;
     }
     set _bound(v) {
-        this.#events._bound = v;
+        this.#events.bound = v;
     }
 
     addEventListener() {
@@ -131,7 +131,7 @@ export class Two {
     dispatchEvent() {
         return this.#events.dispatchEvent.apply(this, arguments);
     }
-    trigger(type: 'pause' | 'play' | 'render' | 'update', ...args: unknown[]): this {
+    trigger(type: 'pause' | 'play' | 'render' | 'resize' | 'update', ...args: unknown[]): this {
         this.#events.dispatchEvent(type, ...args);
         return this;
     }
@@ -171,6 +171,8 @@ export class Two {
      * @property {Number} - The height of the instance's dom element.
      */
     height = 0;
+
+    fit: EventHandler;
 
     /**
      * @name Two#frameCount
@@ -254,14 +256,16 @@ export class Two {
             dom.bind(this.fit.domElement, 'resize', this.fit);
             this.fit();
 
-        } else if (params.fitted) {
+        }
+        else if (params.fitted) {
 
             this.fit = fitToParent.bind(this);
             _.extend(this.renderer.domElement.style, {
                 display: 'block'
             });
 
-        } else if (!_.isElement(params.domElement)) {
+        }
+        else if (!_.isElement(params.domElement)) {
 
             this.renderer.setSize(params.width, params.height, this.ratio);
             this.width = params.width;
@@ -410,12 +414,10 @@ export class Two {
      * @description Call to start an internal animation loop.
      * @nota-bene This function initiates a `requestAnimationFrame` loop.
      */
-    play() {
-
+    play(): this {
         this.playing = true;
         raf.init();
         return this.trigger(Events.Types.play);
-
     }
 
     /**
@@ -425,13 +427,11 @@ export class Two {
      * @description Call to stop the internal animation loop for a specific instance of Two.js.
      */
     pause() {
-
         this.playing = false;
         return this.trigger(Events.Types.pause);
-
     }
 
-    setPlaying(p) {
+    setPlaying(p: boolean): void {
         this.playing = p;
     }
 
@@ -1100,7 +1100,7 @@ export class Two {
 
 }
 
-function fitToWindow() {
+function fitToWindow(this: Two) {
 
     const wr = document.body.getBoundingClientRect();
 
@@ -1111,7 +1111,7 @@ function fitToWindow() {
 
 }
 
-function fitToParent() {
+function fitToParent(this: Two) {
 
     const parent = this.renderer.domElement.parentElement;
     if (!parent) {
@@ -1127,7 +1127,7 @@ function fitToParent() {
 
 }
 
-function updateDimensions(width, height) {
+function updateDimensions(this: Two, width: number, height: number) {
     this.width = width;
     this.height = height;
     this.trigger(Events.Types.resize, width, height);

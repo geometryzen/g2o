@@ -1,4 +1,4 @@
-export type EventHandler = (this: Events) => void;
+export type EventHandler<T extends Events> = (this: T, ...args: unknown[]) => void;
 /**
  * @name Two.Events
  * @class
@@ -6,10 +6,17 @@ export type EventHandler = (this: Events) => void;
  */
 export class Events {
 
-    _events: { [name: string]: EventHandler[] } = {};
-    _bound = false;
+    #events: { [name: string]: EventHandler<Events>[] } = {};
+    #bound = false;
 
     constructor() { }
+
+    get bound() {
+        return this.#bound;
+    }
+    set bound(v) {
+        this.#bound = v;
+    }
 
     /**
      * @name Two.Events#addEventListener
@@ -18,11 +25,11 @@ export class Events {
      * @param {Function} [handler] - The function to be invoked when the event is dispatched.
      * @description Call to add a listener to a specific event name.
      */
-    addEventListener(name: string, handler: EventHandler): this {
+    addEventListener(name: string, handler: EventHandler<Events>): this {
 
-        const handlers = this._events[name] || (this._events[name] = []);
+        const handlers = this.#events[name] || (this.#events[name] = []);
         handlers.push(handler);
-        this._bound = true;
+        this.#bound = true;
         return this;
     }
 
@@ -31,7 +38,7 @@ export class Events {
      * @function
      * @description Alias for {@link Two.Events#addEventListener}.
      */
-    on(name: string, handler: EventHandler) {
+    on(name: string, handler: EventHandler<Events>) {
         return this.addEventListener(name, handler);
     }
     /**
@@ -39,7 +46,7 @@ export class Events {
      * @function
      * @description Alias for {@link Two.Events#addEventListener}.
      */
-    bind(name: string, handler: EventHandler): this {
+    bind(name: string, handler: EventHandler<Events>): this {
         return this.addEventListener(name, handler);
     }
 
@@ -50,22 +57,22 @@ export class Events {
      * @param {Function} [handler] - The handler intended to be removed.
      * @description Call to remove listeners from a specific event. If only `name` is passed then all the handlers attached to that `name` will be removed. If no arguments are passed then all handlers for every event on the obejct are removed.
      */
-    removeEventListener(name: string, handler: EventHandler) {
+    removeEventListener(name: string, handler: EventHandler<Events>) {
 
-        if (!this._events) {
+        if (!this.#events) {
             return this;
         }
         if (!name && !handler) {
-            this._events = {};
-            this._bound = false;
+            this.#events = {};
+            this.#bound = false;
             return this;
         }
 
-        const names = name ? [name] : Object.keys(this._events);
+        const names = name ? [name] : Object.keys(this.#events);
         for (let i = 0, l = names.length; i < l; i++) {
 
             name = names[i];
-            const list = this._events[name];
+            const list = this.#events[name];
 
             if (list) {
                 const events = [];
@@ -78,7 +85,7 @@ export class Events {
                         }
                     }
                 }
-                this._events[name] = events;
+                this.#events[name] = events;
             }
         }
 
@@ -91,7 +98,7 @@ export class Events {
      * @function
      * @description Alias for {@link Two.Events#removeEventListener}.
      */
-    off(name: string, handler: EventHandler) {
+    off(name: string, handler: EventHandler<Events>) {
         return this.removeEventListener(name, handler);
     }
     /**
@@ -112,12 +119,12 @@ export class Events {
      */
     dispatchEvent(name: string, ...values: unknown[]): this {
 
-        if (!this._events) {
+        if (!this.#events) {
             return this;
         }
 
         const args = Array.prototype.slice.call(arguments, 1);
-        const events = this._events[name];
+        const events = this.#events[name];
 
         if (events) {
             for (let i = 0; i < events.length; i++) {
