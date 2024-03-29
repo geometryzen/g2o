@@ -34,7 +34,7 @@ export class Element extends Events {
      * @property {String} - Session specific unique identifier.
      * @nota-bene In the {@link Two.SVGRenderer} change this to change the underlying SVG element's id too.
      */
-    #id = '';
+    _id = '';
 
     /**
      * @name Two.Element#className
@@ -66,18 +66,18 @@ export class Element extends Events {
         return this._renderer;
     }
     get id(): string {
-        return this.#id;
+        return this._id;
     }
     set id(v: string) {
-        const id = this.#id;
-        if (v === this.#id) {
+        const id = this._id;
+        if (v === this._id) {
             return;
         }
-        this.#id = v;
+        this._id = v;
         this._flagId = true;
         if (this.parent) {
             delete this.parent.children.ids[id];
-            this.parent.children.ids[this.#id] = this as unknown as Shape;
+            this.parent.children.ids[this._id] = this as unknown as Shape;
         }
     }
     get className(): string {

@@ -10,8 +10,8 @@ import { Events } from './events';
  */
 export class Vector extends Events {
 
-    #x = 0;
-    #y = 0;
+    x_coord = 0;
+    y_coord = 0;
 
     constructor(x = 0, y = 0) {
 
@@ -22,12 +22,12 @@ export class Vector extends Events {
     }
 
     get x(): number {
-        return this.#x;
+        return this.x_coord;
     }
 
     set x(x: number) {
-        if (this.#x !== x) {
-            this.#x = x;
+        if (this.x_coord !== x) {
+            this.x_coord = x;
             if (this.bound) {
                 this.dispatchEvent(Events.Types.change);
             }
@@ -35,12 +35,12 @@ export class Vector extends Events {
     }
 
     get y(): number {
-        return this.#y;
+        return this.y_coord;
     }
 
     set y(y: number) {
-        if (this.#y !== y) {
-            this.#y = y;
+        if (this.y_coord !== y) {
+            this.y_coord = y;
             if (this.bound) {
                 this.dispatchEvent(Events.Types.change);
             }
