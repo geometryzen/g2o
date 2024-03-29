@@ -1,7 +1,9 @@
 import { Collection } from './collection.js';
+import { Group } from './group.js';
 
 export interface Child {
     id: string;
+    parent: Group;
 }
 
 /**

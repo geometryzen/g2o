@@ -1,5 +1,4 @@
 import { Children } from './children.js';
-import { Events } from './events.js';
 import { Shape } from './shape.js';
 import { _ } from './utils/underscore.js';
 import { Vector } from './vector.js';
@@ -186,6 +185,9 @@ export class Group extends Shape {
 
     _children: Children<Shape>;
 
+    readonly additions: Shape[];
+    readonly subtractions: Shape[];
+
     constructor(children?: Shape[]) {
 
         super();
@@ -248,7 +250,7 @@ export class Group extends Shape {
      * @function
      * @description Cached method to let renderers know order has been updated on a {@link Two.Group}.
      */
-    static OrderChildren(children) {
+    static OrderChildren(this: Group, children) {
         this._flagOrder = true;
     }
 
@@ -784,9 +786,9 @@ export class Group extends Shape {
         }
 
         this._children = new Children(children);
-        this._children.bind(Events.Types.insert, insertChildren);
-        this._children.bind(Events.Types.remove, removeChildren);
-        this._children.bind(Events.Types.order, orderChildren);
+        this._children.bind('insert', insertChildren);
+        this._children.bind('remove', removeChildren);
+        this._children.bind('order', orderChildren);
 
         if (children.length > 0) {
             insertChildren(children);
@@ -917,7 +919,7 @@ export class Group extends Shape {
 //  * and updates parent-child relationships
 //  * Calling with one arguments will simply remove the parenting
 //  */
-function replaceParent(child, newParent) {
+function replaceParent(child: Shape, newParent: Group) {
 
     const parent = child.parent;
     let index;
@@ -989,6 +991,5 @@ function replaceParent(child, newParent) {
             parent.subtractions.push(child);
             parent._flagSubtractions = true;
         }
-
     }
 }

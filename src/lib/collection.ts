@@ -35,10 +35,11 @@ export class Collection<T> extends Array<T> {
         return this.$events.addEventListener.apply(this, arguments);
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    on(type: 'insert' | 'remove', callback: (children: T[]) => void) {
-        return this.$events.on.apply(this, arguments);
+    on(type: 'insert' | 'remove' | 'order', callback: (children: T[]) => void) {
+        return this.$events.on(type, callback);
     }
-    bind() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    bind(type: 'insert' | 'remove' | 'order', callback: (children: T[]) => void) {
         return this.$events.bind.apply(this, arguments);
     }
     removeEventListener() {
@@ -75,7 +76,8 @@ export class Collection<T> extends Array<T> {
         return shifted;
     }
 
-    push() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    push(...items: T[]) {
         const pushed = super.push.apply(this, arguments);
         this.trigger(Events.Types.insert, arguments);
         return pushed;
@@ -87,7 +89,8 @@ export class Collection<T> extends Array<T> {
         return unshifted;
     }
 
-    splice() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    splice(start: number, deleteCount?: number) {
         const spliced = super.splice.apply(this, arguments);
         this.trigger(Events.Types.remove, spliced);
         if (arguments.length > 2) {
