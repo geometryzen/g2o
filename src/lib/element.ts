@@ -2,10 +2,7 @@ import { Events } from './events.js';
 import { View } from './renderers/View.js';
 
 /**
- * @name Two.Element
- * @class
- * @extends Two.Events
- * @description The foundational object for the Two.js scenegraph.
+ * The foundational object for the scenegraph.
  */
 export class Element extends Events {
 
@@ -35,7 +32,7 @@ export class Element extends Events {
      * @property {String} - Session specific unique identifier.
      * @nota-bene In the {@link Two.SVGRenderer} change this to change the underlying SVG element's id too.
      */
-    _id = '';
+    #id = '';
 
     /**
      * @name Two.Element#className
@@ -49,16 +46,10 @@ export class Element extends Events {
      * @property {String[]}
      * @description A list of class strings stored if imported / interpreted  from an SVG element.
      */
-    classList = [];
+    classList: string[] = [];
 
     constructor() {
-
         super();
-
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
-
     }
 
     /**
@@ -69,45 +60,32 @@ export class Element extends Events {
     flagReset() {
         this._flagId = this._flagClassName = false;
     }
-
-}
-
-const proto = {
-    renderer: {
-        enumerable: false,
-        get: function () {
-            return this._renderer;
+    get renderer(): View {
+        return this._renderer;
+    }
+    get id(): string {
+        return this.#id;
+    }
+    set id(v: string) {
+        const id = this.#id;
+        if (v === this.#id) {
+            return;
         }
-    },
-    id: {
-        enumerable: true,
-        get: function () {
-            return this._id;
-        },
-        set: function (v) {
-            const id = this._id;
-            if (v === this._id) {
-                return;
-            }
-            this._id = v;
-            this._flagId = true;
-            if (this.parent) {
-                delete this.parent.children.ids[id];
-                this.parent.children.ids[this._id] = this;
-            }
-        }
-    },
-    className: {
-        enumerable: true,
-        get: function () {
-            return this._className;
-        },
-        set: function (v) {
-            if (this._className !== v) {
-                this._flagClassName = true;
-                this.classList = v.split(/\s+?/);
-                this._className = v;
-            }
+        this.#id = v;
+        this._flagId = true;
+        if (this.parent) {
+            delete this.parent.children.ids[id];
+            this.parent.children.ids[this.#id] = this;
         }
     }
-};
+    get className(): string {
+        return this._className;
+    }
+    set className(v: string) {
+        if (this._className !== v) {
+            this._flagClassName = true;
+            this.classList = v.split(/\s+?/);
+            this._className = v;
+        }
+    }
+}

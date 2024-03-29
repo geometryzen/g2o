@@ -1,6 +1,7 @@
 import { Constants } from './constants.js';
 import { Element } from './element.js';
 import { Events } from './events.js';
+import { Group } from './group.js';
 import { Matrix } from './matrix.js';
 import { getComputedMatrix } from './utils/math.js';
 import { Vector } from './vector.js';
@@ -55,14 +56,14 @@ export class Shape extends Element {
      * @private
      * @property {Number} - The rotation value in Number.
      */
-    _rotation = 0;
+    _rotation: number = 0;
 
     /**
      * @name Two.Shape#_scale
      * @private
      * @property {Number|Two.Vector} - The scale value in Number. Can be a vector for non-uniform scaling.
      */
-    _scale = 1;
+    _scale: number | Vector = 1;
 
     /**
      * @name Two.Shape#_skewX
@@ -81,10 +82,6 @@ export class Shape extends Element {
     constructor() {
 
         super();
-
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
 
         /**
          * @name Two.Shape#renderer
@@ -176,7 +173,7 @@ export class Shape extends Element {
      * @param {Two.Group} group - The parent the shape adds itself to.
      * @description Convenience method to add itself to the scenegraph.
      */
-    addTo(group) {
+    addTo(group: Group): this {
         group.add(this);
         return this;
     }
@@ -205,7 +202,7 @@ export class Shape extends Element {
      * @returns {Two.Shape}
      * @description Create a new {@link Two.Shape} with the same values as the current shape.
      */
-    clone(parent) {
+    clone(parent?: Group): Shape {
 
         const clone = new Shape();
 
@@ -235,7 +232,7 @@ export class Shape extends Element {
      * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
      * @nota-bene Try not to call this method more than once a frame.
      */
-    _update(bubbles) {
+    _update(bubbles?: boolean): this {
 
         if (!this._matrix.manual && this._flagMatrix) {
 
@@ -245,8 +242,9 @@ export class Shape extends Element {
 
             if (this._scale instanceof Vector) {
                 this._matrix.scale(this._scale.x, this._scale.y);
-            } else {
-                this._matrix.scale(this._scale);
+            }
+            else {
+                this._matrix.scale(this._scale, this._scale);
             }
 
             this._matrix.rotate(this.rotation);
@@ -297,10 +295,10 @@ export class Shape extends Element {
         this._rotation = v;
         this._flagMatrix = true;
     }
-    get scale() {
+    get scale(): number | Vector {
         return this._scale;
     }
-    set scale(v) {
+    set scale(v: number | Vector) {
         if (this._scale instanceof Vector) {
             this._scale.unbind(Events.Types.change, this._renderer.flagMatrix);
         }
@@ -311,51 +309,36 @@ export class Shape extends Element {
         this._flagMatrix = true;
         this._flagScale = true;
     }
-}
-
-const proto = {
-    skewX: {
-        enumerable: true,
-        get: function () {
-            return this._skewX;
-        },
-        set: function (v) {
-            this._skewX = v;
-            this._flagMatrix = true;
-        }
-    },
-    skewY: {
-        enumerable: true,
-        get: function () {
-            return this._skewY;
-        },
-        set: function (v) {
-            this._skewY = v;
-            this._flagMatrix = true;
-        }
-    },
-    matrix: {
-        enumerable: true,
-        get: function () {
-            return this._matrix;
-        },
-        set: function (v) {
-            this._matrix = v;
-            this._flagMatrix = true;
-        }
-    },
-    worldMatrix: {
-        enumerable: true,
-        get: function () {
-            // TODO: Make DRY
-            getComputedMatrix(this, this._worldMatrix);
-            return this._worldMatrix;
-        },
-        set: function (v) {
-            this._worldMatrix = v;
-        }
+    get skewX(): number {
+        return this._skewX;
     }
-};
+    set skewX(v: number) {
+        this._skewX = v;
+        this._flagMatrix = true;
+    }
+    get skewY(): number {
+        return this._skewY;
+    }
+    set skewY(v: number) {
+        this._skewY = v;
+        this._flagMatrix = true;
+    }
+    get matrix(): Matrix {
+        return this._matrix;
+    }
+    set matrix(v: Matrix) {
+        this._matrix = v;
+        this._flagMatrix = true;
+    }
+    get worldMatrix() {
+        // TODO: Make DRY
+        getComputedMatrix(this, this._worldMatrix);
+        return this._worldMatrix;
+    }
+    set worldMatrix(v: Matrix) {
+        this._worldMatrix = v;
+    }
+}
 
 /**
  * @name FlagMatrix
@@ -363,6 +346,6 @@ const proto = {
  * @private
  * @description Utility function used in conjunction with event handlers to update the flagMatrix of a shape.
  */
-function FlagMatrix() {
+function FlagMatrix(this: Shape): void {
     this._flagMatrix = true;
 }

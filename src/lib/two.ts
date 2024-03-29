@@ -90,21 +90,6 @@ export interface TwoOptions {
     domElement: Element;
 }
 
-/**
- * @name Two
- * @class
- * @global
- * @extends Two.Events
- * @param {Object} [options]
- * @param {Boolean} [options.fullscreen=false] - Set to `true` to automatically make the stage adapt to the width and height of the parent document. This parameter overrides `width` and `height` parameters if set to `true`. This overrides `options.fitted` as well.
- * @param {Boolean} [options.fitted=false] - Set to `true` to automatically make the stage adapt to the width and height of the parent element. This parameter overrides `width` and `height` parameters if set to `true`.
- * @param {Number} [options.width=640] - The width of the stage on construction. This can be set at a later time.
- * @param {Number} [options.height=480] - The height of the stage on construction. This can be set at a later time.
- * @param {String} [options.type=Two.Types.svg] - The type of renderer to setup drawing with. See {@link Two.Types} for available options.
- * @param {Boolean} [options.autostart=false] - Set to `true` to add the instance to draw on `requestAnimationFrame`. This is a convenient substitute for {@link Two#play}.
- * @param {Element} [options.domElement] - The canvas or SVG element to draw into. This overrides the `options.type` argument.
- * @description The entrypoint for Two.js. Instantiate a `new Two` in order to setup a scene to render to. `Two` is also the publicly accessible namespace that all other sub-classes, functions, and utilities attach to.
- */
 export class Two {
 
     // Warning: inherit events while overriding static properties

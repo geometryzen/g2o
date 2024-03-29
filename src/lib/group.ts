@@ -182,7 +182,7 @@ export class Group extends Shape {
      * @name Two.Group#mask
      * @property {Two.Shape} - The Two.js object to clip from a group's rendering.
      */
-    _mask = null;
+    _mask: Shape = null;
 
     readonly _children: Shape[];
 
@@ -738,6 +738,13 @@ export class Group extends Shape {
         return this;
 
     }
+    get beginning(): number {
+        return this._beginning;
+    }
+    set beginning(v: number) {
+        this._flagBeginning = this._beginning !== v || this._flagBeginning;
+        this._beginning = v;
+    }
     get cap(): string {
         return this._cap;
     }
@@ -827,16 +834,6 @@ export class Group extends Shape {
 }
 
 const proto = {
-    beginning: {
-        enumerable: true,
-        get: function () {
-            return this._beginning;
-        },
-        set: function (v) {
-            this._flagBeginning = this._beginning !== v || this._flagBeginning;
-            this._beginning = v;
-        }
-    },
     ending: {
         enumerable: true,
         get: function () {

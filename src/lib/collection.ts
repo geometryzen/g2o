@@ -1,12 +1,8 @@
 import { Events } from './events.js';
 
 /**
- * @name Two.Collection
- * @class
- * @extends Two.Events
  * @description An `Array` like object with additional event propagation on actions. `pop`, `shift`, and `splice` trigger `removed` events. `push`, `unshift`, and `splice` with more than 2 arguments trigger 'inserted'. Finally, `sort` and `reverse` trigger `order` events.
  */
-
 export class Collection extends Array {
 
     // Warning: Multiple inheritance hack
