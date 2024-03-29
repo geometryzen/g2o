@@ -1,4 +1,4 @@
-import { EventHandler } from "../events";
+import { EventHandler, Events } from "../events";
 import { Group } from "../group";
 
 export interface View {
@@ -8,7 +8,7 @@ export interface View {
     type: 'gradient' | 'group' | 'path';
     vertices: unknown[];
     collection: unknown[];
-    bind(type: 'resize', callback: EventHandler): void;
+    bind(type: 'resize', callback: EventHandler<Events>): void;
     bindVertices: EventHandler;
     unbindVertices: EventHandler;
     flagFill: EventHandler;

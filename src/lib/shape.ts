@@ -12,7 +12,7 @@ import { Vector } from './vector.js';
  * @extends Two.Element
  * @description The foundational transformation object for the Two.js scenegraph.
  */
-export class Shape extends Element {
+export abstract class Shape extends Element {
 
     /**
      * @name Two.Shape#_flagMatrix

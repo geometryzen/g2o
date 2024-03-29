@@ -1,22 +1,21 @@
 import { Collection } from './collection.js';
-import { Events } from './events.js';
-import { Shape } from './shape.js';
+
+export interface Child {
+    id: string;
+}
 
 /**
- * @class
- * @name Two.Group.Children
- * @extends Two.Collection
- * @description A children collection which is accesible both by index and by object `id`.
+ * A children collection which is accesible both by index and by object `id`.
  */
-export class Children<T> extends Collection<T> {
+export class Children<T extends Child> extends Collection<T> {
 
     /**
      * @name Two.Group.Children#ids
      * @property {Object} - Map of all elements in the list keyed by `id`s.
      */
-    ids: { [id: string]: Shape } = {};
+    ids: { [id: string]: T } = {};
 
-    constructor(children: Shape[]) {
+    constructor(children: T[]) {
 
         children = Array.isArray(children)
             ? children : Array.prototype.slice.call(arguments);
@@ -25,9 +24,16 @@ export class Children<T> extends Collection<T> {
 
         this.attach(children);
 
-        this.on(Events.Types.insert, this.attach);
-        this.on(Events.Types.remove, this.detach);
+        const insert_event_handler = (ts: T[]) => {
+            this.attach(ts);
+        };
 
+        const remove_event_handler = (ts: T[]) => {
+            this.detach(ts);
+        };
+
+        this.on('insert', insert_event_handler);
+        this.on('remove', remove_event_handler);
     }
 
     /**
@@ -36,7 +42,7 @@ export class Children<T> extends Collection<T> {
      * @param {Two.Shape[]} children - The objects which extend {@link Two.Shape} to be added.
      * @description Adds elements to the `ids` map.
      */
-    attach(children: Shape[]): this {
+    attach(children: T[]): this {
         for (let i = 0; i < children.length; i++) {
             const child = children[i];
             if (child && child.id) {
@@ -52,7 +58,7 @@ export class Children<T> extends Collection<T> {
      * @param {Two.Shape[]} children - The objects which extend {@link Two.Shape} to be removed.
      * @description Removes elements to the `ids` map.
      */
-    detach(children: Shape[]): this {
+    detach(children: T[]): this {
         for (let i = 0; i < children.length; i++) {
             delete this.ids[children[i].id];
         }

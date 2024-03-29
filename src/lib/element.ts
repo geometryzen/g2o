@@ -1,3 +1,4 @@
+import { Child } from './children.js';
 import { Events } from './events.js';
 import { Group } from './group.js';
 import { View } from './renderers/View.js';
@@ -6,7 +7,10 @@ import { Shape } from './shape.js';
 /**
  * The foundational object for the scenegraph.
  */
-export class Element extends Events {
+export abstract class Element extends Events implements Child {
+    /**
+     * 
+     */
     parent: Group;
     /**
      * @name Two.Element#_flagId

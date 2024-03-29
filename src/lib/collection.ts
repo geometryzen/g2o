@@ -1,4 +1,4 @@
-import { EventHandler, Events } from './events.js';
+import { Events } from './events.js';
 
 /**
  * @description An `Array` like object with additional event propagation on actions. `pop`, `shift`, and `splice` trigger `removed` events. `push`, `unshift`, and `splice` with more than 2 arguments trigger 'inserted'. Finally, `sort` and `reverse` trigger `order` events.
@@ -9,7 +9,7 @@ export class Collection<T> extends Array<T> {
     $events = new Events();
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    constructor(items: unknown[]) {
+    constructor(items: T[]) {
 
         super();
 
@@ -35,7 +35,7 @@ export class Collection<T> extends Array<T> {
         return this.$events.addEventListener.apply(this, arguments);
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    on(type: unknown, callback: EventHandler) {
+    on(type: 'insert' | 'remove', callback: (children: T[]) => void) {
         return this.$events.on.apply(this, arguments);
     }
     bind() {
