@@ -544,7 +544,7 @@ export class Two {
      * @param {(Two.Shape[]|...Two.Shape)} [objects] - An array of Two.js objects. Alternatively can add objects as individual arguments.
      * @description A shorthand method to add specific Two.js objects to the scene.
      */
-    add(...objects: Shape[]) {
+    add(...objects: (Shape | Gradient)[]) {
 
         if (!(objects instanceof Array)) {
             objects = Array.prototype.slice.call(arguments);

@@ -48,7 +48,8 @@ export class Collection<T> extends Array<T> {
     off() {
         return this.$events.off.apply(this, arguments);
     }
-    unbind() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    unbind(type: 'insert' | 'remove' | 'order', callback: (children: T[]) => void) {
         return this.$events.unbind.apply(this, arguments);
     }
     dispatchEvent() {

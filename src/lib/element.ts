@@ -7,7 +7,11 @@ import { Shape } from './shape.js';
 /**
  * The foundational object for the scenegraph.
  */
-export abstract class Element extends Events implements Child {
+export abstract class Element implements Child {
+    /**
+     * Gradient, Shape, Stop, and Texture all extend Element.
+     */
+    isShape: boolean;
     /**
      * 
      */
@@ -54,8 +58,9 @@ export abstract class Element extends Events implements Child {
      */
     classList: string[] = [];
 
+    readonly events = new Events();
+
     constructor() {
-        super();
     }
 
     /**

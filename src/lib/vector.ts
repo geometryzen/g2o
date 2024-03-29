@@ -1,49 +1,34 @@
-import { Events } from './events';
+import { Accessor, createSignal, Setter } from 'solid-js';
 
-/**
- * @name Two.Vector
- * @class
- * @extends Two.Events
- * @param {Number} [x=0] - Any number to represent the horizontal x-component of the vector.
- * @param {Number} [y=0] - Any number to represent the vertical y-component of the vector.
- * @description A class to store x / y component vector data. In addition to storing data `Two.Vector` has suped up methods for commonplace mathematical operations.
- */
-export class Vector extends Events {
+export class Vector {
 
-    x_coord = 0;
-    y_coord = 0;
+    readonly #x_coord: Accessor<number>;
+    readonly #set_x_coord: Setter<number>;
+    readonly #y_coord: Accessor<number>;
+    readonly #set_y_coord: Setter<number>;
 
     constructor(x = 0, y = 0) {
-
-        super();
-
-        this.x = x;
-        this.y = y;
+        [this.#x_coord, this.#set_x_coord] = createSignal(x);
+        [this.#y_coord, this.#set_y_coord] = createSignal(y);
     }
 
     get x(): number {
-        return this.x_coord;
+        return this.#x_coord();
     }
 
     set x(x: number) {
-        if (this.x_coord !== x) {
-            this.x_coord = x;
-            if (this.bound) {
-                this.dispatchEvent(Events.Types.change);
-            }
+        if (this.#x_coord() !== x) {
+            this.#set_x_coord(x);
         }
     }
 
     get y(): number {
-        return this.y_coord;
+        return this.#y_coord();
     }
 
     set y(y: number) {
-        if (this.y_coord !== y) {
-            this.y_coord = y;
-            if (this.bound) {
-                this.dispatchEvent(Events.Types.change);
-            }
+        if (this.#y_coord() !== y) {
+            this.#set_y_coord(y);
         }
     }
 
@@ -126,20 +111,7 @@ export class Vector extends Events {
         return (v1.x * v2.x + v1.y * v2.y) / (v1.length() * v2.length());
     }
 
-    /**
-     * @name Two.Vector.angleBetween
-     * @function
-     * @param {Two.Vector} v1
-     * @param {Two.Vector} v2
-     * @returns {Number} The angle between points `v1` and `v2`.
-     */
     static angleBetween(v1: Vector, v2: Vector): number {
-
-        if (arguments.length >= 4) {
-            const dx = arguments[0] - arguments[2];
-            const dy = arguments[1] - arguments[3];
-            return Math.atan2(dy, dx);
-        }
 
         const dx = v1.x - v2.x;
         const dy = v1.y - v2.y;
@@ -175,295 +147,46 @@ export class Vector extends Events {
         return dx * dx + dy * dy;
     }
 
-    //
-
     set(x: number, y: number): this {
         this.x = x;
         this.y = y;
         return this;
     }
 
-    /**
-     * @name Two.Vector#copy
-     * @function
-     * @param {Two.Vector} v
-     * @description Copy the x / y components of another object `v`.
-     */
     copy(v: Vector): this {
         this.x = v.x;
         this.y = v.y;
         return this;
     }
 
-    /**
-     * @name Two.Vector#clear
-     * @function
-     * @description Set the x / y component values of the vector to zero.
-     */
     clear(): this {
         this.x = 0;
         this.y = 0;
         return this;
     }
 
-    /**
-     * @name Two.Vector#add
-     * @function
-     * @param {Two.Vector} v
-     * @description Add an object with x / y component values to the instance.
-     * @overloaded
-     */
-
-    /**
-     * @name Two.Vector#add
-     * @function
-     * @param {Number} v
-     * @description Add the **same** number to both x / y component values of the instance.
-     * @overloaded
-     */
-
-    /**
-     * @name Two.Vector#add
-     * @function
-     * @param {Number} x
-     * @param {Number} y
-     * @description Add `x` / `y` values to their respective component value on the instance.
-     * @overloaded
-     */
-    add(x: number, y: number): this {
-        if (arguments.length <= 0) {
-            return this;
-        }
-        else if (arguments.length <= 1) {
-            if (typeof x === 'number') {
-                this.x += x;
-                this.y += x;
-            }
-            else if (x && typeof x.x === 'number' && typeof x.y === 'number') {
-                this.x += x.x;
-                this.y += x.y;
-            }
-        }
-        else {
-            this.x += x;
-            this.y += y;
-        }
+    add(rhs: Vector): this {
+        this.x += rhs.x;
+        this.y += rhs.y;
         return this;
     }
 
-    /**
-     * @name Two.Vector#addSelf
-     * @function
-     * @description Alias for {@link Two.Vector.add}.
-     */
-    addSelf(v) {
-        return this.add.apply(this, arguments);
-    }
-
-    /**
-     * @name Two.Vector#sub
-     * @function
-     * @param {Two.Vector} v
-     * @description Subtract an object with x / y component values to the instance.
-     * @overloaded
-     */
-
-    /**
-     * @name Two.Vector#sub
-     * @function
-     * @param {Number} v
-     * @description Subtract the **same** number to both x / y component values of the instance.
-     * @overloaded
-     */
-
-    /**
-     * @name Two.Vector#sub
-     * @function
-     * @param {Number} x
-     * @param {Number} y
-     * @description Subtract `x` / `y` values to their respective component value on the instance.
-     * @overloaded
-     */
-    sub(x, y) {
-        if (arguments.length <= 0) {
-            return this;
-        }
-        else if (arguments.length <= 1) {
-            if (typeof x === 'number') {
-                this.x -= x;
-                this.y -= x;
-            }
-            else if (x && typeof x.x === 'number' && typeof x.y === 'number') {
-                this.x -= x.x;
-                this.y -= x.y;
-            }
-        }
-        else {
-            this.x -= x;
-            this.y -= y;
-        }
+    sub(rhs: Vector) {
+        this.x -= rhs.x;
+        this.y -= rhs.y;
         return this;
     }
 
-    /**
-     * @name Two.Vector#subtract
-     * @function
-     * @description Alias for {@link Two.Vector.sub}.
-     */
-    subtract() {
-        return this.sub.apply(this, arguments);
-    }
-
-    /**
-     * @name Two.Vector#subSelf
-     * @function
-     * @description Alias for {@link Two.Vector.sub}.
-     */
-    subSelf(v) {
-        return this.sub.apply(this, arguments);
-    }
-
-    /**
-     * @name Two.Vector#subtractSelf
-     * @function
-     * @description Alias for {@link Two.Vector.sub}.
-     */
-    subtractSelf(v) {
-        return this.sub.apply(this, arguments);
-    }
-
-    /**
-     * @name Two.Vector#multiply
-     * @function
-     * @param {Two.Vector} v
-     * @description Multiply an object with x / y component values to the instance.
-     * @overloaded
-     */
-
-    /**
-     * @name Two.Vector#multiply
-     * @function
-     * @param {Number} v
-     * @description Multiply the **same** number to both x / y component values of the instance.
-     * @overloaded
-     */
-
-    /**
-     * @name Two.Vector#multiply
-     * @function
-     * @param {Number} x
-     * @param {Number} y
-     * @description Multiply `x` / `y` values to their respective component value on the instance.
-     * @overloaded
-     */
-    multiply(x: number | { x: number, y: number }, y?: number) {
-        if (arguments.length <= 0) {
-            return this;
-        }
-        else if (arguments.length <= 1) {
-            if (typeof x === 'number') {
-                this.x *= x;
-                this.y *= x;
-            }
-            else if (x && typeof x.x === 'number' && typeof x.y === 'number') {
-                this.x *= x.x;
-                this.y *= x.y;
-            }
-        }
-        else {
-            this.x *= x;
-            this.y *= y;
-        }
-        return this;
-    }
-
-    /**
-     * @name Two.Vector#multiplySelf
-     * @function
-     * @description Alias for {@link Two.Vector.multiply}.
-     */
-    multiplySelf(v) {
-        return this.multiply.apply(this, arguments);
-    }
-
-    /**
-     * @name Two.Vector#multiplyScalar
-     * @function
-     * @param {Number} s - The scalar to multiply by.
-     * @description Mulitiply the vector by a single number. Shorthand to call {@link Two.Vector#multiply} directly.
-     */
     multiplyScalar(s: number) {
-        return this.multiply(s);
-    }
-
-    /**
-     * @name Two.Vector#divide
-     * @function
-     * @param {Two.Vector} v
-     * @description Divide an object with x / y component values to the instance.
-     * @overloaded
-     */
-
-    /**
-     * @name Two.Vector#divide
-     * @function
-     * @param {Number} v
-     * @description Divide the **same** number to both x / y component values of the instance.
-     * @overloaded
-     */
-
-    /**
-     * @name Two.Vector#divide
-     * @function
-     * @param {Number} x
-     * @param {Number} y
-     * @description Divide `x` / `y` values to their respective component value on the instance.
-     * @overloaded
-     */
-    divide(x, y) {
-        if (arguments.length <= 0) {
-            return this;
-        }
-        else if (arguments.length <= 1) {
-            if (typeof x === 'number') {
-                this.x /= x;
-                this.y /= x;
-            }
-            else if (x && typeof x.x === 'number' && typeof x.y === 'number') {
-                this.x /= x.x;
-                this.y /= x.y;
-            }
-        }
-        else {
-            this.x /= x;
-            this.y /= y;
-        }
-        if (isNaN(this.x)) {
-            this.x = 0;
-        }
-        if (isNaN(this.y)) {
-            this.y = 0;
-        }
+        this.x = this.x * s;
+        this.y = this.y * s;
         return this;
     }
 
-    /**
-     * @name Two.Vector#divideSelf
-     * @function
-     * @description Alias for {@link Two.Vector.divide}.
-     */
-    divideSelf(v) {
-        return this.divide.apply(this, arguments);
-    }
-
-    /**
-     * @name Two.Vector#divideScalar
-     * @function
-     * @param {Number} s - The scalar to divide by.
-     * @description Divide the vector by a single number. Shorthand to call {@link Two.Vector#divide} directly.
-     */
     divideScalar(s: number) {
-        return this.divide(s);
+        this.x = this.x / s;
+        this.y = this.y / s;
+        return this;
     }
 
     /**
@@ -472,24 +195,18 @@ export class Vector extends Events {
      * @description Invert each component's sign value.
      */
     negate(): this {
-        return this.multiply(-1);
+        return this.multiplyScalar(-1);
     }
 
     /**
-     * @name Two.Vector#dot
-     * @function
-     * @returns {Number}
-     * @description Get the [dot product](https://en.wikipedia.org/wiki/Dot_product) of the vector.
+     * @returns the [dot product](https://en.wikipedia.org/wiki/Dot_product) of the vector.
      */
     dot(v: Vector): number {
         return this.x * v.x + this.y * v.y;
     }
 
     /**
-     * @name Two.Vector#length
-     * @function
-     * @returns {Number}
-     * @description Get the length of a vector.
+     * @returns the length of a vector.
      */
     length(): number {
         return Math.sqrt(this.lengthSquared());

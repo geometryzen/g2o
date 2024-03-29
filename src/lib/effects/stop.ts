@@ -1,6 +1,4 @@
 import { Element } from '../element.js';
-import { _ } from '../utils/underscore.js';
-import { Gradient } from './gradient.js';
 
 /**
  * @name Two.Stop

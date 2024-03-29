@@ -5,7 +5,6 @@ import { LinearGradient } from './effects/linear-gradient';
 import { RadialGradient } from './effects/radial-gradient';
 import { Texture } from './effects/texture';
 import { Events } from './events';
-import { Group } from './group';
 import { Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
 import { decomposeMatrix, lerp, mod } from './utils/math';
@@ -1070,11 +1069,19 @@ export class Path extends Shape {
      */
     flagReset(): this {
 
-        this._flagVertices = this._flagLength = this._flagFill = this._flagStroke =
-            this._flagLinewidth = this._flagOpacity = this._flagVisible =
-            this._flagCap = this._flagJoin = this._flagMiter =
-            this._flagClip = false;
+        this._flagVertices = false;
+        this._flagLength = false;
+        this._flagFill = false;
+        this._flagStroke = false;
+        this._flagLinewidth = false;
+        this._flagOpacity = false;
+        this._flagVisible = false;
+        this._flagCap = false;
+        this._flagJoin = false;
+        this._flagMiter = false;
+        this._flagClip = false;
 
+        super.flagReset();
         Shape.prototype.flagReset.call(this);
 
         return this;

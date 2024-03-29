@@ -1,7 +1,6 @@
 import { Children } from './children.js';
 import { Shape } from './shape.js';
 import { _ } from './utils/underscore.js';
-import { Vector } from './vector.js';
 
 
 // Constants
@@ -353,13 +352,13 @@ export class Group extends Shape {
      * @description Recursively search for classes. Returns an array of matching elements.
      * @returns {Two.Shape[]} - Or empty array if nothing is found.
      */
-    getByClassName(className) {
-        const found = [];
-        function search(node) {
+    getByClassName(className: string) {
+        const found: (Shape | Group)[] = [];
+        function search(node: Shape | Group) {
             if (Array.prototype.indexOf.call(node.classList, className) >= 0) {
                 found.push(node);
             }
-            if (node.children) {
+            if (node instanceof Group && node.children) {
                 for (let i = 0; i < node.children.length; i++) {
                     const child = node.children[i];
                     search(child);
@@ -376,13 +375,14 @@ export class Group extends Shape {
      * @description Recursively search for children of a specific type, e.g. {@link Two.Path}. Pass a reference to this type as the param. Returns an array of matching elements.
      * @returns {Two.Shape[]} - Empty array if nothing is found.
      */
-    getByType(type) {
-        const found = [];
-        function search(node) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getByType(type: any) {
+        const found: (Shape | Group)[] = [];
+        function search(node: Shape | Group) {
             if (node instanceof type) {
                 found.push(node);
             }
-            if (node.children) {
+            if (node instanceof Group && node.children) {
                 for (let i = 0; i < node.children.length; i++) {
                     const child = node.children[i];
                     search(child);
@@ -399,14 +399,15 @@ export class Group extends Shape {
      * @param {Two.Shape[]|...Two.Shape} objects - An array of objects to be added. Can also be supplied as individual arguments.
      * @description Add objects to the group.
      */
-    add(objects) {
+    add(objects: Shape | Shape[] | Group) {
 
         // Allow to pass multiple objects either as array or as multiple arguments
         // If it's an array also create copy of it in case we're getting passed
         // a childrens array directly.
         if (!(objects instanceof Array)) {
             objects = Array.prototype.slice.call(arguments);
-        } else {
+        }
+        else {
             objects = objects.slice();
         }
 
@@ -704,7 +705,9 @@ export class Group extends Shape {
         const orderChildren = Group.OrderChildren.bind(this);
 
         if (this._children) {
-            this._children.unbind();
+            this._children.unbind('insert', insertChildren);
+            this._children.unbind('remove', removeChildren);
+            this._children.unbind('order', orderChildren);
             if (this._children.length > 0) {
                 removeChildren(this._children);
             }

@@ -1,24 +1,24 @@
-import { Events } from './events.js';
+import { createSignal, Signal } from 'solid-js';
 import { Commands } from './utils/path-commands.js';
 import { Vector } from './vector.js';
 
-/**
- * @description An object that holds 3 {@link Two.Vector}s, the anchor point and its corresponding handles: `left` and `right`. In order to properly describe the bezier curve about the point there is also a command property to describe what type of drawing should occur when Two.js renders the anchors.
- */
-export class Anchor extends Vector {
-
+export class Anchor {
+    /**
+     * default is zero.
+     */
+    readonly origin = new Vector();
     readonly controls = {
         left: new Vector(),
         right: new Vector()
     };
-    #command: 'M' | 'L' | 'C' | 'A' | 'Z' = Commands.move;
-    #relative = true;
+    readonly #command: Signal<'M' | 'L' | 'C' | 'A' | 'Z'>;
+    readonly #relative: Signal<boolean>;
 
-    #rx = 0;
-    #ry = 0;
-    #xAxisRotation = 0;
-    #largeArcFlag = 0;
-    #sweepFlag = 1;
+    readonly #rx: Signal<number>;
+    readonly #ry: Signal<number>;
+    readonly #xAxisRotation: Signal<number>;
+    readonly #largeArcFlag: Signal<number>;
+    readonly #sweepFlag: Signal<number>;
 
     /**
      * @param x The x position of the root anchor point.
@@ -29,150 +29,112 @@ export class Anchor extends Vector {
      * @param by The y position of the right handle point.
      * @param command The command to describe how to render. Applicable commands are {@link Two.Commands}
      */
-    constructor(x = 0, y = 0, ax = 0, ay = 0, bx = 0, by = 0, command = Commands.move) {
+    constructor(x = 0, y = 0, ax = 0, ay = 0, bx = 0, by = 0, command: 'M' | 'L' | 'C' | 'A' | 'Z' = Commands.move) {
 
-        super(x, y);
+        this.origin.set(x, y);
+        this.controls.left.set(ax, ay);
+        this.controls.right.set(bx, by);
 
-        this.command = command;
-        this.relative = true;
-
-        const broadcast = Anchor.makeBroadcast(this);
-
-        this.controls.left.set(ax, ay).addEventListener(Events.Types.change, broadcast);
-        this.controls.right.set(bx, by).addEventListener(Events.Types.change, broadcast);
+        this.#command = createSignal(command);
+        this.#relative = createSignal(true);
+        this.#rx = createSignal(0);
+        this.#ry = createSignal(0);
+        this.#xAxisRotation = createSignal(0);
+        this.#largeArcFlag = createSignal(0);
+        this.#sweepFlag = createSignal(1);
     }
 
-    static makeBroadcast(scope: Anchor) {
-        return broadcast;
-        function broadcast() {
-            if (scope.bound) {
-                scope.dispatchEvent(Events.Types.change);
-            }
-        }
-    }
-
-    /**
-     * @name Two.Anchor#copy
-     * @function
-     * @param {Two.Anchor} v - The anchor to apply values to.
-     * @description Copy the properties of one {@link Two.Anchor} onto another.
-     */
     copy(v: Anchor): this {
 
-        this.x = v.x;
-        this.y = v.y;
-
-        if (typeof v.command === 'string') {
-            this.command = v.command;
-        }
-
-        if (v.controls) {
-            if (v.controls.left) {
-                this.controls.left.copy(v.controls.left);
-            }
-            if (v.controls.right) {
-                this.controls.right.copy(v.controls.right);
-            }
-        }
-
-        if (typeof v.relative === 'boolean') {
-            this.relative = v.relative;
-        }
-
-        if (typeof v.rx === 'number') {
-            this.rx = v.rx;
-        }
-        if (typeof v.ry === 'number') {
-            this.ry = v.ry;
-        }
-        if (typeof v.xAxisRotation === 'number') {
-            this.xAxisRotation = v.xAxisRotation;
-        }
-        if (typeof v.largeArcFlag === 'number') {
-            this.largeArcFlag = v.largeArcFlag;
-        }
-        if (typeof v.sweepFlag === 'number') {
-            this.sweepFlag = v.sweepFlag;
-        }
+        this.origin.copy(v.origin);
+        this.command = v.command;
+        this.controls.left.copy(v.controls.left);
+        this.controls.right.copy(v.controls.right);
+        this.relative = v.relative;
+        this.rx = v.rx;
+        this.ry = v.ry;
+        this.xAxisRotation = v.xAxisRotation;
+        this.largeArcFlag = v.largeArcFlag;
+        this.sweepFlag = v.sweepFlag;
 
         return this;
 
     }
-    get command() {
-        return this.#command;
+    /**
+     * default is 'M'.
+     */
+    get command(): 'M' | 'L' | 'C' | 'A' | 'Z' {
+        return this.#command[0]();
     }
-    set command(command) {
-        if (this.#command !== command) {
-            this.#command = command;
-            if (this.bound) {
-                this.dispatchEvent(Events.Types.change);
-            }
+    set command(command: 'M' | 'L' | 'C' | 'A' | 'Z') {
+        if (this.command !== command) {
+            this.#command[1](command);
         }
     }
+    /**
+     * default is true.
+     */
     get relative(): boolean {
-        return this.#relative;
+        return this.#relative[0]();
     }
     set relative(relative: boolean) {
-        if (this.#relative !== !!relative) {
-            this.#relative = !!relative;
-            if (this.bound) {
-                this.dispatchEvent(Events.Types.change);
-            }
+        if (this.relative !== !!relative) {
+            this.#relative[1](relative);
         }
     }
+    /**
+     * default is zero.
+     */
     get rx(): number {
-        return this.#rx;
+        return this.#rx[0]();
     }
     set rx(rx: number) {
-        if (this.#rx !== rx) {
-            this.#rx = rx;
-            if (this.bound) {
-                this.dispatchEvent(Events.Types.change);
-            }
+        if (this.rx !== rx) {
+            this.#rx[1](rx);
         }
     }
+    /**
+     * default is zero.
+     */
     get ry(): number {
-        return this.#ry;
+        return this.#ry[0]();
     }
     set ry(ry: number) {
-        if (this.#ry !== ry) {
-            this.#ry = ry;
-            if (this.bound) {
-                this.dispatchEvent(Events.Types.change);
-            }
+        if (this.ry !== ry) {
+            this.#ry[1](ry);
         }
     }
+    /**
+     * default is zero.
+     */
     get xAxisRotation(): number {
-        return this.#xAxisRotation;
+        return this.#xAxisRotation[0]();
     }
     set xAxisRotation(xAxisRotation: number) {
-        if (this.#xAxisRotation !== xAxisRotation) {
-            this.#xAxisRotation = xAxisRotation;
-            if (this.bound) {
-                this.dispatchEvent(Events.Types.change);
-            }
+        if (this.xAxisRotation !== xAxisRotation) {
+            this.#xAxisRotation[1](xAxisRotation);
         }
     }
-    get largeArcFlag() {
-        return this.#largeArcFlag;
+    /**
+     * default is zero.
+     */
+    get largeArcFlag(): number {
+        return this.#largeArcFlag[0]();
     }
     set largeArcFlag(largeArcFlag) {
-        if (this.#largeArcFlag !== largeArcFlag) {
-            this.#largeArcFlag = largeArcFlag;
-            if (this.bound) {
-                this.dispatchEvent(Events.Types.change);
-            }
+        if (this.largeArcFlag !== largeArcFlag) {
+            this.#largeArcFlag[1](largeArcFlag);
         }
     }
-    get sweepFlag() {
-        return this.#sweepFlag;
+    /**
+     * default is one.
+     */
+    get sweepFlag(): number {
+        return this.#sweepFlag[0]();
     }
     set sweepFlag(sweepFlag) {
-        if (this.#sweepFlag !== sweepFlag) {
-            this.#sweepFlag = sweepFlag;
-            if (this.bound) {
-                this.dispatchEvent(Events.Types.change);
-            }
+        if (this.sweepFlag !== sweepFlag) {
+            this.#sweepFlag[1](sweepFlag);
         }
     }
 }

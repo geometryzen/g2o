@@ -56,7 +56,7 @@ export class RoundedRectangle extends Path {
      */
     _radius = 12;
 
-    constructor(x, y, width, height, radius) {
+    constructor(x = 0, y = 0, width = 0, height = 0, radius = 12) {
 
         if (typeof radius === 'undefined' &&
             typeof width === 'number' && typeof height === 'number') {
@@ -145,14 +145,15 @@ export class RoundedRectangle extends Path {
             if (this._radius instanceof Vector) {
                 rx = this._radius.x;
                 ry = this._radius.y;
-            } else {
+            }
+            else {
                 rx = this._radius;
                 ry = this._radius;
             }
 
             let v;
-            let w = width / 2;
-            let h = height / 2;
+            const w = width / 2;
+            const h = height / 2;
 
             v = this.vertices[0];
             v.x = - (w - rx);
@@ -220,7 +221,6 @@ export class RoundedRectangle extends Path {
 
             v = this.vertices[9];
             v.copy(this.vertices[8]);
-
         }
 
         super._update.call(this);
@@ -236,12 +236,9 @@ export class RoundedRectangle extends Path {
      * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
      */
     flagReset() {
-
         this._flagWidth = this._flagHeight = this._flagRadius = false;
         super.flagReset.call(this);
-
         return this;
-
     }
 }
 

@@ -3,7 +3,6 @@ import { Path } from '../path.js';
 import { TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 
-
 const cos = Math.cos, sin = Math.sin;
 
 /**
@@ -68,10 +67,6 @@ export class Star extends Path {
         }
 
         super();
-
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
 
         this.closed = true;
         this.automatic = false;
@@ -149,20 +144,18 @@ export class Star extends Path {
 
                 if (i >= length) {
                     this.vertices.push(new Anchor(x, y));
-                } else {
+                }
+                else {
                     this.vertices[i].set(x, y);
                 }
 
                 this.vertices[i].command = i === 0 ? Commands.move : Commands.line;
-
             }
-
         }
 
         super._update.call(this);
 
         return this;
-
     }
 
     /**
@@ -172,44 +165,29 @@ export class Star extends Path {
      * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
      */
     flagReset() {
-
         this._flagInnerRadius = this._flagOuterRadius = this._flagSides = false;
         super.flagReset.call(this);
-
         return this;
-
+    }
+    get innerRadius(): number {
+        return this._innerRadius;
+    }
+    set innerRadius(v: number) {
+        this._innerRadius = v;
+        this._flagInnerRadius = true;
+    }
+    get outerRadius(): number {
+        return this._outerRadius;
+    }
+    set outerRadius(v: number) {
+        this._outerRadius = v;
+        this._flagOuterRadius = true;
+    }
+    get sides(): number {
+        return this._sides;
+    }
+    set sides(v: number) {
+        this._sides = v;
+        this._flagSides = true;
     }
 }
-
-const proto = {
-    innerRadius: {
-        enumerable: true,
-        get: function () {
-            return this._innerRadius;
-        },
-        set: function (v) {
-            this._innerRadius = v;
-            this._flagInnerRadius = true;
-        }
-    },
-    outerRadius: {
-        enumerable: true,
-        get: function () {
-            return this._outerRadius;
-        },
-        set: function (v) {
-            this._outerRadius = v;
-            this._flagOuterRadius = true;
-        }
-    },
-    sides: {
-        enumerable: true,
-        get: function () {
-            return this._sides;
-        },
-        set: function (v) {
-            this._sides = v;
-            this._flagSides = true;
-        }
-    }
-};

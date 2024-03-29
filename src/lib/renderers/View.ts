@@ -5,7 +5,7 @@ export interface View {
     domElement: HTMLElement;
     elem: HTMLElement;
     scene: Group;
-    type: 'gradient' | 'group' | 'path' | 'stop';
+    type: 'gradient' | 'group' | 'path' | 'points' | 'stop';
     vertices: unknown[];
     collection: unknown[];
     bind(type: 'resize', callback: EventHandler): void;
