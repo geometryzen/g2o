@@ -6,16 +6,18 @@ export type EventHandler<T extends Events> = (this: T, ...args: unknown[]) => vo
  */
 export class Events {
 
-    #events: { [name: string]: EventHandler<Events>[] } = {};
-    #bound = false;
+    // Being a base class, we have to be careful when creating private members.
+    // Containment may be a better approach.
+    $event_type_to_handlers: { [name: string]: EventHandler<Events>[] } = {};
+    $bound = false;
 
     constructor() { }
 
     get bound() {
-        return this.#bound;
+        return this.$bound;
     }
     set bound(v) {
-        this.#bound = v;
+        this.$bound = v;
     }
 
     /**
@@ -27,9 +29,9 @@ export class Events {
      */
     addEventListener(name: string, handler: EventHandler<Events>): this {
 
-        const handlers = this.#events[name] || (this.#events[name] = []);
+        const handlers = this.$event_type_to_handlers[name] || (this.$event_type_to_handlers[name] = []);
         handlers.push(handler);
-        this.#bound = true;
+        this.$bound = true;
         return this;
     }
 
@@ -59,20 +61,20 @@ export class Events {
      */
     removeEventListener(name: string, handler: EventHandler<Events>) {
 
-        if (!this.#events) {
+        if (!this.$event_type_to_handlers) {
             return this;
         }
         if (!name && !handler) {
-            this.#events = {};
-            this.#bound = false;
+            this.$event_type_to_handlers = {};
+            this.$bound = false;
             return this;
         }
 
-        const names = name ? [name] : Object.keys(this.#events);
+        const names = name ? [name] : Object.keys(this.$event_type_to_handlers);
         for (let i = 0, l = names.length; i < l; i++) {
 
             name = names[i];
-            const list = this.#events[name];
+            const list = this.$event_type_to_handlers[name];
 
             if (list) {
                 const events = [];
@@ -85,7 +87,7 @@ export class Events {
                         }
                     }
                 }
-                this.#events[name] = events;
+                this.$event_type_to_handlers[name] = events;
             }
         }
 
@@ -119,12 +121,12 @@ export class Events {
      */
     dispatchEvent(name: string, ...values: unknown[]): this {
 
-        if (!this.#events) {
+        if (!this.$event_type_to_handlers) {
             return this;
         }
 
         const args = Array.prototype.slice.call(arguments, 1);
-        const events = this.#events[name];
+        const events = this.$event_type_to_handlers[name];
 
         if (events) {
             for (let i = 0; i < events.length; i++) {

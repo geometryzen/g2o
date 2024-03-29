@@ -8,7 +8,7 @@ import { Shape } from './shape.js';
  * @extends Two.Collection
  * @description A children collection which is accesible both by index and by object `id`.
  */
-export class Children extends Collection {
+export class Children<T> extends Collection<T> {
 
     /**
      * @name Two.Group.Children#ids

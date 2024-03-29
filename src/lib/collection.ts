@@ -5,11 +5,8 @@ import { EventHandler, Events } from './events.js';
  */
 export class Collection<T> extends Array<T> {
 
-    // Warning: Multiple inheritance hack
-    /**
-     * @private
-     */
-    _events = new Events();
+    // Being a base class we have to be careful with private members.
+    $events = new Events();
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(items: unknown[]) {
@@ -27,43 +24,43 @@ export class Collection<T> extends Array<T> {
     }
 
     // Getters and setters aren't enumerable
-    get _bound() {
-        return this._events.bound;
+    get bound(): boolean {
+        return this.$events.bound;
     }
-    set _bound(v) {
-        this._events.bound = v;
+    set bound(v: boolean) {
+        this.$events.bound = v;
     }
 
     addEventListener() {
-        return this._events.addEventListener.apply(this, arguments);
+        return this.$events.addEventListener.apply(this, arguments);
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     on(type: unknown, callback: EventHandler) {
-        return this._events.on.apply(this, arguments);
+        return this.$events.on.apply(this, arguments);
     }
     bind() {
-        return this._events.bind.apply(this, arguments);
+        return this.$events.bind.apply(this, arguments);
     }
     removeEventListener() {
-        return this._events.removeEventListener.apply(this, arguments);
+        return this.$events.removeEventListener.apply(this, arguments);
     }
     off() {
-        return this._events.off.apply(this, arguments);
+        return this.$events.off.apply(this, arguments);
     }
     unbind() {
-        return this._events.unbind.apply(this, arguments);
+        return this.$events.unbind.apply(this, arguments);
     }
     dispatchEvent() {
-        return this._events.dispatchEvent.apply(this, arguments);
+        return this.$events.dispatchEvent.apply(this, arguments);
     }
     trigger() {
-        return this._events.trigger.apply(this, arguments);
+        return this.$events.trigger.apply(this, arguments);
     }
     listen() {
-        return this._events.listen.apply(this, arguments);
+        return this.$events.listen.apply(this, arguments);
     }
     ignore() {
-        return this._events.ignore.apply(this, arguments);
+        return this.$events.ignore.apply(this, arguments);
     }
 
     pop() {
