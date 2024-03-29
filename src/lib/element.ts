@@ -1,11 +1,13 @@
 import { Events } from './events.js';
+import { Group } from './group.js';
 import { View } from './renderers/View.js';
+import { Shape } from './shape.js';
 
 /**
  * The foundational object for the scenegraph.
  */
 export class Element extends Events {
-
+    parent: Group;
     /**
      * @name Two.Element#_flagId
      * @private
@@ -75,7 +77,7 @@ export class Element extends Events {
         this._flagId = true;
         if (this.parent) {
             delete this.parent.children.ids[id];
-            this.parent.children.ids[this.#id] = this;
+            this.parent.children.ids[this.#id] = this as unknown as Shape;
         }
     }
     get className(): string {

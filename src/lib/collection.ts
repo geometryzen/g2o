@@ -1,4 +1,4 @@
-import { Events } from './events.js';
+import { EventHandler, Events } from './events.js';
 
 /**
  * @description An `Array` like object with additional event propagation on actions. `pop`, `shift`, and `splice` trigger `removed` events. `push`, `unshift`, and `splice` with more than 2 arguments trigger 'inserted'. Finally, `sort` and `reverse` trigger `order` events.
@@ -11,6 +11,21 @@ export class Collection extends Array {
      */
     _events = new Events();
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    constructor(items: unknown[]) {
+
+        super();
+
+        if (arguments[0] && Array.isArray(arguments[0])) {
+            if (arguments[0].length > 0) {
+                this.push.apply(this, arguments[0]);
+            }
+        }
+        else if (arguments.length > 0) {
+            this.push.apply(this, arguments);
+        }
+    }
+
     // Getters and setters aren't enumerable
     get _bound() {
         return this._events._bound;
@@ -22,7 +37,8 @@ export class Collection extends Array {
     addEventListener() {
         return this._events.addEventListener.apply(this, arguments);
     }
-    on() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    on(type: unknown, callback: EventHandler) {
         return this._events.on.apply(this, arguments);
     }
     bind() {
@@ -48,20 +64,6 @@ export class Collection extends Array {
     }
     ignore() {
         return this._events.ignore.apply(this, arguments);
-    }
-
-    constructor() {
-
-        super();
-
-        if (arguments[0] && Array.isArray(arguments[0])) {
-            if (arguments[0].length > 0) {
-                this.push.apply(this, arguments[0]);
-            }
-        } else if (arguments.length > 0) {
-            this.push.apply(this, arguments);
-        }
-
     }
 
     pop() {

@@ -184,7 +184,7 @@ export class Group extends Shape {
      */
     _mask: Shape = null;
 
-    readonly _children: Shape[];
+    readonly _children: Children;
 
     constructor(children?: Shape[]) {
 

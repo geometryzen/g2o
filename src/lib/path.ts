@@ -139,7 +139,7 @@ export class Path extends Shape {
      * @private
      * @see {@link Two.Path#stroke}
      */
-    _stroke = '#000';
+    _stroke: string = '#000';
 
     /**
      * @name Two.Path#_linewidth
@@ -693,7 +693,7 @@ export class Path extends Shape {
      * @returns {Object}
      * @description Given a float `t` from 0 to 1, return a point or assign a passed `obj`'s coordinates to that percentage on this {@link Two.Path}'s curve.
      */
-    getPointAt(t, obj) {
+    getPointAt(t: number, obj: Vector) {
 
         let ia, ib, result;
         let x, x1, x2, x3, x4, y, y1, y2, y3, y4, left, right;
@@ -942,7 +942,7 @@ export class Path extends Shape {
      * @param {Boolean} [silent=false] - If set to `true` then the path isn't updated before calculation. Useful for internal use.
      * @description Recalculate the {@link Two.Path#length} value.
      */
-    _updateLength(limit, silent) {
+    _updateLength(limit?: number, silent = false) {
         // TODO: DRYness (function above)
         if (!silent) {
             this._update();
@@ -1162,12 +1162,27 @@ export class Path extends Shape {
         return this;
 
     }
-    /**
-     * @name Two.Path#dashes
-     * @property {Number[]} - Array of numbers. Odd indices represent dash length. Even indices represent dash space.
-     * @description A list of numbers that represent the repeated dash length and dash space applied to the stroke of the text.
-     * @see {@link https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray} for more information on the SVG stroke-dasharray attribute.
-     */
+    get cap(): string {
+        return this._cap;
+    }
+    set cap(v: string) {
+        this._cap = v;
+        this._flagCap = true;
+    }
+    get closed(): boolean {
+        return this._closed;
+    }
+    set closed(v: boolean) {
+        this._closed = !!v;
+        this._flagVertices = true;
+    }
+    get curved(): boolean {
+        return this._curved;
+    }
+    set curved(v: boolean) {
+        this._curved = !!v;
+        this._flagVertices = true;
+    }
     get dashes(): number[] {
         return this._dashes;
     }
@@ -1200,12 +1215,32 @@ export class Path extends Shape {
         }
 
     }
+    get join(): string {
+        return this._join;
+    }
+    set join(v: string) {
+        this._join = v;
+        this._flagJoin = true;
+    }
+    get length(): number {
+        if (this._flagLength) {
+            this._updateLength();
+        }
+        return this._length;
+    }
     get linewidth(): number {
         return this._linewidth;
     }
     set linewidth(v: number) {
         this._linewidth = v;
         this._flagLinewidth = true;
+    }
+    get miter(): number {
+        return this._miter;
+    }
+    set miter(v: number) {
+        this._miter = v;
+        this._flagMiter = true;
     }
     get opacity(): number {
         return this._opacity;
@@ -1239,7 +1274,6 @@ export class Path extends Shape {
         return this._collection;
     }
     set vertices(vertices) {
-
         const bindVertices = this._renderer.bindVertices;
         const unbindVertices = this._renderer.unbindVertices;
 
@@ -1278,73 +1312,6 @@ export class Path extends Shape {
 }
 
 const proto = {
-
-    cap: {
-        enumerable: true,
-        get: function () {
-            return this._cap;
-        },
-        set: function (v) {
-            this._cap = v;
-            this._flagCap = true;
-        }
-    },
-    join: {
-        enumerable: true,
-        get: function () {
-            return this._join;
-        },
-        set: function (v) {
-            this._join = v;
-            this._flagJoin = true;
-        }
-    },
-    miter: {
-        enumerable: true,
-        get: function () {
-            return this._miter;
-        },
-        set: function (v) {
-            this._miter = v;
-            this._flagMiter = true;
-        }
-    },
-
-    /**
-     * @name Two.Path#length
-     * @property {Number} - The sum of distances between all {@link Two.Path#vertices}.
-     */
-    length: {
-        get: function () {
-            if (this._flagLength) {
-                this._updateLength();
-            }
-            return this._length;
-        }
-    },
-
-    closed: {
-        enumerable: true,
-        get: function () {
-            return this._closed;
-        },
-        set: function (v) {
-            this._closed = !!v;
-            this._flagVertices = true;
-        }
-    },
-
-    curved: {
-        enumerable: true,
-        get: function () {
-            return this._curved;
-        },
-        set: function (v) {
-            this._curved = !!v;
-            this._flagVertices = true;
-        }
-    },
-
     automatic: {
         enumerable: true,
         get: function () {
@@ -1486,7 +1453,7 @@ const proto = {
  * @function
  * @description Cached method to let renderers know vertices have been updated on a {@link Two.Path}.
  */
-function FlagVertices() {
+function FlagVertices(this: Path) {
     this._flagVertices = true;
     this._flagLength = true;
     if (this.parent) {
