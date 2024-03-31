@@ -1,61 +1,28 @@
+import { Subscription } from 'rxjs';
 import { Anchor } from '../anchor.js';
-import { Events } from '../events.js';
 import { Path } from '../path.js';
 import { Commands } from '../utils/path-commands.js';
 import { Vector } from '../vector.js';
 
-
-/**
- * @name Two.RoundedRectangle
- * @class
- * @extends Two.Path
- * @param {Number} [x=0] - The x position of the rounded rectangle.
- * @param {Number} [y=0] - The y position of the rounded rectangle.
- * @param {Number} [width=0] - The width value of the rounded rectangle.
- * @param {Number} [height=0] - The width value of the rounded rectangle.
- * @param {Number} [radius=0] - The radius value of the rounded rectangle.
- * @param {Number} [resolution=12] - The number of vertices used to construct the rounded rectangle.
- */
 export class RoundedRectangle extends Path {
 
-    /**
-     * @name Two.RoundedRectangle#_flagWidth
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.RoundedRectangle#width} needs updating.
-     */
     _flagWidth = false;
-    /**
-     * @name Two.RoundedRectangle#_flagHeight
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.RoundedRectangle#height} needs updating.
-     */
     _flagHeight = false;
-    /**
-     * @name Two.RoundedRectangle#_flagRadius
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.RoundedRectangle#radius} needs updating.
-     */
     _flagRadius = false;
 
-    /**
-     * @name Two.RoundedRectangle#_width
-     * @private
-     * @see {@link Two.RoundedRectangle#width}
-     */
     _width = 0;
-    /**
-     * @name Two.RoundedRectangle#_height
-     * @private
-     * @see {@link Two.RoundedRectangle#height}
-     */
     _height = 0;
-    /**
-     * @name Two.RoundedRectangle#_radius
-     * @private
-     * @see {@link Two.RoundedRectangle#radius}
-     */
-    _radius = 12;
 
+    _radius: number | Vector = 12;
+    #radius_change_subscription: Subscription | null = null;
+
+    /**
+     * @param x The x position of the rounded rectangle.
+     * @param y The y position of the rounded rectangle.
+     * @param width The width value of the rounded rectangle.
+     * @param height The width value of the rounded rectangle.
+     * @param radius The radius value of the rounded rectangle.
+     */
     constructor(x = 0, y = 0, width = 0, height = 0, radius = 12) {
 
         if (typeof radius === 'undefined' &&
@@ -63,26 +30,17 @@ export class RoundedRectangle extends Path {
             radius = Math.floor(Math.min(width, height) / 12);
         }
 
-        const points = [];
+        const points: Anchor[] = [];
         for (let i = 0; i < 10; i++) {
-            points.push(
-                new Anchor(0, 0, 0, 0, 0, 0,
-                    i === 0 ? Commands.move : Commands.curve)
-            );
+            points.push(new Anchor(0, 0, 0, 0, 0, 0, i === 0 ? Commands.move : Commands.curve));
         }
 
         // points[points.length - 1].command = Two.Commands.close;
 
         super(points);
 
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
-
         this.closed = true;
         this.automatic = false;
-
-        this._renderer.flagRadius = FlagRadius.bind(this);
 
         /**
          * @name Two.RoundedRectangle#width
@@ -119,20 +77,8 @@ export class RoundedRectangle extends Path {
 
     }
 
-    /**
-     * @name Two.RoundedRectangle.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.RoundedRectangle}.
-     */
     static Properties = ['width', 'height', 'radius'];
 
-    /**
-     * @name Two.RoundedRectangle#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
     _update() {
 
         if (this._flagVertices || this._flagWidth || this._flagHeight || this._flagRadius) {
@@ -155,20 +101,20 @@ export class RoundedRectangle extends Path {
             const w = width / 2;
             const h = height / 2;
 
-            v = this.vertices[0];
+            v = this.vertices.getAt(0);
             v.x = - (w - rx);
             v.y = - h;
 
             // Upper Right Corner
 
-            v = this.vertices[1];
+            v = this.vertices.getAt(1);
             v.x = (w - rx);
             v.y = - h;
             v.controls.left.clear();
             v.controls.right.x = rx;
             v.controls.right.y = 0;
 
-            v = this.vertices[2];
+            v = this.vertices.getAt(2);
             v.x = w;
             v.y = - (h - ry);
             v.controls.right.clear();
@@ -176,14 +122,14 @@ export class RoundedRectangle extends Path {
 
             // Bottom Right Corner
 
-            v = this.vertices[3];
+            v = this.vertices.getAt(3);
             v.x = w;
             v.y = (h - ry);
             v.controls.left.clear();
             v.controls.right.x = 0;
             v.controls.right.y = ry;
 
-            v = this.vertices[4];
+            v = this.vertices.getAt(4);
             v.x = (w - rx);
             v.y = h;
             v.controls.right.clear();
@@ -191,14 +137,14 @@ export class RoundedRectangle extends Path {
 
             // Bottom Left Corner
 
-            v = this.vertices[5];
+            v = this.vertices.getAt(5);
             v.x = - (w - rx);
             v.y = h;
             v.controls.left.clear();
             v.controls.right.x = - rx;
             v.controls.right.y = 0;
 
-            v = this.vertices[6];
+            v = this.vertices.getAt(6);
             v.x = - w;
             v.y = (h - ry);
             v.controls.left.clear();
@@ -206,21 +152,21 @@ export class RoundedRectangle extends Path {
 
             // Upper Left Corner
 
-            v = this.vertices[7];
+            v = this.vertices.getAt(7);
             v.x = - w;
             v.y = - (h - ry);
             v.controls.left.clear();
             v.controls.right.x = 0;
             v.controls.right.y = - ry;
 
-            v = this.vertices[8];
+            v = this.vertices.getAt(8);
             v.x = - (w - rx);
             v.y = - h;
             v.controls.left.clear();
             v.controls.right.clear();
 
-            v = this.vertices[9];
-            v.copy(this.vertices[8]);
+            v = this.vertices.getAt(9);
+            v.copy(this.vertices.getAt(8));
         }
 
         super._update.call(this);
@@ -229,68 +175,46 @@ export class RoundedRectangle extends Path {
 
     }
 
-    /**
-     * @name Two.RoundedRectangle#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
     flagReset() {
         this._flagWidth = this._flagHeight = this._flagRadius = false;
         super.flagReset.call(this);
         return this;
     }
-}
 
-const proto = {
-    width: {
-        enumerable: true,
-        get: function () {
-            return this._width;
-        },
-        set: function (v) {
-            this._width = v;
-            this._flagWidth = true;
-        }
-    },
-    height: {
-        enumerable: true,
-        get: function () {
-            return this._height;
-        },
-        set: function (v) {
-            this._height = v;
-            this._flagHeight = true;
-        }
-    },
-    radius: {
-        enumerable: true,
-        get: function () {
-            return this._radius;
-        },
-        set: function (v) {
-
-            if (this._radius instanceof Vector) {
-                this._radius.unbind(Events.Types.change, this._renderer.flagRadius);
-            }
-
-            this._radius = v;
-
-            if (this._radius instanceof Vector) {
-                this._radius.bind(Events.Types.change, this._renderer.flagRadius);
-            }
-
-            this._flagRadius = true;
-
-        }
+    get width() {
+        return this._width;
     }
-};
+    set width(v) {
+        this._width = v;
+        this._flagWidth = true;
+    }
 
-/**
- * @name FlagRadius
- * @private
- * @property {Function} - A convenience function to trigger the flag for radius changing.
- */
-function FlagRadius() {
-    this._flagRadius = true;
+    get height() {
+        return this._height;
+    }
+    set height(v) {
+        this._height = v;
+        this._flagHeight = true;
+    }
+
+    get radius() {
+        return this._radius;
+    }
+    set radius(radius) {
+
+        if (this.#radius_change_subscription) {
+            this.#radius_change_subscription.unsubscribe();
+            this.#radius_change_subscription = null;
+        }
+
+        this._radius = radius;
+
+        if (radius instanceof Vector) {
+            this.#radius_change_subscription = radius.change$.subscribe(() => {
+                this._flagRadius = true;
+            });
+        }
+
+        this._flagRadius = true;
+    }
 }

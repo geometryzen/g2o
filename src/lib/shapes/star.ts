@@ -5,56 +5,23 @@ import { Commands } from '../utils/path-commands.js';
 
 const cos = Math.cos, sin = Math.sin;
 
-/**
- * @name Two.Star
- * @class
- * @extends Two.Path
- * @param {Number} [x=0] - The x position of the star.
- * @param {Number} [y=0] - The y position of the star.
- * @param {Number} [innerRadius=0] - The inner radius value of the star.
- * @param {Number} [outerRadius=0] - The outer radius value of the star.
- * @param {Number} [sides=5] - The number of sides used to construct the star.
- */
 export class Star extends Path {
 
-    /**
-     * @name Two.Star#_flagInnerRadius
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Star#innerRadius} needs updating.
-     */
     _flagInnerRadius = false;
-    /**
-     * @name Two.Star#_flagOuterRadius
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Star#outerRadius} needs updating.
-     */
     _flagOuterRadius = false;
-    /**
-     * @name Two.Star#_flagSides
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Star#sides} needs updating.
-     */
     _flagSides = false;
 
-    /**
-     * @name Two.Star#_innerRadius
-     * @private
-     * @see {@link Two.Star#innerRadius}
-     */
     _innerRadius = 0;
-    /**
-     * @name Two.Star#_outerRadius
-     * @private
-     * @see {@link Two.Star#outerRadius}
-     */
     _outerRadius = 0;
-    /**
-     * @name Two.Star#_sides
-     * @private
-     * @see {@link Two.Star#sides}
-     */
     _sides = 0;
 
+    /**
+     * @param x The x position of the star.
+     * @param y The y position of the star.
+     * @param innerRadius The inner radius value of the star.
+     * @param outerRadius The outer radius value of the star.
+     * @param sides The number of sides used to construct the star.
+     */
     constructor(x = 0, y = 0, innerRadius = 0, outerRadius = 0, sides = 5) {
 
         if (arguments.length <= 3) {
@@ -62,7 +29,7 @@ export class Star extends Path {
             innerRadius = outerRadius / 2;
         }
 
-        if (typeof sides !== 'number' || sides <= 0) {
+        if (sides <= 0) {
             sides = 5;
         }
 
@@ -71,56 +38,21 @@ export class Star extends Path {
         this.closed = true;
         this.automatic = false;
 
-        /**
-         * @name Two.Star#innerRadius
-         * @property {Number} - The size of the inner radius of the star.
-         */
-        if (typeof innerRadius === 'number') {
-            this.innerRadius = innerRadius;
-        }
+        this.innerRadius = innerRadius;
 
-        /**
-         * @name Two.Star#outerRadius
-         * @property {Number} - The size of the outer radius of the star.
-         */
-        if (typeof outerRadius === 'number') {
-            this.outerRadius = outerRadius;
-        }
+        this.outerRadius = outerRadius;
 
-        /**
-         * @name Two.Star#sides
-         * @property {Number} - The amount of sides the star has.
-         */
-        if (typeof sides === 'number') {
-            this.sides = sides;
-        }
+        this.sides = sides;
 
         this._update();
 
-        if (typeof x === 'number') {
-            this.translation.x = x;
-        }
-        if (typeof y === 'number') {
-            this.translation.y = y;
-        }
-
+        this.position.x = x;
+        this.position.y = y;
     }
 
-    /**
-     * @name Two.Star.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.Star}.
-     */
     static Properties = ['innerRadius', 'outerRadius', 'sides'];
 
 
-    /**
-     * @name Two.Star#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
     _update() {
 
         if (this._flagVertices || this._flagInnerRadius || this._flagOuterRadius || this._flagSides) {
@@ -146,10 +78,10 @@ export class Star extends Path {
                     this.vertices.push(new Anchor(x, y));
                 }
                 else {
-                    this.vertices[i].set(x, y);
+                    this.vertices.getAt(i).origin.set(x, y);
                 }
 
-                this.vertices[i].command = i === 0 ? Commands.move : Commands.line;
+                this.vertices.getAt(i).command = i === 0 ? Commands.move : Commands.line;
             }
         }
 
@@ -158,17 +90,12 @@ export class Star extends Path {
         return this;
     }
 
-    /**
-     * @name Two.Star#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
     flagReset() {
         this._flagInnerRadius = this._flagOuterRadius = this._flagSides = false;
         super.flagReset.call(this);
         return this;
     }
+
     get innerRadius(): number {
         return this._innerRadius;
     }
@@ -176,6 +103,7 @@ export class Star extends Path {
         this._innerRadius = v;
         this._flagInnerRadius = true;
     }
+
     get outerRadius(): number {
         return this._outerRadius;
     }
@@ -183,6 +111,7 @@ export class Star extends Path {
         this._outerRadius = v;
         this._flagOuterRadius = true;
     }
+
     get sides(): number {
         return this._sides;
     }
