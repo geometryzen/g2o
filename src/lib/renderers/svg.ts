@@ -1,16 +1,15 @@
-import { IShape } from '../IShape.js';
 import { Anchor } from '../anchor.js';
+import { LinearGradient } from '../effects/linear-gradient.js';
+import { RadialGradient } from '../effects/radial-gradient.js';
 import { Group } from '../group.js';
 import { Path } from '../path.js';
 import { Shape } from '../shape.js';
-import { Text } from '../text.js';
 import { Points } from '../shapes/points.js';
+import { Text } from '../text.js';
 import { decomposeMatrix, mod, toFixed } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 import { _ } from '../utils/underscore.js';
 import { Vector } from '../vector.js';
-import { LinearGradient } from '../effects/linear-gradient.js';
-import { RadialGradient } from '../effects/radial-gradient.js';
 
 const svg = {
     version: 1.1,
@@ -23,14 +22,14 @@ const svg = {
         left: 'start',
         center: 'middle',
         right: 'end'
-    },
+    } as const,
 
     baselines: {
         top: 'hanging',
         middle: 'middle',
         bottom: 'ideographic',
         baseline: 'alphabetic'
-    },
+    } as const,
 
     // Create an svg namespaced element.
     createElement: function (name: string, attrs: { [name: string]: string }) {
@@ -302,7 +301,7 @@ const svg = {
             svg[child._renderer.type].render.call(child, this);
         },
 
-        render: function (this:Shape, domElement) {
+        render: function (this: Shape, domElement) {
 
             // Shortcut for hidden objects.
             // Doesn't reset the flags, so changes are stored and
@@ -409,7 +408,7 @@ const svg = {
 
         path: {
 
-            render: function (this:Path, domElement) {
+            render: function (this: Path, domElement) {
 
                 // Shortcut for hidden objects.
                 // Doesn't reset the flags, so changes are stored and

@@ -620,6 +620,8 @@ export class Path extends Shape {
 
     /**
      * TODO: Bad name. THis function is called for its side effects which are to modify the Anchor.
+     * Originally the function appears to promote a Vector and return an Anchor, but this is not used
+     * and the call always involves an Anchor.
      * @param t Percentage value describing where on the {@link Two.Path} to estimate and assign coordinate values.
      * @param {Two.Vector} [obj] - Object to apply calculated x, y to. If none available returns new `Object`.
      * @returns {Object}

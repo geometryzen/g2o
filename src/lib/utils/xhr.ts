@@ -1,23 +1,16 @@
-/**
- * @name Two.Utils.xhr
- * @function
- * @param {String} path
- * @param {Function} callback
- * @returns {XMLHttpRequest} The constructed and called XHR request.
- * @description Canonical method to initiate `GET` requests in the browser. Mainly used by {@link Two#load} method.
- */
-export function xhr(path, callback) {
+export function xhr(url: string, callback: (responseText: string) => void): XMLHttpRequest {
 
-  const xhr = new XMLHttpRequest();
-  xhr.open('GET', path);
+    const rqst = new XMLHttpRequest();
 
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState === 4 && xhr.status === 200) {
-      callback(xhr.responseText);
-    }
-  };
+    rqst.open('GET', url);
 
-  xhr.send();
-  return xhr;
+    rqst.onreadystatechange = function () {
+        if (rqst.readyState === 4 && rqst.status === 200) {
+            callback(rqst.responseText);
+        }
+    };
 
+    rqst.send();
+
+    return rqst;
 }

@@ -1500,7 +1500,6 @@ const webgl = {
     },
 
     TextureRegistry: new Registry()
-
 };
 
 webgl.ctx = webgl.canvas.getContext('2d');

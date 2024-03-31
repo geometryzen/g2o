@@ -174,10 +174,10 @@ export class Text extends Shape {
     _leading = 17;
 
     /**
-     * @name Two.Text#alignment
-     * @property {String} - Alignment of text in relation to {@link Two.Text#translation}'s coordinates. Possible values include `'left'`, `'center'`, `'right'`. Defaults to `'center'`.
+     * Alignment of text in relation to {@link Text#translation}'s coordinates.
+     * Possible values include `'left'`, `'center'`, `'right'`. Defaults to `'center'`.
      */
-    _alignment = 'center';
+    _alignment: 'center' | 'left' | 'right' = 'center';
 
     /**
      * @name Two.Text#baseline
@@ -449,10 +449,10 @@ export class Text extends Shape {
             this._flagStyle = this._flagDirection = false;
         return this;
     }
-    get alignment() {
+    get alignment(): 'center' | 'left' | 'right' {
         return this._alignment;
     }
-    set alignment(v) {
+    set alignment(v: 'center' | 'left' | 'right') {
         this._alignment = v;
         this._flagAlignment = true;
     }

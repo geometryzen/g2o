@@ -8,12 +8,14 @@ import { Stop } from '../effects/stop.js';
 import { Group } from '../group.js';
 import { Path } from '../path.js';
 import { Registry } from '../registry.js';
+import { Shape } from '../shape.js';
 import { Circle } from '../shapes/circle.js';
 import { Ellipse } from '../shapes/ellipse.js';
 import { Line } from '../shapes/line.js';
 import { Rectangle } from '../shapes/rectangle.js';
 import { RoundedRectangle } from '../shapes/rounded-rectangle.js';
 import { Text } from '../text.js';
+import { Two } from '../two.js';
 import { Vector } from '../vector.js';
 import { getReflection } from './curves.js';
 import { TwoError } from './error.js';
@@ -21,10 +23,6 @@ import { decomposeMatrix } from './math.js';
 import { Commands } from './path-commands.js';
 import { root } from './root.js';
 import { _ } from './underscore.js';
-
-
-
-
 
 // https://github.com/jonobr1/two.js/issues/507#issuecomment-777159213
 const regex = {
@@ -37,10 +35,10 @@ const alignments = {
     start: 'left',
     middle: 'center',
     end: 'right'
-};
+} as const;
 
 // Reserved attributes to remove
-const reservedAttributesToRemove = ['id', 'class', 'transform', 'xmlns', 'viewBox'];
+const reservedAttributesToRemove = ['id', 'class', 'transform', 'xmlns', 'viewBox'] as const;
 
 const overwriteAttrs = ['x', 'y', 'width', 'height', 'href', 'xlink:href'];
 
@@ -50,8 +48,8 @@ const overwriteAttrs = ['x', 'y', 'width', 'height', 'href', 'xlink:href'];
  * @param {AlignmentString}
  * @see {@link https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/text-anchor}
  */
-function getAlignment(anchor) {
-    return alignments[anchor];
+function getAlignment(text_anchor_value: 'start' | 'middle' | 'end'): 'left' | 'center' | 'right' {
+    return alignments[text_anchor_value];
 }
 
 function getBaseline(node) {
@@ -111,64 +109,54 @@ function extractCSSText(text, styles) {
 
 }
 
-/**
- * @name Two.Utils.getSvgStyles
- * @function
- * @param {SVGElement} node - The SVG node to parse.
- * @returns {Object} styles
- * @description Get the CSS comands from the `style` attribute of an SVG node and apply them as key value pairs to a JavaScript object.
- */
-function getSvgStyles(node) {
+function get_svg_element_styles(element: SVGElement): { [name: string]: string } {
 
-    const styles = {};
-    const attributes = getSvgAttributes(node);
-    const length = Math.max(attributes.length, node.style.length);
+    const styles: { [name: string]: string } = {};
+    const non_reserved_names: string[] = get_svg_element_non_reserved_attribute_names(element);
+    const length = Math.max(non_reserved_names.length, element.style.length);
 
     for (let i = 0; i < length; i++) {
 
-        const command = node.style[i];
-        const attribute = attributes[i];
+        const command = element.style[i];
+        const non_reserved_name = non_reserved_names[i];
 
         if (command) {
-            styles[command] = node.style[command];
+            styles[command] = element.style[command];
         }
-        if (attribute) {
-            styles[attribute] = node.getAttribute(attribute);
+        if (non_reserved_name) {
+            styles[non_reserved_name] = element.getAttribute(non_reserved_name);
         }
-
     }
-
     return styles;
-
 }
 
-function getSvgAttributes(node) {
+/**
+ * @returns The SVG attribute names of the element with the reserved 'id','class','transform','xmlns', and 'viewBox' removed
+ */
+function get_svg_element_non_reserved_attribute_names(element: SVGElement): string[] {
 
-    const attributes = node.getAttributeNames();
+    const names = element.getAttributeNames();
 
     for (let i = 0; i < reservedAttributesToRemove.length; i++) {
         const keyword = reservedAttributesToRemove[i];
-        const index = Array.prototype.indexOf.call(attributes, keyword);
+        const index = names.indexOf(keyword);
         if (index >= 0) {
-            attributes.splice(index, 1);
+            names.splice(index, 1);
         }
     }
 
-    return attributes;
+    return names;
 
 }
 
 /**
- * @name Two.Utils.applySvgViewBox
- * @function
- * @param {Two.Shape} node - The Two.js object to apply viewbox matrix to
- * @param {String} value - The viewBox value from the SVG attribute
- * @returns {Two.Shape} node
+ * @param node The Two.js object to apply viewbox matrix to
+ * @param value The viewBox value from the SVG attribute
  * @description Applies the transform of the SVG Viewbox on a given node.
  */
-function applySvgViewBox(node, value) {
+function applySvgViewBox(node: Group, viewBox: string): void {
 
-    const elements = value.split(/[\s,]/);
+    const elements: string[] = viewBox.split(/[\s,]/);
 
     const x = - parseFloat(elements[0]);
     const y = - parseFloat(elements[1]);
@@ -177,7 +165,7 @@ function applySvgViewBox(node, value) {
 
     if (x && y) {
         for (let i = 0; i < node.children.length; i++) {
-            const child = node.children[i];
+            const child = node.children.getAt(i);
             if ('translation' in child) {
                 child.translation.add(x, y);
             }
@@ -211,23 +199,17 @@ function applySvgViewBox(node, value) {
         node.scale.y = node.height / height;
     }
 
-    node.mask = new Rectangle(0, 0, width, height);
-    node.mask.origin.set(- width / 2, - height / 2);
-
-    return node;
-
+    const rectangle = new Rectangle(0, 0, width, height);
+    node.mask = rectangle;
+    rectangle.origin.set(- width / 2, - height / 2);
 }
 
 /**
- * @name Two.Utils.applySvgAttributes
- * @function
- * @param {SVGElement} node - An SVG Node to extrapolate attributes from.
- * @param {Two.Shape} elem - The Two.js object to apply extrapolated attributes to.
- * @returns {Two.Shape} The Two.js object passed now with applied attributes.
- * @description This function iterates through an SVG Node's properties and stores ones of interest. It tries to resolve styles applied via CSS as well.
+ * Iterates through an SVG Node's properties and stores ones of interest on the shape.
+ * It tries to resolve styles applied via CSS as well.
  * @TODO Reverse calculate {@link Two.Gradient}s for fill / stroke of any given path.
  */
-function applySvgAttributes(node, elem, parentStyles) {
+function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyles: ParentStyles) {
 
     const styles = {}, attributes = {}, extracted = {};
     let i, m, key, value, prop, attr;
@@ -411,8 +393,8 @@ function applySvgAttributes(node, elem, parentStyles) {
             case 'clip-path':
                 if (regex.cssBackgroundImage.test(value)) {
                     id = value.replace(regex.cssBackgroundImage, '$1');
-                    if (read.defs.current && read.defs.current.contains(id)) {
-                        ref = read.defs.current.get(id);
+                    if (get_defs_current() && get_defs_current().contains(id)) {
+                        ref = get_defs_current().get(id);
                         if (ref && ref.childNodes.length > 0) {
                             ref = ref.childNodes[0];
                             tagName = getTagName(ref.nodeName);
@@ -438,8 +420,8 @@ function applySvgAttributes(node, elem, parentStyles) {
                     // Overwritten id for non-conflicts on same page SVG documents
                     // TODO: Make this non-descructive
                     // node.setAttribute('two-' + key, value.replace(/\)/i, '-' + Constants.Identifier + 'applied)'));
-                    if (read.defs.current && read.defs.current.contains(id)) {
-                        ref = read.defs.current.get(id);
+                    if (get_defs_current() && get_defs_current().contains(id)) {
+                        ref = get_defs_current().get(id);
                         if (!ref.object) {
                             tagName = getTagName(ref.nodeName);
                             ref.object = read[tagName].call(this, ref, {});
@@ -476,8 +458,8 @@ function applySvgAttributes(node, elem, parentStyles) {
                     break;
                 }
                 if (value.match('[a-z%]$') && !value.endsWith('px')) {
-                    error = new TwoError(
-                        'only pixel values are supported with the ' + key + ' attribute.');
+                    error = new TwoError('only pixel values are supported with the ' + key + ' attribute.');
+                    // eslint-disable-next-line no-console
                     console.warn(error.name, error.message);
                 }
                 elem.translation[key] = parseFloat(value);
@@ -521,50 +503,65 @@ function applySvgAttributes(node, elem, parentStyles) {
 
 }
 
-/**
- * @name Two.Utils.updateDefsCache
- * @function
- * @param {SVGElement} node - The SVG Node with which to update the defs cache.
- * @param {Object} Object - The defs cache to be updated.
- * @description Update the cache of children of <defs /> tags.
- */
-function updateDefsCache(node, defsCache) {
+function updateDefsCache(node: SVGDefsElement, defsCache: Registry): void {
     for (let i = 0, l = node.childNodes.length; i < l; i++) {
-        const n = node.childNodes[i];
-        if (!n.id) continue;
+        const childNode = node.childNodes[i];
+        // FIXME: unknown could happen, but type system doesn't like it.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const id = (childNode as any).id as (string | null);
+        if (!id) {
+            continue;
+        }
+        else {
+            const tagName = getTagName(node.nodeName);
+            if (tagName === '#text') continue;
 
-        const tagName = getTagName(node.nodeName);
-        if (tagName === '#text') continue;
-
-        defsCache.add(n.id, n);
+            defsCache.add(id, childNode);
+        }
     }
 }
 
-/**
- * @name Two.Utils.getScene
- * @param {Two.Shape} node - The currently available object in the scenegraph.
- * @returns {Group} - The highest order {@link Two.Group} in the scenegraph.
- * @property {Function}
- */
-function getScene(node) {
+function getScene(node: Shape): Group {
 
     while (node.parent) {
         node = node.parent;
     }
 
-    return node.scene;
-
+    if (node instanceof Two) {
+        return node.scene;
+    }
+    else {
+        throw new Error();
+    }
 }
 
+function set_defs_current(registry: Registry): Registry {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (read.defs as any).current = registry;
+    return registry;
+}
+
+function get_defs_current(): Registry {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (read.defs as any).current as Registry;
+}
+
+function delete_defs_current(): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (read.defs as any).current;
+}
+
+export type ParentStyles = { [name: string]: string };
+
 /**
- * @name Two.Utils.read
- * @property {Object} read - A map of functions to read any number of SVG node types and create Two.js equivalents of them. Primarily used by the {@link Two#interpret} method.
+ * A map of functions to read any number of SVG node types and create Two.js equivalents of them.
+ *  Primarily used by the {@link Two#interpret} method.
  */
 export const read = {
 
-    svg: function (node) {
+    svg: function (this: Two, node: SVGElement): Group {
 
-        const defs = read.defs.current = new Registry();
+        const defs = set_defs_current(new Registry());
         const elements = node.getElementsByTagName('defs');
 
         for (let i = 0; i < elements.length; i++) {
@@ -602,17 +599,17 @@ export const read = {
             applySvgViewBox(svg, viewBox);
         }
 
-        delete read.defs.current;
+        delete_defs_current();
 
         return svg;
-
     },
 
-    defs: function (node) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    defs: function (this: Two, node: SVGElement): null {
         return null;
     },
 
-    use: function (node, styles) {
+    use: function (this: Two, node: SVGElement, styles: ParentStyles) {
 
         let error;
 
@@ -624,14 +621,14 @@ export const read = {
         }
 
         const id = href.slice(1);
-        if (!read.defs.current.contains(id)) {
+        if (!get_defs_current().contains(id)) {
             error = new TwoError(
                 'unable to find element for reference ' + href + '.');
             console.warn(error.name, error.message);
             return null;
         }
 
-        const template = read.defs.current.get(id);
+        const template = get_defs_current().get(id);
         const fullNode = template.cloneNode(true);
 
         for (let i = 0; i < node.attributes.length; i++) {
@@ -648,7 +645,7 @@ export const read = {
 
     },
 
-    g: function (node, parentStyles) {
+    g: function (this: Two, node: SVGElement, parentStyles: ParentStyles = {}) {
 
         const group = new Group();
 
@@ -657,7 +654,7 @@ export const read = {
         this.add(group);
 
         // Switched up order to inherit more specific styles
-        const styles = getSvgStyles.call(this, node);
+        const styles = get_svg_element_styles.call(this, node);
 
         for (let i = 0, l = node.childNodes.length; i < l; i++) {
             const n = node.childNodes[i];
@@ -1199,7 +1196,7 @@ export const read = {
 
     },
 
-    lineargradient: function (node:HTMLElement, parentStyles) {
+    lineargradient: function (node: HTMLElement, parentStyles) {
 
         let units = node.getAttribute('gradientUnits');
         let spread = node.getAttribute('spreadMethod');
@@ -1244,7 +1241,7 @@ export const read = {
             const opacityAttr = child.getAttribute('stop-opacity');
             const style = child.getAttribute('style');
 
-            let matches: RegExpMatchArray|false;
+            let matches: RegExpMatchArray | false;
             if (color === null) {
                 matches = style ? style.match(/stop-color:\s?([#a-fA-F0-9]*)/) : false;
                 color = matches && matches.length > 1 ? matches[1] : undefined;
@@ -1354,9 +1351,10 @@ export const read = {
 
     },
 
-    text: function (node, parentStyles) {
+    text: function (this: Two, node: SVGElement, parentStyles) {
 
-        const alignment = getAlignment(node.getAttribute('text-anchor')) || 'left';
+        const text_anchor_value = node.getAttribute('text-anchor') as 'start' | 'middle' | 'end';
+        const alignment: 'left' | 'right' | 'center' = getAlignment(text_anchor_value) || 'left';
         const baseline = getBaseline(node) || 'baseline';
         const message = node.textContent;
 
@@ -1371,9 +1369,9 @@ export const read = {
 
     },
 
-    clippath: function (node, parentStyles) {
-        if (read.defs.current && !read.defs.current.contains(node.id)) {
-            read.defs.current.add(node.id, node);
+    clippath: function (this: Two, node: SVGElement, parentStyles) {
+        if (get_defs_current() && !get_defs_current().contains(node.id)) {
+            get_defs_current().add(node.id, node);
         }
         return null;
     },
@@ -1407,4 +1405,4 @@ export const read = {
 
         return sprite;
     }
-};
+} as const;

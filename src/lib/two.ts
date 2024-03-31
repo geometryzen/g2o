@@ -815,8 +815,7 @@ export class Two {
      * @returns {Two.ArcSegment}
      */
     makeArcSegment(x: number, y: number, innerRadius: number, outerRadius: number, startAngle: number, endAngle: number, resolution: number = Two.Resolution): ArcSegment {
-        const arcSegment = new ArcSegment(
-            x, y, innerRadius, outerRadius, startAngle, endAngle, resolution);
+        const arcSegment = new ArcSegment(x, y, innerRadius, outerRadius, startAngle, endAngle, resolution);
         this.scene.add(arcSegment);
         return arcSegment;
     }
@@ -1048,20 +1047,16 @@ export class Two {
 
     }
 
+
     /**
-     * @name Two#load
-     * @function
-     * @param {String|SVGElement} pathOrSVGContent - The URL path of an SVG file or an SVG document as text.
-     * @param {Function} callback - Function to call once loading has completed.
-     * @returns {Two.Group}
-     * @description Load an SVG file or SVG text and interpret it into Two.js legible objects.
+     * Load an SVG file or SVG text and interpret it into Two.js legible objects.
      */
-    load(pathOrSVGContent: string | SVGElement, callback: Function): Group {
+    load(url: string, callback: (group: Group, svg: unknown) => void): Group {
 
         const group = new Group();
         let elem, i, child;
 
-        const attach = (function (data) {
+        const attach = (data: string) => {
 
             dom.temp.innerHTML = data;
 
@@ -1079,22 +1074,17 @@ export class Two {
                 callback(group, svg);
             }
 
-        }).bind(this);
+        };
 
-        if (/\.svg$/i.test(pathOrSVGContent)) {
-
-            xhr(pathOrSVGContent, attach);
-
+        if (/\.svg$/i.test(url)) {
+            xhr(url, attach);
             return group;
-
         }
-
-        attach(pathOrSVGContent);
-
-        return group;
-
+        else {
+            attach(url);
+            return group;
+        }
     }
-
 }
 
 function fitToWindow(this: Two) {
