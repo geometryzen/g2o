@@ -28,6 +28,8 @@ export class Anchor {
     readonly #change: BehaviorSubject<this>;
     readonly change$: Observable<this>;
 
+    readonly #t: Signal<number>;
+
     /**
      * @param x The x position of the root anchor point.
      * @param y The y position of the root anchor point.
@@ -50,6 +52,8 @@ export class Anchor {
         this.#xAxisRotation = createSignal(0);
         this.#largeArcFlag = createSignal(0);
         this.#sweepFlag = createSignal(1);
+
+        this.#t = createSignal(0);
 
         this.#change = new BehaviorSubject(this);
         this.change$ = this.#change.asObservable();
@@ -94,6 +98,15 @@ export class Anchor {
 
     set y(y: number) {
         this.origin.y = y;
+    }
+
+    get t(): number {
+        return this.#t[0]();
+    }
+    set t(t: number) {
+        if (this.t !== t) {
+            this.#t[1](t);
+        }
     }
 
     copy(v: Anchor): this {

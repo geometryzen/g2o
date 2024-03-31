@@ -619,9 +619,8 @@ export class Path extends Shape {
     }
 
     /**
-     * @name Two.Path#getPointAt
-     * @function
-     * @param {Number} t - Percentage value describing where on the {@link Two.Path} to estimate and assign coordinate values.
+     * TODO: Bad name. THis function is called for its side effects which are to modify the Anchor.
+     * @param t Percentage value describing where on the {@link Two.Path} to estimate and assign coordinate values.
      * @param {Two.Vector} [obj] - Object to apply calculated x, y to. If none available returns new `Object`.
      * @returns {Object}
      * @description Given a float `t` from 0 to 1, return a point or assign a passed `obj`'s coordinates to that percentage on this {@link Two.Path}'s curve.
@@ -722,42 +721,35 @@ export class Path extends Shape {
         const alx = lerp(t2x, t3x, t);
         const aly = lerp(t2y, t3y, t);
 
-        if (_.isObject(obj)) {
+        obj.x = x;
+        obj.y = y;
 
-            obj.x = x;
-            obj.y = y;
+        obj.controls.left.x = brx;
+        obj.controls.left.y = bry;
+        obj.controls.right.x = alx;
+        obj.controls.right.y = aly;
 
-            if (obj instanceof Anchor) {
-
-                obj.controls.left.x = brx;
-                obj.controls.left.y = bry;
-                obj.controls.right.x = alx;
-                obj.controls.right.y = aly;
-
-                if (!(typeof obj.relative === 'boolean') || obj.relative) {
-                    obj.controls.left.x -= x;
-                    obj.controls.left.y -= y;
-                    obj.controls.right.x -= x;
-                    obj.controls.right.y -= y;
-                }
-
-            }
-
-            obj.t = t;
-
-            return obj;
-
+        if (!(typeof obj.relative === 'boolean') || obj.relative) {
+            obj.controls.left.x -= x;
+            obj.controls.left.y -= y;
+            obj.controls.right.x -= x;
+            obj.controls.right.y -= y;
         }
 
+        obj.t = t;
+
+        return obj;
+
+        /*
         const result = new Anchor(
             x, y, brx - x, bry - y, alx - x, aly - y,
             this._curved ? Commands.curve : Commands.line
         );
-
+ 
         result.t = t;
-
+ 
         return result;
-
+            */
     }
 
     /**
