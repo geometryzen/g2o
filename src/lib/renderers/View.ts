@@ -10,10 +10,11 @@ import { Group } from "../group";
  * It's not a contract for a renderer.
  */
 export interface View {
+    clip: SVGClipPathElement;
     domElement: HTMLElement;
-    elem: HTMLElement;
+    elem: HTMLElement | SVGElement;
     scene: Group;
-    type: 'gradient' | 'group' | 'linear-gradient' | 'path' | 'points' | 'radial-gradient' | 'stop' | 'text' | 'texture';
+    type: 'group' | 'linear-gradient' | 'path' | 'points' | 'radial-gradient' | 'stop' | 'text' | 'texture';
     vertices: Anchor[];
     collection: Anchor[];
     bind(type: 'resize', callback: EventHandler): void;

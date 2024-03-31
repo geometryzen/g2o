@@ -125,6 +125,21 @@ export class Anchor {
         return this;
 
     }
+
+    /**
+     * Invoked when the path is automatic (not manual).
+     */
+    ignore(): void {
+        throw new Error("TODO: Anchor.ignore()");
+    }
+
+    /**
+     * Invoked when the path is manual (not automatic).
+     */
+    listen(): void {
+        throw new Error("TODO: Anchor.listen()");
+    }
+
     /**
      * default is 'M'.
      */

@@ -19,7 +19,7 @@ import { Two } from '../two.js';
 import { Vector } from '../vector.js';
 import { getReflection } from './curves.js';
 import { TwoError } from './error.js';
-import { decomposeMatrix } from './math.js';
+import { MatrixDecomposition, decomposeMatrix } from './math.js';
 import { Commands } from './path-commands.js';
 import { root } from './root.js';
 import { _ } from './underscore.js';
@@ -29,7 +29,7 @@ const regex = {
     path: /[+-]?(?:\d*\.\d+|\d+)(?:[eE][+-]\d+)?/g,
     cssBackgroundImage: /url\(['"]?#([\w\d-_]*)['"]?\)/i,
     unitSuffix: /[a-zA-Z%]*/i
-};
+} as const;
 
 const alignments = {
     start: 'left',
@@ -40,7 +40,7 @@ const alignments = {
 // Reserved attributes to remove
 const reservedAttributesToRemove = ['id', 'class', 'transform', 'xmlns', 'viewBox'] as const;
 
-const overwriteAttrs = ['x', 'y', 'width', 'height', 'href', 'xlink:href'];
+const overwriteAttrs = ['x', 'y', 'width', 'height', 'href', 'xlink:href'] as const;
 
 /**
  * @name Two.Utils.getAlignment
@@ -52,17 +52,17 @@ function getAlignment(text_anchor_value: 'start' | 'middle' | 'end'): 'left' | '
     return alignments[text_anchor_value];
 }
 
-function getBaseline(node) {
+function getBaseline(node: SVGElement): string {
     const a = node.getAttribute('dominant-baseline');
     const b = node.getAttribute('alignment-baseline');
     return a || b;
 }
 
-function getTagName(tag) {
+function getTagName(tag: string): string {
     return tag.replace(/svg:/ig, '').toLowerCase();
 }
 
-function applyTransformsToVector(transforms, vector) {
+function applyTransformsToVector(transforms: MatrixDecomposition, vector: Vector): void {
 
     vector.x += transforms.translateX;
     vector.y += transforms.translateY;
@@ -76,22 +76,14 @@ function applyTransformsToVector(transforms, vector) {
         vector.x = l * Math.cos(transforms.rotation);
         vector.y = l * Math.sin(transforms.rotation);
     }
-
 }
 
 /**
- * @name Two.Utils.extractCSSText
- * @function
- * @param {String} text - The CSS text body to be parsed and extracted.
- * @param {Object} [styles] - The styles object to apply CSS key values to.
- * @returns {Object} styles
+ * @param text The CSS text body to be parsed and extracted.
+ * @param styles The styles object to apply CSS key values to.
  * @description Parse CSS text body and apply them as key value pairs to a JavaScript object.
  */
-function extractCSSText(text, styles) {
-
-    if (!styles) {
-        styles = {};
-    }
+function extractCSSText(text: string, styles: ParentStyles): void {
 
     const commands = text.split(';');
 
@@ -104,9 +96,6 @@ function extractCSSText(text, styles) {
         }
         styles[name] = value.replace(/\s/, '');
     }
-
-    return styles;
-
 }
 
 function get_svg_element_styles(element: SVGElement): { [name: string]: string } {

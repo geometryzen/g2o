@@ -1,6 +1,8 @@
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Anchor } from '../anchor.js';
 import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
+import { Texture } from '../effects/texture.js';
 import { Group } from '../group.js';
 import { Path } from '../path.js';
 import { Shape } from '../shape.js';
@@ -10,6 +12,39 @@ import { decomposeMatrix, mod, toFixed } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 import { _ } from '../utils/underscore.js';
 import { Vector } from '../vector.js';
+
+type DOMElement = HTMLElement | SVGElement;
+
+
+function set_dom_element_defs(domElement: DOMElement, defs: SVGDefsElement): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (domElement as any).defs = defs;
+}
+
+function get_dom_element_defs(domElement: DOMElement): SVGDefsElement {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (domElement as any).defs;
+}
+
+function set_defs_flag_update(defs: SVGDefsElement, flagUpdate: boolean): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (defs as any)._flagUpdate = flagUpdate;
+}
+
+function get_defs_flag_update(defs: SVGDefsElement): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (defs as any)._flagUpdate as boolean;
+}
+
+/**
+ * Used to set attributes on SVG elements so the value  MUST be a string.
+ */
+export type StylesMap = { [name: string]: string };
+
+export type DomContext = {
+    domElement: DOMElement;
+    elem: HTMLElement | SVGElement;
+};
 
 const svg = {
     version: 1.1,
@@ -32,7 +67,7 @@ const svg = {
     } as const,
 
     // Create an svg namespaced element.
-    createElement: function (name: string, attrs: { [name: string]: string }) {
+    createElement: function (name: string, attrs: StylesMap = {}) {
         const tag = name;
         const elem = document.createElementNS(svg.ns, tag);
         if (tag === 'svg') {
@@ -47,7 +82,7 @@ const svg = {
     },
 
     // Add attributes from an svg element.
-    setAttributes: function (elem: Element, attrs: { [name: string]: string }) {
+    setAttributes: function (elem: Element, attrs: StylesMap) {
         const keys = Object.keys(attrs);
         for (let i = 0; i < keys.length; i++) {
             if (/href/.test(keys[i])) {
@@ -61,7 +96,7 @@ const svg = {
     },
 
     // Remove attributes from an svg element.
-    removeAttributes: function (elem: Element, attrs: { [name: string]: string }) {
+    removeAttributes: function (elem: Element, attrs: StylesMap) {
         for (const key in attrs) {
             elem.removeAttribute(key);
         }
@@ -215,25 +250,24 @@ const svg = {
         return string;
     },
 
-    getClip: function (shape: Shape, domElement: HTMLElement) {
+    getClip: function (shape: Shape, domElement: DOMElement) {
         let clip = shape._renderer.clip;
         if (!clip) {
             clip = shape._renderer.clip = svg.createElement('clipPath', {
                 'clip-rule': 'nonzero'
-            });
+            }) as SVGClipPathElement;
         }
         if (clip.parentNode === null) {
-            domElement.defs.appendChild(clip);
+            get_dom_element_defs(domElement).appendChild(clip);
         }
         return clip;
     },
 
     defs: {
-        update: function (domElement: Element) {
-            const { defs } = domElement;
-            if (defs._flagUpdate) {
-                const children = Array.prototype.slice.call(
-                    defs.children, 0);
+        update: function (domElement: HTMLElement | SVGElement) {
+            const defs = get_dom_element_defs(domElement);
+            if (get_defs_flag_update(defs)) {
+                const children = Array.prototype.slice.call(defs.children, 0);
                 for (let i = 0; i < children.length; i++) {
                     const child = children[i];
                     const id = child.id;
@@ -243,16 +277,14 @@ const svg = {
                         defs.removeChild(child);
                     }
                 }
-                defs._flagUpdate = false;
+                set_defs_flag_update(defs, false);
             }
         }
     },
 
     group: {
 
-        // TODO: Can speed up.
-        // TODO: How does this effect a f
-        appendChild: function (object: Shape) {
+        appendChild: function (this: DomContext, object: Shape) {
 
             const elem = object._renderer.elem;
 
@@ -262,7 +294,7 @@ const svg = {
 
             const tag = elem.nodeName;
 
-            if (!tag || /(radial|linear)gradient/i.test(tag) || object._clip) {
+            if (!tag || /(radial|linear)gradient/i.test(tag) || object.clip) {
                 return;
             }
 
@@ -270,7 +302,7 @@ const svg = {
 
         },
 
-        removeChild: function (object) {
+        removeChild: function (object: Shape) {
 
             const elem = object._renderer.elem;
 
@@ -290,24 +322,22 @@ const svg = {
             }
 
             this.elem.removeChild(elem);
-
         },
 
         orderChild: function (object) {
             this.elem.appendChild(object._renderer.elem);
         },
 
-        renderChild: function (child) {
+        renderChild: function (child: Shape) {
             svg[child._renderer.type].render.call(child, this);
         },
 
-        render: function (this: Shape, domElement) {
+        render: function (this: Group, domElement: HTMLElement | SVGElement): void {
 
             // Shortcut for hidden objects.
             // Doesn't reset the flags, so changes are stored and
             // applied once the object is visible again
-            if ((!this._visible && !this._flagVisible)
-                || (this._opacity === 0 && !this._flagOpacity)) {
+            if ((!this._visible && !this._flagVisible) || (this._opacity === 0 && !this._flagOpacity)) {
                 return this;
             }
 
@@ -322,7 +352,7 @@ const svg = {
 
             // _Update styles for the <g>
             const flagMatrix = this._matrix.manual || this._flagMatrix;
-            const context = {
+            const context: DomContext = {
                 domElement: domElement,
                 elem: this._renderer.elem
             };
@@ -332,7 +362,7 @@ const svg = {
             }
 
             for (let i = 0; i < this.children.length; i++) {
-                const child = this.children[i];
+                const child = this.children.getAt(i);
                 svg[child._renderer.type].render.call(child, domElement);
             }
 
@@ -341,7 +371,7 @@ const svg = {
             }
 
             if (this._flagOpacity) {
-                this._renderer.elem.setAttribute('opacity', this._opacity);
+                this._renderer.elem.setAttribute('opacity', `${this.opacity}`);
             }
 
             if (this._flagVisible) {
@@ -406,7 +436,7 @@ const svg = {
 
         },
 
-        path: {
+        'path': {
 
             render: function (this: Path, domElement) {
 
@@ -553,9 +583,9 @@ const svg = {
 
         },
 
-        points: {
+        'points': {
 
-            render: function (this: Points, domElement) {
+            render: function (this: Points, domElement: DOMElement) {
 
                 // Shortcut for hidden objects.
                 // Doesn't reset the flags, so changes are stored and
@@ -662,9 +692,9 @@ const svg = {
 
         },
 
-        text: {
+        'text': {
 
-            render: function (this: Text, domElement) {
+            render: function (this: Text, domElement: DOMElement) {
 
                 this._update();
 
@@ -967,7 +997,7 @@ const svg = {
                     for (let i = 0; i < this.stops.length; i++) {
 
                         const stop = this.stops[i];
-                        const attrs = {};
+                        const attrs: StylesMap = {};
 
                         if (stop._flagOffset) {
                             attrs.offset = 100 * stop._offset + '%';
@@ -1001,16 +1031,31 @@ const svg = {
 
         },
 
-        texture: {
+        'texture': {
 
-            render: function (domElement, silent) {
+            render: function (this: Texture, domElement: HTMLElement | SVGElement, silent) {
 
                 if (!silent) {
                     this._update();
                 }
 
-                const changed = {};
-                const styles = { x: 0, y: 0 };
+                const changed: {
+                    x?: number;
+                    y?: number;
+                    id?: string;
+                    height?: number;
+                    width?: number
+                } = {};
+
+                const styles: {
+                    href?: string;
+                    x: number;
+                    y: number;
+                    height?: number;
+                    width?: number;
+                    'xlink:href'?: string
+                } = { x: 0, y: 0 };
+
                 const image = this.image;
 
                 if (this._flagId) {
@@ -1021,9 +1066,11 @@ const svg = {
 
                     switch (image.nodeName.toLowerCase()) {
 
-                        case 'canvas':
+                        case 'canvas': {
+                            // toDataURL is a member of HTMLCanvasElement
                             styles.href = styles['xlink:href'] = image.toDataURL('image/png');
                             break;
+                        }
                         case 'img':
                         case 'image':
                             styles.href = styles['xlink:href'] = this.src;
@@ -1129,28 +1176,30 @@ const svg = {
 
         }
 
-    };
+    }
 
-    export interface SVGRendererParams {
-        domElement: HTMLElement;
+} as const;
+
+export interface SVGRendererParams {
+    domElement: HTMLElement;
 }
 
-export class Renderer {
+export class SVGRenderer {
+
+    readonly domElement: HTMLElement | SVGElement;
+    readonly scene: Group;
+    readonly defs: SVGDefsElement;
+
+    width?: number;
+    height?: number;
+
+    readonly #resize: BehaviorSubject<{ width: number; height: number }>;
+    readonly resize$: Observable<{ width: number; height: number }>;
 
     constructor(params: SVGRendererParams) {
 
-        super();
-
-        /**
-         * @name Two.SVGRenderer#domElement
-         * @property {Element} - The `<svg />` associated with the Two.js scene.
-         */
         this.domElement = params.domElement || svg.createElement('svg');
 
-        /**
-         * @name Two.SVGRenderer#scene
-         * @property {Two.Group} - The root group of the scenegraph.
-         */
         this.scene = new Group();
         this.scene.parent = this;
 
@@ -1158,11 +1207,14 @@ export class Renderer {
          * @name Two.SVGRenderer#defs
          * @property {SvgDefintionsElement} - The `<defs />` to apply gradients, patterns, and bitmap imagery.
          */
-        this.defs = svg.createElement('defs');
+        this.defs = svg.createElement('defs') as SVGDefsElement;
         this.defs._flagUpdate = false;
         this.domElement.appendChild(this.defs);
-        this.domElement.defs = this.defs;
+        set_dom_element_defs(this.domElement, this.defs);
         this.domElement.style.overflow = 'hidden';
+
+        this.#resize = new BehaviorSubject({ width: this.width, height: this.height });
+        this.resize$ = this.#resize.asObservable();
     }
 
     /**
@@ -1171,31 +1223,20 @@ export class Renderer {
      */
     static Utils = svg;
 
-    /**
-     * @name Two.SVGRenderer#setSize
-     * @function
-     * @param {Number} width - The new width of the renderer.
-     * @param {Number} height - The new height of the renderer.
-     * @description Change the size of the renderer.
-     * @nota-bene Triggers a `Two.Events.resize`.
-     */
-    setSize(width: number, height: number) {
+    setSize(width: number, height: number): this {
         this.width = width;
         this.height = height;
         svg.setAttributes(this.domElement, {
-            width: width,
-            height: height
+            width: `${width}`,
+            height: `${height}`
         });
-        return this.trigger(Events.Types.resize, width, height);
+        this.#resize.next({ width, height });
+        return this;
     }
 
-    /**
-     * @name Two.SVGRenderer#render
-     * @function
-     * @description Render the current scene to the `<svg />`.
-     */
-    render() {
-        svg.group.render.call(this.scene, this.domElement);
+    render(): this {
+        const thisArg = this.scene;
+        svg.group.render.call(thisArg, this.domElement);
         svg.defs.update(this.domElement);
         return this;
     }

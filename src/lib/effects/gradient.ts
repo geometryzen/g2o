@@ -8,7 +8,7 @@ import { Stop } from './stop.js';
 /**
  *
  */
-export class Gradient extends Element<Group> {
+export abstract class Gradient extends Element<Group> {
 
     _flagStops = false;
     _flagSpread = false;
@@ -30,7 +30,7 @@ export class Gradient extends Element<Group> {
 
         super();
 
-        this._renderer.type = 'gradient';
+
         this.id = Constants.Identifier + Constants.uniqueId();
         this.classList = [];
 

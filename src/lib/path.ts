@@ -5,13 +5,11 @@ import { Gradient } from './effects/gradient';
 import { LinearGradient } from './effects/linear-gradient';
 import { RadialGradient } from './effects/radial-gradient';
 import { Texture } from './effects/texture';
-import { Events } from './events';
 import { Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
 import { decomposeMatrix, lerp, mod } from './utils/math';
 import { Commands } from './utils/path-commands';
 import { contains, getCurveLength, getIdByLength, getSubdivisions } from './utils/shape';
-import { _ } from './utils/underscore';
 import { Vector } from './vector.js';
 
 export function get_dashes_offset(dashes: number[]): number | undefined {
@@ -232,12 +230,7 @@ export class Path extends Shape {
      */
     _ending = 1.0;
 
-    /**
-     * @name Two.Path#_mask
-     * @private
-     * @see {@link Two.Path#mask}
-     */
-    _mask: Shape = null;
+    _mask: Shape | null = null;
 
     /**
      * @name Two.Path#_clip
@@ -265,8 +258,6 @@ export class Path extends Shape {
 
         this._renderer.type = 'path';
         this._renderer.flagVertices = FlagVertices.bind(this);
-        this._renderer.bindVertices = BindVertices.bind(this);
-        this._renderer.unbindVertices = UnbindVertices.bind(this);
 
         this._renderer.flagFill = FlagFill.bind(this);
         this._renderer.flagStroke = FlagStroke.bind(this);
@@ -515,7 +506,7 @@ export class Path extends Shape {
         let border = (this.linewidth || 0) / 2;
         const l = this._renderer.vertices.length;
 
-        if (this.linewidth > 0 || (this.stroke && !(/(transparent|none)/i.test(this.stroke)))) {
+        if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
                 const { scaleX, scaleY } = decomposeMatrix(
                     matrix.elements[0], matrix.elements[3], matrix.elements[1],
@@ -983,7 +974,7 @@ export class Path extends Shape {
                                     v.controls.right.clear();
                                 }
                                 else {
-                                    v.controls.right.copy(v);
+                                    v.controls.right.copy(v.origin);
                                 }
 
                                 if (prev.relative) {
@@ -1097,14 +1088,18 @@ export class Path extends Shape {
     get automatic(): boolean {
         return this._automatic;
     }
-    set automatic(v: boolean) {
-        if (v === this._automatic) {
+    set automatic(automatic: boolean) {
+        if (automatic === this._automatic) {
             return;
         }
-        this._automatic = !!v;
-        const method = this._automatic ? 'ignore' : 'listen';
-        this.vertices.forEach(function (v) {
-            v[method]();
+        this._automatic = !!automatic;
+        this.vertices.forEach(function (v: Anchor) {
+            if (automatic) {
+                v.ignore();
+            }
+            else {
+                v.listen();
+            }
         });
     }
     get beginning(): number {
@@ -1207,14 +1202,14 @@ export class Path extends Shape {
         this._linewidth = v;
         this._flagLinewidth = true;
     }
-    get mask() {
+    get mask(): Shape | null {
         return this._mask;
     }
-    set mask(v: Shape) {
-        this._mask = v;
+    set mask(mask: Shape | null) {
+        this._mask = mask;
         this._flagMask = true;
-        if (_.isObject(v) && !v.clip) {
-            v.clip = true;
+        if (mask instanceof Shape && !mask.clip) {
+            mask.clip = true;
         }
     }
     get miter(): number {
@@ -1263,8 +1258,6 @@ export class Path extends Shape {
         return this._collection;
     }
     set vertices(vertices) {
-        const bindVertices = this._renderer.bindVertices;
-        const unbindVertices = this._renderer.unbindVertices;
 
         // Remove previous listeners
         if (this.#collection_insert_subscription) {
@@ -1327,15 +1320,7 @@ export class Path extends Shape {
     }
 }
 
-// Utility functions
-
-/**
- * @name FlagVertices
- * @private
- * @function
- * @description Cached method to let renderers know vertices have been updated on a {@link Two.Path}.
- */
-function FlagVertices(this: Path) {
+export function FlagVertices(this: Path) {
     this._flagVertices = true;
     this._flagLength = true;
     if (this.parent) {
@@ -1343,64 +1328,10 @@ function FlagVertices(this: Path) {
     }
 }
 
-/**
- * @name BindVertices
- * @private
- * @function
- * @description Cached method to let {@link Two.Path} know vertices have been added to the instance.
- */
-function BindVertices(this: Path, items) {
-
-    // This function is called a lot
-    // when importing a large SVG
-    let i = items.length;
-    while (i--) {
-        items[i].bind(Events.Types.change, this._renderer.flagVertices);
-    }
-
-    this._renderer.flagVertices();
-
-}
-
-/**
- * @name UnbindVertices
- * @private
- * @function
- * @description Cached method to let {@link Two.Path} know vertices have been removed from the instance.
- */
-function UnbindVertices(this: Path, items) {
-
-    let i = items.length;
-    while (i--) {
-        items[i].unbind(Events.Types.change, this._renderer.flagVertices);
-    }
-
-    this._renderer.flagVertices();
-
-}
-
-/**
- * @name FlagFill
- * @private
- * @function
- * @description Cached method to let {@link Two.Path} know the fill has changed.
- */
-function FlagFill() {
+export function FlagFill(this: Path) {
     this._flagFill = true;
 }
 
-/**
- * @name FlagFill
- * @private
- * @function
- * @description Cached method to let {@link Two.Path} know the stroke has changed.
- */
-function FlagStroke() {
+export function FlagStroke(this: Path) {
     this._flagStroke = true;
 }
-
-export {
-    BindVertices, FlagFill,
-    FlagStroke, FlagVertices, UnbindVertices
-};
-

@@ -3,7 +3,6 @@ import { IShape } from './IShape.js';
 import { Children } from './children.js';
 import { Shape } from './shape.js';
 
-
 // Constants
 
 const min = Math.min, max = Math.max;
@@ -116,7 +115,7 @@ export class Group extends Shape implements IShape {
      */
     _mask: Shape = null;
 
-    _shapes: Children<IShape>;
+    _shapes: Children<Shape>;
     #shapes_insert_subscription: Subscription | null = null;
     #shapes_remove_subscription: Subscription | null = null;
     #shapes_order_subscription: Subscription | null = null;
@@ -126,13 +125,13 @@ export class Group extends Shape implements IShape {
     /**
      * An automatically updated list of shapes that need to be appended to the renderer's scenegraph.
      */
-    readonly additions: IShape[] = [];
+    readonly additions: Shape[] = [];
     /**
      * An automatically updated list of children that need to be removed from the renderer's scenegraph.
      */
-    readonly subtractions: IShape[] = [];
+    readonly subtractions: Shape[] = [];
 
-    constructor(shapes: IShape[] = []) {
+    constructor(shapes: Shape[] = []) {
 
         super();
 
@@ -155,13 +154,13 @@ export class Group extends Shape implements IShape {
     }
 
     #subscribe_to_shapes(): void {
-        this.#shapes_insert_subscription = this._shapes.insert$.subscribe((inserts: IShape[]) => {
+        this.#shapes_insert_subscription = this._shapes.insert$.subscribe((inserts: Shape[]) => {
             for (const shape of inserts) {
                 update_shape_group(shape, this);
             }
         });
 
-        this.#shapes_remove_subscription = this._shapes.remove$.subscribe((removes: IShape[]) => {
+        this.#shapes_remove_subscription = this._shapes.remove$.subscribe((removes: Shape[]) => {
             for (const shape of removes) {
                 update_shape_group(shape, null);
             }
@@ -316,7 +315,7 @@ export class Group extends Shape implements IShape {
         return search(this);
     }
 
-    add(...shapes: IShape[]) {
+    add(...shapes: Shape[]) {
 
         for (let i = 0; i < shapes.length; i++) {
             const child = shapes[i];
@@ -334,7 +333,7 @@ export class Group extends Shape implements IShape {
 
     }
 
-    remove(...shapes: IShape[]) {
+    remove(...shapes: Shape[]) {
 
         const l = arguments.length,
             grandparent = this.parent;
@@ -553,7 +552,7 @@ export class Group extends Shape implements IShape {
      * @description A list of all the children in the scenegraph.
      * @nota-bene Ther order of this list indicates the order each element is rendered to the screen.
      */
-    get children() {
+    get children(): Children<Shape> {
         return this._shapes;
     }
     set children(children) {
@@ -693,7 +692,7 @@ export class Group extends Shape implements IShape {
 //  * and updates parent-child relationships
 //  * Calling with one arguments will simply remove the parenting
 //  */
-export function update_shape_group(child: IShape, parent?: Group) {
+export function update_shape_group(child: Shape, parent?: Group) {
 
     const previous_parent = child.parent;
     let index;
