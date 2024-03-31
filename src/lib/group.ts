@@ -76,77 +76,16 @@ export class Group extends Shape implements IShape {
 
     // Underlying Properties
 
-    /**
-     * @name Two.Group#fill
-     * @property {(String|Two.Gradient|Two.Texture)} - The value of what all child shapes should be filled in with.
-     * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
-     */
     _fill = '#fff';
-
-    /**
-     * @name Two.Group#stroke
-     * @property {(String|Two.Gradient|Two.Texture)} - The value of what all child shapes should be outlined in with.
-     * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
-     */
     _stroke = '#000';
-
-    /**
-     * @name Two.Group#linewidth
-     * @property {Number} - The thickness in pixels of the stroke for all child shapes.
-     */
     _linewidth = 1.0;
-
-    /**
-     * @name Two.Group#opacity
-     * @property {Number} - The opaqueness of all child shapes.
-     * @nota-bene Becomes multiplied by the individual child's opacity property.
-     */
     _opacity = 1.0;
-
-    /**
-     * @name Two.Group#visible
-     * @property {Boolean} - Display the path or not.
-     * @nota-bene For {@link Two.CanvasRenderer} and {@link Two.WebGLRenderer} when set to false all updating is disabled improving performance dramatically with many objects in the scene.
-     */
     _visible = true;
-
-    /**
-     * @name Two.Group#cap
-     * @property {String}
-     * @see {@link https://www.w3.org/TR/SVG11/painting.html#StrokeLinecapProperty}
-     */
     _cap = 'round';
-
-    /**
-     * @name Two.Group#join
-     * @property {String}
-     * @see {@link https://www.w3.org/TR/SVG11/painting.html#StrokeLinejoinProperty}
-     */
     _join = 'round';
-
-    /**
-     * @name Two.Group#miter
-     * @property {String}
-     * @see {@link https://www.w3.org/TR/SVG11/painting.html#StrokeMiterlimitProperty}
-     */
     _miter = 4;
-
-    /**
-     * @name Two.Group#closed
-     * @property {Boolean} - Determines whether a final line is drawn between the final point in the `vertices` array and the first point of all child shapes.
-     */
     _closed = true;
-
-    /**
-     * @name Two.Group#curved
-     * @property {Boolean} - When the child's path is `automatic = true` this boolean determines whether the lines between the points are curved or not.
-     */
     _curved = false;
-
-    /**
-     * @name Two.Group#automatic
-     * @property {Boolean} - Determines whether or not Two.js should calculate curves, lines, and commands automatically for you or to let the developer manipulate them for themselves.
-     */
     _automatic = true;
 
     /**

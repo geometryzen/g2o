@@ -1,5 +1,4 @@
 import { Element } from '../element.js';
-import { Events } from '../events.js';
 import { CanvasShim } from '../utils/canvas-shim.js';
 import { TwoError } from '../utils/error.js';
 import { root } from '../utils/root.js';
@@ -9,175 +8,93 @@ import { Vector } from '../vector.js';
 
 import { Renderer as CanvasRenderer } from '../renderers/canvas.js';
 
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { Constants } from '../constants.js';
 import { Group } from '../group.js';
+import { View } from '../renderers/View.js';
 
-let anchor;
+let anchor: HTMLAnchorElement | null = null;
+
 const regex = {
     video: /\.(mp4|webm|ogg)$/i,
     image: /\.(jpe?g|png|gif|tiff|webp)$/i,
     effect: /texture|gradient/i
-};
+} as const;
 
 if (root.document) {
     anchor = document.createElement('a');
 }
 
-/**
- * @name Two.Texture
- * @class
- * @extends Two.Element
- * @param {String|HTMLImageElement} [src] - The URL path to an image file or an `<img />` element.
- * @param {Function} [callback] - An optional callback function once the image has been loaded.
- * @description Fundamental to work with bitmap data, a.k.a. pregenerated imagery, in Two.js. Supported formats include jpg, png, gif, and tiff. See {@link Two.Texture.RegularExpressions} for a full list of supported formats.
- */
 export class Texture extends Element<Group> {
 
-    /**
-     * @name Two.Texture#_flagSrc
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Texture#src} needs updating.
-     */
     _flagSrc = false;
-
-    /**
-     * @name Two.Texture#_flagImage
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Texture#image} needs updating.
-     */
     _flagImage = false;
-
-    /**
-     * @name Two.Texture#_flagVideo
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Texture#video} needs updating.
-     */
     _flagVideo = false;
-
-    /**
-     * @name Two.Texture#_flagLoaded
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Texture#loaded} needs updating.
-     */
     _flagLoaded = false;
-
-    /**
-     * @name Two.Texture#_flagRepeat
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Texture#repeat} needs updating.
-     */
     _flagRepeat = false;
-
-    /**
-     * @name Two.Texture#_flagOffset
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Texture#offset} needs updating.
-     */
     _flagOffset = false;
-
-    /**
-     * @name Two.Texture#_flagScale
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Texture#scale} needs updating.
-     */
     _flagScale = false;
 
-    /**
-     * @name Two.Texture#_src
-     * @private
-     * @see {@link Two.Texture#src}
-     */
     _src = '';
-
-    /**
-     * @name Two.Texture#_image
-     * @private
-     * @see {@link Two.Texture#image}
-     */
-    _image = null;
-
-    /**
-     * @name Two.Texture#_loaded
-     * @private
-     * @see {@link Two.Texture#loaded}
-     */
+    _image: HTMLImageElement | HTMLVideoElement | null = null;
     _loaded = false;
-
-    /**
-     * @name Two.Texture#_repeat
-     * @private
-     * @see {@link Two.Texture#repeat}
-     */
     _repeat = 'no-repeat';
 
-    /**
-     * @name Two.Texture#_scale
-     * @private
-     * @see {@link Two.Texture#scale}
-     */
-    _scale = 1;
+    _scale: Vector | number = 1;
+    #scale_change_subscription: Subscription | null = null;
+
+    _offset: Vector | null = null;
+    #offset_change_subscription: Subscription | null = null;
+
+    readonly #change: BehaviorSubject<this>;
+    readonly change$: Observable<this>;
+
+    readonly #loaded: BehaviorSubject<this>;
+    readonly loaded$: Observable<this>;
 
     /**
-     * @name Two.Texture#_offset
-     * @private
-     * @see {@link Two.Texture#offset}
+     * @param src The URL path to an image file or an `<img />` element.
+     * @param callback An optional callback function once the image has been loaded.
      */
-    _offset = null;
-
-    constructor(src: string, callback: () => void) {
+    constructor(src?: string | HTMLImageElement, callback?: () => void) {
 
         super();
 
-        this._renderer = {};
-
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
+        this._renderer = {} as View;
 
         this._renderer.type = 'texture';
-        this._renderer.flagOffset = FlagOffset.bind(this);
-        this._renderer.flagScale = FlagScale.bind(this);
 
         this.id = Constants.Identifier + Constants.uniqueId();
         this.classList = [];
 
-        /**
-         * @name Two.Texture#loaded
-         * @property {Boolean} - Shorthand value to determine if image has been loaded into the texture.
-         */
         this.loaded = false;
 
         /**
-         * @name Two.Texture#repeat
-         * @property {String} - CSS style declaration to tile {@link Two.Path}. Valid values include: `'no-repeat'`, `'repeat'`, `'repeat-x'`, `'repeat-y'`.
+         * CSS style declaration to tile. Valid values include: `'no-repeat'`, `'repeat'`, `'repeat-x'`, `'repeat-y'`.
          * @see {@link https://www.w3.org/TR/2dcontext/#dom-context-2d-createpattern}
          */
         this.repeat = 'no-repeat';
 
         /**
-         * @name Two.Texture#offset
-         * @property {Two.Vector} - A two-component vector describing any pixel offset of the texture when applied to a {@link Two.Path}.
+         * A two-component vector describing any pixel offset of the texture when applied to a {@link Path}.
          */
         this.offset = new Vector();
 
+        this.#loaded = new BehaviorSubject(this);
+        this.loaded$ = this.#change.asObservable();
+
         if (typeof callback === 'function') {
-            const loaded = (function () {
-                this.unbind(Events.Types.load, loaded);
-                if (typeof callback === 'function') {
-                    callback();
-                }
-            }).bind(this);
-            this.bind(Events.Types.load, loaded);
+            const loaded = () => {
+                subscription.unsubscribe();
+                callback();
+            };
+            const subscription = this.loaded$.subscribe(loaded);
         }
 
-        /**
-         * @name Two.Texture#src
-         * @property {String} - The URL path to the image data.
-         * @nota-bene This property is ultimately serialized in a {@link Two.Registry} to cache retrieval.
-         */
         if (typeof src === 'string') {
             this.src = src;
-        } else if (typeof src === 'object') {
+        }
+        else if (typeof src === 'object') {
             const elemString = Object.prototype.toString.call(src);
             if (
                 elemString === '[object HTMLImageElement]' ||
@@ -185,23 +102,16 @@ export class Texture extends Element<Group> {
                 elemString === '[object HTMLVideoElement]' ||
                 elemString === '[object Image]'
             ) {
-                /**
-                 * @name Two.Texture#image
-                 * @property {Element} - The corresponding DOM Element of the texture. Can be a `<img />`, `<canvas />`, or `<video />` element. See {@link Two.Texture.RegularExpressions} for a full list of supported elements.
-                 * @nota-bene In headless environments this is a `Canvas.Image` object. See {@link https://github.com/Automattic/node-canvas} for more information on headless image objects.
-                 */
                 this.image = src;
             }
         }
 
-        this._update();
+        this.#change = new BehaviorSubject(this);
+        this.change$ = this.#change.asObservable();
 
+        this._update();
     }
 
-    /**
-     * @name Two.Texture.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.Texture}.
-     */
     static Properties = [
         'src', 'loaded', 'repeat', 'scale', 'offset', 'image'
     ];
@@ -225,7 +135,7 @@ export class Texture extends Element<Group> {
      * @param {String} path
      * @returns {String} - The serialized absolute path.
      */
-    static getAbsoluteURL(path) {
+    static getAbsoluteURL(path: string): string {
         if (!anchor) {
             // TODO: Fix for headless environments
             return path;
@@ -241,32 +151,27 @@ export class Texture extends Element<Group> {
      * @param {Function} loaded - The callback function to be triggered once the image is loaded.
      * @nota-bene - This function uses node's `fs.readFileSync` to spoof the `<img />` loading process in the browser.
      */
-    static loadHeadlessBuffer(texture, loaded) {
-
+    static loadHeadlessBuffer(texture: Texture, loaded: (this: GlobalEventHandlers, ev: Event) => void) {
         texture.image.onload = loaded;
         texture.image.src = texture.src;
-
     }
 
     /**
-     * @name Two.Texture.getTag
-     * @property {Function} - Retrieves the tag name of an image, video, or canvas node.
-     * @param {HTMLImageElement} image - The image to infer the tag name from.
-     * @returns {String} - Returns the tag name of an image, video, or canvas node.
+     * Retrieves the tag name of an image, video, or canvas node.
+     * @param image The image to infer the tag name from.
+     * @returns the tag name of an image, video, or canvas node.
      */
-    static getTag(image) {
-        return (image && image.nodeName && image.nodeName.toLowerCase())
-            // Headless environments
-            || 'img';
+    static getTag(image: HTMLImageElement | HTMLVideoElement): 'canvas' | 'img' | 'video' {
+        // Headless environments
+        return (image && image.nodeName && image.nodeName.toLowerCase()) as 'canvas' | 'img' | 'video' || 'img';
     }
 
     /**
-     * @name Two.Texture.getImage
-     * @property {Function} - Convenience function to set {@link Two.Texture#image} properties with canonical versions set in {@link Two.Texture.ImageRegistry}.
-     * @param {String} src - The URL path of the image.
-     * @returns {HTMLImageElement} - Returns either a cached version of the image or a new one that is registered in {@link Two.Texture.ImageRegistry}.
+     * Convenience function to set {@link Texture#image} properties with canonical versions set in {@link Texture.ImageRegistry}.
+     * @param src - The URL path of the image.
+     * @returns either a cached version of the image or a new one that is registered in {@link Texture.ImageRegistry}.
      */
-    static getImage(src) {
+    static getImage(src: string): HTMLImageElement | HTMLVideoElement {
 
         const absoluteSrc = Texture.getAbsoluteURL(src);
 
@@ -274,30 +179,30 @@ export class Texture extends Element<Group> {
             return Texture.ImageRegistry.get(absoluteSrc);
         }
 
-        let image;
+        let image: HTMLImageElement | HTMLVideoElement;
 
         if (CanvasShim.Image) {
-
             // TODO: Fix for headless environments
             image = new CanvasShim.Image();
             CanvasRenderer.Utils.shim(image, 'img');
-
-        } else if (root.document) {
-
+        }
+        else if (root.document) {
             if (regex.video.test(absoluteSrc)) {
                 image = document.createElement('video');
-            } else {
+            }
+            else {
                 image = document.createElement('img');
             }
-
-        } else {
-
+        }
+        else {
+            // eslint-disable-next-line no-console
             console.warn('Two.js: no prototypical image defined for Two.Texture');
-
         }
 
         image.crossOrigin = 'anonymous';
-        image.referrerPolicy = 'no-referrer';
+        if (image instanceof HTMLImageElement) {
+            image.referrerPolicy = 'no-referrer';
+        }
 
         return image;
 
@@ -309,18 +214,18 @@ export class Texture extends Element<Group> {
      * @description A collection of functions to register different types of textures. Used internally by a {@link Two.Texture}.
      */
     static Register = {
-        canvas: function (texture, callback) {
+        canvas: function (texture: Texture, callback: () => void) {
             texture._src = '#' + texture.id;
             Texture.ImageRegistry.add(texture.src, texture.image);
             if (typeof callback === 'function') {
                 callback();
             }
         },
-        img: function (texture, callback) {
+        img: function (texture: Texture, callback: () => void) {
 
             const image = texture.image;
 
-            const loaded = function (e) {
+            const loaded = function () {
                 if (!CanvasShim.isHeadless && image.removeEventListener && typeof image.removeEventListener === 'function') {
                     image.removeEventListener('load', loaded, false);
                     image.removeEventListener('error', error, false);
@@ -329,7 +234,7 @@ export class Texture extends Element<Group> {
                     callback();
                 }
             };
-            const error = function (e) {
+            const error = function () {
                 if (!CanvasShim.isHeadless && typeof image.removeEventListener === 'function') {
                     image.removeEventListener('load', loaded, false);
                     image.removeEventListener('error', error, false);
@@ -340,7 +245,8 @@ export class Texture extends Element<Group> {
             if (typeof image.width === 'number' && image.width > 0
                 && typeof image.height === 'number' && image.height > 0) {
                 loaded();
-            } else if (!CanvasShim.isHeadless && typeof image.addEventListener === 'function') {
+            }
+            else if (!CanvasShim.isHeadless && typeof image.addEventListener === 'function') {
                 image.addEventListener('load', loaded, false);
                 image.addEventListener('error', error, false);
             }
@@ -361,29 +267,31 @@ export class Texture extends Element<Group> {
 
                 Texture.loadHeadlessBuffer(texture, loaded);
 
-            } else {
+            }
+            else {
 
                 texture.image.src = texture.src;
 
             }
 
         },
-        video: function (texture, callback) {
+        video: function (texture: Texture, callback: () => void) {
 
             if (CanvasShim.isHeadless) {
                 throw new TwoError('video textures are not implemented in headless environments.');
             }
 
-            const loaded = function (e) {
-                texture.image.removeEventListener('canplaythrough', loaded, false);
-                texture.image.removeEventListener('error', error, false);
-                texture.image.width = texture.image.videoWidth;
-                texture.image.height = texture.image.videoHeight;
+            const loaded = function () {
+                const image = texture.image as HTMLVideoElement;
+                image.removeEventListener('canplaythrough', loaded, false);
+                image.removeEventListener('error', error, false);
+                image.width = image.videoWidth;
+                image.height = image.videoHeight;
                 if (typeof callback === 'function') {
                     callback();
                 }
             };
-            const error = function (e) {
+            const error = function () {
                 texture.image.removeEventListener('canplaythrough', loaded, false);
                 texture.image.removeEventListener('error', error, false);
                 throw new TwoError('unable to load ' + texture.src);
@@ -396,17 +304,18 @@ export class Texture extends Element<Group> {
                 Texture.ImageRegistry.add(texture.src, texture.image);
             }
 
-            if (texture.image.readyState >= 4) {
+            const image = texture.image as HTMLVideoElement;
+            if (image.readyState >= 4) {
                 loaded();
-            } else {
-                texture.image.addEventListener('canplaythrough', loaded, false);
-                texture.image.addEventListener('error', error, false);
-                texture.image.src = texture.src;
-                texture.image.load();
             }
-
+            else {
+                image.addEventListener('canplaythrough', loaded, false);
+                image.addEventListener('error', error, false);
+                image.src = texture.src;
+                image.load();
+            }
         }
-    };
+    } as const;
 
     /**
      * @name Two.Texture.load
@@ -414,17 +323,18 @@ export class Texture extends Element<Group> {
      * @param {Two.Texture} texture - The texture to load.
      * @param {Function} callback - The function to be called once the texture is loaded.
      */
-    static load(texture, callback) {
+    static load(texture: Texture, callback: () => void): void {
 
         let image = texture.image;
-        let tag = Texture.getTag(image);
+        const candidateTag = Texture.getTag(image);
 
         if (texture._flagImage) {
-            if (/canvas/i.test(tag)) {
+            if (/canvas/i.test(candidateTag)) {
                 Texture.Register.canvas(texture, callback);
-            } else {
+            }
+            else {
                 texture._src = (!CanvasShim.isHeadless && image.getAttribute('two-src')) || image.src;
-                Texture.Register[tag](texture, callback);
+                Texture.Register[candidateTag](texture, callback);
             }
         }
 
@@ -433,181 +343,116 @@ export class Texture extends Element<Group> {
                 image = Texture.getImage(texture.src);
                 texture.image = image;
             }
-            tag = Texture.getTag(image);
+            const tag = Texture.getTag(image) as 'canvas' | 'img' | 'video';
             Texture.Register[tag](texture, callback);
         }
-
     }
 
-    /**
-     * @name Two.Texture#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
-    _update() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _update(bubbles = false): this {
 
         if (this._flagSrc || this._flagImage) {
 
-            this.trigger(Events.Types.change);
+            this.#change.next(this);
 
             if (this._flagSrc || this._flagImage) {
                 this.loaded = false;
-                Texture.load(this, (function () {
+                Texture.load(this, () => {
                     this.loaded = true;
-                    this
-                        .trigger(Events.Types.change)
-                        .trigger(Events.Types.load);
-                }).bind(this));
+                    this.#change.next(this);
+                    this.#loaded.next(this);
+                });
             }
-
         }
 
-        if (this._image && this._image.readyState >= 4) {
+        if (this._image && this._image instanceof HTMLVideoElement && this._image.readyState >= 4) {
             this._flagVideo = true;
         }
 
         return this;
-
     }
 
-    /**
-     * @name Two.Texture#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
     flagReset() {
-
         this._flagSrc = this._flagImage = this._flagLoaded = this._flagRepeat
             = this._flagVideo = this._flagScale = this._flagOffset = false;
-
         super.flagReset.call(this);
-
         return this;
+    }
+    get image() {
+        return this._image;
+    }
+    set image(image) {
 
+        const tag = Texture.getTag(image);
+        let index;
+
+        switch (tag) {
+            case 'canvas':
+                index = '#' + image.id;
+                break;
+            default:
+                index = image.src;
+        }
+
+        if (Texture.ImageRegistry.contains(index)) {
+            this._image = Texture.ImageRegistry.get(image.src);
+        }
+        else {
+            this._image = image;
+        }
+
+        this._flagImage = true;
     }
 
-}
-
-const proto = {
-
-    src: {
-        enumerable: true,
-        get: function () {
-            return this._src;
-        },
-        set: function (v) {
-            this._src = v;
-            this._flagSrc = true;
+    get loaded() {
+        return this._loaded;
+    }
+    set loaded(v) {
+        this._loaded = v;
+        this._flagLoaded = true;
+    }
+    get offset() {
+        return this._offset;
+    }
+    set offset(v) {
+        if (this.#offset_change_subscription) {
+            this.#offset_change_subscription.unsubscribe();
+            this.#offset_change_subscription = null;
         }
-    },
-    loaded: {
-        enumerable: true,
-        get: function () {
-            return this._loaded;
-        },
-        set: function (v) {
-            this._loaded = v;
-            this._flagLoaded = true;
-        }
-    },
-    repeat: {
-        enumerable: true,
-        get: function () {
-            return this._repeat;
-        },
-        set: function (v) {
-            this._repeat = v;
-            this._flagRepeat = true;
-        }
-    },
-
-    image: {
-        enumerable: true,
-        get: function () {
-            return this._image;
-        },
-        set: function (image) {
-
-            const tag = Texture.getTag(image);
-            let index;
-
-            switch (tag) {
-                case 'canvas':
-                    index = '#' + image.id;
-                    break;
-                default:
-                    index = image.src;
-            }
-
-            if (Texture.ImageRegistry.contains(index)) {
-                this._image = Texture.ImageRegistry.get(image.src);
-            } else {
-                this._image = image;
-            }
-
-            this._flagImage = true;
-
-        }
-
-    },
-
-    offset: {
-        enumerable: true,
-        get: function () {
-            return this._offset;
-        },
-        set: function (v) {
-            if (this._offset) {
-                this._offset.unbind(Events.Types.change, this._renderer.flagOffset);
-            }
-            this._offset = v;
-            this._offset.bind(Events.Types.change, this._renderer.flagOffset);
+        this._offset = v;
+        this.#offset_change_subscription = this._offset.change$.subscribe(() => {
             this._flagOffset = true;
-        }
-    },
-
-    scale: {
-        enumerable: true,
-        get: function () {
-            return this._scale;
-        },
-        set: function (v) {
-
-            if (this._scale instanceof Vector) {
-                this._scale.unbind(Events.Types.change, this._renderer.flagScale);
-            }
-
-            this._scale = v;
-
-            if (this._scale instanceof Vector) {
-                this._scale.bind(Events.Types.change, this._renderer.flagScale);
-            }
-
-            this._flagScale = true;
-
-        }
+        });
+        this._flagOffset = true;
     }
-
-};
-
-/**
- * @name Two.Texture.FlagOffset
- * @function
- * @description Cached method to let renderers know `offset` has been updated on a {@link Two.Texture}.
- */
-function FlagOffset(this: Texture) {
-    this._flagOffset = true;
-}
-
-/**
- * @name Two.Texture.FlagScale
- * @function
- * @description Cached method to let renderers know `scale` has been updated on a {@link Two.Texture}.
- */
-function FlagScale(this: Texture) {
-    this._flagScale = true;
+    get repeat() {
+        return this._repeat;
+    }
+    set repeat(v) {
+        this._repeat = v;
+        this._flagRepeat = true;
+    }
+    get scale() {
+        return this._scale;
+    }
+    set scale(v) {
+        if (this.#scale_change_subscription) {
+            this.#scale_change_subscription.unsubscribe();
+            this.#scale_change_subscription = null;
+        }
+        this._scale = v;
+        if (this._scale instanceof Vector) {
+            this.#scale_change_subscription = this._scale.change$.subscribe(() => {
+                this._flagScale = true;
+            });
+        }
+        this._flagScale = true;
+    }
+    get src() {
+        return this._src;
+    }
+    set src(v) {
+        this._src = v;
+        this._flagSrc = true;
+    }
 }
