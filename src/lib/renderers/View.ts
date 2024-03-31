@@ -13,7 +13,7 @@ export interface View {
     domElement: HTMLElement;
     elem: HTMLElement;
     scene: Group;
-    type: 'gradient' | 'group' | 'linear-gradient' | 'path' | 'points' | 'radial-gradient' | 'stop' | 'texture';
+    type: 'gradient' | 'group' | 'linear-gradient' | 'path' | 'points' | 'radial-gradient' | 'stop' | 'text' | 'texture';
     vertices: Anchor[];
     collection: Anchor[];
     bind(type: 'resize', callback: EventHandler): void;

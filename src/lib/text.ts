@@ -3,13 +3,12 @@ import { LinearGradient } from './effects/linear-gradient.js';
 import { RadialGradient } from './effects/radial-gradient.js';
 import { Texture } from './effects/texture.js';
 import { Events } from './events.js';
+import { get_dashes_offset, set_dashes_offset } from './path.js';
 import { Shape } from './shape.js';
 import { root } from './utils/root.js';
 import { _ } from './utils/underscore.js';
 
-
-
-let canvas;
+let canvas: HTMLCanvasElement;
 const min = Math.min, max = Math.max;
 
 if (root.document) {
@@ -216,14 +215,14 @@ export class Text extends Shape {
      * @property {(String|Two.Gradient|Two.Texture)} - The value of what the text object should be filled in with.
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
-    _fill = '#000';
+    _fill: string | Gradient | Texture = '#000';
 
     /**
      * @name Two.Text#stroke
      * @property {(String|Two.Gradient|Two.Texture)} - The value of what the text object should be filled in with.
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
-    _stroke = 'none';
+    _stroke: string | Gradient | Texture = 'none';
 
     /**
      * @name Two.Text#linewidth
@@ -250,7 +249,7 @@ export class Text extends Shape {
      * @property {Two.Shape} - The shape whose alpha property becomes a clipping area for the text.
      * @nota-bene This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
      */
-    _mask = null;
+    _mask: Shape = null;
 
     /**
      * @name Two.Text#clip
@@ -264,15 +263,11 @@ export class Text extends Shape {
      * @private
      * @see {@link Two.Text#dashes}
      */
-    _dashes = null;
+    _dashes: number[] | null = null;
 
     constructor(message: string, x: number = 0, y: number = 0, styles?: object) {
 
         super();
-
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
 
         this._renderer.type = 'text';
         this._renderer.flagFill = FlagFill.bind(this);
@@ -295,11 +290,7 @@ export class Text extends Shape {
          */
         this.dashes = [];
 
-        /**
-         * @name Two.Text#dashes#offset
-         * @property {Number} - A number in pixels to offset {@link Two.Text#dashes} display.
-         */
-        this.dashes.offset = 0;
+        set_dashes_offset(this.dashes, 0);
 
         if (!_.isObject(styles)) {
             return this;
@@ -330,27 +321,22 @@ export class Text extends Shape {
         'fill', 'stroke'
     ];
 
-    /**
-     * 
-     * @name Two.Measure
-     * @function
-     * @param {Two.Text} [text] - The instance of {@link Two.Text} to measure.
-     * @returns {Object} - The width and height of the {@link Two.Text} instance.
-     */
-    static Measure(text) {
+    static Measure(text: Text): { width: number; height: number } {
         if (canvas) {
             const ctx = canvas.getContext('2d');
             ctx.font = [text._style, text._weight, `${text._size}px/${text._leading}px`,
             text._family].join(' ');
-            const metrics = ctx.measureText(text.value, 0, 0);
+            const metrics = ctx.measureText(text.value);
             const height = metrics.actualBoundingBoxDescent + metrics.actualBoundingBoxAscent;
             return {
                 width: metrics.width,
                 height
             };
-        } else {
-            const width = this.value.length * this.size * Text.Ratio;
-            const height = this.leading;
+        }
+        else {
+            const width = text.value.length * text.size * Text.Ratio;
+            const height = text.leading;
+            // eslint-disable-next-line no-console
             console.warn('Two.Text: unable to accurately measure text, so using an approximation.');
             return {
                 width, height
@@ -390,15 +376,17 @@ export class Text extends Shape {
      * @returns {Object} - Returns object with top, left, right, bottom, width, height attributes.
      * @description Return an object with top, left, right, bottom, width, and height parameters of the text object.
      */
-    getBoundingClientRect(shallow) {
+    getBoundingClientRect(shallow = false) {
 
-        let matrix;
-        let left, right, top, bottom;
+        let left: number;
+        let right: number;
+        let top: number;
+        let bottom: number;
 
         // TODO: Update this to not __always__ update. Just when it needs to.
         this._update(true);
 
-        matrix = shallow ? this.matrix : this.worldMatrix;
+        const matrix = shallow ? this.matrix : this.worldMatrix;
 
         const { width, height } = Text.Measure(this);
         const border = (this._linewidth || 0) / 2;
@@ -427,10 +415,10 @@ export class Text extends Shape {
                 bottom = border;
         }
 
-        const [ax, ay] = matrix.multiply(left, top);
-        const [bx, by] = matrix.multiply(left, bottom);
-        const [cx, cy] = matrix.multiply(right, top);
-        const [dx, dy] = matrix.multiply(right, bottom);
+        const [ax, ay] = matrix.multiply_vector(left, top);
+        const [bx, by] = matrix.multiply_vector(left, bottom);
+        const [cx, cy] = matrix.multiply_vector(right, top);
+        const [dx, dy] = matrix.multiply_vector(right, bottom);
 
         top = min(ay, by, cy, dy);
         left = min(ax, bx, cx, dx);
@@ -438,35 +426,166 @@ export class Text extends Shape {
         bottom = max(ay, by, cy, dy);
 
         return {
-            top: top,
-            left: left,
-            right: right,
-            bottom: bottom,
+            top,
+            left,
+            right,
+            bottom,
             width: right - left,
             height: bottom - top
         };
-
     }
 
-    /**
-     * @name Two.Text#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
+    hasBoundingClientRect(): boolean {
+        return true;
+    }
+
     flagReset() {
-
         super.flagReset.call(this);
-
         this._flagValue = this._flagFamily = this._flagSize =
             this._flagLeading = this._flagAlignment = this._flagFill =
             this._flagStroke = this._flagLinewidth = this._flagOpacity =
             this._flagVisible = this._flagClip = this._flagDecoration =
             this._flagClassName = this._flagBaseline = this._flagWeight =
             this._flagStyle = this._flagDirection = false;
-
         return this;
+    }
+    get alignment() {
+        return this._alignment;
+    }
+    set alignment(v) {
+        this._alignment = v;
+        this._flagAlignment = true;
+    }
+    get baseline() {
+        return this._baseline;
+    }
+    set baseline(v) {
+        this._baseline = v;
+        this._flagBaseline = true;
+    }
+    get clip() {
+        return this._clip;
+    }
+    set clip(v) {
+        this._clip = v;
+        this._flagClip = true;
+    }
+    get dashes() {
+        return this._dashes;
+    }
+    set dashes(v) {
+        if (typeof get_dashes_offset(v) !== 'number') {
+            set_dashes_offset(v, (this.dashes && get_dashes_offset(this._dashes)) || 0);
+        }
+        this._dashes = v;
+    }
+    get decoration() {
+        return this._decoration;
+    }
+    set decoration(v) {
+        this._decoration = v;
+        this._flagDecoration = true;
+    }
+    get direction() {
+        return this._direction;
+    }
+    set direction(v) {
+        this._direction = v;
+        this._flagDirection = true;
+    }
+    get family() {
+        return this._family;
+    }
+    set family(v) {
+        this._family = v;
+        this._flagFamily = true;
+    }
+    get fill() {
+        return this._fill;
+    }
+    set fill(f) {
+        if (this._fill instanceof Gradient
+            || this._fill instanceof LinearGradient
+            || this._fill instanceof RadialGradient
+            || this._fill instanceof Texture) {
+            this._fill.unbind(Events.Types.change, this._renderer.flagFill);
+        }
+        this._fill = f;
+        this._flagFill = true;
+        if (this._fill instanceof Gradient
+            || this._fill instanceof LinearGradient
+            || this._fill instanceof RadialGradient
+            || this._fill instanceof Texture) {
+            this._fill.bind(Events.Types.change, this._renderer.flagFill);
+        }
+    }
+    get leading() {
+        return this._leading;
+    }
+    set leading(v) {
+        this._leading = v;
+        this._flagLeading = true;
+    }
+    get linewidth() {
+        return this._linewidth;
+    }
+    set linewidth(v) {
+        this._linewidth = v;
+        this._flagLinewidth = true;
+    }
+    get mask() {
+        return this._mask;
+    }
+    set mask(v) {
+        this._mask = v;
+        this._flagMask = true;
+        if (_.isObject(v) && !v.clip) {
+            v.clip = true;
+        }
+    }
+    get opacity() {
+        return this._opacity;
+    }
+    set opacity(v) {
+        this._opacity = v;
+        this._flagOpacity = true;
+    }
+    get size() {
+        return this._size;
+    }
+    set size(v) {
+        this._size = v;
+        this._flagSize = true;
+    }
+    get stroke() {
+        return this._stroke;
+    }
+    set stroke(f) {
 
+        if (this._stroke instanceof Gradient
+            || this._stroke instanceof LinearGradient
+            || this._stroke instanceof RadialGradient
+            || this._stroke instanceof Texture) {
+            this._stroke.unbind(Events.Types.change, this._renderer.flagStroke);
+        }
+
+        this._stroke = f;
+        this._flagStroke = true;
+
+        if (this._stroke instanceof Gradient
+            || this._stroke instanceof LinearGradient
+            || this._stroke instanceof RadialGradient
+            || this._stroke instanceof Texture) {
+            this._stroke.bind(Events.Types.change, this._renderer.flagStroke);
+        }
+
+    }
+    get style() {
+        return this._style;
+    }
+    set style(v) {
+        this._style = v;
+        this._flagStyle = true;
     }
     get value(): string {
         return this._value;
@@ -475,218 +594,21 @@ export class Text extends Shape {
         this._value = v;
         this._flagValue = true;
     }
-}
-
-const proto = {
-    family: {
-        enumerable: true,
-        get: function () {
-            return this._family;
-        },
-        set: function (v) {
-            this._family = v;
-            this._flagFamily = true;
-        }
-    },
-    size: {
-        enumerable: true,
-        get: function () {
-            return this._size;
-        },
-        set: function (v) {
-            this._size = v;
-            this._flagSize = true;
-        }
-    },
-    leading: {
-        enumerable: true,
-        get: function () {
-            return this._leading;
-        },
-        set: function (v) {
-            this._leading = v;
-            this._flagLeading = true;
-        }
-    },
-    alignment: {
-        enumerable: true,
-        get: function () {
-            return this._alignment;
-        },
-        set: function (v) {
-            this._alignment = v;
-            this._flagAlignment = true;
-        }
-    },
-    linewidth: {
-        enumerable: true,
-        get: function () {
-            return this._linewidth;
-        },
-        set: function (v) {
-            this._linewidth = v;
-            this._flagLinewidth = true;
-        }
-    },
-    style: {
-        enumerable: true,
-        get: function () {
-            return this._style;
-        },
-        set: function (v) {
-            this._style = v;
-            this._flagStyle = true;
-        }
-    },
-    weight: {
-        enumerable: true,
-        get: function () {
-            return this._weight;
-        },
-        set: function (v) {
-            this._weight = v;
-            this._flagWeight = true;
-        }
-    },
-    decoration: {
-        enumerable: true,
-        get: function () {
-            return this._decoration;
-        },
-        set: function (v) {
-            this._decoration = v;
-            this._flagDecoration = true;
-        }
-    },
-    direction: {
-        enumerable: true,
-        get: function () {
-            return this._direction;
-        },
-        set: function (v) {
-            this._direction = v;
-            this._flagDirection = true;
-        }
-    },
-    baseline: {
-        enumerable: true,
-        get: function () {
-            return this._baseline;
-        },
-        set: function (v) {
-            this._baseline = v;
-            this._flagBaseline = true;
-        }
-    },
-    opacity: {
-        enumerable: true,
-        get: function () {
-            return this._opacity;
-        },
-        set: function (v) {
-            this._opacity = v;
-            this._flagOpacity = true;
-        }
-    },
-    visible: {
-        enumerable: true,
-        get: function () {
-            return this._visible;
-        },
-        set: function (v) {
-            this._visible = v;
-            this._flagVisible = true;
-        }
-    },
-    fill: {
-        enumerable: true,
-        get: function () {
-            return this._fill;
-        },
-        set: function (f) {
-
-            if (this._fill instanceof Gradient
-                || this._fill instanceof LinearGradient
-                || this._fill instanceof RadialGradient
-                || this._fill instanceof Texture) {
-                this._fill.unbind(Events.Types.change, this._renderer.flagFill);
-            }
-
-            this._fill = f;
-            this._flagFill = true;
-
-            if (this._fill instanceof Gradient
-                || this._fill instanceof LinearGradient
-                || this._fill instanceof RadialGradient
-                || this._fill instanceof Texture) {
-                this._fill.bind(Events.Types.change, this._renderer.flagFill);
-            }
-
-        }
-    },
-    stroke: {
-        enumerable: true,
-        get: function () {
-            return this._stroke;
-        },
-        set: function (f) {
-
-            if (this._stroke instanceof Gradient
-                || this._stroke instanceof LinearGradient
-                || this._stroke instanceof RadialGradient
-                || this._stroke instanceof Texture) {
-                this._stroke.unbind(Events.Types.change, this._renderer.flagStroke);
-            }
-
-            this._stroke = f;
-            this._flagStroke = true;
-
-            if (this._stroke instanceof Gradient
-                || this._stroke instanceof LinearGradient
-                || this._stroke instanceof RadialGradient
-                || this._stroke instanceof Texture) {
-                this._stroke.bind(Events.Types.change, this._renderer.flagStroke);
-            }
-
-        }
-    },
-    mask: {
-        enumerable: true,
-        get: function () {
-            return this._mask;
-        },
-        set: function (v) {
-            this._mask = v;
-            this._flagMask = true;
-            if (_.isObject(v) && !v.clip) {
-                v.clip = true;
-            }
-        }
-
-    },
-    clip: {
-        enumerable: true,
-        get: function () {
-            return this._clip;
-        },
-        set: function (v) {
-            this._clip = v;
-            this._flagClip = true;
-        }
-    },
-    dashes: {
-        enumerable: true,
-        get: function () {
-            return this._dashes;
-        },
-        set: function (v) {
-            if (typeof v.offset !== 'number') {
-                v.offset = (this.dashes && this._dashes.offset) || 0;
-            }
-            this._dashes = v;
-        }
+    get visible() {
+        return this._visible;
     }
-};
+    set visible(v) {
+        this._visible = v;
+        this._flagVisible = true;
+    }
+    get weight() {
+        return this._weight;
+    }
+    set weight(v) {
+        this._weight = v;
+        this._flagWeight = true;
+    }
+}
 
 /**
  * @name Two.Text.FlagFill
