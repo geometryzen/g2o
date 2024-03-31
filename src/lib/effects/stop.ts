@@ -100,20 +100,10 @@ export class Stop extends Element<Gradient> {
      */
     static Properties = ['offset', 'opacity', 'color'];
 
-    /**
-     * @name Two.Stop#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
     flagReset() {
-
         this._flagOffset = this._flagColor = this._flagOpacity = false;
-
         super.flagReset.call(this);
-
         return this;
-
     }
     get color(): string {
         return this._color;
