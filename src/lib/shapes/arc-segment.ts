@@ -4,7 +4,6 @@ import { Path } from '../path.js';
 import { HALF_PI, mod, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 
-
 /**
  * @name Two.ArcSegment
  * @class
