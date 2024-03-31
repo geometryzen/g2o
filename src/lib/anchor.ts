@@ -27,7 +27,7 @@ export class Anchor {
      * @param ay The y position of the left handle point.
      * @param bx The x position of the right handle point.
      * @param by The y position of the right handle point.
-     * @param command The command to describe how to render. Applicable commands are {@link Two.Commands}
+     * @param command The command to describe how to render. Applicable commands are {@link Commands}
      */
     constructor(x = 0, y = 0, ax = 0, ay = 0, bx = 0, by = 0, command: 'M' | 'L' | 'C' | 'A' | 'Z' = Commands.move) {
 

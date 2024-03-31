@@ -76,10 +76,10 @@ export class Collection<T> {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    splice(start: number, deleteCount?: number): T[] {
+    splice(start: number, deleteCount?: number, ...more: T[]): T[] {
         // TODO: This needs some care because the behavior dependes on ...
         if (typeof deleteCount === 'number') {
-            const xs = this.#items.splice(start, deleteCount);
+            const xs = this.#items.splice(start, deleteCount, ...more);
             this.#remove.next(xs);
             return xs;
         }
