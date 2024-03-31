@@ -4,7 +4,7 @@ import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
 import { Texture } from '../effects/texture.js';
 import { Events } from '../events.js';
-import { BindVertices, FlagFill, FlagStroke, FlagVertices, Path, UnbindVertices, get_dashes_offset, set_dashes_offset } from '../path.js';
+import { Path, get_dashes_offset, set_dashes_offset } from '../path.js';
 import { Shape } from '../shape.js';
 import { subdivide } from '../utils/curves.js';
 import { getIdByLength } from '../utils/shape.js';
@@ -48,12 +48,6 @@ export class Points extends Shape {
         super();
 
         this._renderer.type = 'points';
-        this._renderer.flagVertices = FlagVertices.bind(this);
-        this._renderer.bindVertices = BindVertices.bind(this);
-        this._renderer.unbindVertices = UnbindVertices.bind(this);
-
-        this._renderer.flagFill = FlagFill.bind(this);
-        this._renderer.flagStroke = FlagStroke.bind(this);
         this._renderer.vertices = null;
         this._renderer.collection = null;
 

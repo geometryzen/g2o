@@ -163,7 +163,7 @@ export class Text extends Shape {
      * @property {Two.Shape} - The shape whose alpha property becomes a clipping area for the text.
      * @nota-bene This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
      */
-    _mask: Shape = null;
+    _mask: Shape | null = null;
 
     /**
      * @name Two.Text#clip
@@ -516,14 +516,14 @@ export class Text extends Shape {
         this._linewidth = v;
         this._flagLinewidth = true;
     }
-    get mask() {
+    get mask(): Shape | null {
         return this._mask;
     }
-    set mask(v) {
-        this._mask = v;
+    set mask(mask) {
+        this._mask = mask;
         this._flagMask = true;
-        if (_.isObject(v) && !v.clip) {
-            v.clip = true;
+        if (mask instanceof Shape && !mask.clip) {
+            mask.clip = true;
         }
     }
     get opacity() {

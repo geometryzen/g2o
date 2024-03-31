@@ -66,9 +66,6 @@
         "url": "https://github.com/geometryzen/two/issues"
     },
     "homepage": "https://github.com/geometryzen/two#readme",
-    "peerDependencies": {
-        "solid-js": "^1.8.16"
-    },
     "dependencies": {
         "rxjs": "^7.8.1"
     },

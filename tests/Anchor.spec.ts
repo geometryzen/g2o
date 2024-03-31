@@ -1,4 +1,3 @@
-import { createEffect } from 'solid-js';
 import { Anchor } from "../src/index";
 import { Commands } from "../src/lib/utils/path-commands";
 
@@ -141,37 +140,5 @@ describe("Anchor", function () {
         expect(anchor.controls.right.y).toBe(by);
         expect(anchor.command).toBe(command);
         expect(anchor.relative).toBe(relative);
-    });
-    it("relative", function () {
-        const anchor = new Anchor();
-
-        const relatives: boolean[] = [];
-        createEffect(() => {
-            relatives.push(anchor.relative);
-        });
-
-        expect(relatives.length).toBe(0);
-
-        expect(anchor.relative).toBe(true);
-        anchor.relative = true;
-        expect(anchor.relative).toBe(true);
-        anchor.relative = false;
-        expect(anchor.relative).toBe(false);
-        anchor.relative = true;
-        expect(anchor.relative).toBe(true);
-
-        expect(relatives.length).toBe(0);
-
-        return new Promise<void>((resolve, reject) => {
-            try {
-                queueMicrotask(() => {
-                    expect(relatives.length).toBe(0);
-                    resolve();
-                });
-            }
-            catch (e) {
-                reject(e);
-            }
-        });
     });
 });

@@ -1,10 +1,11 @@
+import { Anchor } from '../anchor.js';
 import { Constants } from '../constants.js';
 import { Events } from '../events.js';
 import { Group } from '../group.js';
 import { Path } from '../path.js';
 import { Curve } from '../utils/curves.js';
 import { getRatio } from '../utils/device-pixel-ratio.js';
-import { decomposeMatrix, mod, TWO_PI } from '../utils/math.js';
+import { TWO_PI, decomposeMatrix, mod } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 import { _ } from '../utils/underscore.js';
 import { Vector } from '../vector.js';
@@ -949,7 +950,7 @@ const canvas = {
  * @param {Boolean} [parameters.smoothing=true] - Determines whether the canvas should antialias drawing. Set it to `false` when working with pixel art. `false` can lead to better performance, since it would use a cheaper interpolation algorithm.
  * @description This class is used by {@link Two} when constructing with `type` of `Two.Types.canvas`. It takes Two.js' scenegraph and renders it to a `<canvas />`.
  */
-export class Renderer extends Events implements View {
+export class CanvasRenderer extends Events implements View {
 
     readonly domElement: HTMLCanvasElement;
     readonly ctx: CanvasRenderingContext2D;
@@ -992,6 +993,12 @@ export class Renderer extends Events implements View {
         this.scene.parent = this;
 
     }
+    clip: SVGClipPathElement;
+    elem: HTMLElement | SVGElement;
+    scene: Group;
+    type: 'group' | 'linear-gradient' | 'path' | 'points' | 'radial-gradient' | 'stop' | 'text' | 'texture';
+    vertices: Anchor[];
+    collection: Anchor[];
 
     /**
      * @name Two.CanvasRenderer.Utils

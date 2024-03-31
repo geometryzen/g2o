@@ -257,10 +257,6 @@ export class Path extends Shape {
         super();
 
         this._renderer.type = 'path';
-        this._renderer.flagVertices = FlagVertices.bind(this);
-
-        this._renderer.flagFill = FlagFill.bind(this);
-        this._renderer.flagStroke = FlagStroke.bind(this);
         this._renderer.vertices = [];
         this._renderer.collection = [];
 

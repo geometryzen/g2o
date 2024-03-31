@@ -1,5 +1,4 @@
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
-import { Signal, createSignal } from 'solid-js';
 import { Commands } from './utils/path-commands.js';
 import { Vector } from './vector.js';
 
@@ -16,19 +15,19 @@ export class Anchor {
     #a_change_subscription: Subscription | null = null;
     #b_change_subscription: Subscription | null = null;
 
-    readonly #command: Signal<'M' | 'L' | 'C' | 'A' | 'Z'>;
-    readonly #relative: Signal<boolean>;
+    #command: 'M' | 'L' | 'C' | 'A' | 'Z';
+    #relative: boolean;
 
-    readonly #rx: Signal<number>;
-    readonly #ry: Signal<number>;
-    readonly #xAxisRotation: Signal<number>;
-    readonly #largeArcFlag: Signal<number>;
-    readonly #sweepFlag: Signal<number>;
+    #rx: number;
+    #ry: number;
+    #xAxisRotation: number;
+    #largeArcFlag: number;
+    #sweepFlag: number;
 
     readonly #change: BehaviorSubject<this>;
     readonly change$: Observable<this>;
 
-    readonly #t: Signal<number>;
+    #t: number;
 
     /**
      * @param x The x position of the root anchor point.
@@ -45,15 +44,15 @@ export class Anchor {
         this.controls.left.set(ax, ay);
         this.controls.right.set(bx, by);
 
-        this.#command = createSignal(command);
-        this.#relative = createSignal(true);
-        this.#rx = createSignal(0);
-        this.#ry = createSignal(0);
-        this.#xAxisRotation = createSignal(0);
-        this.#largeArcFlag = createSignal(0);
-        this.#sweepFlag = createSignal(1);
+        this.#command = command;
+        this.#relative = true;
+        this.#rx = 0;
+        this.#ry = 0;
+        this.#xAxisRotation = 0;
+        this.#largeArcFlag = 0;
+        this.#sweepFlag = 1;
 
-        this.#t = createSignal(0);
+        this.#t = 0;
 
         this.#change = new BehaviorSubject(this);
         this.change$ = this.#change.asObservable();
@@ -101,11 +100,11 @@ export class Anchor {
     }
 
     get t(): number {
-        return this.#t[0]();
+        return this.#t;
     }
     set t(t: number) {
         if (this.t !== t) {
-            this.#t[1](t);
+            this.#t = t;
         }
     }
 
@@ -144,77 +143,77 @@ export class Anchor {
      * default is 'M'.
      */
     get command(): 'M' | 'L' | 'C' | 'A' | 'Z' {
-        return this.#command[0]();
+        return this.#command;
     }
     set command(command: 'M' | 'L' | 'C' | 'A' | 'Z') {
         if (this.command !== command) {
-            this.#command[1](command);
+            this.#command = command;
         }
     }
     /**
      * default is true.
      */
     get relative(): boolean {
-        return this.#relative[0]();
+        return this.#relative;
     }
     set relative(relative: boolean) {
         if (this.relative !== !!relative) {
-            this.#relative[1](relative);
+            this.#relative = relative;
         }
     }
     /**
      * default is zero.
      */
     get rx(): number {
-        return this.#rx[0]();
+        return this.#rx;
     }
     set rx(rx: number) {
         if (this.rx !== rx) {
-            this.#rx[1](rx);
+            this.#rx = rx;
         }
     }
     /**
      * default is zero.
      */
     get ry(): number {
-        return this.#ry[0]();
+        return this.#ry;
     }
     set ry(ry: number) {
         if (this.ry !== ry) {
-            this.#ry[1](ry);
+            this.#ry = ry;
         }
     }
     /**
      * default is zero.
      */
     get xAxisRotation(): number {
-        return this.#xAxisRotation[0]();
+        return this.#xAxisRotation;
     }
     set xAxisRotation(xAxisRotation: number) {
         if (this.xAxisRotation !== xAxisRotation) {
-            this.#xAxisRotation[1](xAxisRotation);
+            this.#xAxisRotation = xAxisRotation;
         }
     }
     /**
      * default is zero.
      */
     get largeArcFlag(): number {
-        return this.#largeArcFlag[0]();
+        return this.#largeArcFlag;
     }
     set largeArcFlag(largeArcFlag) {
         if (this.largeArcFlag !== largeArcFlag) {
-            this.#largeArcFlag[1](largeArcFlag);
+            this.#largeArcFlag = largeArcFlag;
         }
     }
     /**
      * default is one.
      */
     get sweepFlag(): number {
-        return this.#sweepFlag[0]();
+        return this.#sweepFlag;
     }
     set sweepFlag(sweepFlag) {
         if (this.sweepFlag !== sweepFlag) {
-            this.#sweepFlag[1](sweepFlag);
+            this.#sweepFlag = sweepFlag;
         }
     }
 }

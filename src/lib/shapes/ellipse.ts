@@ -3,7 +3,6 @@ import { Path } from '../path.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 
-
 const cos = Math.cos, sin = Math.sin;
 
 export class Ellipse extends Path {

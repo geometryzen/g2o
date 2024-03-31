@@ -6,7 +6,7 @@ import { root } from '../utils/root.js';
 import { Registry } from '../registry.js';
 import { Vector } from '../vector.js';
 
-import { Renderer as CanvasRenderer } from '../renderers/canvas.js';
+import { CanvasRenderer } from '../renderers/canvas.js';
 
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { Constants } from '../constants.js';
@@ -127,7 +127,7 @@ export class Texture extends Element<Group> {
      * @property {Two.Registry} - A canonical listing of image data used in a single session of Two.js.
      * @nota-bene This object is used to cache image data between different textures.
      */
-    static ImageRegistry = new Registry();
+    static ImageRegistry: Registry<HTMLImageElement | HTMLVideoElement> = new Registry();
 
     /**
      * @name Two.Texture.getAbsoluteURL
@@ -166,11 +166,6 @@ export class Texture extends Element<Group> {
         return (image && image.nodeName && image.nodeName.toLowerCase()) as 'canvas' | 'img' | 'video' || 'img';
     }
 
-    /**
-     * Convenience function to set {@link Texture#image} properties with canonical versions set in {@link Texture.ImageRegistry}.
-     * @param src - The URL path of the image.
-     * @returns either a cached version of the image or a new one that is registered in {@link Texture.ImageRegistry}.
-     */
     static getImage(src: string): HTMLImageElement | HTMLVideoElement {
 
         const absoluteSrc = Texture.getAbsoluteURL(src);

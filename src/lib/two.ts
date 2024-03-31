@@ -2,7 +2,6 @@
 
 // Core Classes
 import { Anchor } from './anchor.js';
-import { Collection } from './collection.js';
 import { Constants } from './constants.js';
 import { Gradient } from './effects/gradient.js';
 import { ImageSequence } from './effects/image-sequence.js';
@@ -14,21 +13,18 @@ import { Stop } from './effects/stop.js';
 import { Texture } from './effects/texture.js';
 import { EventHandler, Events } from './events.js';
 import { Group } from './group.js';
-import { Matrix } from './matrix.js';
 import { Path } from './path.js';
-import { Registry } from './registry.js';
 // Renderers
-import { Renderer as CanvasRenderer } from './renderers/canvas.js';
-import { Renderer as SVGRenderer } from './renderers/svg.js';
+import { CanvasRenderer } from './renderers/canvas.js';
+import { SVGRenderer } from './renderers/svg.js';
 import { View } from './renderers/View.js';
-import { Renderer as WebGLRenderer } from './renderers/webgl.js';
+import { WebGLRenderer } from './renderers/webgl.js';
 import { Shape } from './shape.js';
 // Secondary Classes
 import { ArcSegment } from './shapes/arc-segment.js';
 import { Circle } from './shapes/circle.js';
 import { Ellipse } from './shapes/ellipse.js';
 import { Line } from './shapes/line.js';
-import { Points } from './shapes/points.js';
 import { Polygon } from './shapes/polygon.js';
 import { Rectangle } from './shapes/rectangle.js';
 import { RoundedRectangle } from './shapes/rounded-rectangle.js';
@@ -44,7 +40,6 @@ import * as math from './utils/math.js';
 import { Commands } from './utils/path-commands.js';
 import { _ } from './utils/underscore.js';
 import { xhr } from './utils/xhr.js';
-import { Vector } from './vector.js';
 
 const Utils = _.extend({
     Error: TwoError,
@@ -128,6 +123,11 @@ export class Two {
      * @property {Number} - The height of the instance's dom element.
      */
     height = 0;
+
+    /**
+     * 
+     */
+    ratio: number | undefined = void 0;
 
     fit: EventHandler;
 
@@ -334,53 +334,6 @@ export class Two {
      * @returns {Number} Ever increasing Number.
      */
     static uniqueId = Constants.uniqueId;
-
-    static Anchor = Anchor;
-    static Collection = Collection;
-    static Events = Events;
-    static Group = Group;
-    static Matrix = Matrix;
-    static Path = Path;
-    static Registry = Registry;
-    static Shape = Shape;
-    static Text = Text;
-    static Vector = Vector;
-
-    static Gradient = Gradient;
-    static ImageSequence = ImageSequence;
-    static LinearGradient = LinearGradient;
-    static RadialGradient = RadialGradient;
-    static Sprite = Sprite;
-    static Stop = Stop;
-    static Texture = Texture;
-
-    static ArcSegment = ArcSegment;
-    static Circle = Circle;
-    static Ellipse = Ellipse;
-    static Line = Line;
-    static Points = Points;
-    static Polygon = Polygon;
-    static Rectangle = Rectangle;
-    static RoundedRectangle = RoundedRectangle;
-    static Star = Star;
-
-    static CanvasRenderer = CanvasRenderer;
-    static SVGRenderer = SVGRenderer;
-    static WebGLRenderer = WebGLRenderer;
-
-    /**
-     * @name Two.Commands
-     * @property {Object} - Map of possible path commands. Taken from the SVG specification. Commands include: `move`, `line`, `curve`, `arc`, and `close`.
-     */
-    static Commands = Commands;
-
-    /**
-     * @name Two.Utils
-     * @property {Object} Utils - A massive object filled with utility functions and properties.
-     * @property {Object} Two.Utils.read - A collection of SVG parsing functions indexed by element name.
-     * @property {Function} Two.Utils.read.path - Parse SVG path element or `d` attribute string.
-     */
-    static Utils = Utils;
 
     /**
      * @name Two#appendTo
@@ -820,14 +773,7 @@ export class Two {
         return arcSegment;
     }
 
-    /**
-     * @name Two#makePoints
-     * @function
-     * @param {Two.Vector[]} [points] - An array of {@link Two.Vector} points
-     * @param {...Number} - Alternatively you can pass alternating `x` / `y` coordinate values as individual agrguments. These will be combined into {@link Two.Vector}s for use in the points object.
-     * @returns {Two.Points}
-     * @description Creates a Two.js points object and adds it to the current scene.
-     */
+    /*
     makePoints(p: Vector[]): Points {
 
         const l = arguments.length;
@@ -852,6 +798,7 @@ export class Two {
         return points;
 
     }
+    */
 
     /**
      * Creates a Path and adds it to the scene.
@@ -1024,7 +971,7 @@ export class Two {
      */
     interpret(svg: SVGElement, shallow?: boolean, add?: boolean): Group {
 
-        const tag = svg.tagName.toLowerCase();
+        const tag = svg.tagName.toLowerCase() as 'svg';
 
         add = (typeof add !== 'undefined') ? add : true;
 

@@ -25,5 +25,6 @@ export interface View {
     flagMatrix: EventHandler;
     flagStroke: EventHandler;
     flagVertices: EventHandler;
+    render(): void;
     setSize(width: number, height: number, ratio: number): void;
 }
