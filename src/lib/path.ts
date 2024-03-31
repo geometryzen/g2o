@@ -1,3 +1,4 @@
+import { Subscription } from 'rxjs';
 import { Anchor } from './anchor';
 import { Collection } from './collection';
 import { Gradient } from './effects/gradient';
@@ -144,13 +145,15 @@ export class Path extends Shape {
      * @see {@link Two.Path#fill}
      */
     _fill: string | Gradient | Texture = '#fff';
+    #fill_change_subscription: Subscription | null = null;
 
     /**
      * @name Two.Path#_stroke
      * @private
      * @see {@link Two.Path#stroke}
      */
-    _stroke: string = '#000';
+    _stroke: string | Gradient | Texture = '#000';
+    #stroke_change_subscription: Subscription | null = null;
 
     /**
      * @name Two.Path#_linewidth
@@ -251,6 +254,10 @@ export class Path extends Shape {
     _dashes: number[] = null;
 
     _collection: Collection<Anchor>;
+    #collection_insert_subscription: Subscription | null = null;
+    #collection_remove_subscription: Subscription | null = null;
+
+    readonly #anchor_change_subscriptions = new Map<Anchor, Subscription>();
 
     constructor(vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean) {
 
@@ -789,7 +796,7 @@ export class Path extends Shape {
         let b = this.vertices.getAt(last);
         let points: Anchor[] = [], verts;
 
-        this.vertices.forEach(function (a, i) {
+        this.vertices.forEach((a, i) => {
 
             if (i <= 0 && !closed) {
                 b = a;
@@ -809,7 +816,7 @@ export class Path extends Shape {
             points = points.concat(verts);
 
             // Assign commands to all the verts
-            _.each(verts, function (v, i) {
+            verts.forEach(function (v, i) {
                 if (i <= 0 && b.command === Commands.move) {
                     v.command = Commands.move;
                 }
@@ -829,7 +836,7 @@ export class Path extends Shape {
                     points = points.concat(verts);
 
                     // Assign commands to all the verts
-                    _.each(verts, function (v, i) {
+                    verts.forEach(function (v, i) {
                         if (i <= 0 && b.command === Commands.move) {
                             v.command = Commands.move;
                         }
@@ -850,14 +857,13 @@ export class Path extends Shape {
 
             b = a;
 
-        }, this);
+        });
 
         this._automatic = false;
         this._curved = false;
-        this.vertices = points;
+        this.vertices = new Collection(points);
 
         return this;
-
     }
 
     /**
@@ -868,7 +874,7 @@ export class Path extends Shape {
      * @param {Boolean} [silent=false] - If set to `true` then the path isn't updated before calculation. Useful for internal use.
      * @description Recalculate the {@link Two.Path#length} value.
      */
-    _updateLength(limit?: number, silent = false) {
+    _updateLength(limit?: number, silent = false): this {
         // TODO: DRYness (function above)
         if (!silent) {
             this._update();
@@ -878,14 +884,10 @@ export class Path extends Shape {
         const last = length - 1;
         const closed = false;//this._closed || this.vertices[last]._command === Commands.close;
 
-        let b = this.vertices[last];
+        let b = this.vertices.getAt(last);
         let sum = 0;
 
-        if (typeof this._lengths === 'undefined') {
-            this._lengths = [];
-        }
-
-        _.each(this.vertices, function (a: Anchor, i: number) {
+        this.vertices.forEach((a: Anchor, i: number) => {
 
             if ((i <= 0 && !closed) || a.command === Commands.move) {
                 b = a;
@@ -898,7 +900,7 @@ export class Path extends Shape {
 
             if (i >= last && closed) {
 
-                b = this.vertices[(i + 1) % length];
+                b = this.vertices.getAt((i + 1) % length);
 
                 this._lengths[i + 1] = getCurveLength(a, b, limit);
                 sum += this._lengths[i + 1];
@@ -907,7 +909,7 @@ export class Path extends Shape {
 
             b = a;
 
-        }, this);
+        });
 
         this._length = sum;
         this._flagLength = false;
@@ -998,7 +1000,7 @@ export class Path extends Shape {
                                 else {
                                     this._renderer.collection[i - 1].controls.right
                                         .copy(prev.controls.right)
-                                        .lerp(prev, 1 - v.t);
+                                        .lerp(prev.origin, 1 - v.t);
                                 }
 
                             }
@@ -1006,8 +1008,7 @@ export class Path extends Shape {
                         }
                         else if (i >= low && i <= high) {
 
-                            v = this._renderer.collection[i]
-                                .copy(this._collection[i]);
+                            const v = this._renderer.collection[i].copy(this._collection.getAt(i));
                             this._renderer.vertices.push(v);
 
                             if (i === high && contains(this, ending)) {
@@ -1017,7 +1018,7 @@ export class Path extends Shape {
                                         right.controls.right.clear();
                                     }
                                     else {
-                                        right.controls.right.copy(right);
+                                        right.controls.right.copy(right.origin);
                                     }
                                 }
                             }
@@ -1029,7 +1030,7 @@ export class Path extends Shape {
                                         left.controls.left.clear();
                                     }
                                     else {
-                                        left.controls.left.copy(left);
+                                        left.controls.left.copy(left.origin);
                                     }
                                 }
                             }
@@ -1080,12 +1081,6 @@ export class Path extends Shape {
         return this;
     }
 
-    /**
-     * @name Two.Path#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
     flagReset(): this {
 
         this._flagVertices = false;
@@ -1174,23 +1169,29 @@ export class Path extends Shape {
     }
     set fill(f: string | Gradient | Texture) {
 
-        if (this._fill instanceof Gradient
-            || this._fill instanceof LinearGradient
-            || this._fill instanceof RadialGradient
-            || this._fill instanceof Texture) {
-            this._fill.unbind(Events.Types.change, this._renderer.flagFill);
+        if (this.#fill_change_subscription) {
+            this.#fill_change_subscription.unsubscribe();
+            this.#fill_change_subscription = null;
         }
 
         this._fill = f;
         this._flagFill = true;
 
-        if (this._fill instanceof Gradient
-            || this._fill instanceof LinearGradient
-            || this._fill instanceof RadialGradient
-            || this._fill instanceof Texture) {
-            this._fill.bind(Events.Types.change, this._renderer.flagFill);
+        if (this._fill instanceof LinearGradient) {
+            this.#fill_change_subscription = this._fill.change$.subscribe(() => {
+                this._flagFill = true;
+            });
         }
-
+        else if (this._fill instanceof RadialGradient) {
+            this.#fill_change_subscription = this._fill.change$.subscribe(() => {
+                this._flagFill = true;
+            });
+        }
+        else if (this._fill instanceof Texture) {
+            this.#fill_change_subscription = this._fill.change$.subscribe(() => {
+                this._flagFill = true;
+            });
+        }
     }
     get join(): string {
         return this._join;
@@ -1236,25 +1237,32 @@ export class Path extends Shape {
         this._opacity = v;
         this._flagOpacity = true;
     }
-    get stroke(): string {
+    get stroke(): string | Gradient | Texture {
         return this._stroke;
     }
-    set stroke(f: string) {
-        if (this._stroke instanceof Gradient
-            || this._stroke instanceof LinearGradient
-            || this._stroke instanceof RadialGradient
-            || this._stroke instanceof Texture) {
-            this._stroke.unbind(Events.Types.change, this._renderer.flagStroke);
+    set stroke(stroke: string | Gradient | Texture) {
+        if (this.#stroke_change_subscription) {
+            this.#stroke_change_subscription.unsubscribe();
+            this.#stroke_change_subscription = null;
         }
 
-        this._stroke = f;
+        this._stroke = stroke;
         this._flagStroke = true;
 
-        if (this._stroke instanceof Gradient
-            || this._stroke instanceof LinearGradient
-            || this._stroke instanceof RadialGradient
-            || this._stroke instanceof Texture) {
-            this._stroke.bind(Events.Types.change, this._renderer.flagStroke);
+        if (this._stroke instanceof LinearGradient) {
+            this.#stroke_change_subscription = this._stroke.change$.subscribe(() => {
+                this._flagStroke = true;
+            });
+        }
+        else if (this._stroke instanceof RadialGradient) {
+            this.#stroke_change_subscription = this._stroke.change$.subscribe(() => {
+                this._flagStroke = true;
+            });
+        }
+        else if (this._stroke instanceof Texture) {
+            this.#stroke_change_subscription = this._stroke.change$.subscribe(() => {
+                this._flagStroke = true;
+            });
         }
     }
     get vertices() {
@@ -1265,10 +1273,13 @@ export class Path extends Shape {
         const unbindVertices = this._renderer.unbindVertices;
 
         // Remove previous listeners
-        if (this._collection) {
-            this._collection
-                .unbind(Events.Types.insert, bindVertices)
-                .unbind(Events.Types.remove, unbindVertices);
+        if (this.#collection_insert_subscription) {
+            this.#collection_insert_subscription.unsubscribe();
+            this.#collection_insert_subscription = null;
+        }
+        if (this.#collection_remove_subscription) {
+            this.#collection_remove_subscription.unsubscribe();
+            this.#collection_remove_subscription = null;
         }
 
         // Create new Collection with copy of vertices
@@ -1281,16 +1292,37 @@ export class Path extends Shape {
 
 
         // Listen for Collection changes and bind / unbind
-        this._collection.insert$.subscribe((inserts: Anchor[])=>{
-
+        this.#collection_insert_subscription = this._collection.insert$.subscribe((inserts: Anchor[]) => {
+            let i = inserts.length;
+            while (i--) {
+                const anchor = inserts[i];
+                const subscription = anchor.change$.subscribe(() => {
+                    this._flagVertices = true;
+                });
+                // TODO: Check that we are not already mapped?
+                this.#anchor_change_subscriptions.set(anchor, subscription);
+            }
+            this._flagVertices = true;
         });
-        this._collection
-            .bind(Events.Types.insert, bindVertices)
-            .bind(Events.Types.remove, unbindVertices);
+
+        this.#collection_remove_subscription = this._collection.remove$.subscribe((removes: Anchor[]) => {
+            let i = removes.length;
+            while (i--) {
+                const anchor = removes[i];
+                const subscription = this.#anchor_change_subscriptions.get(anchor);
+                subscription.unsubscribe();
+                this.#anchor_change_subscriptions.delete(anchor);
+            }
+            this._flagVertices = true;
+        });
 
         // Bind Initial Vertices
-        bindVertices(this._collection);
-
+        this._collection.forEach((anchor: Anchor) => {
+            const subscription = anchor.change$.subscribe(() => {
+                this._flagVertices = true;
+            });
+            this.#anchor_change_subscriptions.set(anchor, subscription);
+        });
     }
     get visible(): boolean {
         return this._visible;

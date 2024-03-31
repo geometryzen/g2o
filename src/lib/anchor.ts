@@ -1,4 +1,5 @@
-import { createSignal, Signal } from 'solid-js';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { Signal, createSignal } from 'solid-js';
 import { Commands } from './utils/path-commands.js';
 import { Vector } from './vector.js';
 
@@ -7,10 +8,14 @@ export class Anchor {
      * default is zero.
      */
     readonly origin = new Vector();
+    #origin_change_subscription: Subscription | null = null;
     readonly controls = {
         left: new Vector(),
         right: new Vector()
     };
+    #a_change_subscription: Subscription | null = null;
+    #b_change_subscription: Subscription | null = null;
+
     readonly #command: Signal<'M' | 'L' | 'C' | 'A' | 'Z'>;
     readonly #relative: Signal<boolean>;
 
@@ -19,6 +24,9 @@ export class Anchor {
     readonly #xAxisRotation: Signal<number>;
     readonly #largeArcFlag: Signal<number>;
     readonly #sweepFlag: Signal<number>;
+
+    readonly #change: BehaviorSubject<this>;
+    readonly change$: Observable<this>;
 
     /**
      * @param x The x position of the root anchor point.
@@ -42,6 +50,34 @@ export class Anchor {
         this.#xAxisRotation = createSignal(0);
         this.#largeArcFlag = createSignal(0);
         this.#sweepFlag = createSignal(1);
+
+        this.#change = new BehaviorSubject(this);
+        this.change$ = this.#change.asObservable();
+
+        this.#origin_change_subscription = this.origin.change$.subscribe(() => {
+            this.#change.next(this);
+        });
+        this.#a_change_subscription = this.controls.left.change$.subscribe(() => {
+            this.#change.next(this);
+        });
+        this.#b_change_subscription = this.controls.right.change$.subscribe(() => {
+            this.#change.next(this);
+        });
+    }
+
+    dispose(): void {
+        if (this.#origin_change_subscription) {
+            this.#origin_change_subscription.unsubscribe();
+            this.#origin_change_subscription = null;
+        }
+        if (this.#a_change_subscription) {
+            this.#a_change_subscription.unsubscribe();
+            this.#a_change_subscription = null;
+        }
+        if (this.#b_change_subscription) {
+            this.#b_change_subscription.unsubscribe();
+            this.#b_change_subscription = null;
+        }
     }
 
     get x() {

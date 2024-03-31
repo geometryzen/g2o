@@ -10,17 +10,14 @@ import { subdivide } from '../utils/curves.js';
 import { getIdByLength } from '../utils/shape.js';
 import { Vector } from '../vector.js';
 
-
-
 const ceil = Math.ceil,
     floor = Math.floor;
 
 /**
- * @name Two.Points
- * @class
- * @extends Two.Shape
- * @param {Two.Vector[]} [vertices] - A list of {@link Two.Vector}s that represent the order and coordinates to construct a rendered set of points.
- * @description This is a primary primitive class for quickly and easily drawing points in Two.js. Unless specified methods return their instance of `Two.Points` for the purpose of chaining.
+ * DGH: We can't extend Path because a path is composed of Anchor(s).
+ * Points are composed of Vector(s).
+ * And yet we need to implement some methods that are just like path.
+ * We also need the appropriate interface for getIdByLength (IPathOrPoints)
  */
 export class Points extends Shape {
 
@@ -273,12 +270,6 @@ export class Points extends Shape {
 
     }
 
-    /**
-     * @name Two.Points#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
     flagReset() {
         this._flagVertices = this._flagLength = this._flagFill = this._flagStroke =
             this._flagLinewidth = this._flagOpacity = this._flagVisible =

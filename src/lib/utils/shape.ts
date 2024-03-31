@@ -24,14 +24,22 @@ export function contains(path: Path, t: number): boolean {
 
 }
 
+export interface IPathOrPoints {
+    /**
+     * The total length of the path.
+     */
+    _length: number;
+    /**
+     * The lengths of each segment of the path.
+     */
+    _lengths: number[];
+}
+
 /**
- * @private
- * @param {Two.Path} path - The path to analyze against.
- * @param {Number} target - The target length at which to find an anchor.
- * @returns {Number}
- * @description Return the id of an anchor based on a target length.
+ * TODO: Not a good name. Appears to be returning the index into the lengths array
+ * corresponding to the provided "target" length. But the result also appears to be fractional.
  */
-export function getIdByLength(path: Path, target: number): number {
+export function getIdByLength(path: IPathOrPoints, target: number): number {
 
     const total = path._length;
 
@@ -41,20 +49,14 @@ export function getIdByLength(path: Path, target: number): number {
     else if (target >= total) {
         return path._lengths.length - 1;
     }
-
     for (let i = 0, sum = 0; i < path._lengths.length; i++) {
-
         if (sum + path._lengths[i] >= target) {
             target -= sum;
             return Math.max(i - 1, 0) + target / path._lengths[i];
         }
-
         sum += path._lengths[i];
-
     }
-
-    return - 1;
-
+    return -1;
 }
 
 export function getCurveLength(a: Anchor, b: Anchor, limit: number): number {
