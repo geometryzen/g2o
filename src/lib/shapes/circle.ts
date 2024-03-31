@@ -1,9 +1,7 @@
 import { Anchor } from '../anchor.js';
-import { Group } from '../group.js';
 import { Path } from '../path.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
-
 
 const cos = Math.cos, sin = Math.sin;
 
@@ -111,10 +109,10 @@ export class Circle extends Path {
                 const rx = rc * cos(theta + HALF_PI);
                 const ry = rc * sin(theta + HALF_PI);
 
-                const v = this.vertices[i];
+                const v = this.vertices.getAt(i);
 
                 v.command = i === 0 ? Commands.move : Commands.curve;
-                v.set(x, y);
+                v.origin.set(x, y);
                 v.controls.left.set(lx, ly);
                 v.controls.right.set(rx, ry);
             }

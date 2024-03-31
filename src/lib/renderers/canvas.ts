@@ -1,6 +1,7 @@
 import { Constants } from '../constants.js';
 import { Events } from '../events.js';
 import { Group } from '../group.js';
+import { Path } from '../path.js';
 import { Curve } from '../utils/curves.js';
 import { getRatio } from '../utils/device-pixel-ratio.js';
 import { decomposeMatrix, mod, TWO_PI } from '../utils/math.js';
@@ -56,7 +57,7 @@ const canvas = {
             canvas[child._renderer.type].render.call(child, this.ctx, true, this.clip);
         },
 
-        render: function (ctx) {
+        render: function (this: Group, ctx) {
 
             if (!this._visible) {
                 return this;
@@ -114,14 +115,13 @@ const canvas = {
             // }
 
             return this.flagReset();
-
         }
 
     },
 
     path: {
 
-        render: function (ctx, forced, parentClipped) {
+        render: function (this: Path, ctx, forced, parentClipped) {
 
             let matrix, stroke, linewidth, fill, opacity, visible, cap, join, miter,
                 closed, commands, length, last, prev, a, b, c, d, ux, uy, vx, vy,
@@ -171,7 +171,8 @@ const canvas = {
             if (fill) {
                 if (typeof fill === 'string') {
                     ctx.fillStyle = fill;
-                } else {
+                }
+                else {
                     canvas[fill._renderer.type].render.call(fill, ctx, this);
                     ctx.fillStyle = fill._renderer.effect;
                 }
@@ -179,7 +180,8 @@ const canvas = {
             if (stroke) {
                 if (typeof stroke === 'string') {
                     ctx.strokeStyle = stroke;
-                } else {
+                }
+                else {
                     canvas[stroke._renderer.type].render.call(stroke, ctx, this);
                     ctx.strokeStyle = stroke._renderer.effect;
                 }
@@ -252,7 +254,8 @@ const canvas = {
                         if (a._relative) {
                             vx = (ar.x + a.x);
                             vy = (ar.y + a.y);
-                        } else {
+                        }
+                        else {
                             vx = ar.x;
                             vy = ar.y;
                         }
@@ -260,7 +263,8 @@ const canvas = {
                         if (b._relative) {
                             ux = (bl.x + b.x);
                             uy = (bl.y + b.y);
-                        } else {
+                        }
+                        else {
                             ux = bl.x;
                             uy = bl.y;
                         }
@@ -277,7 +281,8 @@ const canvas = {
                             if (b._relative) {
                                 vx = (br.x + b.x);
                                 vy = (br.y + b.y);
-                            } else {
+                            }
+                            else {
                                 vx = br.x;
                                 vy = br.y;
                             }
@@ -285,7 +290,8 @@ const canvas = {
                             if (c._relative) {
                                 ux = (cl.x + c.x);
                                 uy = (cl.y + c.y);
-                            } else {
+                            }
+                            else {
                                 ux = cl.x;
                                 uy = cl.y;
                             }
@@ -360,7 +366,6 @@ const canvas = {
             }
 
             return this.flagReset();
-
         }
 
     },
@@ -403,7 +408,8 @@ const canvas = {
             if (fill) {
                 if (typeof fill === 'string') {
                     ctx.fillStyle = fill;
-                } else {
+                }
+                else {
                     canvas[fill._renderer.type].render.call(fill, ctx, this);
                     ctx.fillStyle = fill._renderer.effect;
                 }
@@ -411,7 +417,8 @@ const canvas = {
             if (stroke) {
                 if (typeof stroke === 'string') {
                     ctx.strokeStyle = stroke;
-                } else {
+                }
+                else {
                     canvas[stroke._renderer.type].render.call(stroke, ctx, this);
                     ctx.strokeStyle = stroke._renderer.effect;
                 }
@@ -554,7 +561,8 @@ const canvas = {
             if (fill) {
                 if (typeof fill === 'string') {
                     ctx.fillStyle = fill;
-                } else {
+                }
+                else {
                     canvas[fill._renderer.type].render.call(fill, ctx, this);
                     ctx.fillStyle = fill._renderer.effect;
                 }
@@ -562,7 +570,8 @@ const canvas = {
             if (stroke) {
                 if (typeof stroke === 'string') {
                     ctx.strokeStyle = stroke;
-                } else {
+                }
+                else {
                     canvas[stroke._renderer.type].render.call(stroke, ctx, this);
                     ctx.strokeStyle = stroke._renderer.effect;
                 }
@@ -603,7 +612,8 @@ const canvas = {
                         ctx.fillText(this.value, c, d);
                         ctx.restore();
 
-                    } else {
+                    }
+                    else {
                         ctx.fillText(this.value, 0, 0);
                     }
 
@@ -634,7 +644,8 @@ const canvas = {
                         ctx.strokeText(this.value, c, d);
                         ctx.restore();
 
-                    } else {
+                    }
+                    else {
                         ctx.strokeText(this.value, 0, 0);
                     }
                 }
@@ -833,7 +844,8 @@ const canvas = {
                     if (this._scale instanceof Vector) {
                         this._renderer.offset.x *= this._scale.x;
                         this._renderer.offset.y *= this._scale.y;
-                    } else {
+                    }
+                    else {
                         this._renderer.offset.x *= this._scale;
                         this._renderer.offset.y *= this._scale;
                     }
@@ -849,7 +861,8 @@ const canvas = {
 
                 if (this._scale instanceof Vector) {
                     this._renderer.scale.copy(this._scale);
-                } else {
+                }
+                else {
                     this._renderer.scale.set(this._scale, this._scale);
                 }
 
@@ -1061,7 +1074,8 @@ function renderArcEstimate(ctx, ox, oy, rx, ry, startAngle, endAngle, clockwise,
 
             deltaAngle = 0;
 
-        } else {
+        }
+        else {
 
             deltaAngle = TWO_PI;
 
@@ -1075,7 +1089,8 @@ function renderArcEstimate(ctx, ox, oy, rx, ry, startAngle, endAngle, clockwise,
 
             deltaAngle = - TWO_PI;
 
-        } else {
+        }
+        else {
 
             deltaAngle = deltaAngle - TWO_PI;
 

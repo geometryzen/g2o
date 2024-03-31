@@ -1,18 +1,15 @@
+import { Subscription } from 'rxjs';
+import { IShape } from './IShape.js';
 import { Constants } from './constants.js';
+import { Gradient } from './effects/gradient.js';
+import { Texture } from './effects/texture.js';
 import { Element } from './element.js';
-import { Events } from './events.js';
 import { Group } from './group.js';
 import { Matrix } from './matrix.js';
 import { getComputedMatrix } from './utils/math.js';
 import { Vector } from './vector.js';
 
-/**
- * @name Two.Shape
- * @class
- * @extends Two.Element
- * @description The foundational transformation object for the Two.js scenegraph.
- */
-export abstract class Shape extends Element {
+export abstract class Shape extends Element<Group> implements IShape {
 
     /**
      * @name Two.Shape#_flagMatrix
@@ -50,6 +47,7 @@ export abstract class Shape extends Element {
      * @property {Two.Vector} - The translation values as a {@link Two.Vector}.
      */
     _position: Vector = null;
+    _position_change_subscription: Subscription | null = null;
 
     /**
      * @name Two.Shape#_rotation
@@ -64,6 +62,7 @@ export abstract class Shape extends Element {
      * @property {Number|Two.Vector} - The scale value in Number. Can be a vector for non-uniform scaling.
      */
     _scale: number | Vector = 1;
+    _scale_change_subscription: Subscription | null = null;
 
     /**
      * @name Two.Shape#_skewX
@@ -78,6 +77,27 @@ export abstract class Shape extends Element {
      * @property {Number} - The rotation value in Number.
      */
     _skewY = 0;
+
+    abstract _flagVisible: boolean;
+    abstract automatic: boolean;
+    abstract beginning: number;
+    abstract cap: string;
+    abstract clip: boolean;
+    abstract closed: boolean;
+    abstract curved: boolean;
+    abstract ending: number;
+    abstract fill: string | Gradient | Texture;
+    abstract join: string;
+    abstract length: number;
+    abstract linewidth: number;
+    abstract miter: number;
+    abstract stroke: string | Gradient | Texture;
+    abstract visible: boolean;
+    abstract getBoundingClientRect(shallow?: boolean): { width?: number; height?: number; top?: number; left?: number; right?: number; bottom?: number };
+    abstract hasBoundingClientRect(): boolean;
+    abstract noFill(): this;
+    abstract noStroke(): this;
+    abstract subdivide(limit: number): this;
 
     constructor() {
 
@@ -100,17 +120,12 @@ export abstract class Shape extends Element {
         this.id = Constants.Identifier + Constants.uniqueId();
 
         /**
-         * @name Two.Shape#matrix
-         * @property {Two.Matrix}
-         * @description The transformation matrix of the shape.
-         * @nota-bene {@link Two.Shape#position}, {@link Two.Shape#rotation}, {@link Two.Shape#scale}, {@link Two.Shape#skewX}, and {@link Two.Shape#skewY} apply their values to the matrix when changed. The matrix is what is sent to the renderer to be drawn.
+         * The transformation matrix of the shape.
          */
         this.matrix = new Matrix();
 
         /**
-         * @name Two.Shape#worldMatrix
-         * @property {Two.Matrix}
-         * @description The transformation matrix of the shape in the scene.
+         * The transformation matrix of the shape in the scene.
          */
         this.worldMatrix = new Matrix();
 
@@ -156,10 +171,6 @@ export abstract class Shape extends Element {
         this._renderer = v;
     }
 
-    /**
-     * @name Two.Shape#translation
-     * @description Alias for {@link Two.Shape#position}.
-     */
     get translation() {
         return this.position;
     }
@@ -252,12 +263,14 @@ export abstract class Shape extends Element {
         return this._position;
     }
     set position(v) {
-        if (this._position) {
-            this._position.unbind(Events.Types.change, this._renderer.flagMatrix);
+        if (this._position_change_subscription) {
+            this._position_change_subscription.unsubscribe();
+            this._position_change_subscription = null;
         }
         this._position = v;
-        this._position.bind(Events.Types.change, this._renderer.flagMatrix);
-        FlagMatrix.call(this);
+        this._position_change_subscription = this._position.change$.subscribe(() => {
+            this._flagMatrix = true;
+        });
     }
     get rotation(): number {
         return this._rotation;
@@ -270,12 +283,15 @@ export abstract class Shape extends Element {
         return this._scale;
     }
     set scale(v: number | Vector) {
-        if (this._scale instanceof Vector) {
-            this._scale.unbind(Events.Types.change, this._renderer.flagMatrix);
+        if (this._scale_change_subscription) {
+            this._scale_change_subscription.unsubscribe();
+            this._scale_change_subscription = null;
         }
         this._scale = v;
         if (this._scale instanceof Vector) {
-            this._scale.bind(Events.Types.change, this._renderer.flagMatrix);
+            this._scale_change_subscription = this._scale.change$.subscribe(() => {
+                this._flagMatrix = true;
+            });
         }
         this._flagMatrix = true;
         this._flagScale = true;

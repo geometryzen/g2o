@@ -19,8 +19,8 @@ describe("Anchor", function () {
         const by = Math.random();
         const command = random(commands);
         const anchor = new Anchor(x, y, ax, ay, bx, by, command);
-        expect(anchor.origin.x).toBe(x);
-        expect(anchor.origin.y).toBe(y);
+        expect(anchor.x).toBe(x);
+        expect(anchor.y).toBe(y);
         expect(anchor.controls.left.x).toBe(ax);
         expect(anchor.controls.left.y).toBe(ay);
         expect(anchor.controls.right.x).toBe(bx);
@@ -32,8 +32,8 @@ describe("Anchor", function () {
     });
     it("defaults", function () {
         const anchor = new Anchor();
-        expect(anchor.origin.x).toBe(0);
-        expect(anchor.origin.y).toBe(0);
+        expect(anchor.x).toBe(0);
+        expect(anchor.y).toBe(0);
         expect(anchor.controls.left.x).toBe(0);
         expect(anchor.controls.left.y).toBe(0);
         expect(anchor.controls.right.x).toBe(0);
@@ -57,8 +57,8 @@ describe("Anchor", function () {
         const original = new Anchor(x, y, ax, ay, bx, by, command);
         const anchor = new Anchor();
         anchor.copy(original);
-        expect(anchor.origin.x).toBe(x);
-        expect(anchor.origin.y).toBe(y);
+        expect(anchor.x).toBe(x);
+        expect(anchor.y).toBe(y);
         expect(anchor.controls.left.x).toBe(ax);
         expect(anchor.controls.left.y).toBe(ay);
         expect(anchor.controls.right.x).toBe(bx);
@@ -92,8 +92,8 @@ describe("Anchor", function () {
         anchor.largeArcFlag = largeArcFlag;
         anchor.sweepFlag = sweepFlag;
 
-        expect(anchor.origin.x).toBe(x);
-        expect(anchor.origin.y).toBe(y);
+        expect(anchor.x).toBe(x);
+        expect(anchor.y).toBe(y);
         expect(anchor.controls.left.x).toBe(ax);
         expect(anchor.controls.left.y).toBe(ay);
         expect(anchor.controls.right.x).toBe(bx);
@@ -118,7 +118,7 @@ describe("Anchor", function () {
 
         const anchor = new Anchor(x, y, ax, ay, bx, by, command);
         const ditto = new Anchor(x, y, ax, ay, bx, by, command);
-        anchor.origin.set(ditto.origin.x, ditto.origin.y);
+        anchor.origin.set(ditto.x, ditto.y);
         anchor.controls.left.set(ax, ay);
         anchor.controls.right.set(bx, by);
         anchor.command = command;
@@ -133,8 +133,8 @@ describe("Anchor", function () {
         anchor.relative = relative;
         anchor.command = command;
 
-        expect(anchor.origin.x).toBe(x);
-        expect(anchor.origin.y).toBe(y);
+        expect(anchor.x).toBe(x);
+        expect(anchor.y).toBe(y);
         expect(anchor.controls.left.x).toBe(ax);
         expect(anchor.controls.left.y).toBe(ay);
         expect(anchor.controls.right.x).toBe(bx);
@@ -147,7 +147,6 @@ describe("Anchor", function () {
 
         const relatives: boolean[] = [];
         createEffect(() => {
-            console.log("relative", anchor.relative);
             relatives.push(anchor.relative);
         });
 
@@ -166,7 +165,6 @@ describe("Anchor", function () {
         return new Promise<void>((resolve, reject) => {
             try {
                 queueMicrotask(() => {
-                    console.log("microtask");
                     expect(relatives.length).toBe(0);
                     resolve();
                 });

@@ -79,10 +79,6 @@ export class ArcSegment extends Path {
 
         super(points, true, false, true);
 
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
-
         /**
          * @name Two.ArcSegment#innerRadius
          * @property {Number} - The size of the inner radius of the arc segment.
@@ -161,7 +157,8 @@ export class ArcSegment extends Path {
 
             if (connected) {
                 length--;
-            } else if (!punctured) {
+            }
+            else if (!punctured) {
                 length -= 2;
             }
 
@@ -171,7 +168,7 @@ export class ArcSegment extends Path {
             for (i = 0, last = length - 1; i < length; i++) {
 
                 pct = i / last;
-                v = vertices[id];
+                v = vertices.getAt(id);
                 theta = pct * (ea - sa) + sa;
                 step = (ea - sa) / length;
 
@@ -213,9 +210,10 @@ export class ArcSegment extends Path {
             if (punctured) {
 
                 if (connected) {
-                    vertices[id].command = Commands.close;
+                    vertices.getAt(id).command = Commands.close;
                     id++;
-                } else {
+                }
+                else {
                     length--;
                     last = length - 1;
                 }
@@ -226,7 +224,7 @@ export class ArcSegment extends Path {
                 for (i = 0; i < length; i++) {
 
                     pct = i / last;
-                    v = vertices[id];
+                    v = vertices.getAt(id);
                     theta = (1 - pct) * (ea - sa) + sa;
                     step = (ea - sa) / length;
 
@@ -262,19 +260,20 @@ export class ArcSegment extends Path {
                 }
 
                 // Final Point
-                vertices[id].copy(vertices[0]);
-                vertices[id].command = Commands.line;
+                vertices.getAt(id).copy(vertices.getAt(0));
+                vertices.getAt(id).command = Commands.line;
 
-            } else if (!connected) {
+            }
+            else if (!connected) {
 
-                vertices[id].command = Commands.line;
-                vertices[id].x = 0;
-                vertices[id].y = 0;
+                vertices.getAt(id).command = Commands.line;
+                vertices.getAt(id).x = 0;
+                vertices.getAt(id).y = 0;
                 id++;
 
                 // Final Point
-                vertices[id].copy(vertices[0]);
-                vertices[id].command = Commands.line;
+                vertices.getAt(id).copy(vertices.getAt(0));
+                vertices.getAt(id).command = Commands.line;
 
             }
 
@@ -293,56 +292,38 @@ export class ArcSegment extends Path {
      * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
      */
     flagReset() {
-
         super.flagReset.call(this);
 
         this._flagStartAngle = this._flagEndAngle
             = this._flagInnerRadius = this._flagOuterRadius = false;
-
         return this;
-
+    }
+    get startAngle() {
+        return this._startAngle;
+    }
+    set startAngle(v) {
+        this._startAngle = v;
+        this._flagStartAngle = true;
+    }
+    get endAngle() {
+        return this._endAngle;
+    }
+    set endAngle(v) {
+        this._endAngle = v;
+        this._flagEndAngle = true;
+    }
+    get innerRadius() {
+        return this._innerRadius;
+    }
+    set innerRadius(v) {
+        this._innerRadius = v;
+        this._flagInnerRadius = true;
+    }
+    get outerRadius() {
+        return this._outerRadius;
+    }
+    set outerRadius(v) {
+        this._outerRadius = v;
+        this._flagOuterRadius = true;
     }
 }
-
-const proto = {
-    startAngle: {
-        enumerable: true,
-        get: function () {
-            return this._startAngle;
-        },
-        set: function (v) {
-            this._startAngle = v;
-            this._flagStartAngle = true;
-        }
-    },
-    endAngle: {
-        enumerable: true,
-        get: function () {
-            return this._endAngle;
-        },
-        set: function (v) {
-            this._endAngle = v;
-            this._flagEndAngle = true;
-        }
-    },
-    innerRadius: {
-        enumerable: true,
-        get: function () {
-            return this._innerRadius;
-        },
-        set: function (v) {
-            this._innerRadius = v;
-            this._flagInnerRadius = true;
-        }
-    },
-    outerRadius: {
-        enumerable: true,
-        get: function () {
-            return this._outerRadius;
-        },
-        set: function (v) {
-            this._outerRadius = v;
-            this._flagOuterRadius = true;
-        }
-    }
-};

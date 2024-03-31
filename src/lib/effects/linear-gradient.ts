@@ -1,67 +1,28 @@
-import { Events } from '../events.js';
-import { _ } from '../utils/underscore.js';
+import { Subscription } from 'rxjs';
 import { Vector } from '../vector.js';
 import { Gradient } from './gradient.js';
 import { Stop } from './stop.js';
 
-
-/**
- * @name Two.LinearGradient
- * @class
- * @extends Two.Gradient
- * @param {Number} [x1=0] - The x position of the first end point of the linear gradient.
- * @param {Number} [y1=0] - The y position of the first end point of the linear gradient.
- * @param {Number} [x2=0] - The x position of the second end point of the linear gradient.
- * @param {Number} [y2=0] - The y position of the second end point of the linear gradient.
- * @param {Two.Stop[]} [stops] - A list of {@link Two.Stop}s that contain the gradient fill pattern for the gradient.
- * @nota-bene The linear gradient lives within the space of the parent object's matrix space.
- */
 export class LinearGradient extends Gradient {
+    #flagEndPoints = false;
+    #left: Vector | null = null;
+    #left_change_subscription: Subscription | null = null;
+    #right: Vector | null = null;
+    #right_change_subscription: Subscription | null = null;
 
     /**
-     * @name Two.LinearGradient#_flagEndPoints
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.LinearGradient#left} or {@link Two.LinearGradient#right} changed and needs to update.
+     * @param x1 The x position of the first end point of the linear gradient.
+     * @param y1 The y position of the first end point of the linear gradient.
+     * @param x2 The x position of the second end point of the linear gradient.
+     * @param y2 The y position of the second end point of the linear gradient.
+     * @param stops A list of {@link Stop}s that contain the gradient fill pattern for the gradient.
+     * @nota-bene The linear gradient lives within the space of the parent object's matrix space.
      */
-    _flagEndPoints = false;
-    _left = null;
-    _right = null;
-
-    constructor(x1 = 0, y1 = 0, x2 = 0, y2 = 0, stops: Stop[]) {
-
+    constructor(x1 = 0, y1 = 0, x2 = 0, y2 = 0, stops: Stop[] = []) {
         super(stops);
-
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
-
         this._renderer.type = 'linear-gradient';
-        this._renderer.flagEndPoints = FlagEndPoints.bind(this);
-
-        /**
-         * @name Two.LinearGradient#left
-         * @property {Two.Vector} - The x and y value for where the first end point is placed on the canvas.
-         */
-        this.left = new Vector();
-        /**
-         * @name Two.LinearGradient#right
-         * @property {Two.Vector} - The x and y value for where the second end point is placed on the canvas.
-         */
-        this.right = new Vector();
-
-        if (typeof x1 === 'number') {
-            this.left.x = x1;
-        }
-        if (typeof y1 === 'number') {
-            this.left.y = y1;
-        }
-        if (typeof x2 === 'number') {
-            this.right.x = x2;
-        }
-        if (typeof y2 === 'number') {
-            this.right.y = y2;
-        }
-
+        this.left = new Vector(x1, y1);
+        this.right = new Vector(x2, y2);
     }
 
     static Properties = ['left', 'right'];
@@ -81,13 +42,10 @@ export class LinearGradient extends Gradient {
      * @nota-bene Try not to call this method more than once a frame.
      */
     _update() {
-
-        if (this._flagEndPoints || this._flagSpread || this._flagStops) {
-            this.trigger(Events.Types.change);
+        if (this.#flagEndPoints || this._flagSpread || this._flagStops) {
+            this._change.next(this);
         }
-
         return this;
-
     }
 
     /**
@@ -97,54 +55,36 @@ export class LinearGradient extends Gradient {
      * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
      */
     flagReset() {
-
-        this._flagEndPoints = false;
-
+        this.#flagEndPoints = false;
         super.flagReset.call(this);
-
         return this;
-
     }
-
-}
-
-const proto = {
-    left: {
-        enumerable: true,
-        get: function () {
-            return this._left;
-        },
-        set: function (v) {
-            if (this._left instanceof Vector) {
-                this._left.unbind(Events.Types.change, this._renderer.flagEndPoints);
-            }
-            this._left = v;
-            this._left.bind(Events.Types.change, this._renderer.flagEndPoints);
-            this._flagEndPoints = true;
-        }
-    },
-    right: {
-        enumerable: true,
-        get: function () {
-            return this._right;
-        },
-        set: function (v) {
-            if (this._right instanceof Vector) {
-                this._right.unbind(Events.Types.change, this._renderer.flagEndPoints);
-            }
-            this._right = v;
-            this._right.bind(Events.Types.change, this._renderer.flagEndPoints);
-            this._flagEndPoints = true;
-        }
+    get left() {
+        return this.#left;
     }
-};
-
-/**
- * @name FlagEndPoints
- * @private
- * @function
- * @description Cached method to let renderers know end points have been updated on a {@link Two.LinearGradient}.
- */
-function FlagEndPoints() {
-    this._flagEndPoints = true;
+    set left(v) {
+        if (this.#left_change_subscription) {
+            this.#left_change_subscription.unsubscribe();
+            this.#left_change_subscription = null;
+        }
+        this.#left = v;
+        this.#left_change_subscription = this.#left.change$.subscribe(() => {
+            this.#flagEndPoints = true;
+        });
+        this.#flagEndPoints = true;
+    }
+    get right() {
+        return this.#right;
+    }
+    set right(v) {
+        if (this.#right_change_subscription) {
+            this.#right_change_subscription.unsubscribe();
+            this.#right_change_subscription = null;
+        }
+        this.#right = v;
+        this.#right_change_subscription = this.#right.change$.subscribe(() => {
+            this.#flagEndPoints = true;
+        });
+        this.#flagEndPoints = true;
+    }
 }

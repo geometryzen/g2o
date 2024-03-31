@@ -6,16 +6,6 @@ import { Commands } from '../utils/path-commands.js';
 
 const cos = Math.cos, sin = Math.sin;
 
-/**
- * @name Two.Ellipse
- * @class
- * @extends Two.Path
- * @param {Number} [x=0] - The x position of the ellipse.
- * @param {Number} [y=0] - The y position of the ellipse.
- * @param {Number} [rx=0] - The radius value of the ellipse in the x direction.
- * @param {Number} [ry=0] - The radius value of the ellipse in the y direction.
- * @param {Number} [resolution=4] - The number of vertices used to construct the ellipse.
- */
 export class Ellipse extends Path {
 
     /**
@@ -44,7 +34,14 @@ export class Ellipse extends Path {
      */
     _height = 0;
 
-    constructor(x: number, y: number, rx: number, ry: number, resolution: number) {
+    /**
+     * @param {Number} [x=0] - The x position of the ellipse.
+     * @param {Number} [y=0] - The y position of the ellipse.
+     * @param {Number} [rx=0] - The radius value of the ellipse in the x direction.
+     * @param {Number} [ry=0] - The radius value of the ellipse in the y direction.
+     * @param {Number} [resolution=4] - The number of vertices used to construct the ellipse.
+     */
+    constructor(x: number = 0, y: number = 0, rx: number = 0, ry: number = 0, resolution: number = 4) {
 
         if (typeof ry !== 'number' && typeof rx === 'number') {
             ry = rx;
@@ -58,10 +55,6 @@ export class Ellipse extends Path {
         }
 
         super(points, true, true, true);
-
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
 
         /**
          * @name Two.Ellipse#width
@@ -132,10 +125,10 @@ export class Ellipse extends Path {
                 const rx = radiusX * c * cos(theta + HALF_PI);
                 const ry = radiusY * c * sin(theta + HALF_PI);
 
-                const v = this.vertices[i];
+                const v = this.vertices.getAt(i);
 
                 v.command = i === 0 ? Commands.move : Commands.curve;
-                v.set(x, y);
+                v.origin.set(x, y);
                 v.controls.left.set(lx, ly);
                 v.controls.right.set(rx, ry);
             }
@@ -153,34 +146,22 @@ export class Ellipse extends Path {
      * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
      */
     flagReset() {
-
         this._flagWidth = this._flagHeight = false;
-
         super.flagReset.call(this);
         return this;
-
+    }
+    get height() {
+        return this._height;
+    }
+    set height(v) {
+        this._height = v;
+        this._flagHeight = true;
+    }
+    get width() {
+        return this._width;
+    }
+    set width(v) {
+        this._width = v;
+        this._flagWidth = true;
     }
 }
-
-const proto = {
-    width: {
-        enumerable: true,
-        get: function () {
-            return this._width;
-        },
-        set: function (v) {
-            this._width = v;
-            this._flagWidth = true;
-        }
-    },
-    height: {
-        enumerable: true,
-        get: function () {
-            return this._height;
-        },
-        set: function (v) {
-            this._height = v;
-            this._flagHeight = true;
-        }
-    }
-};

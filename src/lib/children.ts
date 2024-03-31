@@ -1,9 +1,9 @@
+import { Observable, Subscription } from 'rxjs';
 import { Collection } from './collection.js';
-import { Group } from './group.js';
 
 export interface Child {
     id: string;
-    parent: Group;
+    id$: Observable<{ id: string, previous_id: string }>;
 }
 
 /**
@@ -11,58 +11,56 @@ export interface Child {
  */
 export class Children<T extends Child> extends Collection<T> {
 
-    /**
-     * @name Two.Group.Children#ids
-     * @property {Object} - Map of all elements in the list keyed by `id`s.
-     */
-    ids: { [id: string]: T } = {};
+    readonly ids: { [id: string]: T } = {};
+    readonly #child_subscriptions: { [id: string]: Subscription } = {};
+
+    readonly #insert_subscription: Subscription;
+    readonly #remove_subscription: Subscription;
 
     constructor(children: T[]) {
-
-        children = Array.isArray(children)
-            ? children : Array.prototype.slice.call(arguments);
-
         super(children);
 
-        this.attach(children);
+        this.#attach(children);
 
-        const insert_event_handler = (ts: T[]) => {
-            this.attach(ts);
-        };
+        this.#insert_subscription = this.insert$.subscribe((cs: T[]) => {
+            this.#attach(cs);
+        });
 
-        const remove_event_handler = (ts: T[]) => {
-            this.detach(ts);
-        };
-
-        this.on('insert', insert_event_handler);
-        this.on('remove', remove_event_handler);
+        this.#remove_subscription = this.remove$.subscribe((cs: T[]) => {
+            this.#detach(cs);
+        });
     }
 
-    /**
-     * @function
-     * @name Two.Group.Children#attach
-     * @param {Two.Shape[]} children - The objects which extend {@link Two.Shape} to be added.
-     * @description Adds elements to the `ids` map.
-     */
-    attach(children: T[]): this {
+    dispose(): void {
+        this.#insert_subscription.unsubscribe();
+        this.#remove_subscription.unsubscribe();
+    }
+
+    #attach(children: T[]): this {
         for (let i = 0; i < children.length; i++) {
             const child = children[i];
             if (child && child.id) {
                 this.ids[child.id] = child;
             }
+            this.#child_subscriptions[child.id] = child.id$.subscribe(({ id, previous_id }) => {
+                if (previous_id) {
+                    delete this.ids[previous_id];
+                    // Move the subscription to the new id and delete the reference for the previous_id
+                    this.#child_subscriptions[id] = this.#child_subscriptions[previous_id];
+                    delete this.#child_subscriptions[previous_id];
+                }
+                this.ids[id] = child;
+            });
         }
         return this;
     }
 
-    /**
-     * @function
-     * @name Two.Group.Children#detach
-     * @param {Two.Shape[]} children - The objects which extend {@link Two.Shape} to be removed.
-     * @description Removes elements to the `ids` map.
-     */
-    detach(children: T[]): this {
+    #detach(children: T[]): this {
         for (let i = 0; i < children.length; i++) {
-            delete this.ids[children[i].id];
+            const child = children[i];
+            this.#child_subscriptions[child.id].unsubscribe();
+            delete this.#child_subscriptions[child.id];
+            delete this.ids[child.id];
         }
         return this;
     }

@@ -1,8 +1,18 @@
+import { Group } from '../group.js';
+import { Matrix } from '../matrix.js';
+import { Shape } from '../shape.js';
 import { root } from './root.js';
 
-let Matrix;
-const TWO_PI = Math.PI * 2;
-const HALF_PI = Math.PI * 0.5;
+export const TWO_PI = Math.PI * 2;
+export const HALF_PI = Math.PI * 0.5;
+
+export interface MatrixDecomposition {
+    translateX: number;
+    translateY: number;
+    scaleX: number;
+    scaleY: number;
+    rotation: number
+}
 
 /**
  * @name Two.Utils.decomposeMatrix
@@ -11,37 +21,20 @@ const HALF_PI = Math.PI * 0.5;
  * @returns {Object} An object containing relevant skew values.
  * @description Decompose a 2D 3x3 Matrix to find the skew.
  */
-function decomposeMatrix(matrix, b, c, d, e, f) {
+export function decomposeMatrix(a: number, b: number, c: number, d: number, e: number, f: number): MatrixDecomposition {
 
-  // TODO: Include skewX, skewY
-  // https://math.stackexchange.com/questions/237369/given-this-transformation-matrix-how-do-i-decompose-it-into-translation-rotati/417813
-  // https://stackoverflow.com/questions/45159314/decompose-2d-transformation-matrix
+    // TODO: Include skewX, skewY
+    // https://math.stackexchange.com/questions/237369/given-this-transformation-matrix-how-do-i-decompose-it-into-translation-rotati/417813
+    // https://stackoverflow.com/questions/45159314/decompose-2d-transformation-matrix
 
-  let a;
+    return {
+        translateX: e,
+        translateY: f,
+        scaleX: Math.sqrt(a * a + b * b),
+        scaleY: Math.sqrt(c * c + d * d),
+        rotation: 180 * Math.atan2(b, a) / Math.PI
+    };
 
-  if (arguments.length <= 1) {
-    a = matrix.a;
-    b = matrix.b;
-    c = matrix.c;
-    d = matrix.d;
-    e = matrix.e;
-    f = matrix.f;
-  } else {
-    a = matrix;
-  }
-
-  return {
-    translateX: e,
-    translateY: f,
-    scaleX: Math.sqrt(a * a + b * b),
-    scaleY: Math.sqrt(c * c + d * d),
-    rotation: 180 * Math.atan2(b, a) / Math.PI
-  };
-
-}
-
-function setMatrix(matrix) {
-  Matrix = matrix;
 }
 
 /**
@@ -52,30 +45,25 @@ function setMatrix(matrix) {
  * @returns {Two.Matrix} The computed matrix of a nested object. If no `matrix` was passed in arguments then a `new Two.Matrix` is returned.
  * @description Method to get the world space transformation of a given object in a Two.js scene.
  */
-function getComputedMatrix(object, matrix) {
+export function getComputedMatrix(object: Shape, matrix: Matrix): Matrix {
 
-  matrix = (matrix && matrix.identity()) || new Matrix();
-  let parent = object;
-  const matrices = [];
+    matrix = (matrix && matrix.identity()) || new Matrix();
+    let parent: Shape | Group = object;
+    const matrices: Matrix[] = [];
 
-  while (parent && parent._matrix) {
-    matrices.push(parent._matrix);
-    parent = parent.parent;
-  }
+    while (parent && parent._matrix) {
+        matrices.push(parent._matrix);
+        parent = parent.parent;
+    }
 
-  matrices.reverse();
+    matrices.reverse();
 
-  for (let i = 0; i < matrices.length; i++) {
+    for (let i = 0; i < matrices.length; i++) {
+        const m = matrices[i];
+        matrix.multiply(m.a, m.b, m.c, m.d, m.e, m.f, m.g, m.h, m.i);
+    }
 
-    const m = matrices[i];
-    const e = m.elements;
-    matrix.multiply(
-      e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], e[8], e[9]);
-
-  }
-
-  return matrix;
-
+    return matrix;
 }
 
 /**
@@ -87,8 +75,8 @@ function getComputedMatrix(object, matrix) {
  * @returns {Number}
  * @description Linear interpolation between two values `a` and `b` by an amount `t`.
  */
-function lerp(a, b, t) {
-  return t * (b - a) + a;
+export function lerp(a: number, b: number, t: number): number {
+    return t * (b - a) + a;
 }
 
 /**
@@ -99,12 +87,12 @@ function lerp(a, b, t) {
  * @see {@link https://en.wikipedia.org/wiki/Power_of_two}
  */
 const pots = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
-function getPoT(value) {
-  let i = 0;
-  while (pots[i] && pots[i] < value) {
-    i++;
-  }
-  return pots[i];
+export function getPoT(value: number) {
+    let i = 0;
+    while (pots[i] && pots[i] < value) {
+        i++;
+    }
+    return pots[i];
 }
 
 /**
@@ -115,17 +103,17 @@ function getPoT(value) {
  * @returns {Number}
  * @description Modulo with added functionality to handle negative values in a positive manner.
  */
-function mod(v, l) {
+export function mod(v: number, l: number): number {
 
-  while (v < 0) {
-    v += l;
-  }
+    while (v < 0) {
+        v += l;
+    }
 
-  return v % l;
+    return v % l;
 
 }
 
-const NumArray = root.Float32Array || Array;
+export const NumArray = root.Float32Array || Array<number>;
 const floor = Math.floor;
 
 /**
@@ -136,12 +124,6 @@ const floor = Math.floor;
 * @description A pretty fast toFixed(3) alternative.
 * @see {@link http://jsperf.com/parsefloat-tofixed-vs-math-round/18}
 */
-function toFixed(v) {
-  return floor(v * 1000000) / 1000000;
+export function toFixed(v: number): number {
+    return floor(v * 1000000) / 1000000;
 }
-
-
-export {
-  decomposeMatrix, getComputedMatrix, getPoT, setMatrix, lerp, mod, NumArray,
-  toFixed, TWO_PI, HALF_PI
-};

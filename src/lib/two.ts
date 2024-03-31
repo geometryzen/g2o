@@ -829,7 +829,7 @@ export class Two {
      * @returns {Two.Points}
      * @description Creates a Two.js points object and adds it to the current scene.
      */
-    makePoints(p): Points {
+    makePoints(p: Vector[]): Points {
 
         const l = arguments.length;
         let vertices = p;

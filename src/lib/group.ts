@@ -1,21 +1,14 @@
+import { Subscription } from 'rxjs';
+import { IShape } from './IShape.js';
 import { Children } from './children.js';
 import { Shape } from './shape.js';
-import { _ } from './utils/underscore.js';
 
 
 // Constants
 
 const min = Math.min, max = Math.max;
 
-/**
- * @name Two.Group
- * @class
- * @extends Two.Shape
- * @param {Two.Shape[]} [children] - A list of objects that inherit {@link Two.Shape}. For instance, the array could be a {@link Two.Path}, {@link Two.Text}, and {@link Two.RoundedRectangle}.
- * @description This is the primary class for grouping objects that are then drawn in Two.js. In Illustrator this is a group, in After Effects it would be a Null Object. Whichever the case, the `Two.Group` contains a transformation matrix and commands to style its children, but it by itself doesn't render to the screen.
- * @nota-bene The {@link Two#scene} is an instance of `Two.Group`.
- */
-export class Group extends Shape {
+export class Group extends Shape implements IShape {
 
     /**
      * @name Two.Group#_flagAdditions
@@ -78,6 +71,8 @@ export class Group extends Shape {
      * @property {Boolean} - Determines whether the {@link Two.Group#mask} needs updating.
      */
     _flagMask = false;
+
+    _flagVisible = false;
 
     // Underlying Properties
 
@@ -182,76 +177,78 @@ export class Group extends Shape {
      */
     _mask: Shape = null;
 
-    _children: Children<Shape>;
+    _shapes: Children<IShape>;
+    #shapes_insert_subscription: Subscription | null = null;
+    #shapes_remove_subscription: Subscription | null = null;
+    #shapes_order_subscription: Subscription | null = null;
 
-    readonly additions: Shape[];
-    readonly subtractions: Shape[];
+    clip: boolean;
 
-    constructor(children?: Shape[]) {
+    /**
+     * An automatically updated list of shapes that need to be appended to the renderer's scenegraph.
+     */
+    readonly additions: IShape[] = [];
+    /**
+     * An automatically updated list of children that need to be removed from the renderer's scenegraph.
+     */
+    readonly subtractions: IShape[] = [];
+
+    constructor(shapes: IShape[] = []) {
 
         super();
+
+        this._shapes = new Children(shapes);
+
+        this.#subscribe_to_shapes();
 
         //
 
         this._renderer.type = 'group';
+    }
 
-        /**
-         * @name Two.Group#additions
-         * @property {Two.Shape[]}
-         * @description An automatically updated list of children that need to be appended to the renderer's scenegraph.
-         */
-        this.additions = [];
+    hasBoundingClientRect(): boolean {
+        return false;
+    }
 
-        /**
-         * @name Two.Group#subtractions
-         * @property {Two.Shape[]}
-         * @description An automatically updated list of children that need to be removed from the renderer's scenegraph.
-         */
-        this.subtractions = [];
+    dispose() {
+        this.#unsubscribe_from_shapes();
+        this._shapes.dispose();
+    }
 
-        /**
-         * @name Two.Group#children
-         * @property {Two.Group.Children}
-         * @description A list of all the children in the scenegraph.
-         * @nota-bene Ther order of this list indicates the order each element is rendered to the screen.
-         */
-        this.children = Array.isArray(children) ? children : Array.prototype.slice.call(arguments);
+    #subscribe_to_shapes(): void {
+        this.#shapes_insert_subscription = this._shapes.insert$.subscribe((inserts: IShape[]) => {
+            for (const shape of inserts) {
+                update_shape_group(shape, this);
+            }
+        });
+
+        this.#shapes_remove_subscription = this._shapes.remove$.subscribe((removes: IShape[]) => {
+            for (const shape of removes) {
+                update_shape_group(shape, null);
+            }
+        });
+
+        this.#shapes_order_subscription = this._shapes.order$.subscribe(() => {
+            this._flagOrder = true;
+        });
+    }
+
+    #unsubscribe_from_shapes(): void {
+        if (this.#shapes_insert_subscription) {
+            this.#shapes_insert_subscription.unsubscribe();
+            this.#shapes_insert_subscription = null;
+        }
+        if (this.#shapes_remove_subscription) {
+            this.#shapes_remove_subscription.unsubscribe();
+            this.#shapes_remove_subscription = null;
+        }
+        if (this.#shapes_order_subscription) {
+            this.#shapes_order_subscription.unsubscribe();
+            this.#shapes_order_subscription = null;
+        }
     }
 
     static Children = Children;
-
-    /**
-     * @name Two.Group.InsertChildren
-     * @function
-     * @param {Two.Shape[]} children - The objects to be inserted.
-     * @description Cached method to let renderers know children have been added to a {@link Two.Group}.
-     */
-    static InsertChildren(children: Shape[]) {
-        for (let i = 0; i < children.length; i++) {
-            replaceParent.call(this, children[i], this);
-        }
-    }
-
-    /**
-     * @name Two.Group.RemoveChildren
-     * @function
-     * @param {Two.Shape[]} children - The objects to be removed.
-     * @description Cached method to let renderers know children have been removed from a {@link Two.Group}.
-     */
-    static RemoveChildren(children: Shape[]) {
-        for (let i = 0; i < children.length; i++) {
-            replaceParent.call(this, children[i]);
-        }
-    }
-
-    /**
-     * @name Two.Group.OrderChildren
-     * @function
-     * @description Cached method to let renderers know order has been updated on a {@link Two.Group}.
-     */
-    static OrderChildren(this: Group, children) {
-        this._flagOrder = true;
-    }
 
     /**
      * @name Two.Group.Properties
@@ -271,16 +268,14 @@ export class Group extends Shape {
     ];
 
     /**
-     * @name Two.Group#corner
-     * @function
-     * @description Orient the children of the group to the upper left-hand corner of that group.
+     * Orient the children of the group to the upper left-hand corner of that group.
      */
     corner() {
 
         const rect = this.getBoundingClientRect(true);
 
         for (let i = 0; i < this.children.length; i++) {
-            const child = this.children[i];
+            const child = this.children.getAt(i);
             child.translation.x -= rect.left;
             child.translation.y -= rect.top;
         }
@@ -306,7 +301,7 @@ export class Group extends Shape {
         const cy = rect.top + rect.height / 2 - this.translation.y;
 
         for (let i = 0; i < this.children.length; i++) {
-            const child = this.children[i];
+            const child = this.children.getAt(i);
             if (child.isShape) {
                 child.translation.x -= cx;
                 child.translation.y -= cy;
@@ -328,14 +323,15 @@ export class Group extends Shape {
      * @description Recursively search for id. Returns the first element found.
      * @returns {Two.Shape} - Or `null` if nothing is found.
      */
-    getById(id) {
+    getById(id: string): IShape {
         let found = null;
-        function search(node) {
+        function search(node: IShape): IShape {
             if (node.id === id) {
                 return node;
-            } else if (node.children) {
+            }
+            else if (node instanceof Group && node.children) {
                 for (let i = 0; i < node.children.length; i++) {
-                    found = search(node.children[i]);
+                    found = search(node.children.getAt(i));
                     if (found) {
                         return found;
                     }
@@ -346,21 +342,15 @@ export class Group extends Shape {
         return search(this);
     }
 
-    /**
-     * @name Two.Group#getByClassName
-     * @function
-     * @description Recursively search for classes. Returns an array of matching elements.
-     * @returns {Two.Shape[]} - Or empty array if nothing is found.
-     */
-    getByClassName(className: string) {
-        const found: (Shape | Group)[] = [];
-        function search(node: Shape | Group) {
+    getByClassName(className: string): IShape[] {
+        const found: IShape[] = [];
+        function search(node: IShape) {
             if (Array.prototype.indexOf.call(node.classList, className) >= 0) {
                 found.push(node);
             }
             if (node instanceof Group && node.children) {
                 for (let i = 0; i < node.children.length; i++) {
-                    const child = node.children[i];
+                    const child = node.children.getAt(i);
                     search(child);
                 }
             }
@@ -369,22 +359,16 @@ export class Group extends Shape {
         return search(this);
     }
 
-    /**
-     * @name Two.Group#getByType
-     * @function
-     * @description Recursively search for children of a specific type, e.g. {@link Two.Path}. Pass a reference to this type as the param. Returns an array of matching elements.
-     * @returns {Two.Shape[]} - Empty array if nothing is found.
-     */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getByType(type: any) {
-        const found: (Shape | Group)[] = [];
-        function search(node: Shape | Group) {
+    getByType(type: any): IShape[] {
+        const found: IShape[] = [];
+        function search(node: IShape) {
             if (node instanceof type) {
                 found.push(node);
             }
             if (node instanceof Group && node.children) {
                 for (let i = 0; i < node.children.length; i++) {
-                    const child = node.children[i];
+                    const child = node.children.getAt(i);
                     search(child);
                 }
             }
@@ -393,31 +377,14 @@ export class Group extends Shape {
         return search(this);
     }
 
-    /**
-     * @name Two.Group#add
-     * @function
-     * @param {Two.Shape[]|...Two.Shape} objects - An array of objects to be added. Can also be supplied as individual arguments.
-     * @description Add objects to the group.
-     */
-    add(objects: Shape | Shape[] | Group) {
+    add(...shapes: IShape[]) {
 
-        // Allow to pass multiple objects either as array or as multiple arguments
-        // If it's an array also create copy of it in case we're getting passed
-        // a childrens array directly.
-        if (!(objects instanceof Array)) {
-            objects = Array.prototype.slice.call(arguments);
-        }
-        else {
-            objects = objects.slice();
-        }
-
-        // Add the objects
-        for (let i = 0; i < objects.length; i++) {
-            const child = objects[i];
+        for (let i = 0; i < shapes.length; i++) {
+            const child = shapes[i];
             if (!(child && child.id)) {
                 continue;
             }
-            const index = Array.prototype.indexOf.call(this.children, child);
+            const index = this.children.indexOf(child);
             if (index >= 0) {
                 this.children.splice(index, 1);
             }
@@ -428,17 +395,12 @@ export class Group extends Shape {
 
     }
 
-    /**
-     * @name Two.Group#remove
-     * @function
-     * @param {Two.Shape[]|...Two.Shape} [objects=self] - An array of objects to be removed. Can be also removed as individual arguments. If no arguments are passed, then it removes itself from its parent.
-     * @description Remove objects from the group.
-     */
-    remove(objects) {
+    remove(...shapes: IShape[]) {
 
         const l = arguments.length,
             grandparent = this.parent;
 
+        // TODO: I don't like this double-meaning. It's in Shape too.
         // Allow to call remove without arguments
         // This will detach the object from its own parent.
         if (l <= 0 && grandparent) {
@@ -446,18 +408,9 @@ export class Group extends Shape {
             return this;
         }
 
-        // Allow to pass multiple objects either as array or as multiple arguments
-        // If it's an array also create copy of it in case we're getting passed
-        // a childrens array directly.
-        if (!(objects instanceof Array)) {
-            objects = Array.prototype.slice.call(arguments);
-        } else {
-            objects = objects.slice();
-        }
-
         // Remove the objects
-        for (let i = 0; i < objects.length; i++) {
-            const object = objects[i];
+        for (let i = 0; i < shapes.length; i++) {
+            const object = shapes[i];
             if (!object || !this.children.ids[object.id]) {
                 continue;
             }
@@ -471,67 +424,52 @@ export class Group extends Shape {
 
     }
 
-    /**
-     * @name Two.Group#getBoundingClientRect
-     * @function
-     * @param {Boolean} [shallow=false] - Describes whether to calculate off local matrix or world matrix.
-     * @returns {Object} - Returns object with top, left, right, bottom, width, height attributes.
-     * @description Return an object with top, left, right, bottom, width, and height parameters of the group.
-     */
-    getBoundingClientRect(shallow) {
-        let rect, matrix, tc, lc, rc, bc;
+    getBoundingClientRect(shallow = false): { top: number; left: number; right: number; bottom: number; width?: number; height?: number } {
 
-        // TODO: Update this to not __always__ update. Just when it needs to.
-        this._update(true);
+        this._update();
 
         // Variables need to be defined here, because of nested nature of groups.
         let left = Infinity, right = -Infinity,
             top = Infinity, bottom = -Infinity;
 
-        const regex = /texture|gradient/i;
-
-        matrix = shallow ? this.matrix : this.worldMatrix;
+        const matrix = shallow ? this.matrix : this.worldMatrix;
 
         for (let i = 0; i < this.children.length; i++) {
 
-            const child = this.children[i];
+            const child = this.children.getAt(i);
 
-            if (!child.visible || regex.test(child._renderer.type)) {
+            if (!child.visible || child.hasBoundingClientRect()) {
                 continue;
             }
 
-            rect = child.getBoundingClientRect(shallow);
+            const rect = child.getBoundingClientRect(shallow);
 
-            tc = typeof rect.top !== 'number' || _.isNaN(rect.top) || !isFinite(rect.top);
-            lc = typeof rect.left !== 'number' || _.isNaN(rect.left) || !isFinite(rect.left);
-            rc = typeof rect.right !== 'number' || _.isNaN(rect.right) || !isFinite(rect.right);
-            bc = typeof rect.bottom !== 'number' || _.isNaN(rect.bottom) || !isFinite(rect.bottom);
+            const tc = typeof rect.top !== 'number' || isNaN(rect.top) || !isFinite(rect.top);
+            const lc = typeof rect.left !== 'number' || isNaN(rect.left) || !isFinite(rect.left);
+            const rc = typeof rect.right !== 'number' || isNaN(rect.right) || !isFinite(rect.right);
+            const bc = typeof rect.bottom !== 'number' || isNaN(rect.bottom) || !isFinite(rect.bottom);
 
             if (tc || lc || rc || bc) {
                 continue;
             }
 
             if (shallow) {
-
-                const [ax, ay] = matrix.multiply(rect.left, rect.top);
-                const [bx, by] = matrix.multiply(rect.right, rect.top);
-                const [cx, cy] = matrix.multiply(rect.left, rect.bottom);
-                const [dx, dy] = matrix.multiply(rect.right, rect.bottom);
+                const [ax, ay] = matrix.multiply_vector(rect.left, rect.top);
+                const [bx, by] = matrix.multiply_vector(rect.right, rect.top);
+                const [cx, cy] = matrix.multiply_vector(rect.left, rect.bottom);
+                const [dx, dy] = matrix.multiply_vector(rect.right, rect.bottom);
 
                 top = min(ay, by, cy, dy);
                 left = min(ax, bx, cx, dx);
                 right = max(ax, bx, cx, dx);
                 bottom = max(ay, by, cy, dy);
-
-            } else {
-
+            }
+            else {
                 top = min(rect.top, top);
                 left = min(rect.left, left);
                 right = max(rect.right, right);
                 bottom = max(rect.bottom, bottom);
-
             }
-
         }
 
         return {
@@ -542,13 +480,10 @@ export class Group extends Shape {
             width: right - left,
             height: bottom - top
         };
-
     }
 
     /**
-     * @name Two.Group#noFill
-     * @function
-     * @description Apply `noFill` method to all child shapes.
+     * Apply `noFill` method to all child shapes.
      */
     noFill() {
         this.children.forEach(function (child) {
@@ -558,9 +493,7 @@ export class Group extends Shape {
     }
 
     /**
-     * @name Two.Group#noStroke
-     * @function
-     * @description Apply `noStroke` method to all child shapes.
+     * Apply `noStroke` method to all child shapes.
      */
     noStroke() {
         this.children.forEach(function (child) {
@@ -570,29 +503,16 @@ export class Group extends Shape {
     }
 
     /**
-     * @name Two.Group#subdivide
-     * @function
-     * @description Apply `subdivide` method to all child shapes.
+     * Apply `subdivide` method to all child shapes.
      */
-    subdivide() {
-        const args = arguments;
+    subdivide(limit: number) {
         this.children.forEach(function (child) {
-            child.subdivide.apply(child, args);
+            child.subdivide(limit);
         });
         return this;
     }
 
-    /**
-     * @name Two.Group#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
     _update() {
-
-        let i, l, child;
 
         if (this._flagBeginning || this._flagEnding) {
 
@@ -604,36 +524,35 @@ export class Group extends Shape {
             const bd = beginning * length;
             const ed = ending * length;
 
-            for (i = 0; i < this.children.length; i++) {
-
-                child = this.children[i];
-                l = child.length;
+            for (let i = 0; i < this.children.length; i++) {
+                const child = this.children.getAt(i);
+                const l = child.length;
 
                 if (bd > sum + l) {
                     child.beginning = 1;
                     child.ending = 1;
-                } else if (ed < sum) {
+                }
+                else if (ed < sum) {
                     child.beginning = 0;
                     child.ending = 0;
-                } else if (bd > sum && bd < sum + l) {
+                }
+                else if (bd > sum && bd < sum + l) {
                     child.beginning = (bd - sum) / l;
                     child.ending = 1;
-                } else if (ed > sum && ed < sum + l) {
+                }
+                else if (ed > sum && ed < sum + l) {
                     child.beginning = 0;
                     child.ending = (ed - sum) / l;
-                } else {
+                }
+                else {
                     child.beginning = 0;
                     child.ending = 1;
                 }
-
                 sum += l;
-
             }
-
         }
 
-        return super._update.apply(this, arguments);
-
+        return super._update();
     }
 
     /**
@@ -668,7 +587,7 @@ export class Group extends Shape {
     set automatic(v: boolean) {
         this._automatic = v;
         for (let i = 0; i < this.children.length; i++) {
-            const child = this.children[i];
+            const child = this.children.getAt(i);
             child.automatic = v;
         }
     }
@@ -685,7 +604,7 @@ export class Group extends Shape {
     set cap(v: string) {
         this._cap = v;
         for (let i = 0; i < this.children.length; i++) {
-            const child = this.children[i];
+            const child = this.children.getAt(i);
             child.cap = v;
         }
     }
@@ -696,32 +615,20 @@ export class Group extends Shape {
      * @nota-bene Ther order of this list indicates the order each element is rendered to the screen.
      */
     get children() {
-        return this._children;
+        return this._shapes;
     }
     set children(children) {
 
-        const insertChildren = Group.InsertChildren.bind(this);
-        const removeChildren = Group.RemoveChildren.bind(this);
-        const orderChildren = Group.OrderChildren.bind(this);
+        this.#unsubscribe_from_shapes();
+        this._shapes.dispose();
 
-        if (this._children) {
-            this._children.unbind('insert', insertChildren);
-            this._children.unbind('remove', removeChildren);
-            this._children.unbind('order', orderChildren);
-            if (this._children.length > 0) {
-                removeChildren(this._children);
-            }
+        this._shapes = children;
+        this.#subscribe_to_shapes();
+
+        for (let i = 0; i < children.length; i++) {
+            const shape = children.getAt(i);
+            update_shape_group(shape, this);
         }
-
-        this._children = new Children(children);
-        this._children.bind('insert', insertChildren);
-        this._children.bind('remove', removeChildren);
-        this._children.bind('order', orderChildren);
-
-        if (children.length > 0) {
-            insertChildren(children);
-        }
-
     }
     get closed(): boolean {
         return this._closed;
@@ -729,7 +636,7 @@ export class Group extends Shape {
     set closed(v: boolean) {
         this._closed = v;
         for (let i = 0; i < this.children.length; i++) {
-            const child = this.children[i];
+            const child = this.children.getAt(i);
             child.closed = v;
         }
     }
@@ -739,7 +646,7 @@ export class Group extends Shape {
     set curved(v: boolean) {
         this._curved = v;
         for (let i = 0; i < this.children.length; i++) {
-            const child = this.children[i];
+            const child = this.children.getAt(i);
             child.curved = v;
         }
     }
@@ -756,7 +663,7 @@ export class Group extends Shape {
     set fill(v) {
         this._fill = v;
         for (let i = 0; i < this.children.length; i++) {
-            const child = this.children[i];
+            const child = this.children.getAt(i);
             child.fill = v;
         }
     }
@@ -766,7 +673,7 @@ export class Group extends Shape {
     set join(v: string) {
         this._join = v;
         for (let i = 0; i < this.children.length; i++) {
-            const child = this.children[i];
+            const child = this.children.getAt(i);
             child.join = v;
         }
     }
@@ -777,7 +684,7 @@ export class Group extends Shape {
                 return this._length;
             }
             for (let i = 0; i < this.children.length; i++) {
-                const child = this.children[i];
+                const child = this.children.getAt(i);
                 this._length += child.length;
             }
         }
@@ -789,7 +696,7 @@ export class Group extends Shape {
     set linewidth(v: number) {
         this._linewidth = v;
         for (let i = 0; i < this.children.length; i++) {
-            const child = this.children[i];
+            const child = this.children.getAt(i);
             child.linewidth = v;
         }
     }
@@ -799,7 +706,7 @@ export class Group extends Shape {
     set mask(v: Shape) {
         this._mask = v;
         this._flagMask = true;
-        if (_.isObject(v) && !v.clip) {
+        if (!v.clip) {
             v.clip = true;
         }
     }
@@ -809,7 +716,7 @@ export class Group extends Shape {
     set miter(v: number) {
         this._miter = v;
         for (let i = 0; i < this.children.length; i++) {
-            const child = this.children[i];
+            const child = this.children.getAt(i);
             child.miter = v;
         }
     }
@@ -826,7 +733,7 @@ export class Group extends Shape {
     set stroke(v: string) {
         this._stroke = v;
         for (let i = 0; i < this.children.length; i++) {
-            const child = this.children[i];
+            const child = this.children.getAt(i);
             child.stroke = v;
         }
     }
@@ -847,77 +754,77 @@ export class Group extends Shape {
 //  * and updates parent-child relationships
 //  * Calling with one arguments will simply remove the parenting
 //  */
-function replaceParent(child: Shape, newParent: Group) {
+export function update_shape_group(child: IShape, parent?: Group) {
 
-    const parent = child.parent;
+    const previous_parent = child.parent;
     let index;
 
-    if (parent === newParent) {
+    if (previous_parent === parent) {
         add();
         return;
     }
 
-    if (parent && parent.children.ids[child.id]) {
+    if (previous_parent && previous_parent.children.ids[child.id]) {
 
-        index = Array.prototype.indexOf.call(parent.children, child);
-        parent.children.splice(index, 1);
+        index = Array.prototype.indexOf.call(previous_parent.children, child);
+        previous_parent.children.splice(index, 1);
 
         splice();
 
     }
 
-    if (newParent) {
+    if (parent) {
         add();
         return;
     }
 
     splice();
 
-    if (parent._flagAdditions && parent.additions.length === 0) {
-        parent._flagAdditions = false;
+    if (previous_parent._flagAdditions && previous_parent.additions.length === 0) {
+        previous_parent._flagAdditions = false;
     }
-    if (parent._flagSubtractions && parent.subtractions.length === 0) {
-        parent._flagSubtractions = false;
+    if (previous_parent._flagSubtractions && previous_parent.subtractions.length === 0) {
+        previous_parent._flagSubtractions = false;
     }
 
     delete child.parent;
 
     function add() {
 
-        if (newParent.subtractions.length > 0) {
-            index = Array.prototype.indexOf.call(newParent.subtractions, child);
+        if (parent.subtractions.length > 0) {
+            index = Array.prototype.indexOf.call(parent.subtractions, child);
 
             if (index >= 0) {
-                newParent.subtractions.splice(index, 1);
+                parent.subtractions.splice(index, 1);
             }
         }
 
-        if (newParent.additions.length > 0) {
-            index = Array.prototype.indexOf.call(newParent.additions, child);
+        if (parent.additions.length > 0) {
+            index = Array.prototype.indexOf.call(parent.additions, child);
 
             if (index >= 0) {
-                newParent.additions.splice(index, 1);
+                parent.additions.splice(index, 1);
             }
         }
 
-        child.parent = newParent;
-        newParent.additions.push(child);
-        newParent._flagAdditions = true;
+        child.parent = parent;
+        parent.additions.push(child);
+        parent._flagAdditions = true;
     }
 
     function splice() {
 
-        index = Array.prototype.indexOf.call(parent.additions, child);
+        index = Array.prototype.indexOf.call(previous_parent.additions, child);
 
         if (index >= 0) {
-            parent.additions.splice(index, 1);
+            previous_parent.additions.splice(index, 1);
         }
 
-        index = Array.prototype.indexOf.call(parent.subtractions, child);
+        index = Array.prototype.indexOf.call(previous_parent.subtractions, child);
 
         if (index < 0) {
-            parent.subtractions.push(child);
-            parent._flagSubtractions = true;
+            previous_parent.subtractions.push(child);
+            previous_parent._flagSubtractions = true;
         }
     }
 }

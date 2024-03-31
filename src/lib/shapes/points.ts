@@ -4,11 +4,10 @@ import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
 import { Texture } from '../effects/texture.js';
 import { Events } from '../events.js';
-import { BindVertices, FlagFill, FlagStroke, FlagVertices, Path, UnbindVertices } from '../path.js';
+import { BindVertices, FlagFill, FlagStroke, FlagVertices, Path, UnbindVertices, get_dashes_offset, set_dashes_offset } from '../path.js';
 import { Shape } from '../shape.js';
 import { subdivide } from '../utils/curves.js';
 import { getIdByLength } from '../utils/shape.js';
-import { _ } from '../utils/underscore.js';
 import { Vector } from '../vector.js';
 
 
@@ -36,8 +35,8 @@ export class Points extends Shape {
     _flagSizeAttenuation = true;
 
     _length = 0;
-    _fill = '#fff';
-    _stroke = '#000';
+    _fill: string | Gradient | Texture = '#fff';
+    _stroke: string | Gradient | Texture = '#000';
     _linewidth = 1;
     _opacity = 1.0;
     _visible = true;
@@ -45,15 +44,11 @@ export class Points extends Shape {
     _sizeAttenuation = false;
     _beginning = 0;
     _ending = 1.0;
-    _dashes = null;
+    _dashes: number[] | null = null;
 
-    constructor(vertices) {
+    constructor(vertices: Vector[]) {
 
         super();
-
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
 
         this._renderer.type = 'points';
         this._renderer.flagVertices = FlagVertices.bind(this);
@@ -132,12 +127,7 @@ export class Points extends Shape {
          */
         this.dashes = [];
 
-        /**
-         * @name Two.Points#dashes#offset
-         * @property {Number} - A number in pixels to offset {@link Two.Points#dashes} display.
-         */
-        this.dashes.offset = 0;
-
+        set_dashes_offset(this.dashes, 0);
     }
 
     static Properties = [
@@ -195,7 +185,7 @@ export class Points extends Shape {
      * @param {Number} limit - How many times to recurse subdivisions.
      * @description Insert a {@link Two.Vector} at the midpoint between every item in {@link Two.Points#vertices}.
      */
-    subdivide(limit) {
+    subdivide(limit: number) {
         // TODO: DRYness (function below)
         this._update();
         let points = [];
@@ -290,15 +280,77 @@ export class Points extends Shape {
      * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
      */
     flagReset() {
-
         this._flagVertices = this._flagLength = this._flagFill = this._flagStroke =
             this._flagLinewidth = this._flagOpacity = this._flagVisible =
             this._flagSize = this._flagSizeAttenuation = false;
-
         super.flagReset.call(this);
-
         return this;
+    }
+    get beginning() {
+        return this._beginning;
+    }
+    set beginning(v) {
+        this._beginning = v;
+        this._flagVertices = true;
+    }
+    get dashes() {
+        return this._dashes;
+    }
+    set dashes(v) {
+        if (typeof get_dashes_offset(v) !== 'number') {
+            v.offset = (this.dashes && this._dashes.offset) || 0;
+        }
+        this._dashes = v;
+    }
+    get ending() {
+        return this._ending;
+    }
+    set ending(v) {
+        this._ending = v;
+        this._flagVertices = true;
+    }
+    get fill() {
+        return this._fill;
+    }
+    set fill(f) {
 
+        if (this._fill instanceof Gradient
+            || this._fill instanceof LinearGradient
+            || this._fill instanceof RadialGradient
+            || this._fill instanceof Texture) {
+            this._fill.unbind(Events.Types.change, this._renderer.flagFill);
+        }
+
+        this._fill = f;
+        this._flagFill = true;
+
+        if (this._fill instanceof Gradient
+            || this._fill instanceof LinearGradient
+            || this._fill instanceof RadialGradient
+            || this._fill instanceof Texture) {
+            this._fill.bind(Events.Types.change, this._renderer.flagFill);
+        }
+
+    }
+    get length() {
+        if (this._flagLength) {
+            this._updateLength();
+        }
+        return this._length;
+    }
+    get linewidth() {
+        return this._linewidth;
+    }
+    set linewidth(v) {
+        this._linewidth = v;
+        this._flagLinewidth = true;
+    }
+    get opacity() {
+        return this._opacity;
+    }
+    set opacity(v) {
+        this._opacity = v;
+        this._flagOpacity = true;
     }
     get size() {
         return this._size;
@@ -307,191 +359,74 @@ export class Points extends Shape {
         this._size = v;
         this._flagSize = true;
     }
-}
-
-const proto = {
-
-    linewidth: {
-        enumerable: true,
-        get: function () {
-            return this._linewidth;
-        },
-        set: function (v) {
-            this._linewidth = v;
-            this._flagLinewidth = true;
-        }
-    },
-    opacity: {
-        enumerable: true,
-        get: function () {
-            return this._opacity;
-        },
-        set: function (v) {
-            this._opacity = v;
-            this._flagOpacity = true;
-        }
-    },
-    visible: {
-        enumerable: true,
-        get: function () {
-            return this._visible;
-        },
-        set: function (v) {
-            this._visible = v;
-            this._flagVisible = true;
-        }
-    },
-    sizeAttenuation: {
-        enumerable: true,
-        get: function () {
-            return this._sizeAttenuation;
-        },
-        set: function (v) {
-            this._sizeAttenuation = v;
-            this._flagSizeAttenuation = true;
-        }
-    },
-
-    fill: {
-        enumerable: true,
-        get: function () {
-            return this._fill;
-        },
-        set: function (f) {
-
-            if (this._fill instanceof Gradient
-                || this._fill instanceof LinearGradient
-                || this._fill instanceof RadialGradient
-                || this._fill instanceof Texture) {
-                this._fill.unbind(Events.Types.change, this._renderer.flagFill);
-            }
-
-            this._fill = f;
-            this._flagFill = true;
-
-            if (this._fill instanceof Gradient
-                || this._fill instanceof LinearGradient
-                || this._fill instanceof RadialGradient
-                || this._fill instanceof Texture) {
-                this._fill.bind(Events.Types.change, this._renderer.flagFill);
-            }
-
-        }
-    },
-
-    stroke: {
-        enumerable: true,
-        get: function () {
-            return this._stroke;
-        },
-        set: function (f) {
-
-            if (this._stroke instanceof Gradient
-                || this._stroke instanceof LinearGradient
-                || this._stroke instanceof RadialGradient
-                || this._stroke instanceof Texture) {
-                this._stroke.unbind(Events.Types.change, this._renderer.flagStroke);
-            }
-
-            this._stroke = f;
-            this._flagStroke = true;
-
-            if (this._stroke instanceof Gradient
-                || this._stroke instanceof LinearGradient
-                || this._stroke instanceof RadialGradient
-                || this._stroke instanceof Texture) {
-                this._stroke.bind(Events.Types.change, this._renderer.flagStroke);
-            }
-
-        }
-    },
-
-    /**
-     * @name Two.Points#length
-     * @property {Number} - The sum of distances between all {@link Two.Points#vertices}.
-     */
-    length: {
-        get: function () {
-            if (this._flagLength) {
-                this._updateLength();
-            }
-            return this._length;
-        }
-    },
-
-    beginning: {
-        enumerable: true,
-        get: function () {
-            return this._beginning;
-        },
-        set: function (v) {
-            this._beginning = v;
-            this._flagVertices = true;
-        }
-    },
-
-    ending: {
-        enumerable: true,
-        get: function () {
-            return this._ending;
-        },
-        set: function (v) {
-            this._ending = v;
-            this._flagVertices = true;
-        }
-    },
-
-    vertices: {
-
-        enumerable: true,
-
-        get: function () {
-            return this._collection;
-        },
-
-        set: function (vertices) {
-
-            const bindVertices = this._renderer.bindVertices;
-            const unbindVertices = this._renderer.unbindVertices;
-
-            // Remove previous listeners
-            if (this._collection) {
-                this._collection
-                    .unbind(Events.Types.insert, bindVertices)
-                    .unbind(Events.Types.remove, unbindVertices);
-            }
-
-            // Create new Collection with copy of vertices
-            if (vertices instanceof Collection) {
-                this._collection = vertices;
-            } else {
-                this._collection = new Collection(vertices || []);
-            }
-
-
-            // Listen for Collection changes and bind / unbind
-            this._collection
-                .bind(Events.Types.insert, bindVertices)
-                .bind(Events.Types.remove, unbindVertices);
-
-            // Bind Initial Vertices
-            bindVertices(this._collection);
-
-        }
-
-    },
-
-    dashes: {
-        enumerable: true,
-        get: function () {
-            return this._dashes;
-        },
-        set: function (v) {
-            if (typeof v.offset !== 'number') {
-                v.offset = (this.dashes && this._dashes.offset) || 0;
-            }
-            this._dashes = v;
-        }
+    get sizeAttenuation() {
+        return this._sizeAttenuation;
     }
+    set sizeAttenuation(v) {
+        this._sizeAttenuation = v;
+        this._flagSizeAttenuation = true;
+    }
+    get stroke() {
+        return this._stroke;
+    }
+    set stroke(f) {
+        if (this._stroke instanceof Gradient
+            || this._stroke instanceof LinearGradient
+            || this._stroke instanceof RadialGradient
+            || this._stroke instanceof Texture) {
+            this._stroke.unbind(Events.Types.change, this._renderer.flagStroke);
+        }
 
-};
+        this._stroke = f;
+        this._flagStroke = true;
+
+        if (this._stroke instanceof Gradient
+            || this._stroke instanceof LinearGradient
+            || this._stroke instanceof RadialGradient
+            || this._stroke instanceof Texture) {
+
+            this._stroke.bind(Events.Types.change, this._renderer.flagStroke);
+        }
+
+    }
+    get vertices() {
+        return this._collection;
+    }
+    set vertices(vertices) {
+
+        const bindVertices = this._renderer.bindVertices;
+        const unbindVertices = this._renderer.unbindVertices;
+
+        // Remove previous listeners
+        if (this._collection) {
+            this._collection
+                .unbind(Events.Types.insert, bindVertices)
+                .unbind(Events.Types.remove, unbindVertices);
+        }
+
+        // Create new Collection with copy of vertices
+        if (vertices instanceof Collection) {
+            this._collection = vertices;
+        }
+        else {
+            this._collection = new Collection(vertices || []);
+        }
+
+
+        // Listen for Collection changes and bind / unbind
+        this._collection
+            .bind(Events.Types.insert, bindVertices)
+            .bind(Events.Types.remove, unbindVertices);
+
+        // Bind Initial Vertices
+        bindVertices(this._collection);
+
+    }
+    get visible() {
+        return this._visible;
+    }
+    set visible(v) {
+        this._visible = v;
+        this._flagVisible = true;
+    }
+}

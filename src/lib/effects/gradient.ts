@@ -1,20 +1,14 @@
-import { Collection } from '../collection.js';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { Children } from '../children.js';
 import { Constants } from '../constants.js';
 import { Element } from '../element.js';
-import { Events } from '../events.js';
 import { Group } from '../group.js';
-import { _ } from '../utils/underscore.js';
 import { Stop } from './stop.js';
 
-
 /**
- * @name Two.Gradient
- * @class
- * @extends Two.Element
- * @param {Two.Stop[]} [stops] - A list of {@link Two.Stop}s that contain the gradient fill pattern for the gradient.
- * @description This is the base class for constructing different types of gradients with Two.js. The two common gradients are {@link Two.LinearGradient} and {@link Two.RadialGradient}.
+ *
  */
-export class Gradient extends Element {
+export class Gradient extends Element<Group> {
 
     _flagStops = false;
     _flagSpread = false;
@@ -22,32 +16,23 @@ export class Gradient extends Element {
 
     _spread = '';
     _units = '';
-    _stops: Collection<Stop>;
+
+    _stops: Children<Stop> | null = null;
+    _stops_insert_subscription: Subscription | null = null;
+    _stops_remove_subscription: Subscription | null = null;
+
+    protected readonly _change: BehaviorSubject<this>;
+    readonly change$: Observable<this>;
+
+    readonly _stop_subscriptions: { [id: string]: Subscription } = {};
 
     constructor(stops?: Stop[]) {
 
         super();
 
         this._renderer.type = 'gradient';
-
-        /**
-         * @name Two.Gradient#renderer
-         * @property {Object}
-         * @description Object access to store relevant renderer specific variables. Warning: manipulating this object can create unintended consequences.
-         * @nota-bene With the {@link Two.SVGRenderer} you can access the underlying SVG element created via `shape.renderer.elem`.
-         */
-
-        /**
-         * @name Two.Gradient#id
-         * @property {String} - Session specific unique identifier.
-         * @nota-bene In the {@link Two.SVGRenderer} change this to change the underlying SVG element's id too.
-         */
         this.id = Constants.Identifier + Constants.uniqueId();
         this.classList = [];
-
-        this._renderer.flagStops = FlagStops.bind(this);
-        this._renderer.bindStops = BindStops.bind(this);
-        this._renderer.unbindStops = UnbindStops.bind(this);
 
         /**
          * @name Two.Gradient#spread
@@ -63,14 +48,61 @@ export class Gradient extends Element {
          */
         this.units = 'objectBoundingBox';
 
-        /**
-         * @name Two.Gradient#stops
-         * @property {Two.Stop[]} - An ordered list of {@link Two.Stop}s for rendering the gradient.
-         */
-        if (stops) {
-            this.stops = stops;
-        }
+        this.#set_children(stops);
 
+        this._change = new BehaviorSubject(this);
+        this.change$ = this._change.asObservable();
+    }
+
+    dispose(): void {
+        this.#unset_children();
+    }
+
+    /**
+     * Trying to stay DRY here, but this may not be the best factoring. 
+     */
+    #set_children(children: Stop[]): void {
+        this._stops = new Children((children || []).slice(0));
+
+        this._stops_insert_subscription = this._stops.insert$.subscribe((stops: Stop[]) => {
+            let i = stops.length;
+            while (i--) {
+                const stop = stops[i];
+                this._stop_subscriptions[stop.id] = stop.change$.subscribe(() => {
+                    this._flagStops = true;
+                });
+                stop.parent = this;
+            }
+        });
+
+        this._stops_remove_subscription = this._stops.remove$.subscribe((stops: Stop[]) => {
+            let i = stops.length;
+            while (i--) {
+                const stop = stops[i];
+                const subscription = this._stop_subscriptions[stop.id];
+                subscription.unsubscribe();
+                delete this._stop_subscriptions[stop.id];
+                delete stops[i].parent;
+            }
+        });
+
+        // Notify renderer of initial stops.
+        this._stops.ping();
+    }
+
+    #unset_children(): void {
+        if (this._stops_insert_subscription) {
+            this._stops_insert_subscription.unsubscribe();
+            this._stops_insert_subscription = null;
+        }
+        if (this._stops_remove_subscription) {
+            this._stops_remove_subscription.unsubscribe();
+            this._stops_remove_subscription = null;
+        }
+        if (this._stops) {
+            this._stops.dispose();
+            this._stops = null;
+        }
     }
 
     /**
@@ -80,8 +112,7 @@ export class Gradient extends Element {
     static Stop = Stop;
 
     /**
-     * @name Two.Gradient.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.Gradient}.
+     * A list of properties that are on every Gradient.
      */
     static Properties = ['spread', 'stops', 'renderer', 'units'];
 
@@ -93,14 +124,12 @@ export class Gradient extends Element {
      * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
      * @nota-bene Try not to call this method more than once a frame.
      */
-    _update() {
-
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _update(bubbles = false): this {
         if (this._flagSpread || this._flagStops) {
-            this.trigger(Events.Types.change);
+            this._change.next(this);
         }
-
         return this;
-
     }
 
     /**
@@ -110,13 +139,9 @@ export class Gradient extends Element {
      * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
      */
     flagReset() {
-
         this._flagSpread = this._flagUnits = this._flagStops = false;
-
         super.flagReset.call(this);
-
         return this;
-
     }
     get spread(): string {
         return this._spread;
@@ -126,30 +151,12 @@ export class Gradient extends Element {
         this._flagSpread = true;
     }
     get stops() {
-        return this._stops;
+        // TODO: Should we be returning a defensive copy?
+        return this._stops.get();
     }
     set stops(stops: Stop[]) {
-
-        const bindStops = this._renderer.bindStops;
-        const unbindStops = this._renderer.unbindStops;
-
-        // Remove previous listeners
-        if (this._stops) {
-            this._stops
-                .unbind(Events.Types.insert, bindStops)
-                .unbind(Events.Types.remove, unbindStops);
-        }
-
-        // Create new Collection with copy of Stops
-        this._stops = new Collection((stops || []).slice(0));
-
-        // Listen for Collection changes and bind / unbind
-        this._stops
-            .bind(Events.Types.insert, bindStops)
-            .bind(Events.Types.remove, unbindStops);
-
-        // Bind Initial Stops
-        bindStops(this._stops);
+        this.#unset_children();
+        this.#set_children(stops);
     }
     get units(): string {
         return this._units;
@@ -158,52 +165,4 @@ export class Gradient extends Element {
         this._units = v;
         this._flagUnits = true;
     }
-}
-
-/**
- * @name FlagStops
- * @private
- * @function
- * @description Cached method to let renderers know stops have been updated on a {@link Two.Gradient}.
- */
-function FlagStops(this: Gradient) {
-    this._flagStops = true;
-}
-
-/**
- * @name BindVertices
- * @private
- * @function
- * @description Cached method to let {@link Two.Gradient} know vertices have been added to the instance.
- */
-function BindStops(this: Gradient, items) {
-
-    // This function is called a lot
-    // when importing a large SVG
-    let i = items.length;
-    while (i--) {
-        items[i].bind(Events.Types.change, this._renderer.flagStops);
-        items[i].parent = this;
-    }
-
-    this._renderer.flagStops();
-
-}
-
-/**
- * @name UnbindStops
- * @private
- * @function
- * @description Cached method to let {@link Two.Gradient} know vertices have been removed from the instance.
- */
-function UnbindStops(this: Gradient, items) {
-
-    let i = items.length;
-    while (i--) {
-        items[i].unbind(Events.Types.change, this._renderer.flagStops);
-        delete items[i].parent;
-    }
-
-    this._renderer.flagStops();
-
 }

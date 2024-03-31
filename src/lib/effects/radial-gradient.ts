@@ -1,186 +1,102 @@
-import { Events } from '../events.js';
-import { _ } from '../utils/underscore.js';
+import { Subscription } from 'rxjs';
 import { Vector } from '../vector.js';
 import { Gradient } from './gradient.js';
 import { Stop } from './stop.js';
 
-
-/**
- * @name Two.RadialGradient
- * @class
- * @extends Two.Gradient
- * @param {Number} [x=0] - The x position of the origin of the radial gradient.
- * @param {Number} [y=0] - The y position of the origin of the radial gradient.
- * @param {Number} [radius=0] - The radius of the radial gradient.
- * @param {Two.Stop[]} [stops] - A list of {@link Two.Stop}s that contain the gradient fill pattern for the gradient.
- * @param {Number} [focalX=0] - The x position of the focal point on the radial gradient.
- * @param {Number} [focalY=0] - The y position of the focal point on the radial gradient.
- * @nota-bene The radial gradient lives within the space of the parent object's matrix space.
- */
 export class RadialGradient extends Gradient {
 
-    /**
-     * @name Two.RadialGradient#_flagRadius
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.RadialGradient#radius} changed and needs to update.
-     */
     _flagRadius = false;
-    /**
-     * @name Two.RadialGradient#_flagCenter
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.RadialGradient#center} changed and needs to update.
-     */
     _flagCenter = false;
-    /**
-     * @name Two.RadialGradient#_flagFocal
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.RadialGradient#focal} changed and needs to update.
-     */
     _flagFocal = false;
 
-    _radius = 0;
-    _center = null
-    _focal = null;
+    #radius = 0;
+    #center: Vector | null = null;
+    #center_change_subscription: Subscription | null = null;
+    #focal: Vector | null = null;
+    #focal_change_subscription: Subscription | null = null;
 
-    constructor(cx: number, cy: number, r: number, stops: Stop[], fx?: number, fy?: number) {
+    /**
+     * @param cx The x position of the origin of the radial gradient.
+     * @param cy The y position of the origin of the radial gradient.
+     * @param r The radius of the radial gradient.
+     * @param stops A list of {@link Two.Stop}s that contain the gradient fill pattern for the gradient.
+     * @param fx The x position of the focal point on the radial gradient.
+     * @param fy The y position of the focal point on the radial gradient.
+     */
+    constructor(cx: number = 0, cy: number = 0, r: number = 1, stops: Stop[] = [], fx?: number, fy?: number) {
 
         super(stops);
 
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
-
         this._renderer.type = 'radial-gradient';
-        this._renderer.flagCenter = FlagCenter.bind(this);
-        this._renderer.flagFocal = FlagFocal.bind(this);
 
-        /**
-         * @name Two.RadialGradient#center
-         * @property {Two.Vector} - The x and y value for where the origin of the radial gradient is.
-         */
-        this.center = new Vector();
+        this.center = new Vector(cx, cy);
 
-        this.radius = typeof r === 'number' ? r : 1;
+        this.radius = r;
 
-        /**
-         * @name Two.RadialGradient#focal
-         * @property {Two.Vector} - The x and y value for where the focal point of the radial gradient is.
-         * @nota-bene This effects the spray or spread of the radial gradient.
-         */
-        this.focal = new Vector();
-
-        if (typeof cx === 'number') {
-            this.center.x = cx;
-        }
-        if (typeof cy === 'number') {
-            this.center.y = cy;
-        }
-
+        this.focal = new Vector(fx, fy);
         this.focal.copy(this.center);
-
         if (typeof fx === 'number') {
             this.focal.x = fx;
         }
         if (typeof fy === 'number') {
             this.focal.y = fy;
         }
-
     }
 
-    /**
-     * @name Two.RadialGradient.Stop
-     * @see {@link Two.Stop}
-     */
     static Stop = Stop;
-
-    /**
-     * @name Two.RadialGradient.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.RadialGradient}.
-     */
     static Properties = ['center', 'radius', 'focal'];
 
-    /**
-     * @name Two.RadialGradient#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
     _update() {
-
-        if (this._flagRadius || this._flatCenter || this._flagFocal
-            || this._flagSpread || this._flagStops) {
-            this.trigger(Events.Types.change);
+        if (this._flagRadius || this._flagCenter || this._flagFocal || this._flagSpread || this._flagStops) {
+            this._change.next(this);
         }
-
         return this;
-
     }
 
-    /**
-     * @name Two.RadialGradient#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
     flagReset() {
-
         this._flagRadius = this._flagCenter = this._flagFocal = false;
-
         super.flagReset.call(this);
-
         return this;
-
     }
 
-}
+    get center() {
+        return this.#center;
+    }
 
-const proto = {
-    radius: {
-        enumerable: true,
-        get: function () {
-            return this._radius;
-        },
-        set: function (v) {
-            this._radius = v;
-            this._flagRadius = true;
+    set center(v) {
+        if (this.#center_change_subscription) {
+            this.#center_change_subscription.unsubscribe();
+            this.#center_change_subscription = null;
         }
-    },
-    center: {
-        enumerable: true,
-        get: function () {
-            return this._center;
-        },
-        set: function (v) {
-            if (this._center) {
-                this._center.unbind(Events.Types.change, this._renderer.flagCenter);
-            }
-            this._center = v;
-            this._center.bind(Events.Types.change, this._renderer.flagCenter);
+        this.#center = v;
+        this.#center_change_subscription = this.#center.change$.subscribe(() => {
             this._flagCenter = true;
-        }
-    },
-    focal: {
-        enumerable: true,
-        get: function () {
-            return this._focal;
-        },
-        set: function (v) {
-            if (this._focal) {
-                this._focal.unbind(Events.Types.change, this._renderer.flagFocal);
-            }
-            this._focal = v;
-            this._focal.bind(Events.Types.change, this._renderer.flagFocal);
-            this._flagFocal = true;
-        }
+        });
+        this._flagCenter = true;
     }
-};
 
-function FlagCenter() {
-    this._flagCenter = true;
-}
+    get focal() {
+        return this.#focal;
+    }
 
-function FlagFocal() {
-    this._flagFocal = true;
+    set focal(v) {
+        if (this.#focal_change_subscription) {
+            this.#focal_change_subscription.unsubscribe();
+            this.#focal_change_subscription = null;
+        }
+        this.#focal = v;
+        this.#focal_change_subscription = this.#focal.change$.subscribe(() => {
+            this._flagFocal = true;
+        });
+        this._flagFocal = true;
+    }
+
+    get radius() {
+        return this.#radius;
+    }
+
+    set radius(v) {
+        this.#radius = v;
+        this._flagRadius = true;
+    }
 }

@@ -1,15 +1,8 @@
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Element } from '../element.js';
+import { Gradient } from './gradient.js';
 
-/**
- * @name Two.Stop
- * @class
- * @extends Two.Element
- * @param {Number} [offset] - The offset percentage of the stop represented as a zero-to-one value. Default value flip flops from zero-to-one as new stops are created.
- * @param {String} [color] - The color of the stop. Default value flip flops from white to black as new stops are created.
- * @param {Number} [opacity] - The opacity value. Default value is 1, cannot be lower than 0.
- * @nota-bene Used specifically in conjunction with {@link Two.Gradient}s to control color graduation.
- */
-export class Stop extends Element {
+export class Stop extends Element<Gradient> {
 
     /**
      * @name Two.Stop#_flagOffset
@@ -53,6 +46,15 @@ export class Stop extends Element {
      */
     _color = '#fff';
 
+    readonly #change: BehaviorSubject<this>;
+    readonly change$: Observable<this>;
+
+    /**
+     * @param {Number} [offset] - The offset percentage of the stop represented as a zero-to-one value. Default value flip flops from zero-to-one as new stops are created.
+     * @param {String} [color] - The color of the stop. Default value flip flops from white to black as new stops are created.
+     * @param {Number} [opacity] - The opacity value. Default value is 1, cannot be lower than 0.
+     * @nota-bene Used specifically in conjunction with {@link Two.Gradient}s to control color graduation.
+     */
     constructor(offset?: number, color?: string, opacity?: number) {
 
         super();
@@ -82,6 +84,8 @@ export class Stop extends Element {
 
         Stop.Index = (Stop.Index + 1) % 2;
 
+        this.#change = new BehaviorSubject(this);
+        this.change$ = this.#change.asObservable();
     }
 
     /**
@@ -120,6 +124,7 @@ export class Stop extends Element {
         if (this.parent) {
             this.parent._flagStops = true;
         }
+        this.#change.next(this);
     }
     get offset(): number {
         return this._offset;
@@ -130,6 +135,7 @@ export class Stop extends Element {
         if (this.parent) {
             this.parent._flagStops = true;
         }
+        this.#change.next(this);
     }
     get opacity(): number {
         return this._opacity;
@@ -140,5 +146,6 @@ export class Stop extends Element {
         if (this.parent) {
             this.parent._flagStops = true;
         }
+        this.#change.next(this);
     }
 }

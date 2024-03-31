@@ -1,94 +1,94 @@
-import { Events } from './events.js';
+import { Observable, Subject } from 'rxjs';
 
 /**
- * @description An `Array` like object with additional event propagation on actions. `pop`, `shift`, and `splice` trigger `removed` events. `push`, `unshift`, and `splice` with more than 2 arguments trigger 'inserted'. Finally, `sort` and `reverse` trigger `order` events.
+ * TODO: If this was iterable then there would be less need for the length and getAt.
  */
-export class Collection<T> extends Array<T> {
+export class Collection<T> {
 
-    // Being a base class we have to be careful with private members.
-    $events = new Events();
+    readonly #insert: Subject<T[]>;
+    readonly insert$: Observable<T[]>;
+
+    readonly #remove: Subject<T[]>;
+    readonly remove$: Observable<T[]>;
+
+    readonly #order: Subject<void>;
+    readonly order$: Observable<void>;
+
+    #items: T[];
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(items: T[]) {
 
-        super();
+        this.#items = items;
 
-        if (arguments[0] && Array.isArray(arguments[0])) {
-            if (arguments[0].length > 0) {
-                this.push.apply(this, arguments[0]);
-            }
+        this.#insert = new Subject();
+        this.insert$ = this.#insert.asObservable();
+
+        this.#remove = new Subject();
+        this.remove$ = this.#remove.asObservable();
+
+        this.#order = new Subject();
+        this.order$ = this.#order.asObservable();
+    }
+
+    forEach(callbackfn: (value: T, index: number, array: T[]) => void, thisArg?: unknown): void {
+        this.#items.forEach(callbackfn, thisArg);
+    }
+
+    get length(): number {
+        return this.#items.length;
+    }
+
+    getAt(index: number): T {
+        return this.#items[index];
+    }
+
+    get(): T[] {
+        return this.#items;
+    }
+
+    ping(): void {
+        this.#insert.next(this.#items);
+    }
+
+    pop(): T {
+        const x = this.#items.pop();
+        this.#remove.next([x]);
+        return x;
+    }
+
+    shift(): T {
+        const x = this.#items.shift();
+        this.#remove.next([x]);
+        return x;
+    }
+
+    push(...items: T[]): number {
+        const new_length = this.#items.push(...items);
+        this.#insert.next(items);
+        return new_length;
+    }
+
+    unshift(...items: T[]): number {
+        const new_length = this.#items.unshift();
+        this.#insert.next(items);
+        return new_length;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    splice(start: number, deleteCount?: number): T[] {
+        // TODO: This needs some care because the behavior dependes on ...
+        if (typeof deleteCount === 'number') {
+            const xs = this.#items.splice(start, deleteCount);
+            this.#remove.next(xs);
+            return xs;
         }
-        else if (arguments.length > 0) {
-            this.push.apply(this, arguments);
+        else {
+            const xs = this.#items.splice(start);
+            this.#remove.next(xs);
+            return xs;
         }
-    }
-
-    // Getters and setters aren't enumerable
-    get bound(): boolean {
-        return this.$events.bound;
-    }
-    set bound(v: boolean) {
-        this.$events.bound = v;
-    }
-
-    addEventListener() {
-        return this.$events.addEventListener.apply(this, arguments);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    on(type: 'insert' | 'remove' | 'order', callback: (children: T[]) => void) {
-        return this.$events.on(type, callback);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    bind(type: 'insert' | 'remove' | 'order', callback: (children: T[]) => void) {
-        return this.$events.bind.apply(this, arguments);
-    }
-    removeEventListener() {
-        return this.$events.removeEventListener.apply(this, arguments);
-    }
-    off() {
-        return this.$events.off.apply(this, arguments);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    unbind(type: 'insert' | 'remove' | 'order', callback: (children: T[]) => void) {
-        return this.$events.unbind.apply(this, arguments);
-    }
-    dispatchEvent() {
-        return this.$events.dispatchEvent.apply(this, arguments);
-    }
-    trigger() {
-        return this.$events.trigger.apply(this, arguments);
-    }
-    ignore() {
-        return this.$events.ignore.apply(this, arguments);
-    }
-
-    pop() {
-        const popped = super.pop.apply(this, arguments);
-        this.trigger(Events.Types.remove, [popped]);
-        return popped;
-    }
-
-    shift() {
-        const shifted = super.shift.apply(this, arguments);
-        this.trigger(Events.Types.remove, [shifted]);
-        return shifted;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    push(...items: T[]) {
-        const pushed = super.push.apply(this, arguments);
-        this.trigger(Events.Types.insert, arguments);
-        return pushed;
-    }
-
-    unshift() {
-        const unshifted = super.unshift.apply(this, arguments);
-        this.trigger(Events.Types.insert, arguments);
-        return unshifted;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    splice(start: number, deleteCount?: number) {
+        /*
         const spliced = super.splice.apply(this, arguments);
         this.trigger(Events.Types.remove, spliced);
         if (arguments.length > 2) {
@@ -97,36 +97,27 @@ export class Collection<T> extends Array<T> {
             this.trigger(Events.Types.order);
         }
         return spliced;
+        */
     }
 
-    sort() {
-        super.sort.apply(this, arguments);
-        this.trigger(Events.Types.order);
+    sort(compareFn: (a: T, b: T) => number): this {
+        this.#items.sort(compareFn);
+        this.#order.next();
         return this;
     }
 
-    reverse() {
-        super.reverse.apply(this, arguments);
-        this.trigger(Events.Types.order);
+    reverse(): this {
+        this.#items.reverse();
+        this.#order.next();
         return this;
     }
 
-    indexOf() {
-        return super.indexOf.apply(this, arguments);
+    indexOf(searchElement: T, fromIndex?: number): number {
+        return this.#items.indexOf(searchElement, fromIndex);
     }
 
-    map(func, scope) {
-        const results = [];
-        for (let key = 0; key < this.length; key++) {
-            const value = this[key];
-            let result;
-            if (scope) {
-                result = func.call(scope, value, key);
-            } else {
-                result = func(value, key);
-            }
-            results.push(result);
-        }
-        return results;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    map<X>(callbackfn: (value: T, index: number, array: T[]) => X, thisArg?: any): X[] {
+        return this.#items.map(callbackfn, thisArg);
     }
 }

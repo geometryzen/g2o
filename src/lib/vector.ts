@@ -1,4 +1,5 @@
-import { Accessor, createSignal, Setter } from 'solid-js';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { Accessor, Setter, createSignal } from 'solid-js';
 
 export class Vector {
 
@@ -6,10 +7,15 @@ export class Vector {
     readonly #set_x_coord: Setter<number>;
     readonly #y_coord: Accessor<number>;
     readonly #set_y_coord: Setter<number>;
+    readonly #change: BehaviorSubject<this>;
+    readonly change$: Observable<this>;
 
     constructor(x = 0, y = 0) {
         [this.#x_coord, this.#set_x_coord] = createSignal(x);
         [this.#y_coord, this.#set_y_coord] = createSignal(y);
+
+        this.#change = new BehaviorSubject(this);
+        this.change$ = this.#change.asObservable();
     }
 
     get x(): number {
@@ -19,6 +25,7 @@ export class Vector {
     set x(x: number) {
         if (this.#x_coord() !== x) {
             this.#set_x_coord(x);
+            this.#change.next(this);
         }
     }
 
@@ -29,6 +36,7 @@ export class Vector {
     set y(y: number) {
         if (this.#y_coord() !== y) {
             this.#set_y_coord(y);
+            this.#change.next(this);
         }
     }
 

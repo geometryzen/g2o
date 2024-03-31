@@ -44,6 +44,22 @@ export class Anchor {
         this.#sweepFlag = createSignal(1);
     }
 
+    get x() {
+        return this.origin.x;
+    }
+
+    set x(x: number) {
+        this.origin.x = x;
+    }
+
+    get y() {
+        return this.origin.y;
+    }
+
+    set y(y: number) {
+        this.origin.y = y;
+    }
+
     copy(v: Anchor): this {
 
         this.origin.copy(v.origin);

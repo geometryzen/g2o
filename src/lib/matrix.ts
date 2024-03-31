@@ -1,31 +1,21 @@
-import { Events } from './events.js';
-import { NumArray, setMatrix, toFixed } from './utils/math.js';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { NumArray, toFixed } from './utils/math.js';
 
 // Constants
 
 const cos = Math.cos, sin = Math.sin, tan = Math.tan;
-const array = [];
+const array: number[] = [];
 
 /**
- * @name Two.Matrix
- * @class
- * @param {Number} [a=1] - The value for element at the first column and first row.
- * @param {Number} [b=0] - The value for element at the second column and first row.
- * @param {Number} [c=0] - The value for element at the third column and first row.
- * @param {Number} [d=0] - The value for element at the first column and second row.
- * @param {Number} [e=1] - The value for element at the second column and second row.
- * @param {Number} [f=0] - The value for element at the third column and second row.
- * @param {Number} [g=0] - The value for element at the first column and third row.
- * @param {Number} [h=0] - The value for element at the second column and third row.
- * @param {Number} [i=1] - The value for element at the third column and third row.
- * @description A class to store 3 x 3 transformation matrix information. In addition to storing data `Two.Matrix` has suped up methods for commonplace mathematical operations.
- * @nota-bene Order is based on how to construct transformation strings for the browser.
+ * 1st row is [a,b,c], 2nd row is [d,e,f], 3rd row is [g,h,i]
  */
-export class Matrix extends Events {
+export class Matrix {
+
+    readonly #change: BehaviorSubject<this>;
+    readonly change$: Observable<this>;
 
     /**
-     * @name Two.Matrix#elements
-     * @property {Number[]} - The underlying data stored as an array.
+     * 1st row is [0,1,2], 2nd row is [3,4,5], 3rd row is [6,7,8]
      */
     elements = new NumArray(9);
 
@@ -36,23 +26,47 @@ export class Matrix extends Events {
      */
     manual = false;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(a = 1, b = 0, c = 0, d = 0, e = 1, f = 0, g = 0, h = 0, i = 1) {
+        this.elements[0] = a;
+        this.elements[1] = b;
+        this.elements[2] = c;
+        this.elements[3] = d;
+        this.elements[4] = e;
+        this.elements[5] = f;
+        this.elements[6] = g;
+        this.elements[7] = h;
+        this.elements[8] = i;
 
-        super();
+        this.#change = new BehaviorSubject(this);
+        this.change$ = this.#change.asObservable();
+    }
 
-        let elements = a;
-        if (!Array.isArray(elements)) {
-            elements = Array.prototype.slice.call(arguments);
-        }
-
-        // initialize the elements with default values.
-        this.identity();
-
-        if (elements.length > 0) {
-            this.set(elements);
-        }
-
+    get a() {
+        return this.elements[0];
+    }
+    get b() {
+        return this.elements[1];
+    }
+    get c() {
+        return this.elements[2];
+    }
+    get d() {
+        return this.elements[3];
+    }
+    get e() {
+        return this.elements[4];
+    }
+    get f() {
+        return this.elements[5];
+    }
+    get g() {
+        return this.elements[6];
+    }
+    get h() {
+        return this.elements[7];
+    }
+    get i() {
+        return this.elements[8];
     }
 
     //
@@ -67,96 +81,7 @@ export class Matrix extends Events {
         0, 0, 1
     ];
 
-    /**
-     * @name Two.Matrix.Multiply
-     * @function
-     * @param {Number[]} A
-     * @param {Number[]} B
-     * @param {Number[]} [C] - An optional matrix to apply the multiplication to.
-     * @returns {Number[]} - If an optional `C` matrix isn't passed then a new one is created and returned.
-     * @description Multiply two matrices together and return the result.
-     */
-    static Multiply(A, B, C) {
-
-        if (B.length <= 3) { // Multiply Vector
-
-            const e = A;
-            let x, y, z;
-
-            const a = B[0] || 0,
-                b = B[1] || 0,
-                c = B[2] || 0;
-
-            // Go down rows first
-            // a, d, g, b, e, h, c, f, i
-
-            x = e[0] * a + e[1] * b + e[2] * c;
-            y = e[3] * a + e[4] * b + e[5] * c;
-            z = e[6] * a + e[7] * b + e[8] * c;
-
-            return [x, y, z];
-
-        }
-
-        const A0 = A[0], A1 = A[1], A2 = A[2];
-        const A3 = A[3], A4 = A[4], A5 = A[5];
-        const A6 = A[6], A7 = A[7], A8 = A[8];
-
-        const B0 = B[0], B1 = B[1], B2 = B[2];
-        const B3 = B[3], B4 = B[4], B5 = B[5];
-        const B6 = B[6], B7 = B[7], B8 = B[8];
-
-        C = C || new NumArray(9);
-
-        C[0] = A0 * B0 + A1 * B3 + A2 * B6;
-        C[1] = A0 * B1 + A1 * B4 + A2 * B7;
-        C[2] = A0 * B2 + A1 * B5 + A2 * B8;
-        C[3] = A3 * B0 + A4 * B3 + A5 * B6;
-        C[4] = A3 * B1 + A4 * B4 + A5 * B7;
-        C[5] = A3 * B2 + A4 * B5 + A5 * B8;
-        C[6] = A6 * B0 + A7 * B3 + A8 * B6;
-        C[7] = A6 * B1 + A7 * B4 + A8 * B7;
-        C[8] = A6 * B2 + A7 * B5 + A8 * B8;
-
-        return C;
-
-    }
-
-    /**
-     * @name Two.Matrix#set
-     * @function
-     * @param {Number} a - The value for element at the first column and first row.
-     * @param {Number} b - The value for element at the second column and first row.
-     * @param {Number} c - The value for element at the third column and first row.
-     * @param {Number} d - The value for element at the first column and second row.
-     * @param {Number} e - The value for element at the second column and second row.
-     * @param {Number} f - The value for element at the third column and second row.
-     * @param {Number} g - The value for element at the first column and third row.
-     * @param {Number} h - The value for element at the second column and third row.
-     * @param {Number} i - The value for element at the third column and third row.
-     * @description Set an array of values onto the matrix. Order described in {@link Two.Matrix}.
-     */
-
-    /**
-    * @name Two.Matrix#set
-    * @function
-    * @param {Number[]} a - The array of elements to apply.
-    * @description Set an array of values onto the matrix. Order described in {@link Two.Matrix}.
-    */
-    set(a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) {
-
-        if (typeof b === 'undefined') {
-            const elements = a;
-            a = elements[0];
-            b = elements[1];
-            c = elements[2];
-            d = elements[3];
-            e = elements[4];
-            f = elements[5];
-            g = elements[6];
-            h = elements[7];
-            i = elements[8];
-        }
+    set(a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number): this {
 
         this.elements[0] = a;
         this.elements[1] = b;
@@ -168,8 +93,26 @@ export class Matrix extends Events {
         this.elements[7] = h;
         this.elements[8] = i;
 
-        return this.trigger(Events.Types.change);
+        this.#change.next(this);
 
+        return this;
+    }
+
+    set_from_matrix(m: Matrix): this {
+
+        this.elements[0] = m.a;
+        this.elements[1] = m.b;
+        this.elements[2] = m.c;
+        this.elements[3] = m.d;
+        this.elements[4] = m.e;
+        this.elements[5] = m.f;
+        this.elements[6] = m.g;
+        this.elements[7] = m.h;
+        this.elements[8] = m.i;
+
+        this.#change.next(this);
+
+        return this;
     }
 
     /**
@@ -177,7 +120,7 @@ export class Matrix extends Events {
      * @function
      * @description Copy the matrix of one to the current instance.
      */
-    copy(m) {
+    copy(m: Matrix): this {
 
         this.elements[0] = m.elements[0];
         this.elements[1] = m.elements[1];
@@ -191,8 +134,8 @@ export class Matrix extends Events {
 
         this.manual = m.manual;
 
-        return this.trigger(Events.Types.change);
-
+        this.#change.next(this);
+        return this;
     }
 
     /**
@@ -212,8 +155,8 @@ export class Matrix extends Events {
         this.elements[7] = Matrix.Identity[7];
         this.elements[8] = Matrix.Identity[8];
 
-        return this.trigger(Events.Types.change);
-
+        this.#change.next(this);
+        return this;
     }
 
     /**
@@ -224,74 +167,7 @@ export class Matrix extends Events {
      * @overloaded
      */
 
-    /**
-     * @name Two.Matrix#multiply
-     * @function
-     * @param {Number} a - The x component to be multiplied.
-     * @param {Number} b - The y component to be multiplied.
-     * @param {Number} c - The z component to be multiplied.
-     * @description Multiply all components of a matrix against a 3 component vector.
-     * @overloaded
-     */
-
-    /**
-     * @name Two.Matrix#multiply
-     * @function
-     * @param {Number} a - The value at the first column and first row of the matrix to be multiplied.
-     * @param {Number} b - The value at the second column and first row of the matrix to be multiplied.
-     * @param {Number} c - The value at the third column and first row of the matrix to be multiplied.
-     * @param {Number} d - The value at the first column and second row of the matrix to be multiplied.
-     * @param {Number} e - The value at the second column and second row of the matrix to be multiplied.
-     * @param {Number} f - The value at the third column and second row of the matrix to be multiplied.
-     * @param {Number} g - The value at the first column and third row of the matrix to be multiplied.
-     * @param {Number} h - The value at the second column and third row of the matrix to be multiplied.
-     * @param {Number} i - The value at the third column and third row of the matrix to be multiplied.
-     * @description Multiply all components of a matrix against another matrix.
-     * @overloaded
-     */
-    multiply(a, b, c, d, e, f, g, h, i) {
-
-        // Multiply scalar
-
-        if (typeof b === 'undefined') {
-
-            this.elements[0] *= a;
-            this.elements[1] *= a;
-            this.elements[2] *= a;
-            this.elements[3] *= a;
-            this.elements[4] *= a;
-            this.elements[5] *= a;
-            this.elements[6] *= a;
-            this.elements[7] *= a;
-            this.elements[8] *= a;
-
-            return this.trigger(Events.Types.change);
-
-        }
-
-        if (typeof c === 'undefined') {
-            c = 1;
-        }
-
-        if (typeof d === 'undefined') { // Multiply Vector
-
-            a = a || 0;
-            b = b || 0;
-            c = c || 0;
-            e = this.elements;
-
-            // Go down rows first
-            // a, d, g, b, e, h, c, f, i
-
-            const x = e[0] * a + e[1] * b + e[2] * c;
-            const y = e[3] * a + e[4] * b + e[5] * c;
-            const z = e[6] * a + e[7] * b + e[8] * c;
-
-            return [x, y, z];
-
-        }
-
-        // Multiple matrix
+    multiply(a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number): this {
 
         const A = this.elements;
         const B = [a, b, c, d, e, f, g, h, i];
@@ -316,8 +192,32 @@ export class Matrix extends Events {
         this.elements[7] = A6 * B1 + A7 * B4 + A8 * B7;
         this.elements[8] = A6 * B2 + A7 * B5 + A8 * B8;
 
-        return this.trigger(Events.Types.change);
+        this.#change.next(this);
 
+        return this;
+    }
+
+    multiply_vector(x: number = 0, y: number = 0, z: number = 1): [number, number, number] {
+
+        const x1 = this.a * x + this.b * y + this.c * z;
+        const x2 = this.d * x + this.e * y + this.f * z;
+        const x3 = this.g * x + this.h * y + this.i * z;
+
+        return [x1, x2, x3];
+    }
+
+    multiply_by_scalar(s: number): this {
+        this.elements[0] *= s;
+        this.elements[1] *= s;
+        this.elements[2] *= s;
+        this.elements[3] *= s;
+        this.elements[4] *= s;
+        this.elements[5] *= s;
+        this.elements[6] *= s;
+        this.elements[7] *= s;
+        this.elements[8] *= s;
+        this.#change.next(this);
+        return this;
     }
 
     /**
@@ -326,7 +226,7 @@ export class Matrix extends Events {
      * @param {Two.Matrix} [out] - The optional matrix to apply the inversion to.
      * @description Return an inverted version of the matrix. If no optional one is passed a new matrix is created and returned.
      */
-    inverse(out) {
+    inverse(out?: Matrix): Matrix {
 
         const a = this.elements;
         out = out || new Matrix();
@@ -359,7 +259,6 @@ export class Matrix extends Events {
         out.elements[8] = (a11 * a00 - a01 * a10) * det;
 
         return out;
-
     }
 
     /**
@@ -392,13 +291,12 @@ export class Matrix extends Events {
      * @param {Number} Number - The amount to rotate in Number.
      * @description Rotate the matrix.
      */
-    rotate(Number) {
+    rotate(angle: number) {
 
-        const c = cos(Number);
-        const s = sin(Number);
+        const c = cos(angle);
+        const s = sin(angle);
 
         return this.multiply(c, -s, 0, s, c, 0, 0, 0, 1);
-
     }
 
     /**
@@ -408,48 +306,28 @@ export class Matrix extends Events {
      * @param {Number} y - The vertical translation value to apply.
      * @description Translate the matrix.
      */
-    translate(x, y) {
-
+    translate(x: number, y: number): this {
         return this.multiply(1, 0, x, 0, 1, y, 0, 0, 1);
-
     }
 
     /**
-     * @name Two.Matrix#skewX
-     * @function
-     * @param {Number} Number - The amount to skew in Number.
-     * @description Skew the matrix by an angle in the x axis direction.
+     * Skew the matrix by an angle in the x axis direction.
      */
-    skewX(Number) {
-
-        const a = tan(Number);
-
+    skewX(angle: number): this {
+        const a = tan(angle);
         return this.multiply(1, a, 0, 0, 1, 0, 0, 0, 1);
-
     }
 
     /**
-     * @name Two.Matrix#skewY
-     * @function
-     * @param {Number} Number - The amount to skew in Number.
-     * @description Skew the matrix by an angle in the y axis direction.
+     * Skew the matrix by an angle in the y axis direction.
      */
-    skewY(Number) {
-
-        const a = tan(Number);
-
+    skewY(angle: number): this {
+        const a = tan(angle);
         return this.multiply(1, 0, 0, a, 1, 0, 0, 0, 1);
 
     }
 
-    /**
-     * @name Two.Matrix#toString
-     * @function
-     * @param {Boolean} [fullMatrix=false] - Return the full 9 elements of the matrix or just 6 for 2D transformations.
-     * @returns {String} - The transformation matrix as a 6 component string separated by spaces.
-     * @description Create a transform string. Used for the Two.js rendering APIs.
-     */
-    toString(fullMatrix) {
+    toString(fullMatrix = false): string {
 
         array.length = 0;
         this.toTransformArray(fullMatrix, array);
@@ -459,13 +337,9 @@ export class Matrix extends Events {
     }
 
     /**
-     * @name Two.Matrix#toTransformArray
-     * @function
-     * @param {Boolean} [fullMatrix=false] - Return the full 9 elements of the matrix or just 6 in the format for 2D transformations.
-     * @param {Number[]} [output] - An array empty or otherwise to apply the values to.
-     * @description Create a transform array. Used for the Two.js rendering APIs.
+     * @returns the full 9 elements of the matrix or just 6 in the format for 2D transformations.
      */
-    toTransformArray(fullMatrix, output) {
+    toTransformArray(fullMatrix = false, output?: number[]): number[] {
 
         const elements = this.elements;
         const hasOutput = !!output;
@@ -493,7 +367,7 @@ export class Matrix extends Events {
                 output[6] = c;
                 output[7] = f;
                 output[8] = i;
-                return;
+                return output;
             }
 
             return [
@@ -508,26 +382,21 @@ export class Matrix extends Events {
             output[3] = e;
             output[4] = c;
             output[5] = f;
-            return;
+            return output;
         }
 
         return [
             a, d, b, e, c, f  // Specific format see LN:19
         ];
-
     }
 
     /**
-     * @name Two.Matrix#toArray
-     * @function
-     * @param {Boolean} [fullMatrix=false] - Return the full 9 elements of the matrix or just 6 for 2D transformations.
-     * @param {Number[]} [output] - An array empty or otherwise to apply the values to.
-     * @description Create a transform array. Used for the Two.js rendering APIs.
+     * @returns  the full 9 elements of the matrix or just 6 for 2D transformations.
      */
-    toArray(fullMatrix, output) {
+    toArray(fullMatrix = false, output?: number[]): number[] {
 
         const elements = this.elements;
-        const hasOutput = !!output;
+        const hasOutput = Array.isArray(output);
 
         const a = elements[0];
         const b = elements[1];
@@ -552,7 +421,7 @@ export class Matrix extends Events {
                 output[6] = g;
                 output[7] = h;
                 output[8] = i;
-                return;
+                return output;
             }
 
             return [
@@ -567,14 +436,59 @@ export class Matrix extends Events {
             output[3] = d;
             output[4] = e;
             output[5] = f;
-            return;
+            return output;
         }
 
         return [
             a, b, c, d, e, f
         ];
-
     }
 }
+// TODO
+/*
+export function multiply(A: Matrix, B, C) {
 
-setMatrix(Matrix);
+    if (B.length <= 3) { // Multiply Vector
+
+        const e = A;
+        let x, y, z;
+
+        const a = B[0] || 0,
+            b = B[1] || 0,
+            c = B[2] || 0;
+
+        // Go down rows first
+        // a, d, g, b, e, h, c, f, i
+
+        x = e[0] * a + e[1] * b + e[2] * c;
+        y = e[3] * a + e[4] * b + e[5] * c;
+        z = e[6] * a + e[7] * b + e[8] * c;
+
+        return [x, y, z];
+
+    }
+
+    const A0 = A[0], A1 = A[1], A2 = A[2];
+    const A3 = A[3], A4 = A[4], A5 = A[5];
+    const A6 = A[6], A7 = A[7], A8 = A[8];
+
+    const B0 = B[0], B1 = B[1], B2 = B[2];
+    const B3 = B[3], B4 = B[4], B5 = B[5];
+    const B6 = B[6], B7 = B[7], B8 = B[8];
+
+    C = C || new NumArray(9);
+
+    C[0] = A0 * B0 + A1 * B3 + A2 * B6;
+    C[1] = A0 * B1 + A1 * B4 + A2 * B7;
+    C[2] = A0 * B2 + A1 * B5 + A2 * B8;
+    C[3] = A3 * B0 + A4 * B3 + A5 * B6;
+    C[4] = A3 * B1 + A4 * B4 + A5 * B7;
+    C[5] = A3 * B2 + A4 * B5 + A5 * B8;
+    C[6] = A6 * B0 + A7 * B3 + A8 * B6;
+    C[7] = A6 * B1 + A7 * B4 + A8 * B7;
+    C[8] = A6 * B2 + A7 * B5 + A8 * B8;
+
+    return C;
+
+}
+*/

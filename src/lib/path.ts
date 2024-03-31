@@ -13,6 +13,15 @@ import { contains, getCurveLength, getIdByLength, getSubdivisions } from './util
 import { _ } from './utils/underscore';
 import { Vector } from './vector.js';
 
+export function get_dashes_offset(dashes: number[]): number | undefined {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (dashes as any)['offset'];
+}
+
+export function set_dashes_offset(dashes: number[], offset: number): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (dashes as any)['offset'] = offset;
+}
 
 
 // Constants
@@ -126,6 +135,8 @@ export class Path extends Shape {
      * @see {@link Two.Path#length}
      */
     _length = 0;
+
+    readonly _lengths: number[] = [];
 
     /**
      * @name Two.Path#_fill
@@ -241,7 +252,7 @@ export class Path extends Shape {
 
     _collection: Collection<Anchor>;
 
-    constructor(vertices?: Anchor[], closed?: boolean, curved?: boolean, manual?: boolean) {
+    constructor(vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean) {
 
         super();
 
@@ -353,7 +364,9 @@ export class Path extends Shape {
          * @description A list of {@link Two.Anchor} objects that consist of what form the path takes.
          * @nota-bene The array when manipulating is actually a {@link Two.Collection}.
          */
-        this.vertices = vertices;
+        this._collection = new Collection(vertices);
+
+        // TODO: Listeners to collection?
 
         /**
          * @name Two.Path#automatic
@@ -369,13 +382,7 @@ export class Path extends Shape {
          */
         this.dashes = [];
 
-        /**
-         * @name Two.Path#dashes#offset
-         * @property {Number} - A number in pixels to offset {@link Two.Path#dashes} display.
-         */
-        this.dashes.offset = 0;
-
-
+        set_dashes_offset(this.dashes, 0);
     }
 
     /**
@@ -436,7 +443,7 @@ export class Path extends Shape {
         const cy = rect.top + rect.height / 2;
 
         for (let i = 0; i < this.vertices.length; i++) {
-            const v = this.vertices[i];
+            const v = this.vertices.getAt(i);
             v.x -= cx;
             v.y -= cy;
             v.x += hw;
@@ -467,7 +474,7 @@ export class Path extends Shape {
         const cy = rect.top + rect.height / 2 - this.translation.y;
 
         for (let i = 0; i < this.vertices.length; i++) {
-            const v = this.vertices[i];
+            const v = this.vertices.getAt(i);
             v.x -= cx;
             v.y -= cy;
         }
@@ -490,18 +497,16 @@ export class Path extends Shape {
      */
     getBoundingClientRect(shallow?: boolean): { width: number; height: number; top?: number; left?: number; right?: number; bottom?: number } {
 
-        let matrix, border, l, i, v0, v1;
-
         let left = Infinity, right = -Infinity,
             top = Infinity, bottom = -Infinity;
 
         // TODO: Update this to not __always__ update. Just when it needs to.
-        this._update(true);
+        this._update();
 
-        matrix = shallow ? this.matrix : this.worldMatrix;
+        const matrix = shallow ? this.matrix : this.worldMatrix;
 
-        border = (this.linewidth || 0) / 2;
-        l = this._renderer.vertices.length;
+        let border = (this.linewidth || 0) / 2;
+        const l = this._renderer.vertices.length;
 
         if (this.linewidth > 0 || (this.stroke && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
@@ -526,15 +531,15 @@ export class Path extends Shape {
             };
         }
 
-        for (i = 0; i < l; i++) {
+        for (let i = 0; i < l; i++) {
 
-            v1 = this._renderer.vertices[i];
+            const v1 = this._renderer.vertices[i];
             // If i = 0, then this "wraps around" to the last vertex. Otherwise, it's the previous vertex.
             // This is important for handling cyclic paths.
-            v0 = this._renderer.vertices[(i + l - 1) % l];
+            const v0 = this._renderer.vertices[(i + l - 1) % l];
 
-            const [v0x, v0y] = matrix.multiply(v0.x, v0.y);
-            const [v1x, v1y] = matrix.multiply(v1.x, v1.y);
+            const [v0x, v0y] = matrix.multiply_vector(v0.x, v0.y);
+            const [v1x, v1y] = matrix.multiply_vector(v1.x, v1.y);
 
             if (v0.controls && v1.controls) {
 
@@ -546,7 +551,7 @@ export class Path extends Shape {
                     ry += v0.y;
                 }
 
-                const [c0x, c0y] = matrix.multiply(rx, ry);
+                const [c0x, c0y] = matrix.multiply_vector(rx, ry);
 
                 let lx = v1.controls.left.x;
                 let ly = v1.controls.left.y;
@@ -556,7 +561,7 @@ export class Path extends Shape {
                     ly += v1.y;
                 }
 
-                const [c1x, c1y] = matrix.multiply(lx, ly);
+                const [c1x, c1y] = matrix.multiply_vector(lx, ly);
 
                 const bb = getCurveBoundingBox(
                     v0x, v0y,
@@ -602,6 +607,10 @@ export class Path extends Shape {
 
     }
 
+    hasBoundingClientRect(): boolean {
+        return true;
+    }
+
     /**
      * @name Two.Path#getPointAt
      * @function
@@ -610,10 +619,10 @@ export class Path extends Shape {
      * @returns {Object}
      * @description Given a float `t` from 0 to 1, return a point or assign a passed `obj`'s coordinates to that percentage on this {@link Two.Path}'s curve.
      */
-    getPointAt(t: number, obj: Vector) {
+    getPointAt(t: number, obj: Anchor): Anchor {
 
-        let ia, ib, result;
-        let x, x1, x2, x3, x4, y, y1, y2, y3, y4, left, right;
+        let ia, ib;
+        let x2, x3, y2, y3;
         let target = this.length * Math.min(Math.max(t, 0), 1);
         const length = this.vertices.length;
         const last = length - 1;
@@ -638,8 +647,8 @@ export class Path extends Shape {
                     ib = Math.min(Math.max(i - 1, 0), last);
                 }
 
-                a = this.vertices[ia];
-                b = this.vertices[ib];
+                a = this.vertices.getAt(ia);
+                b = this.vertices.getAt(ib);
                 target -= sum;
                 if (this._lengths[i] !== 0) {
                     t = target / this._lengths[i];
@@ -667,17 +676,17 @@ export class Path extends Shape {
             return a;
         }
 
-        right = b.controls && b.controls.right;
-        left = a.controls && a.controls.left;
+        const right = b.controls && b.controls.right;
+        const left = a.controls && a.controls.left;
 
-        x1 = b.x;
-        y1 = b.y;
+        const x1 = b.x;
+        const y1 = b.y;
         x2 = (right || b).x;
         y2 = (right || b).y;
         x3 = (left || a).x;
         y3 = (left || a).y;
-        x4 = a.x;
-        y4 = a.y;
+        const x4 = a.x;
+        const y4 = a.y;
 
         if (right && b.relative) {
             x2 += b.x;
@@ -689,8 +698,8 @@ export class Path extends Shape {
             y3 += a.y;
         }
 
-        x = getComponentOnCubicBezier(t, x1, x2, x3, x4);
-        y = getComponentOnCubicBezier(t, y1, y2, y3, y4);
+        const x = getComponentOnCubicBezier(t, x1, x2, x3, x4);
+        const y = getComponentOnCubicBezier(t, y1, y2, y3, y4);
 
         // Higher order points for control calculation.
         const t1x = lerp(x1, x2, t);
@@ -733,7 +742,7 @@ export class Path extends Shape {
 
         }
 
-        result = new Anchor(
+        const result = new Anchor(
             x, y, brx - x, bry - y, alx - x, aly - y,
             this._curved ? Commands.curve : Commands.line
         );
@@ -758,7 +767,7 @@ export class Path extends Shape {
         }
 
         for (let i = 0; i < this._collection.length; i++) {
-            this._collection[i].command = i === 0 ? Commands.move : Commands.line;
+            this._collection.getAt(i).command = i === 0 ? Commands.move : Commands.line;
         }
 
         return this;
@@ -776,11 +785,11 @@ export class Path extends Shape {
         this._update();
 
         const last = this.vertices.length - 1;
-        const closed = this._closed || this.vertices[last].command === Commands.close;
-        let b = this.vertices[last];
-        let points = [], verts;
+        const closed = this._closed || this.vertices.getAt(last).command === Commands.close;
+        let b = this.vertices.getAt(last);
+        let points: Anchor[] = [], verts;
 
-        _.each(this.vertices, function (a, i) {
+        this.vertices.forEach(function (a, i) {
 
             if (i <= 0 && !closed) {
                 b = a;
@@ -939,126 +948,136 @@ export class Path extends Shape {
             const low = ceil(bid);
             const high = floor(eid);
 
-            let left, right, prev, next, v, i;
+            {
+                /**
+                 * Assigned in the for loop, used after the for loop.
+                 */
+                let left: Anchor;
+                /**
+                 * Assigned in the for loop, used after the for loop.
+                 */
+                let next: Anchor;
 
-            this._renderer.vertices.length = 0;
+                this._renderer.vertices.length = 0;
+                {
+                    let right: Anchor;
+                    let prev: Anchor;
+                    for (let i = 0; i < l; i++) {
 
-            for (i = 0; i < l; i++) {
+                        if (this._renderer.collection.length <= i) {
+                            // Expected to be `relative` anchor points.
+                            this._renderer.collection.push(new Anchor());
+                        }
 
-                if (this._renderer.collection.length <= i) {
-                    // Expected to be `relative` anchor points.
-                    this._renderer.collection.push(new Anchor());
+                        if (i > high && !right) {
+
+                            const v = this._renderer.collection[i].copy(this._collection.getAt(i));
+                            this.getPointAt(ending, v);
+                            v.command = this._renderer.collection[i].command;
+                            this._renderer.vertices.push(v);
+
+                            right = v;
+                            prev = this._collection.getAt(i - 1);
+
+                            // Project control over the percentage `t`
+                            // of the in-between point
+                            if (prev && prev.controls) {
+
+                                if (v.relative) {
+                                    v.controls.right.clear();
+                                }
+                                else {
+                                    v.controls.right.copy(v);
+                                }
+
+                                if (prev.relative) {
+                                    this._renderer.collection[i - 1].controls.right
+                                        .copy(prev.controls.right)
+                                        .lerp(Vector.zero, 1 - v.t);
+                                }
+                                else {
+                                    this._renderer.collection[i - 1].controls.right
+                                        .copy(prev.controls.right)
+                                        .lerp(prev, 1 - v.t);
+                                }
+
+                            }
+
+                        }
+                        else if (i >= low && i <= high) {
+
+                            v = this._renderer.collection[i]
+                                .copy(this._collection[i]);
+                            this._renderer.vertices.push(v);
+
+                            if (i === high && contains(this, ending)) {
+                                right = v;
+                                if (!closed && right.controls) {
+                                    if (right.relative) {
+                                        right.controls.right.clear();
+                                    }
+                                    else {
+                                        right.controls.right.copy(right);
+                                    }
+                                }
+                            }
+                            else if (i === low && contains(this, beginning)) {
+                                left = v;
+                                left.command = Commands.move;
+                                if (!closed && left.controls) {
+                                    if (left.relative) {
+                                        left.controls.left.clear();
+                                    }
+                                    else {
+                                        left.controls.left.copy(left);
+                                    }
+                                }
+                            }
+
+                        }
+
+                    }
                 }
 
-                if (i > high && !right) {
+                // Prepend the trimmed point if necessary.
+                if (low > 0 && !left) {
 
-                    v = this._renderer.collection[i].copy(this._collection[i]);
-                    this.getPointAt(ending, v);
-                    v.command = this._renderer.collection[i].command;
-                    this._renderer.vertices.push(v);
+                    const i = low - 1;
 
-                    right = v;
-                    prev = this._collection[i - 1];
+                    const v = this._renderer.collection[i].copy(this._collection.getAt(i));
+                    this.getPointAt(beginning, v);
+                    v.command = Commands.move;
+                    this._renderer.vertices.unshift(v);
+
+                    next = this._collection.getAt(i + 1);
 
                     // Project control over the percentage `t`
                     // of the in-between point
-                    if (prev && prev.controls) {
+                    if (next && next.controls) {
 
-                        if (v.relative) {
-                            v.controls.right.clear();
+                        v.controls.left.clear();
+
+                        if (next.relative) {
+                            this._renderer.collection[i + 1].controls.left
+                                .copy(next.controls.left)
+                                .lerp(Vector.zero, v.t);
                         }
                         else {
-                            v.controls.right.copy(v);
-                        }
-
-                        if (prev.relative) {
-                            this._renderer.collection[i - 1].controls.right
-                                .copy(prev.controls.right)
-                                .lerp(Vector.zero, 1 - v.t);
-                        }
-                        else {
-                            this._renderer.collection[i - 1].controls.right
-                                .copy(prev.controls.right)
-                                .lerp(prev, 1 - v.t);
+                            vector.copy(next.origin);
+                            this._renderer.collection[i + 1].controls.left
+                                .copy(next.controls.left)
+                                .lerp(next.origin, v.t);
                         }
 
                     }
 
                 }
-                else if (i >= low && i <= high) {
-
-                    v = this._renderer.collection[i]
-                        .copy(this._collection[i]);
-                    this._renderer.vertices.push(v);
-
-                    if (i === high && contains(this, ending)) {
-                        right = v;
-                        if (!closed && right.controls) {
-                            if (right.relative) {
-                                right.controls.right.clear();
-                            }
-                            else {
-                                right.controls.right.copy(right);
-                            }
-                        }
-                    }
-                    else if (i === low && contains(this, beginning)) {
-                        left = v;
-                        left.command = Commands.move;
-                        if (!closed && left.controls) {
-                            if (left.relative) {
-                                left.controls.left.clear();
-                            }
-                            else {
-                                left.controls.left.copy(left);
-                            }
-                        }
-                    }
-
-                }
-
             }
-
-            // Prepend the trimmed point if necessary.
-            if (low > 0 && !left) {
-
-                i = low - 1;
-
-                v = this._renderer.collection[i].copy(this._collection[i]);
-                this.getPointAt(beginning, v);
-                v.command = Commands.move;
-                this._renderer.vertices.unshift(v);
-
-                next = this._collection[i + 1];
-
-                // Project control over the percentage `t`
-                // of the in-between point
-                if (next && next.controls) {
-
-                    v.controls.left.clear();
-
-                    if (next.relative) {
-                        this._renderer.collection[i + 1].controls.left
-                            .copy(next.controls.left)
-                            .lerp(Vector.zero, v.t);
-                    }
-                    else {
-                        vector.copy(next);
-                        this._renderer.collection[i + 1].controls.left
-                            .copy(next.controls.left)
-                            .lerp(next, v.t);
-                    }
-
-                }
-
-            }
-
         }
 
-        Shape.prototype._update.apply(this, arguments);
+        super._update();
 
         return this;
-
     }
 
     /**
@@ -1082,7 +1101,6 @@ export class Path extends Shape {
         this._flagClip = false;
 
         super.flagReset();
-        Shape.prototype.flagReset.call(this);
 
         return this;
 
@@ -1096,7 +1114,7 @@ export class Path extends Shape {
         }
         this._automatic = !!v;
         const method = this._automatic ? 'ignore' : 'listen';
-        _.each(this.vertices, function (v) {
+        this.vertices.forEach(function (v) {
             v[method]();
         });
     }
@@ -1139,8 +1157,8 @@ export class Path extends Shape {
         return this._dashes;
     }
     set dashes(v: number[]) {
-        if (typeof v.offset !== 'number') {
-            v.offset = (this.dashes && this._dashes.offset) || 0;
+        if (typeof get_dashes_offset(v) !== 'number') {
+            set_dashes_offset(v, (this.dashes && get_dashes_offset(this._dashes)) || 0);
         }
         this._dashes = v;
     }
@@ -1263,6 +1281,9 @@ export class Path extends Shape {
 
 
         // Listen for Collection changes and bind / unbind
+        this._collection.insert$.subscribe((inserts: Anchor[])=>{
+
+        });
         this._collection
             .bind(Events.Types.insert, bindVertices)
             .bind(Events.Types.remove, unbindVertices);
@@ -1353,10 +1374,7 @@ function FlagStroke() {
 }
 
 export {
-    FlagVertices,
-    BindVertices,
-    UnbindVertices,
-    FlagFill,
-    FlagStroke
+    BindVertices, FlagFill,
+    FlagStroke, FlagVertices, UnbindVertices
 };
 

@@ -1,13 +1,17 @@
+import { Observable, Subject } from 'rxjs';
 import { Child } from './children.js';
-import { Events } from './events.js';
-import { Group } from './group.js';
 import { View } from './renderers/View.js';
-import { Shape } from './shape.js';
+
+export interface Parent {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // children: Children<Parent, Child<Parent>>
+    // children: unknown;
+}
 
 /**
  * The foundational object for the scenegraph.
  */
-export abstract class Element implements Child {
+export abstract class Element<P extends Parent> implements Child {
     /**
      * Gradient, Shape, Stop, and Texture all extend Element.
      */
@@ -15,7 +19,7 @@ export abstract class Element implements Child {
     /**
      * 
      */
-    parent: Group;
+    parent: P;
     /**
      * @name Two.Element#_flagId
      * @private
@@ -42,7 +46,9 @@ export abstract class Element implements Child {
      * @property {String} - Session specific unique identifier.
      * @nota-bene In the {@link Two.SVGRenderer} change this to change the underlying SVG element's id too.
      */
-    _id = '';
+    _id: string | null = null;
+    readonly #id: Subject<{ id: string, previous_id: string | null }>;
+    readonly id$: Observable<{ id: string, previous_id: string | null }>;
 
     /**
      * @name Two.Element#className
@@ -58,9 +64,9 @@ export abstract class Element implements Child {
      */
     classList: string[] = [];
 
-    readonly events = new Events();
-
     constructor() {
+        this.#id = new Subject();
+        this.id$ = this.#id.asObservable();
     }
 
     /**
@@ -80,17 +86,14 @@ export abstract class Element implements Child {
     get id(): string {
         return this._id;
     }
-    set id(v: string) {
-        const id = this._id;
-        if (v === this._id) {
+    set id(id: string) {
+        const previous_id = this.id;
+        if (id === previous_id) {
             return;
         }
-        this._id = v;
+        this._id = id;
         this._flagId = true;
-        if (this.parent) {
-            delete this.parent.children.ids[id];
-            this.parent.children.ids[this._id] = this as unknown as Shape;
-        }
+        this.#id.next({ id, previous_id });
     }
     get className(): string {
         return this._className;

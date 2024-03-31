@@ -1,4 +1,5 @@
 import { Anchor } from '../anchor.js';
+import { Collection } from '../collection.js';
 import { Constants } from '../constants.js';
 import { Vector } from '../vector.js';
 import { HALF_PI, mod } from './math.js';
@@ -277,20 +278,20 @@ function integrate(f, a, b, n) {
  * @param {Boolean} closed
  * @description Sets the bezier handles on {@link Anchor}s in the `points` list with estimated values to create a catmull-rom like curve. Used by {@link Two.Path#plot}.
  */
-function getCurveFromPoints(points: Anchor[], closed: boolean): void {
+function getCurveFromPoints(points: Collection<Anchor>, closed: boolean): void {
 
     const l = points.length, last = l - 1;
 
     for (let i = 0; i < l; i++) {
 
-        const point = points[i];
+        const point = points.getAt(i);
 
         const prev = closed ? mod(i - 1, l) : Math.max(i - 1, 0);
         const next = closed ? mod(i + 1, l) : Math.min(i + 1, last);
 
-        const a = points[prev];
+        const a = points.getAt(prev);
         const b = point;
-        const c = points[next];
+        const c = points.getAt(next);
         getControlPoints(a, b, c);
 
         b.command = i === 0 ? Commands.move : Commands.curve;
@@ -415,15 +416,6 @@ function getAnchorsFromArcData(center, xAxisRotation, rx, ry, ts, td, ccw) {
 }
 
 export {
-    Curve,
-    getComponentOnCubicBezier,
-    subdivide,
-    getCurveLength,
-    getCurveBoundingBox,
-    integrate,
-    getCurveFromPoints,
-    getControlPoints,
-    getReflection,
-    getAnchorsFromArcData
+    Curve, getAnchorsFromArcData, getComponentOnCubicBezier, getControlPoints, getCurveBoundingBox, getCurveFromPoints, getCurveLength, getReflection, integrate, subdivide
 };
 
