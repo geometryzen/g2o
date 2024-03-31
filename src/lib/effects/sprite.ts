@@ -63,7 +63,9 @@ export class Sprite extends Rectangle {
      * @private
      * @see {@link Two.Sprite#origin}
      */
-    _origin = null;
+    _origin: Vector = null;
+
+    _onLastFrame: () => void;
 
     /**
      * @param path The URL path or {@link Two.Texture} to be used as the bitmap data displayed on the sprite.
@@ -78,10 +80,6 @@ export class Sprite extends Rectangle {
 
         super(ox, oy, 0, 0);
 
-        for (let prop in proto) {
-            Object.defineProperty(this, prop, proto[prop]);
-        }
-
         this.noStroke();
         this.noFill();
 
@@ -91,7 +89,8 @@ export class Sprite extends Rectangle {
          */
         if (path instanceof Texture) {
             this.texture = path;
-        } else if (typeof path === 'string') {
+        }
+        else if (typeof path === 'string') {
             this.texture = new Texture(path);
         }
 
@@ -147,11 +146,11 @@ export class Sprite extends Rectangle {
      * @param {Function} [onLastFrame] - Optional callback function to be triggered after playing the last frame. This fires multiple times when the sprite is looped.
      * @description Initiate animation playback of a {@link Two.Sprite}.
      */
-    play(firstFrame, lastFrame, onLastFrame) {
+    play(firstFrame = 0, lastFrame?: number, onLastFrame?: () => void) {
 
         this._playing = true;
         this._firstFrame = 0;
-        this._lastFrame = this.amount - 1;
+        this._lastFrame = this._amount - 1;
         this._startTime = _.performance.now();
 
         if (typeof firstFrame === 'number') {
@@ -162,7 +161,8 @@ export class Sprite extends Rectangle {
         }
         if (typeof onLastFrame === 'function') {
             this._onLastFrame = onLastFrame;
-        } else {
+        }
+        else {
             delete this._onLastFrame;
         }
 
@@ -261,7 +261,8 @@ export class Sprite extends Rectangle {
 
                     if (this._loop) {
                         elapsed = elapsed % duration;
-                    } else {
+                    }
+                    else {
                         elapsed = Math.min(elapsed, duration);
                     }
 
@@ -323,58 +324,32 @@ export class Sprite extends Rectangle {
         this._texture = v;
         this._flagTexture = true;
     }
-
-}
-
-const proto = {
-    texture: {
-        enumerable: true,
-        get: function () {
-            return this._texture;
-        },
-        set: function (v) {
-            this._texture = v;
-            this._flagTexture = true;
-        }
-    },
-    columns: {
-        enumerable: true,
-        get: function () {
-            return this._columns;
-        },
-        set: function (v) {
-            this._columns = v;
-            this._flagColumns = true;
-        }
-    },
-    rows: {
-        enumerable: true,
-        get: function () {
-            return this._rows;
-        },
-        set: function (v) {
-            this._rows = v;
-            this._flagRows = true;
-        }
-    },
-    frameRate: {
-        enumerable: true,
-        get: function () {
-            return this._frameRate;
-        },
-        set: function (v) {
-            this._frameRate = v;
-            this._flagFrameRate = true;
-        }
-    },
-    index: {
-        enumerable: true,
-        get: function () {
-            return this._index;
-        },
-        set: function (v) {
-            this._index = v;
-            this._flagIndex = true;
-        }
+    get columns() {
+        return this._columns;
     }
-};
+    set columns(v) {
+        this._columns = v;
+        this._flagColumns = true;
+    }
+    get rows() {
+        return this._rows;
+    }
+    set rows(v) {
+        this._rows = v;
+        this._flagRows = true;
+    }
+    get frameRate() {
+        return this._frameRate;
+    }
+    set frameRate(v) {
+        this._frameRate = v;
+        this._flagFrameRate = true;
+    }
+    get index() {
+        return this._index;
+    }
+    set index(v) {
+        this._index = v;
+        this._flagIndex = true;
+    }
+}
