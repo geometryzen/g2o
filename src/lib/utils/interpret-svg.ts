@@ -52,10 +52,10 @@ function getAlignment(text_anchor_value: 'start' | 'middle' | 'end'): 'left' | '
     return alignments[text_anchor_value];
 }
 
-function getBaseline(node: SVGElement): string {
+function getBaseline(node: SVGElement): 'bottom' | 'middle' | 'top' {
     const a = node.getAttribute('dominant-baseline');
     const b = node.getAttribute('alignment-baseline');
-    return a || b;
+    return (a || b) as 'bottom' | 'middle' | 'top';
 }
 
 function getTagName(tag: string): string {
@@ -1358,7 +1358,7 @@ export const read = {
 
     },
 
-    clippath: function (this: Two, node: SVGElement, parentStyles) {
+    clippath: function (this: Two, node: SVGElement) {
         if (get_defs_current() && !get_defs_current().contains(node.id)) {
             get_defs_current().add(node.id, node);
         }

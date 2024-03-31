@@ -1,8 +1,6 @@
+import { Subscription } from 'rxjs';
 import { Gradient } from './effects/gradient.js';
-import { LinearGradient } from './effects/linear-gradient.js';
-import { RadialGradient } from './effects/radial-gradient.js';
 import { Texture } from './effects/texture.js';
-import { Events } from './events.js';
 import { get_dashes_offset, set_dashes_offset } from './path.js';
 import { Shape } from './shape.js';
 import { root } from './utils/root.js';
@@ -15,161 +13,75 @@ if (root.document) {
     canvas = document.createElement('canvas');
 }
 
-/**
- * @name Two.Text
- * @class
- * @extends Two.Shape
- * @param {String} [message] - The String to be rendered to the scene.
- * @param {Number} [x=0] - The position in the x direction for the object.
- * @param {Number} [y=0] - The position in the y direction for the object.
- * @param {Object} [styles] - An object where styles are applied. Attribute must exist in Two.Text.Properties.
- * @description This is a primitive class for creating drawable text that can be added to the scenegraph.
- * @returns {Two.Text}
- */
+export interface TextStyles {
+    alignment: 'center' | 'left' | 'right';
+    baseline: 'bottom' | 'middle' | 'top';
+    decoration: string;
+    direction: 'ltr' | 'rtl';
+    family: string;
+    fill: string;
+    leading: number;
+    linewidth: number;
+    opacity: number;
+    size: number;
+    stroke: string;
+    style: string;
+    value: string;
+    visible: boolean;
+    weight: number;
+}
+
 export class Text extends Shape {
+    automatic: boolean;
+    beginning: number;
+    cap: string;
+    closed: boolean;
+    curved: boolean;
+    ending: number;
+    join: string;
+    length: number;
+    miter: number;
 
-    /**
-     * @name Two.Text#_flagValue
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#value} need updating.
-     */
     _flagValue = true;
-
-    /**
-     * @name Two.Text#_flagFamily
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#family} need updating.
-     */
     _flagFamily = true;
-
-    /**
-     * @name Two.Text#_flagSize
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#size} need updating.
-     */
     _flagSize = true;
-
-    /**
-     * @name Two.Text#_flagLeading
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#leading} need updating.
-     */
     _flagLeading = true;
-
-    /**
-     * @name Two.Text#_flagAlignment
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#alignment} need updating.
-     */
     _flagAlignment = true;
-
-    /**
-     * @name Two.Text#_flagBaseline
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#baseline} need updating.
-     */
     _flagBaseline = true;
-
-    /**
-     * @name Two.Text#_flagStyle
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#style} need updating.
-     */
     _flagStyle = true;
-
-    /**
-     * @name Two.Text#_flagWeight
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#weight} need updating.
-     */
     _flagWeight = true;
-
-    /**
-     * @name Two.Text#_flagDecoration
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#decoration} need updating.
-     */
     _flagDecoration = true;
-
-    /**
-     * @name Two.Text#_flagFill
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#fill} need updating.
-     */
     _flagFill = true;
-
-    /**
-     * @name Two.Text#_flagStroke
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#stroke} need updating.
-     */
     _flagStroke = true;
-
-    /**
-     * @name Two.Text#_flagLinewidth
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#linewidth} need updating.
-     */
     _flagLinewidth = true;
-
-    /**
-     * @name Two.Text#_flagOpacity
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#opacity} need updating.
-     */
     _flagOpacity = true;
-
-    /**
-     * @name Two.Text#_flagVisible
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#visible} need updating.
-     */
     _flagVisible = true;
-
-    /**
-     * @name Two.Path#_flagMask
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#mask} needs updating.
-     */
     _flagMask = false;
-
-    /**
-     * @name Two.Text#_flagClip
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#clip} needs updating.
-     */
     _flagClip = false;
-
-    /**
-     * @name Two.Text#_flagDirection
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Text#direction} needs updating.
-     */
     _flagDirection = false;
 
     // Underlying Properties
 
     /**
-     * @name Two.Text#value
-     * @property {String} - The characters to be rendered to the the screen. Referred to in the documentation sometimes as the `message`.
+     * The characters to be rendered to the the screen.
+     * Referred to in the documentation sometimes as the `message`.
      */
     _value = '';
 
     /**
-     * @name Two.Text#family
-     * @property {String} - The font family Two.js should attempt to register for rendering. The default value is `'sans-serif'`. Comma separated font names can be supplied as a "stack", similar to the CSS implementation of `font-family`.
+     * The font family Two.js should attempt to register for rendering.
+     * The default value is `'sans-serif'`.
+     * Comma separated font names can be supplied as a "stack", similar to the CSS implementation of `font-family`.
      */
     _family = 'sans-serif';
 
     /**
-     * @name Two.Text#size
-     * @property {Number} - The font size in Two.js point space. Defaults to `13`.
+     * The font size in Two.js point space. Defaults to `13`.
      */
     _size = 13;
 
     /**
-     * @name Two.Text#leading
-     * @property {Number} - The height between lines measured from base to base in Two.js point space. Defaults to `17`.
+     * The height between lines measured from base to base in Two.js point space. Defaults to `17`.
      */
     _leading = 17;
 
@@ -180,11 +92,11 @@ export class Text extends Shape {
     _alignment: 'center' | 'left' | 'right' = 'center';
 
     /**
-     * @name Two.Text#baseline
-     * @property {String} - The vertical aligment of the text in relation to {@link Two.Text#translation}'s coordinates. Possible values include `'top'`, `'middle'`, `'bottom'`, and `'baseline'`. Defaults to `'baseline'`.
+     * The vertical aligment of the text in relation to {@link Two.Text#translation}'s coordinates.
+     * Possible values include `'top'`, `'middle'`, `'bottom'`, and `'baseline'`. Defaults to `'baseline'`.
      * @nota-bene In headless environments where the canvas is based on {@link https://github.com/Automattic/node-canvas}, `baseline` seems to be the only valid property.
      */
-    _baseline = 'middle';
+    _baseline: 'bottom' | 'middle' | 'top' = 'middle';
 
     /**
      * @name Two.Text#style
@@ -205,10 +117,10 @@ export class Text extends Shape {
     _decoration = 'none';
 
     /**
-     * @name Two.Text#direction
-     * @property {String} - String to determine what direction the text should run. Possibly values are `'ltr'` for left-to-right and `'rtl'` for right-to-left. Defaults to `'ltr'`.
+     * determine what direction the text should run.
+     * Possibly values are `'ltr'` for left-to-right and `'rtl'` for right-to-left. Defaults to `'ltr'`.
      */
-    _direction = 'ltr';
+    _direction: 'ltr' | 'rtl' = 'ltr';
 
     /**
      * @name Two.Text#fill
@@ -216,6 +128,7 @@ export class Text extends Shape {
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
     _fill: string | Gradient | Texture = '#000';
+    #fill_change_subscription: Subscription | null = null;
 
     /**
      * @name Two.Text#stroke
@@ -223,6 +136,7 @@ export class Text extends Shape {
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
     _stroke: string | Gradient | Texture = 'none';
+    #stroke_change_subscription: Subscription | null = null;
 
     /**
      * @name Two.Text#linewidth
@@ -265,13 +179,17 @@ export class Text extends Shape {
      */
     _dashes: number[] | null = null;
 
-    constructor(message: string, x: number = 0, y: number = 0, styles?: object) {
+    /**
+     * @param message The String to be rendered to the scene.
+     * @param x The position in the x direction for the object.
+     * @param y The position in the y direction for the object.
+     * @param styles An object where styles are applied. Attribute must exist in Two.Text.Properties.
+     */
+    constructor(message: string, x: number = 0, y: number = 0, styles?: TextStyles) {
 
         super();
 
         this._renderer.type = 'text';
-        this._renderer.flagFill = FlagFill.bind(this);
-        this._renderer.flagStroke = FlagStroke.bind(this);
 
         this.value = message;
 
@@ -299,27 +217,85 @@ export class Text extends Shape {
         for (let i = 0; i < Text.Properties.length; i++) {
             const property = Text.Properties[i];
             if (property in styles) {
-                this[property] = styles[property];
+                switch (property) {
+                    case 'alignment': {
+                        this.alignment = styles.alignment;
+                        break;
+                    }
+                    case 'baseline': {
+                        this.baseline = styles.baseline;
+                        break;
+                    }
+                    case 'decoration': {
+                        this.decoration = styles.decoration;
+                        break;
+                    }
+                    case 'direction': {
+                        this.direction = styles.direction;
+                        break;
+                    }
+                    case 'family': {
+                        this.family = styles.family;
+                        break;
+                    }
+                    case 'fill': {
+                        this.fill = styles.fill;
+                        break;
+                    }
+                    case 'leading': {
+                        this.leading = styles.leading;
+                        break;
+                    }
+                    case 'linewidth': {
+                        this.linewidth = styles.linewidth;
+                        break;
+                    }
+                    case 'opacity': {
+                        this.opacity = styles.opacity;
+                        break;
+                    }
+                    case 'size': {
+                        this.size = styles.size;
+                        break;
+                    }
+                    case 'stroke': {
+                        this.stroke = styles.stroke;
+                        break;
+                    }
+                    case 'style': {
+                        this.style = styles.style;
+                        break;
+                    }
+                    case 'value': {
+                        this.value = styles.value;
+                        break;
+                    }
+                    case 'visible': {
+                        this.visible = styles.visible;
+                        break;
+                    }
+                    case 'weight': {
+                        this.weight = styles.weight;
+                        break;
+                    }
+                    default: {
+                        throw new Error(property);
+                    }
+                }
             }
         }
-
     }
 
     /**
-     * @name Two.Text.Ratio
-     * @property {Number} - Approximate aspect ratio of a typeface's character width to height.
+     * Approximate aspect ratio of a typeface's character width to height.
      */
     static Ratio = 0.6;
 
-    /**
-     * @name Two.Text.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.Text}.
-     */
     static Properties = [
         'value', 'family', 'size', 'leading', 'alignment', 'linewidth', 'style',
         'weight', 'decoration', 'direction', 'baseline', 'opacity', 'visible',
         'fill', 'stroke'
-    ];
+    ] as const;
 
     static Measure(text: Text): { width: number; height: number } {
         if (canvas) {
@@ -439,6 +415,11 @@ export class Text extends Shape {
         return true;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    subdivide(limit: number): this {
+        throw new Error('Method not implemented.');
+    }
+
     flagReset() {
         super.flagReset.call(this);
         this._flagValue = this._flagFamily = this._flagSize =
@@ -504,19 +485,21 @@ export class Text extends Shape {
         return this._fill;
     }
     set fill(f) {
-        if (this._fill instanceof Gradient
-            || this._fill instanceof LinearGradient
-            || this._fill instanceof RadialGradient
-            || this._fill instanceof Texture) {
-            this._fill.unbind(Events.Types.change, this._renderer.flagFill);
+        if (this.#fill_change_subscription) {
+            this.#fill_change_subscription.unsubscribe();
+            this.#fill_change_subscription = null;
         }
         this._fill = f;
         this._flagFill = true;
-        if (this._fill instanceof Gradient
-            || this._fill instanceof LinearGradient
-            || this._fill instanceof RadialGradient
-            || this._fill instanceof Texture) {
-            this._fill.bind(Events.Types.change, this._renderer.flagFill);
+        if (this.fill instanceof Gradient) {
+            this.#fill_change_subscription = this.fill.change$.subscribe(() => {
+                this._flagFill = true;
+            });
+        }
+        if (this.fill instanceof Texture) {
+            this.#fill_change_subscription = this.fill.change$.subscribe(() => {
+                this._flagFill = true;
+            });
         }
     }
     get leading() {
@@ -561,24 +544,22 @@ export class Text extends Shape {
         return this._stroke;
     }
     set stroke(f) {
-
-        if (this._stroke instanceof Gradient
-            || this._stroke instanceof LinearGradient
-            || this._stroke instanceof RadialGradient
-            || this._stroke instanceof Texture) {
-            this._stroke.unbind(Events.Types.change, this._renderer.flagStroke);
+        if (this.#stroke_change_subscription) {
+            this.#stroke_change_subscription.unsubscribe();
+            this.#stroke_change_subscription = null;
         }
-
         this._stroke = f;
         this._flagStroke = true;
-
-        if (this._stroke instanceof Gradient
-            || this._stroke instanceof LinearGradient
-            || this._stroke instanceof RadialGradient
-            || this._stroke instanceof Texture) {
-            this._stroke.bind(Events.Types.change, this._renderer.flagStroke);
+        if (this.stroke instanceof Gradient) {
+            this.#stroke_change_subscription = this.stroke.change$.subscribe(() => {
+                this._flagStroke = true;
+            });
         }
-
+        if (this.stroke instanceof Texture) {
+            this.#stroke_change_subscription = this.stroke.change$.subscribe(() => {
+                this._flagStroke = true;
+            });
+        }
     }
     get style() {
         return this._style;
@@ -608,24 +589,4 @@ export class Text extends Shape {
         this._weight = v;
         this._flagWeight = true;
     }
-}
-
-/**
- * @name Two.Text.FlagFill
- * @function
- * @private
- * @description Cached method to let renderers know the fill property have been updated on a {@link Two.Text}.
- */
-function FlagFill() {
-    this._flagFill = true;
-}
-
-/**
- * @name Two.Text.FlagStroke
- * @function
- * @private
- * @description Cached method to let renderers know the stroke property have been updated on a {@link Two.Text}.
- */
-function FlagStroke() {
-    this._flagStroke = true;
 }
