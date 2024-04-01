@@ -4,7 +4,6 @@ import { Gradient } from '../effects/gradient.js';
 import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
 import { Texture } from '../effects/texture.js';
-import { Events } from '../events.js';
 import { get_dashes_offset, set_dashes_offset } from '../path.js';
 import { Shape } from '../shape.js';
 import { getCurveLength as gcl, getCurveBoundingBox, subdivide } from '../utils/curves.js';
@@ -54,6 +53,10 @@ export class Points extends Shape {
     _dashes: number[] | null = null;
 
     _collection: Collection<Vector>;
+    #collection_insert_subscription: Subscription | null = null;
+    #collection_remove_subscription: Subscription | null = null;
+
+    readonly #vector_change_subscriptions = new Map<Vector, Subscription>();
 
     constructor(vertices: Vector[]) {
 
@@ -120,7 +123,7 @@ export class Points extends Shape {
          * @description A list of {@link Two.Vector} objects that consist of which coordinates to draw points at.
          * @nota-bene The array when manipulating is actually a {@link Two.Collection}.
          */
-        this.vertices = vertices;
+        this.vertices = new Collection(vertices);
 
         /**
          * @name Two.Points#dashes
@@ -335,7 +338,7 @@ export class Points extends Shape {
             const ay = a.y;
             const bx = b.x;
             const by = b.y;
-            const builder = (x:number, y:number)=> new Vector(x,y);
+            const builder = (x: number, y: number) => new Vector(x, y);
             const subdivisions = subdivide(builder, ax, ay, ax, ay, bx, by, bx, by, limit);
 
             points = points.concat(subdivisions);
@@ -561,14 +564,14 @@ export class Points extends Shape {
     }
     set vertices(vertices) {
 
-        const bindVertices = this._renderer.bindVertices;
-        const unbindVertices = this._renderer.unbindVertices;
-
         // Remove previous listeners
-        if (this._collection) {
-            this._collection
-                .unbind(Events.Types.insert, bindVertices)
-                .unbind(Events.Types.remove, unbindVertices);
+        if (this.#collection_insert_subscription) {
+            this.#collection_insert_subscription.unsubscribe();
+            this.#collection_insert_subscription = null;
+        }
+        if (this.#collection_remove_subscription) {
+            this.#collection_remove_subscription.unsubscribe();
+            this.#collection_remove_subscription = null;
         }
 
         // Create new Collection with copy of vertices
@@ -581,13 +584,37 @@ export class Points extends Shape {
 
 
         // Listen for Collection changes and bind / unbind
-        this._collection
-            .bind(Events.Types.insert, bindVertices)
-            .bind(Events.Types.remove, unbindVertices);
+        this.#collection_insert_subscription = this._collection.insert$.subscribe((inserts: Vector[]) => {
+            let i = inserts.length;
+            while (i--) {
+                const anchor = inserts[i];
+                const subscription = anchor.change$.subscribe(() => {
+                    this._flagVertices = true;
+                });
+                // TODO: Check that we are not already mapped?
+                this.#vector_change_subscriptions.set(anchor, subscription);
+            }
+            this._flagVertices = true;
+        });
+
+        this.#collection_remove_subscription = this._collection.remove$.subscribe((removes: Vector[]) => {
+            let i = removes.length;
+            while (i--) {
+                const anchor = removes[i];
+                const subscription = this.#vector_change_subscriptions.get(anchor);
+                subscription.unsubscribe();
+                this.#vector_change_subscriptions.delete(anchor);
+            }
+            this._flagVertices = true;
+        });
 
         // Bind Initial Vertices
-        bindVertices(this._collection);
-
+        this._collection.forEach((anchor: Vector) => {
+            const subscription = anchor.change$.subscribe(() => {
+                this._flagVertices = true;
+            });
+            this.#vector_change_subscriptions.set(anchor, subscription);
+        });
     }
     get visible() {
         return this._visible;

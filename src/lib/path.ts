@@ -361,9 +361,7 @@ export class Path extends Shape {
          * @description A list of {@link Two.Anchor} objects that consist of what form the path takes.
          * @nota-bene The array when manipulating is actually a {@link Two.Collection}.
          */
-        this._collection = new Collection(vertices);
-
-        // TODO: Listeners to collection?
+        this.vertices = new Collection(vertices);
 
         /**
          * @name Two.Path#automatic
