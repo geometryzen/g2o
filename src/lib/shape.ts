@@ -11,72 +11,44 @@ import { Vector } from './vector.js';
 
 export abstract class Shape extends Element<Group> implements IShape {
 
-    /**
-     * @name Two.Shape#_flagMatrix
-     * @private
-     * @property {Boolean} - Determines whether the matrix needs updating.
-     */
     _flagMatrix = true;
-
-    /**
-     * @name Two.Shape#_flagScale
-     * @private
-     * @property {Boolean} - Determines whether the scale needs updating.
-     */
     _flagScale = false;
 
     // Underlying Properties
 
     /**
-     * @name Two.Shape#_matrix
-     * @private
-     * @property {Two.Matrix} - The matrix value of the shape's position, rotation, and scale.
+     * The matrix value of the shape's position, rotation, and scale.
      */
     _matrix: Matrix = null;
 
     /**
-     * @name Two.Shape#_worldMatrix
-     * @private
-     * @property {Two.Matrix} - The matrix value of the shape's position, rotation, and scale in the scene.
+     * The matrix value of the shape's position, rotation, and scale in the scene.
      */
     _worldMatrix: Matrix = null;
 
-    /**
-     * @name Two.Shape#_position
-     * @private
-     * @property {Two.Vector} - The translation values as a {@link Two.Vector}.
-     */
     _position: Vector = null;
     _position_change_subscription: Subscription | null = null;
 
     /**
-     * @name Two.Shape#_rotation
-     * @private
-     * @property {Number} - The rotation value in Number.
+     * TODO: Replace with attitude and Geometric Algebra.
      */
     _rotation: number = 0;
 
     /**
-     * @name Two.Shape#_scale
-     * @private
-     * @property {Number|Two.Vector} - The scale value in Number. Can be a vector for non-uniform scaling.
+     * The scale value in Number. Can be a vector for non-uniform scaling.
      */
     _scale: number | Vector = 1;
     _scale_change_subscription: Subscription | null = null;
 
-    /**
-     * @name Two.Shape#_skewX
-     * @private
-     * @property {Number} - The rotation value in Number.
-     */
     _skewX = 0;
 
-    /**
-     * @name Two.Shape#_skewY
-     * @private
-     * @property {Number} - The rotation value in Number.
-     */
     _skewY = 0;
+
+    /**
+     * DGH: This is plonked on here by the interpretation of SVG.
+     * It's then copied by the SVG renderer to the dataset property of the renderer elem.
+     */
+    dataset?: DOMStringMap;
 
     abstract _flagVisible: boolean;
     abstract automatic: boolean;

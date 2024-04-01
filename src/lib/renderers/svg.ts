@@ -1,10 +1,13 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Anchor } from '../anchor.js';
+import { Gradient } from '../effects/gradient.js';
 import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
+import { Stop } from '../effects/stop.js';
 import { Texture } from '../effects/texture.js';
+import { Element as ElementBase } from '../element.js';
 import { Group } from '../group.js';
-import { Path } from '../path.js';
+import { Path, get_dashes_offset } from '../path.js';
 import { Shape } from '../shape.js';
 import { Points } from '../shapes/points.js';
 import { Text } from '../text.js';
@@ -26,6 +29,9 @@ function get_dom_element_defs(domElement: DOMElement): SVGDefsElement {
     return (domElement as any).defs;
 }
 
+/**
+ * sets the "hidden" _flagUpdate property.
+ */
 function set_defs_flag_update(defs: SVGDefsElement, flagUpdate: boolean): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (defs as any)._flagUpdate = flagUpdate;
@@ -36,10 +42,116 @@ function get_defs_flag_update(defs: SVGDefsElement): boolean {
     return (defs as any)._flagUpdate as boolean;
 }
 
+function is_gradient_or_texture(x: string | Gradient | Texture): x is Gradient | Texture {
+    return x instanceof Gradient || x instanceof Texture;
+}
+
+function serialize_color(x: string | Gradient | Texture): string {
+    if (is_gradient_or_texture(x)) {
+        // TODO: This assumes that Gradient or Texture have a meaningful toString. That's bad.
+        return 'url(#' + x + ')';
+    }
+    else {
+        return x;
+    }
+}
+
 /**
- * Used to set attributes on SVG elements so the value  MUST be a string.
+ * Used to set attributes on SVG elements so the value MUST be a string.
  */
 export type StylesMap = { [name: string]: string };
+
+/**
+ * A more specific representation of the attributes that are permitted on SVG elements.
+ * @see https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute
+ * The value of all attributes MUST be string.
+ */
+export interface SVGAttributes {
+    'class'?: string;
+    'clip-rule'?: 'nonzero' | 'evenodd' | 'inherit';
+    'cx'?: string;
+    'cy'?: string;
+    /**
+     * Defines the path to be drawn as a list of path commands and their parameters.
+     */
+    'd'?: string;
+    'dominant-baseline'?: 'auto' | 'middle' | 'hanging';
+    'fill'?: string;
+    'fill-opacity'?: string;
+    'font-family'?: string;
+    'font-size'?: string;
+    'font-style'?: string;
+    'font-weight'?: string;
+    'fx'?: string;
+    'fy'?: string;
+    'height'?: string;
+    'href'?: 'string';
+    'id'?: string;
+    'line-height'?: string;
+    'opacity'?: string;
+    'text-anchor'?: 'start' | 'middle' | 'end';
+    'r'?: string;
+    'spreadMethod'?: 'pad' | 'reflect' | 'repeat';
+    'stop-color'?: string;
+    'stroke'?: string;
+    'stroke-dasharray'?: string;
+    'stroke-dashoffset'?: string;
+    'stroke-linecap'?: string;
+    'stroke-linejoin'?: string;
+    'stroke-miterlimit'?: string;
+    'stroke-opacity'?: string;
+    'stroke-width'?: string;
+    'transform'?: string;
+    'visibility'?: 'visible' | 'hidden';
+    'width'?: string;
+    'x'?: string;
+    'y'?: string;
+}
+
+/**
+ * An de-serialized representation of SVGAttributes.
+ */
+export interface SVGProperties {
+    'class'?: string;
+    'cx'?: number;
+    'cy'?: number;
+    /**
+     * Defines the path to be drawn as a list of path commands and their parameters.
+     */
+    'd'?: string;
+    'dominant-baseline'?: 'auto' | 'middle' | 'hanging';
+    'fill'?: string;
+    'fill-opacity'?: string;
+    'font-family'?: string;
+    'font-size'?: number;
+    'fx'?: number;
+    'fy'?: number;
+    'height'?: number;
+    'id'?: string;
+    'line-height'?: number;
+    'opacity'?: string;
+    'patternUnits'?: 'userSpaceOnUse' | 'objectBoundingBox';
+    'text-anchor'?: 'start' | 'middle' | 'end';
+    'r'?: number;
+    'stroke'?: string;
+    'stroke-dasharray'?: string;
+    'stroke-opacity'?: number;
+    'stroke-width'?: number;
+    'transform'?: string;
+    'visibility'?: 'visible' | 'hidden';
+    'width'?: number;
+    'x'?: number;
+    'y'?: number;
+}
+
+function serialize_svg_props(props: SVGProperties): SVGAttributes {
+    const attrs: SVGAttributes = {};
+    attrs.class = props.class;
+    if (typeof props.cx === 'number') {
+        attrs.cx = `${props.cx}`;
+    }
+    return attrs;
+}
 
 export type DomContext = {
     domElement: DOMElement;
@@ -47,6 +159,10 @@ export type DomContext = {
 };
 
 const svg = {
+    /**
+     * @deprecated
+     * @see https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/version
+     */
     version: 1.1,
 
     ns: 'http://www.w3.org/2000/svg',
@@ -67,12 +183,9 @@ const svg = {
     } as const,
 
     // Create an svg namespaced element.
-    createElement: function (name: string, attrs: StylesMap = {}) {
+    createElement: function (name: string, attrs: SVGAttributes = {}) {
         const tag = name;
         const elem = document.createElementNS(svg.ns, tag);
-        if (tag === 'svg') {
-            attrs.version = `${svg.version}`;
-        }
         if (attrs && Object.keys(attrs).length > 0) {
             svg.setAttributes(elem, attrs);
         }
@@ -80,21 +193,23 @@ const svg = {
     },
 
     // Add attributes from an svg element.
-    setAttributes: function (elem: Element, attrs: StylesMap) {
+    setAttributes: function (elem: Element, attrs: SVGAttributes) {
+        // SVGAttributes doe snot have an index signature.
+        const styles = attrs as { [name: string]: string };
         const keys = Object.keys(attrs);
         for (let i = 0; i < keys.length; i++) {
             if (/href/.test(keys[i])) {
-                elem.setAttributeNS(svg.xlink, keys[i], attrs[keys[i]]);
+                elem.setAttributeNS(svg.xlink, keys[i], styles[keys[i]]);
             }
             else {
-                elem.setAttribute(keys[i], attrs[keys[i]]);
+                elem.setAttribute(keys[i], styles[keys[i]]);
             }
         }
         return this;
     },
 
     // Remove attributes from an svg element.
-    removeAttributes: function (elem: Element, attrs: StylesMap) {
+    removeAttributes: function (elem: Element, attrs: SVGAttributes) {
         for (const key in attrs) {
             elem.removeAttribute(key);
         }
@@ -105,7 +220,7 @@ const svg = {
     // element. It is imperative that the string collation is as fast as
     // possible, because this call will be happening multiple times a
     // second.
-    toString: function (points: Anchor[], closed: boolean) {
+    toString: function (points: Anchor[], closed: boolean): string {
 
         const l = points.length;
         const last = l - 1;
@@ -325,9 +440,30 @@ const svg = {
         orderChild: function (this: DomContext, object: Shape) {
             this.elem.appendChild(object._renderer.elem);
         },
-
-        renderChild: function (child: Shape) {
-            svg[child._renderer.type].render.call(child, this);
+        /**
+         * DGH: This doesn't seem to be used. 
+         */
+        renderChild: function (this: DOMElement, child: ElementBase<unknown>) {
+            const type = child._renderer.type;
+            switch (type) {
+                case 'group': {
+                    svg.group.render.call(child as Group, this);
+                    break;
+                }
+                case 'linear-gradient': {
+                    svg.group['linear-gradient'].render.call(child as LinearGradient, this);
+                    break;
+                }
+                case 'path': {
+                    svg.group.path.render.call(child as Path, this);
+                    break;
+                }
+                default: {
+                    // DGH: This doesn't make sense, but then I think it was dead code.
+                    // svg[child._renderer.type].render.call(child, this);
+                    throw new Error(`renderChild ${type}`);
+                }
+            }
         },
 
         render: function (this: Group, domElement: DOMElement): void {
@@ -336,7 +472,7 @@ const svg = {
             // Doesn't reset the flags, so changes are stored and
             // applied once the object is visible again
             if ((!this._visible && !this._flagVisible) || (this._opacity === 0 && !this._flagOpacity)) {
-                return this;
+                return;
             }
 
             this._update();
@@ -361,7 +497,10 @@ const svg = {
 
             for (let i = 0; i < this.children.length; i++) {
                 const child = this.children.getAt(i);
-                svg[child._renderer.type].render.call(child, domElement);
+                // DGH: How does this work?
+                // svg[child._renderer.type].render.call(child, domElement);
+                // DGH: This seems to make more sense.
+                svg.group.renderChild.call(dom_context.domElement, child);
             }
 
             if (this._flagId) {
@@ -428,10 +567,8 @@ const svg = {
                     Object.assign(this._renderer.elem.dataset, this.dataset);
                 }
 
-                return this.flagReset();
-
+                this.flagReset();
             }
-
         },
 
         'path': {
@@ -447,7 +584,7 @@ const svg = {
                 this._update();
 
                 // Collect any attribute that needs to be changed here
-                const changed = {};
+                const changed: SVGAttributes = {};
 
                 const flagMatrix = this._matrix.manual || this._flagMatrix;
 
@@ -464,43 +601,79 @@ const svg = {
                     changed.d = vertices;
                 }
 
-                if (this._fill && this._fill._renderer) {
+                if (this._fill && is_gradient_or_texture(this._fill)) {
                     this._renderer.hasFillEffect = true;
                     this._fill._update();
-                    svg[this._fill._renderer.type].render.call(this._fill, domElement, true);
+                    const type = this._fill._renderer.type as 'linear-gradient' | 'radial-gradient' | 'texture';
+                    switch (type) {
+                        case 'linear-gradient': {
+                            svg.group['linear-gradient'].render.call(this._fill as unknown as LinearGradient, domElement, true);
+                            break;
+                        }
+                        case 'radial-gradient': {
+                            svg.group['radial-gradient'].render.call(this._fill as unknown as RadialGradient, domElement, true);
+                            break;
+                        }
+                        case 'texture': {
+                            svg.group['texture'].render.call(this._fill as unknown as Texture, domElement, true);
+                            break;
+                        }
+                        default: {
+                            throw new Error(`${type}`);
+                        }
+                    }
                 }
 
                 if (this._flagFill) {
-                    changed.fill = this._fill && this._fill.id
-                        ? 'url(#' + this._fill.id + ')' : this._fill;
-                    if (this._renderer.hasFillEffect && typeof this._fill.id === 'undefined') {
-                        domElement.defs._flagUpdate = true;
+                    if (this._fill) {
+                        changed.fill = serialize_color(this._fill);
+                    }
+                    if (this._renderer.hasFillEffect && typeof this._fill === 'string') {
+                        set_defs_flag_update(get_dom_element_defs(domElement), true);
                         delete this._renderer.hasFillEffect;
                     }
                 }
 
-                if (this._stroke && this._stroke._renderer) {
+                if (this._stroke && is_gradient_or_texture(this._stroke)) {
                     this._renderer.hasStrokeEffect = true;
                     this._stroke._update();
-                    svg[this._stroke._renderer.type].render.call(this._stroke, domElement, true);
+                    const type = this._stroke._renderer.type as 'linear-gradient' | 'radial-gradient' | 'texture';
+                    switch (type) {
+                        case 'linear-gradient': {
+                            svg.group['linear-gradient'].render.call(this._fill as unknown as LinearGradient, domElement, true);
+                            break;
+                        }
+                        case 'radial-gradient': {
+                            svg.group['radial-gradient'].render.call(this._fill as unknown as RadialGradient, domElement, true);
+                            break;
+                        }
+                        case 'texture': {
+                            svg.group['texture'].render.call(this._fill as unknown as Texture, domElement, true);
+                            break;
+                        }
+                        default: {
+                            throw new Error(`${type}`);
+                        }
+                    }
                 }
 
                 if (this._flagStroke) {
-                    changed.stroke = this._stroke && this._stroke.id
-                        ? 'url(#' + this._stroke.id + ')' : this._stroke;
-                    if (this._renderer.hasStrokeEffect && typeof this._stroke.id === 'undefined') {
-                        domElement.defs._flagUpdate = true;
+                    if (this._stroke) {
+                        changed.stroke = serialize_color(this._stroke);
+                    }
+                    if (this._renderer.hasStrokeEffect && typeof this._stroke === 'string') {
+                        set_defs_flag_update(get_dom_element_defs(domElement), true);
                         delete this._renderer.hasStrokeEffect;
                     }
                 }
 
                 if (this._flagLinewidth) {
-                    changed['stroke-width'] = this._linewidth;
+                    changed['stroke-width'] = `${this._linewidth}`;
                 }
 
                 if (this._flagOpacity) {
-                    changed['stroke-opacity'] = this._opacity;
-                    changed['fill-opacity'] = this._opacity;
+                    changed['stroke-opacity'] = `${this._opacity}`;
+                    changed['fill-opacity'] = `${this._opacity}`;
                 }
 
                 if (this._flagClassName) {
@@ -512,7 +685,7 @@ const svg = {
                 }
 
                 if (this._flagCap) {
-                    changed['stroke-linecap'] = this._cap;
+                    changed['stroke-linecap'] = this.cap;
                 }
 
                 if (this._flagJoin) {
@@ -520,18 +693,17 @@ const svg = {
                 }
 
                 if (this._flagMiter) {
-                    changed['stroke-miterlimit'] = this._miter;
+                    changed['stroke-miterlimit'] = `${this._miter}`;
                 }
 
                 if (this.dashes && this.dashes.length > 0) {
                     changed['stroke-dasharray'] = this.dashes.join(' ');
-                    changed['stroke-dashoffset'] = this.dashes.offset || 0;
+                    changed['stroke-dashoffset'] = `${get_dashes_offset(this.dashes) || 0}`;
                 }
 
                 // If there is no attached DOM element yet,
                 // create it with all necessary attributes.
                 if (!this._renderer.elem) {
-
                     changed.id = this._id;
                     this._renderer.elem = svg.createElement('path', changed);
                     domElement.appendChild(this._renderer.elem);
@@ -594,7 +766,7 @@ const svg = {
                 this._update();
 
                 // Collect any attribute that needs to be changed here
-                const changed = {};
+                const changed: SVGAttributes = {};
 
                 const flagMatrix = this._matrix.manual || this._flagMatrix;
 
@@ -642,18 +814,18 @@ const svg = {
                     changed.stroke = this._stroke && this._stroke.id
                         ? 'url(#' + this._stroke.id + ')' : this._stroke;
                     if (this._renderer.hasStrokeEffect && typeof this._stroke.id === 'undefined') {
-                        domElement.defs._flagUpdate = true;
+                        set_defs_flag_update(get_dom_element_defs(domElement), true);
                         delete this._renderer.hasStrokeEffect;
                     }
                 }
 
                 if (this._flagLinewidth) {
-                    changed['stroke-width'] = this._linewidth;
+                    changed['stroke-width'] = `${this.linewidth}`;
                 }
 
                 if (this._flagOpacity) {
-                    changed['stroke-opacity'] = this._opacity;
-                    changed['fill-opacity'] = this._opacity;
+                    changed['stroke-opacity'] = `${this.opacity}`;
+                    changed['fill-opacity'] = `${this.opacity}`;
                 }
 
                 if (this._flagClassName) {
@@ -689,13 +861,21 @@ const svg = {
 
         },
 
+        'stop': {
+            render: function (this: Stop) {
+                // DGH 'stop' has only been added by me because it is a possible type.
+                throw new Error();
+            }
+        },
+
         'text': {
 
             render: function (this: Text, domElement: DOMElement) {
 
                 this._update();
 
-                const changed = {};
+                // The styles that will be applied to an SVG
+                const changed: SVGAttributes = {};
 
                 const flagMatrix = this._matrix.manual || this._flagMatrix;
 
@@ -711,16 +891,16 @@ const svg = {
                     changed['font-family'] = this._family;
                 }
                 if (this._flagSize) {
-                    changed['font-size'] = this._size;
+                    changed['font-size'] = `${this._size}`;
                 }
                 if (this._flagLeading) {
-                    changed['line-height'] = this._leading;
+                    changed['line-height'] = `${this._leading}`;
                 }
                 if (this._flagAlignment) {
-                    changed['text-anchor'] = svg.alignments[this._alignment] || this._alignment;
+                    changed['text-anchor'] = svg.alignments[this._alignment]/* || this._alignment*/;
                 }
                 if (this._flagBaseline) {
-                    changed['dominant-baseline'] = svg.baselines[this._baseline] || this._baseline;
+                    changed['dominant-baseline'] = svg.baselines[this._baseline]/* || this._baseline*/;
                 }
                 if (this._flagStyle) {
                     changed['font-style'] = this._style;
@@ -761,10 +941,10 @@ const svg = {
                     }
                 }
                 if (this._flagLinewidth) {
-                    changed['stroke-width'] = this._linewidth;
+                    changed['stroke-width'] = `${this.linewidth}`;
                 }
                 if (this._flagOpacity) {
-                    changed.opacity = this._opacity;
+                    changed.opacity = `${this._opacity}`;
                 }
                 if (this._flagClassName) {
                     changed['class'] = this.classList.join(' ');
@@ -777,18 +957,13 @@ const svg = {
                     changed['stroke-dashoffset'] = this.dashes.offset || 0;
                 }
 
-                if (!this._renderer.elem) {
-
-                    changed.id = this._id;
-
-                    this._renderer.elem = svg.createElement('text', changed);
-                    domElement.appendChild(this._renderer.elem);
-
+                if (this._renderer.elem) {
+                    svg.setAttributes(this._renderer.elem, changed);
                 }
                 else {
-
-                    svg.setAttributes(this._renderer.elem, changed);
-
+                    changed.id = this._id;
+                    this._renderer.elem = svg.createElement('text', changed);
+                    domElement.appendChild(this._renderer.elem);
                 }
 
                 if (this._flagClip) {
@@ -840,7 +1015,7 @@ const svg = {
                     this._update();
                 }
 
-                const changed = {};
+                const changed: SVGAttributes = {};
 
                 if (this._flagId) {
                     changed.id = this._id;
@@ -931,18 +1106,18 @@ const svg = {
                     this._update();
                 }
 
-                const changed = {};
+                const changed: SVGAttributes = {};
 
                 if (this._flagId) {
                     changed.id = this._id;
                 }
                 if (this._flagCenter) {
-                    changed.cx = this.center._x;
-                    changed.cy = this.center._y;
+                    changed.cx = this.center.x;
+                    changed.cy = this.center.y;
                 }
                 if (this._flagFocal) {
-                    changed.fx = this.focal._x;
-                    changed.fy = this.focal._y;
+                    changed.fx = this.focal.x;
+                    changed.fy = this.focal.y;
                 }
                 if (this._flagRadius) {
                     changed.r = this.radius;
@@ -960,7 +1135,8 @@ const svg = {
                 if (!this._renderer.elem) {
 
                     changed.id = this._id;
-                    this._renderer.elem = svg.createElement('radialGradient', changed);
+                    const styles: StylesMap = serialize_svg_props(changed);
+                    this._renderer.elem = svg.createElement('radialGradient', styles);
 
                     // Otherwise apply all pending attributes
                 }
@@ -988,7 +1164,7 @@ const svg = {
                     for (let i = 0; i < this.stops.length; i++) {
 
                         const stop = this.stops[i];
-                        const attrs: StylesMap = {};
+                        const attrs: SVGAttributes = {};
 
                         if (stop._flagOffset) {
                             attrs.offset = 100 * stop._offset + '%';
@@ -1029,22 +1205,9 @@ const svg = {
                     this._update();
                 }
 
-                const changed: {
-                    x?: number;
-                    y?: number;
-                    id?: string;
-                    height?: number;
-                    width?: number
-                } = {};
+                const changed: SVGProperties = {};
 
-                const styles: {
-                    href?: string;
-                    x: number;
-                    y: number;
-                    height?: number;
-                    width?: number;
-                    'xlink:href'?: string
-                } = { x: 0, y: 0 };
+                const styles: SVGAttributes = { x: '0', y: '0' };
 
                 const image = this.image;
 
@@ -1058,12 +1221,12 @@ const svg = {
 
                         case 'canvas': {
                             // toDataURL is a member of HTMLCanvasElement
-                            styles.href = styles['xlink:href'] = image.toDataURL('image/png');
+                            styles.href = image.toDataURL('image/png');
                             break;
                         }
                         case 'img':
                         case 'image':
-                            styles.href = styles['xlink:href'] = this.src;
+                            styles.href = this.src;
                             break;
 
                     }
@@ -1072,21 +1235,21 @@ const svg = {
 
                 if (this._flagOffset || this._flagLoaded || this._flagScale) {
 
-                    changed.x = this._offset.x;
-                    changed.y = this._offset.y;
+                    changed.x = this.offset.x;
+                    changed.y = this.offset.y;
 
                     if (image) {
 
                         changed.x -= image.width / 2;
                         changed.y -= image.height / 2;
 
-                        if (this._scale instanceof Vector) {
-                            changed.x *= this._scale.x;
-                            changed.y *= this._scale.y;
+                        if (this.scale instanceof Vector) {
+                            changed.x *= this.scale.x;
+                            changed.y *= this.scale.y;
                         }
                         else {
-                            changed.x *= this._scale;
-                            changed.y *= this._scale;
+                            changed.x *= this.scale;
+                            changed.y *= this.scale;
                         }
                     }
 
@@ -1142,12 +1305,12 @@ const svg = {
 
                     changed.id = this._id;
                     changed.patternUnits = 'userSpaceOnUse';
-                    this._renderer.elem = svg.createElement('pattern', changed);
+                    this._renderer.elem = svg.createElement('pattern', serialize_svg_props(changed));
 
                 }
                 else if (Object.keys(changed).length !== 0) {
 
-                    svg.setAttributes(this._renderer.elem, changed);
+                    svg.setAttributes(this._renderer.elem, serialize_svg_props(changed));
 
                 }
 
@@ -1195,6 +1358,7 @@ export class SVGRenderer {
          * @property {SvgDefintionsElement} - The `<defs />` to apply gradients, patterns, and bitmap imagery.
          */
         this.defs = svg.createElement('defs') as SVGDefsElement;
+        set_defs_flag_update(this.defs, false);
         this.defs._flagUpdate = false;
         this.domElement.appendChild(this.defs);
         set_dom_element_defs(this.domElement, this.defs);

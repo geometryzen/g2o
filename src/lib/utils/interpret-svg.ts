@@ -374,7 +374,7 @@ function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyl
                 // Only apply styles to rendered shapes
                 // in the scene.
                 if (elem instanceof Group) {
-                    elem._opacity = parseFloat(value);
+                    elem.opacity = parseFloat(value);
                     break;
                 }
                 elem.opacity = parseFloat(value);
@@ -486,13 +486,15 @@ function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyl
         }
     }
 
-    if (Object.keys(node.dataset).length) elem.dataset = node.dataset;
+    if (Object.keys(node.dataset).length) {
+        elem.dataset = node.dataset;
+    }
 
     return styles;
 
 }
 
-function updateDefsCache(node: SVGDefsElement, defsCache: Registry): void {
+function updateDefsCache(node: SVGDefsElement, defsCache: Registry<ChildNode>): void {
     for (let i = 0, l = node.childNodes.length; i < l; i++) {
         const childNode = node.childNodes[i];
         // FIXME: unknown could happen, but type system doesn't like it.
