@@ -57,10 +57,10 @@ export interface TwoOptions {
 
 export class Two {
 
-    renderer: Renderer = null;
+    readonly renderer: Renderer = null;
     #renderer_resize_subscription: Subscription | null = null;
 
-    readonly scene: Group = new Group();
+    readonly #scene: Group;
 
     /**
      * The width of the instance's dom element.
@@ -101,7 +101,20 @@ export class Two {
     _lastFrame: number;
 
 
-    constructor(rendererFactory: RendererFactory, options: Partial<TwoOptions> = {}) {
+    constructor(scene: Group, view: Renderer, options: Partial<TwoOptions> = {}) {
+        if (scene instanceof Group) {
+            this.#scene = scene;
+        }
+        else {
+            throw new Error("scene must be a Group");
+        }
+
+        if (typeof view === 'object') {
+            this.renderer = view;
+        }
+        else {
+            throw new Error("view must be defined");
+        }
 
         const params: TwoOptions = {
             fullscreen: !options.fullscreen,
@@ -111,7 +124,7 @@ export class Two {
             domElement: options.domElement
         };
 
-        this.renderer = rendererFactory({ domElement: params.domElement, scene: this.scene });
+        this.renderer = view;
         this.frameCount = 0;
         this.#frameCount = new BehaviorSubject(this.frameCount);
         this.frameCount$ = this.#frameCount.asObservable();
@@ -139,6 +152,13 @@ export class Two {
             this.#size.next({ width, height });
         });
     }
+
+    /*
+    addView(view: Renderer): this {
+        this.renderer = view;
+        return this;
+    }
+    */
 
     dispose(): void {
         if (this.#renderer_resize_subscription) {
@@ -210,12 +230,12 @@ export class Two {
     }
 
     add(...shapes: Shape[]): this {
-        this.scene.add(...shapes);
+        this.#scene.add(...shapes);
         return this;
     }
 
     remove(...shapes: Shape[]): this {
-        this.scene.remove(...shapes);
+        this.#scene.remove(...shapes);
         return this;
     }
     /*
@@ -228,7 +248,7 @@ export class Two {
     makeLine(x1: number, y1: number, x2: number, y2: number): Line {
 
         const line = new Line(x1, y1, x2, y2);
-        this.scene.add(line);
+        this.#scene.add(line);
 
         return line;
 
@@ -264,38 +284,38 @@ export class Two {
         path.cap = 'round';
         path.join = 'round';
 
-        this.scene.add(path);
+        this.#scene.add(path);
 
         return path;
     }
 
     makeRectangle(x: number, y: number, width: number, height: number): Rectangle {
         const rect = new Rectangle(x, y, width, height);
-        this.scene.add(rect);
+        this.#scene.add(rect);
         return rect;
     }
 
     makeRoundedRectangle(x: number, y: number, width: number, height: number, sides: number): RoundedRectangle {
         const rect = new RoundedRectangle(x, y, width, height, sides);
-        this.scene.add(rect);
+        this.#scene.add(rect);
         return rect;
     }
 
     makeCircle(x: number, y: number, radius: number, resolution: number = 4): Circle {
         const circle = new Circle(x, y, radius, resolution);
-        this.scene.add(circle);
+        this.#scene.add(circle);
         return circle;
     }
 
     makeEllipse(x: number, y: number, rx: number, ry: number, resolution: number = 4): Ellipse {
         const ellipse = new Ellipse(x, y, rx, ry, resolution);
-        this.scene.add(ellipse);
+        this.#scene.add(ellipse);
         return ellipse;
     }
 
     makeStar(x: number, y: number, outerRadius: number, innerRadius: number, sides: number): Star {
         const star = new Star(x, y, outerRadius, innerRadius, sides);
-        this.scene.add(star);
+        this.#scene.add(star);
         return star;
     }
 
@@ -304,19 +324,19 @@ export class Two {
         const curve = new Path(anchors, closed, curved);
         const rect = curve.getBoundingClientRect();
         curve.center().translation.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
-        this.scene.add(curve);
+        this.#scene.add(curve);
         return curve;
     }
 
     makePolygon(x: number, y: number, radius: number, sides: number): Polygon {
         const poly = new Polygon(x, y, radius, sides);
-        this.scene.add(poly);
+        this.#scene.add(poly);
         return poly;
     }
 
     makeArcSegment(x: number, y: number, innerRadius: number, outerRadius: number, startAngle: number, endAngle: number, resolution: number = Constants.Resolution): ArcSegment {
         const arcSegment = new ArcSegment(x, y, innerRadius, outerRadius, startAngle, endAngle, resolution);
-        this.scene.add(arcSegment);
+        this.#scene.add(arcSegment);
         return arcSegment;
     }
 
@@ -354,7 +374,7 @@ export class Two {
             typeof rect.right === 'number' && typeof rect.bottom === 'number') {
             path.center().translation.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
         }
-        this.scene.add(path);
+        this.#scene.add(path);
         return path;
     }
 
@@ -405,7 +425,7 @@ export class Two {
 
     makeGroup(...shapes: Shape[]): Group {
         const group = new Group(shapes);
-        this.scene.add(group);
+        this.#scene.add(group);
         return group;
     }
 
@@ -517,7 +537,7 @@ class Fitter {
     set_target(elem: Element | Window): this {
         this.#target = elem;
         if (this.is_target_window()) {
-
+            // TODO: The controller should take care of this...
             document.body.style.overflow = 'hidden';
             document.body.style.margin = '0';
             document.body.style.padding = '0';
@@ -527,6 +547,7 @@ class Fitter {
             document.body.style.bottom = '0';
             document.body.style.position = 'fixed';
 
+            // TODO: The controller should take care of this...
             const two = this.#two;
             two.renderer.domElement.style.display = 'block';
             two.renderer.domElement.style.top = '0';

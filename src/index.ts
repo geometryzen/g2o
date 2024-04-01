@@ -15,7 +15,7 @@ export { Matrix } from './lib/matrix';
 export { Path } from './lib/path';
 export { Renderer } from './lib/renderers/Renderer';
 // export { CanvasRenderer } from './lib/renderers/canvas';
-export { svg_view } from './lib/renderers/svg';
+export { SVGRenderer, SVGRendererParams } from './lib/renderers/svg';
 // export { WebGLRenderer } from './lib/renderers/webgl';
 export { Shape } from './lib/shape';
 export { ArcSegment } from './lib/shapes/arc-segment';

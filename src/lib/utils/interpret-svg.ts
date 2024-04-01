@@ -518,7 +518,7 @@ function getScene(node: Shape): Group {
     }
 
     if (node instanceof Two) {
-        return node.scene;
+        return node.#scene;
     }
     else {
         throw new Error();

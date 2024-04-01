@@ -112,7 +112,11 @@ export interface SVGAttributes {
     'visibility'?: 'visible' | 'hidden';
     'width'?: string;
     'x'?: string;
+    'x1'?: string;
+    'x2'?: string;
     'y'?: string;
+    'y1'?: string;
+    'y2'?: string;
 }
 
 /**
@@ -1346,11 +1350,20 @@ export class SVGRenderer implements Renderer {
     readonly #size: BehaviorSubject<{ width: number; height: number }>;
     readonly size$: Observable<{ width: number; height: number }>;
 
-    constructor(params: RendererParams) {
-
-        this.domElement = params.domElement || svg.createElement('svg');
-        this.scene = params.scene;
-        this.scene.parent = this;
+    constructor(scene: Group, params: SVGRendererParams) {
+        if (scene instanceof Group) {
+            this.scene = scene;
+            this.scene.parent = this;
+        }
+        else {
+            throw new Error("scene must be a Group");
+        }
+        if (params.domElement) {
+            this.domElement = params.domElement;
+        }
+        else {
+            this.domElement = svg.createElement('svg');
+        }
 
         this.defs = svg.createElement('defs') as SVGDefsElement;
         set_defs_flag_update(this.defs, false);
