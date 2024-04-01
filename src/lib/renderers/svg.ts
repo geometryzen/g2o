@@ -10,7 +10,6 @@ import { Path, get_dashes_offset } from '../path.js';
 import { Shape } from '../shape.js';
 import { Points } from '../shapes/points.js';
 import { Text } from '../text.js';
-import { RendererParams } from '../two.js';
 import { decomposeMatrix } from '../utils/decompose_matrix.js';
 import { mod, toFixed } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
@@ -18,11 +17,6 @@ import { Vector } from '../vector.js';
 import { Renderer } from './Renderer.js';
 
 type DOMElement = HTMLElement | SVGElement;
-
-export function svg_view(model: RendererParams): Renderer {
-    return new SVGRenderer(model);
-}
-
 
 function set_dom_element_defs(domElement: DOMElement, defs: SVGDefsElement): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,6 +94,7 @@ export interface SVGAttributes {
     'r'?: string;
     'spreadMethod'?: 'pad' | 'reflect' | 'repeat';
     'stop-color'?: string;
+    'stop-opacity'?: string;
     'stroke'?: string;
     'stroke-dasharray'?: string;
     'stroke-dashoffset'?: string;
@@ -1073,7 +1068,7 @@ const svg = {
                     for (let i = 0; i < this.stops.length; i++) {
 
                         const stop = this.stops[i];
-                        const attrs = {};
+                        const attrs: SVGAttributes = {};
 
                         if (stop._flagOffset) {
                             attrs.offset = 100 * stop._offset + '%';
@@ -1335,12 +1330,12 @@ const svg = {
 } as const;
 
 export interface SVGRendererParams {
-    domElement: HTMLElement;
+    svgElement?: SVGElement;
 }
 
 export class SVGRenderer implements Renderer {
 
-    readonly domElement: HTMLElement | SVGElement;
+    readonly domElement: SVGElement;
     readonly scene: Group;
     readonly defs: SVGDefsElement;
 
@@ -1358,8 +1353,8 @@ export class SVGRenderer implements Renderer {
         else {
             throw new Error("scene must be a Group");
         }
-        if (params.domElement) {
-            this.domElement = params.domElement;
+        if (params.svgElement) {
+            this.domElement = params.svgElement;
         }
         else {
             this.domElement = svg.createElement('svg');

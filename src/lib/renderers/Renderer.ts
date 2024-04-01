@@ -9,6 +9,9 @@ import { Group } from "../group";
  */
 export interface Renderer {
     clip?: SVGClipPathElement;
+    /**
+     * 
+     */
     domElement: HTMLElement | SVGElement;
     /**
      * Used by the CanvasRenderer.

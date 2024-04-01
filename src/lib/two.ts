@@ -168,11 +168,11 @@ export class Two {
         this.#fitter.unbind();
     }
 
-    appendTo(elem: Element) {
-        elem.appendChild(this.renderer.domElement);
+    appendTo(container: Element) {
+        container.appendChild(this.renderer.domElement);
 
         if (!this.#fitter.is_target_window()) {
-            this.#fitter.set_target(elem);
+            this.#fitter.set_target(container);
         }
 
         this.update();
