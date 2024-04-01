@@ -1,17 +1,21 @@
+import { Subscription } from 'rxjs';
 import { Collection } from '../collection.js';
 import { Gradient } from '../effects/gradient.js';
 import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
 import { Texture } from '../effects/texture.js';
 import { Events } from '../events.js';
-import { Path, get_dashes_offset, set_dashes_offset } from '../path.js';
+import { get_dashes_offset, set_dashes_offset } from '../path.js';
 import { Shape } from '../shape.js';
-import { subdivide } from '../utils/curves.js';
+import { getCurveLength as gcl, getCurveBoundingBox, subdivide } from '../utils/curves.js';
+import { decomposeMatrix } from '../utils/decompose_matrix.js';
 import { getIdByLength } from '../utils/shape.js';
 import { Vector } from '../vector.js';
 
-const ceil = Math.ceil,
-    floor = Math.floor;
+const min = Math.min;
+const max = Math.max;
+const ceil = Math.ceil;
+const floor = Math.floor;
 
 /**
  * DGH: We can't extend Path because a path is composed of Anchor(s).
@@ -32,8 +36,14 @@ export class Points extends Shape {
     _flagSizeAttenuation = true;
 
     _length = 0;
+    readonly _lengths: number[] = [];
+
     _fill: string | Gradient | Texture = '#fff';
+    #fill_change_subscription: Subscription | null = null;
+
     _stroke: string | Gradient | Texture = '#000';
+    #stroke_change_subscription: Subscription | null = null;
+
     _linewidth = 1;
     _opacity = 1.0;
     _visible = true;
@@ -42,6 +52,8 @@ export class Points extends Shape {
     _beginning = 0;
     _ending = 1.0;
     _dashes: number[] | null = null;
+
+    _collection: Collection<Vector>;
 
     constructor(vertices: Vector[]) {
 
@@ -133,95 +145,255 @@ export class Points extends Shape {
         'ending'
     ];
 
-    /**
-     * @name Two.Points#noFill
-     * @function
-     * @description Short hand method to set fill to `none`.
-     */
-    noFill = Path.prototype.noFill;
+    noFill() {
+        this.fill = 'none';
+        return this;
+    }
+
+    noStroke() {
+        this.stroke = 'none';
+        return this;
+    }
+
+    corner() {
+        const rect = this.getBoundingClientRect(true);
+        const hw = rect.width / 2;
+        const hh = rect.height / 2;
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        for (let i = 0; i < this.vertices.length; i++) {
+            const v = this.vertices.getAt(i);
+            v.x -= cx;
+            v.y -= cy;
+            v.x += hw;
+            v.y += hh;
+        }
+        /*
+        if (this.mask) {
+            this.mask.translation.x -= cx;
+            this.mask.translation.x += hw;
+            this.mask.translation.y -= cy;
+            this.mask.translation.y += hh;
+        }
+        */
+
+        return this;
+
+    }
+
+    center() {
+        const rect = this.getBoundingClientRect(true);
+
+        const cx = rect.left + rect.width / 2 - this.translation.x;
+        const cy = rect.top + rect.height / 2 - this.translation.y;
+
+        for (let i = 0; i < this.vertices.length; i++) {
+            const v = this.vertices.getAt(i);
+            v.x -= cx;
+            v.y -= cy;
+        }
+        /*
+        if (this.mask) {
+            this.mask.translation.x -= cx;
+            this.mask.translation.y -= cy;
+        }
+        */
+        return this;
+    }
+
+    getBoundingClientRect(shallow?: boolean): { width: number; height: number; top?: number; left?: number; right?: number; bottom?: number } {
+
+        let left = Infinity, right = -Infinity,
+            top = Infinity, bottom = -Infinity;
+
+        // TODO: Update this to not __always__ update. Just when it needs to.
+        this._update();
+
+        const matrix = shallow ? this.matrix : this.worldMatrix;
+
+        let border = (this.linewidth || 0) / 2;
+        const l = this._renderer.vertices.length;
+
+        if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
+            if (this.matrix.manual) {
+                const { scaleX, scaleY } = decomposeMatrix(
+                    matrix.elements[0], matrix.elements[3], matrix.elements[1],
+                    matrix.elements[4], matrix.elements[2], matrix.elements[5]
+                );
+                if (typeof scaleX === 'number' && typeof scaleY === 'number') {
+                    border = Math.max(scaleX, scaleY) * (this.linewidth || 0) / 2;
+                }
+            }
+            else {
+                border *= typeof this.scale === 'number'
+                    ? this.scale : Math.max(this.scale.x, this.scale.y);
+            }
+        }
+
+        if (l <= 0) {
+            return {
+                width: 0,
+                height: 0
+            };
+        }
+
+        for (let i = 0; i < l; i++) {
+
+            const v1 = this._renderer.vertices[i];
+            // If i = 0, then this "wraps around" to the last vertex. Otherwise, it's the previous vertex.
+            // This is important for handling cyclic paths.
+            const v0 = this._renderer.vertices[(i + l - 1) % l];
+
+            const [v0x, v0y] = matrix.multiply_vector(v0.x, v0.y);
+            const [v1x, v1y] = matrix.multiply_vector(v1.x, v1.y);
+
+            if (v0.controls && v1.controls) {
+
+                let rx = v0.controls.right.x;
+                let ry = v0.controls.right.y;
+
+                if (v0.relative) {
+                    rx += v0.x;
+                    ry += v0.y;
+                }
+
+                const [c0x, c0y] = matrix.multiply_vector(rx, ry);
+
+                let lx = v1.controls.left.x;
+                let ly = v1.controls.left.y;
+
+                if (v1.relative) {
+                    lx += v1.x;
+                    ly += v1.y;
+                }
+
+                const [c1x, c1y] = matrix.multiply_vector(lx, ly);
+
+                const bb = getCurveBoundingBox(
+                    v0x, v0y,
+                    c0x, c0y,
+                    c1x, c1y,
+                    v1x, v1y
+                );
+
+                top = min(bb.min.y - border, top);
+                left = min(bb.min.x - border, left);
+                right = max(bb.max.x + border, right);
+                bottom = max(bb.max.y + border, bottom);
+
+            }
+            else {
+
+                if (i <= 1) {
+
+                    top = min(v0y - border, top);
+                    left = min(v0x - border, left);
+                    right = max(v0x + border, right);
+                    bottom = max(v0y + border, bottom);
+
+                }
+
+                top = min(v1y - border, top);
+                left = min(v1x - border, left);
+                right = max(v1x + border, right);
+                bottom = max(v1y + border, bottom);
+
+            }
+
+        }
+
+        return {
+            top: top,
+            left: left,
+            right: right,
+            bottom: bottom,
+            width: right - left,
+            height: bottom - top
+        };
+
+    }
 
     /**
-     * @name Two.Points#noStroke
-     * @function
-     * @description Short hand method to set stroke to `none`.
-     */
-    noStroke = Path.prototype.noStroke;
-
-    /**
-     * @name Two.Points#corner
-     * @function
-     * @description Orient the vertices of the shape to the upper left-hand corner of the points object.
-     */
-    corner = Path.prototype.corner;
-
-    /**
-     * @name Two.Points#center
-     * @function
-     * @description Orient the vertices of the shape to the center of the points object.
-     */
-    center = Path.prototype.center;
-
-    /**
-     * @name Two.Points#getBoundingClientRect
-     * @function
-     * @param {Boolean} [shallow=false] - Describes whether to calculate off local matrix or world matrix.
-     * @returns {Object} - Returns object with top, left, right, bottom, width, height attributes.
-     * @description Return an object with top, left, right, bottom, width, and height parameters of the path.
-     */
-    getBoundingClientRect = Path.prototype.getBoundingClientRect;
-
-    /**
-     * @name Two.Points#subdivide
-     * @function
-     * @param {Number} limit - How many times to recurse subdivisions.
-     * @description Insert a {@link Two.Vector} at the midpoint between every item in {@link Two.Points#vertices}.
+     * @param limit - How many times to recurse subdivisions.
+     * Insert a {@link Vector} at the midpoint between every item in {@link Points#vertices}.
      */
     subdivide(limit: number) {
         // TODO: DRYness (function below)
         this._update();
-        let points = [];
+        let points: Vector[] = [];
         for (let i = 0; i < this.vertices.length; i++) {
 
-            const a = this.vertices[i];
-            const b = this.vertices[i - 1];
+            const a = this.vertices.getAt(i);
+            const b = this.vertices.getAt(i - 1);
 
             if (!b) {
                 continue;
             }
 
-            const x1 = a.x;
-            const y1 = a.y;
-            const x2 = b.x;
-            const y2 = b.y;
-            const subdivisions = subdivide(x1, y1, x1, y1, x2, y2, x2, y2, limit);
+            const ax = a.x;
+            const ay = a.y;
+            const bx = b.x;
+            const by = b.y;
+            const builder = (x:number, y:number)=> new Vector(x,y);
+            const subdivisions = subdivide(builder, ax, ay, ax, ay, bx, by, bx, by, limit);
 
             points = points.concat(subdivisions);
-
         }
 
-        this.vertices = points;
+        this.vertices = new Collection(points);
         return this;
 
     }
 
     /**
-     * @name Two.Points#_updateLength
-     * @function
-     * @private
      * @param {Number} [limit] -
-     * @param {Boolean} [silent=false] - If set to `true` then the points object isn't updated before calculation. Useful for internal use.
-     * @description Recalculate the {@link Two.Points#length} value.
+     * @param {Boolean} [silent=false] - If set to `true` then the path isn't updated before calculation. Useful for internal use.
+     * @description Recalculate the {@link Two.Path#length} value.
      */
-    _updateLength = Path.prototype._updateLength;
+    _updateLength(limit?: number, silent = false): this {
+        // TODO: DRYness (function above)
+        if (!silent) {
+            this._update();
+        }
 
-    /**
-     * @name Two.Points#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
+        const length = this.vertices.length;
+        const last = length - 1;
+        const closed = false;//this._closed || this.vertices[last]._command === Commands.close;
+
+        let b = this.vertices.getAt(last);
+        let sum = 0;
+
+        this.vertices.forEach((a: Vector, i: number) => {
+
+            if (i <= 0 && !closed) {
+                b = a;
+                this._lengths[i] = 0;
+                return;
+            }
+
+            this._lengths[i] = get_vector_vector_curve_length(a, b, limit);
+            sum += this._lengths[i];
+
+            if (i >= last && closed) {
+
+                b = this.vertices.getAt((i + 1) % length);
+
+                this._lengths[i + 1] = get_vector_vector_curve_length(a, b, limit);
+                sum += this._lengths[i + 1];
+
+            }
+
+            b = a;
+
+        });
+
+        this._length = sum;
+        this._flagLength = false;
+
+        return this;
+    }
+
     _update() {
 
         if (this._flagVertices) {
@@ -247,7 +419,7 @@ export class Points extends Shape {
             for (let i = 0; i < this._collection.length; i++) {
 
                 if (i >= low && i <= high) {
-                    v = this._collection[i];
+                    v = this._collection.getAt(i);
                     this._renderer.collection.push(v);
                     this._renderer.vertices[j * 2 + 0] = v.x;
                     this._renderer.vertices[j * 2 + 1] = v.y;
@@ -258,7 +430,7 @@ export class Points extends Shape {
 
         }
 
-        super._update.apply(this, arguments);
+        super._update();
 
         return this;
 
@@ -278,14 +450,14 @@ export class Points extends Shape {
         this._beginning = v;
         this._flagVertices = true;
     }
-    get dashes() {
+    get dashes(): number[] {
         return this._dashes;
     }
-    set dashes(v) {
-        if (typeof get_dashes_offset(v) !== 'number') {
-            v.offset = (this.dashes && this._dashes.offset) || 0;
+    set dashes(dashes: number[]) {
+        if (typeof get_dashes_offset(dashes) !== 'number') {
+            set_dashes_offset(dashes, (this.dashes && get_dashes_offset(this._dashes)) || 0);
         }
-        this._dashes = v;
+        this._dashes = dashes;
     }
     get ending() {
         return this._ending;
@@ -294,28 +466,33 @@ export class Points extends Shape {
         this._ending = v;
         this._flagVertices = true;
     }
-    get fill() {
+    get fill(): string | Gradient | Texture {
         return this._fill;
     }
-    set fill(f) {
-
-        if (this._fill instanceof Gradient
-            || this._fill instanceof LinearGradient
-            || this._fill instanceof RadialGradient
-            || this._fill instanceof Texture) {
-            this._fill.unbind(Events.Types.change, this._renderer.flagFill);
+    set fill(f: string | Gradient | Texture) {
+        if (this.#fill_change_subscription) {
+            this.#fill_change_subscription.unsubscribe();
+            this.#fill_change_subscription = null;
         }
 
         this._fill = f;
         this._flagFill = true;
 
-        if (this._fill instanceof Gradient
-            || this._fill instanceof LinearGradient
-            || this._fill instanceof RadialGradient
-            || this._fill instanceof Texture) {
-            this._fill.bind(Events.Types.change, this._renderer.flagFill);
+        if (this._fill instanceof LinearGradient) {
+            this.#fill_change_subscription = this._fill.change$.subscribe(() => {
+                this._flagFill = true;
+            });
         }
-
+        else if (this._fill instanceof RadialGradient) {
+            this.#fill_change_subscription = this._fill.change$.subscribe(() => {
+                this._flagFill = true;
+            });
+        }
+        else if (this._fill instanceof Texture) {
+            this.#fill_change_subscription = this._fill.change$.subscribe(() => {
+                this._flagFill = true;
+            });
+        }
     }
     get length() {
         if (this._flagLength) {
@@ -351,28 +528,33 @@ export class Points extends Shape {
         this._sizeAttenuation = v;
         this._flagSizeAttenuation = true;
     }
-    get stroke() {
+    get stroke(): string | Gradient | Texture {
         return this._stroke;
     }
-    set stroke(f) {
-        if (this._stroke instanceof Gradient
-            || this._stroke instanceof LinearGradient
-            || this._stroke instanceof RadialGradient
-            || this._stroke instanceof Texture) {
-            this._stroke.unbind(Events.Types.change, this._renderer.flagStroke);
+    set stroke(stroke: string | Gradient | Texture) {
+        if (this.#stroke_change_subscription) {
+            this.#stroke_change_subscription.unsubscribe();
+            this.#stroke_change_subscription = null;
         }
 
-        this._stroke = f;
+        this._stroke = stroke;
         this._flagStroke = true;
 
-        if (this._stroke instanceof Gradient
-            || this._stroke instanceof LinearGradient
-            || this._stroke instanceof RadialGradient
-            || this._stroke instanceof Texture) {
-
-            this._stroke.bind(Events.Types.change, this._renderer.flagStroke);
+        if (this._stroke instanceof LinearGradient) {
+            this.#stroke_change_subscription = this._stroke.change$.subscribe(() => {
+                this._flagStroke = true;
+            });
         }
-
+        else if (this._stroke instanceof RadialGradient) {
+            this.#stroke_change_subscription = this._stroke.change$.subscribe(() => {
+                this._flagStroke = true;
+            });
+        }
+        else if (this._stroke instanceof Texture) {
+            this.#stroke_change_subscription = this._stroke.change$.subscribe(() => {
+                this._flagStroke = true;
+            });
+        }
     }
     get vertices() {
         return this._collection;
@@ -414,4 +596,15 @@ export class Points extends Shape {
         this._visible = v;
         this._flagVisible = true;
     }
+}
+
+export function get_vector_vector_curve_length(a: Vector, b: Vector, limit: number): number {
+
+    const x1 = b.x;
+    const y1 = b.y;
+    const x3 = a.x;
+    const y3 = a.y;
+
+    // TODO: Probably an optimizaton here given redundant arguments.
+    return gcl(x1, y1, x1, y1, x3, y3, x3, y3, limit);
 }

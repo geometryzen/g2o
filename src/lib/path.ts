@@ -26,8 +26,10 @@ export function set_dashes_offset(dashes: number[], offset: number): void {
 
 // Constants
 
-const min = Math.min, max = Math.max,
-    ceil = Math.ceil, floor = Math.floor;
+const min = Math.min;
+const max = Math.max;
+const ceil = Math.ceil;
+const floor = Math.floor;
 
 const vector = new Vector();
 
@@ -404,33 +406,17 @@ export class Path extends Shape {
         getCurveLength
     };
 
-    /**
-     * @name Two.Path#noFill
-     * @function
-     * @description Short hand method to set fill to `none`.
-     */
     noFill() {
         this.fill = 'none';
         return this;
     }
 
-    /**
-     * @name Two.Path#noStroke
-     * @function
-     * @description Short hand method to set stroke to `none`.
-     */
     noStroke() {
         this.stroke = 'none';
         return this;
     }
 
-    /**
-     * @name Two.Path#corner
-     * @function
-     * @description Orient the vertices of the shape to the upper left-hand corner of the path.
-     */
     corner() {
-
         const rect = this.getBoundingClientRect(true);
         const hw = rect.width / 2;
         const hh = rect.height / 2;
@@ -451,18 +437,10 @@ export class Path extends Shape {
             this.mask.translation.y -= cy;
             this.mask.translation.y += hh;
         }
-
         return this;
-
     }
 
-    /**
-     * @name Two.Path#center
-     * @function
-     * @description Orient the vertices of the shape to the center of the path.
-     */
     center() {
-
         const rect = this.getBoundingClientRect(true);
 
         const cx = rect.left + rect.width / 2 - this.translation.x;
@@ -483,13 +461,6 @@ export class Path extends Shape {
 
     }
 
-    /**
-     * @name Two.Path#getBoundingClientRect
-     * @function
-     * @param {Boolean} [shallow=false] - Describes whether to calculate off local matrix or world matrix.
-     * @returns {Object} - Returns object with top, left, right, bottom, width, height attributes.
-     * @description Return an object with top, left, right, bottom, width, and height parameters of the path.
-     */
     getBoundingClientRect(shallow?: boolean): { width: number; height: number; top?: number; left?: number; right?: number; bottom?: number } {
 
         let left = Infinity, right = -Infinity,
@@ -849,9 +820,6 @@ export class Path extends Shape {
     }
 
     /**
-     * @name Two.Path#_updateLength
-     * @function
-     * @private
      * @param {Number} [limit] -
      * @param {Boolean} [silent=false] - If set to `true` then the path isn't updated before calculation. Useful for internal use.
      * @description Recalculate the {@link Two.Path#length} value.
@@ -1154,7 +1122,6 @@ export class Path extends Shape {
         return this._fill;
     }
     set fill(f: string | Gradient | Texture) {
-
         if (this.#fill_change_subscription) {
             this.#fill_change_subscription.unsubscribe();
             this.#fill_change_subscription = null;

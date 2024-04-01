@@ -90,30 +90,29 @@ export function getCurveLength(a: Anchor, b: Anchor, limit: number): number {
 }
 
 export function getSubdivisions(a: Anchor, b: Anchor, limit: number): Anchor[] {
-    // TODO: DRYness
-    let x2, x3, y2, y3;
 
-    const right = b.controls && b.controls.right;
-    const left = a.controls && a.controls.left;
+    const br = b.controls.right;
+    const al = a.controls.left;
 
-    const x1 = b.x;
-    const y1 = b.y;
-    x2 = (right || b).x;
-    y2 = (right || b).y;
-    x3 = (left || a).x;
-    y3 = (left || a).y;
-    const x4 = a.x;
-    const y4 = a.y;
+    const bx = b.x;
+    const by = b.y;
+    let brx = br.x;
+    let bry = br.y;
+    let alx = al.x;
+    let aly = al.y;
+    const ax = a.x;
+    const ay = a.y;
 
-    if (right && b.relative) {
-        x2 += b.x;
-        y2 += b.y;
+    if (b.relative) {
+        brx += b.x;
+        bry += b.y;
     }
 
-    if (left && a.relative) {
-        x3 += a.x;
-        y3 += a.y;
+    if (a.relative) {
+        alx += a.x;
+        aly += a.y;
     }
-
-    return subdivide(x1, y1, x2, y2, x3, y3, x4, y4, limit);
+    const builder = (x: number, y: number) => new Anchor(x, y);
+    // TODO: Curiously, the semantics of which anchor is first and second seems to have been reversed.
+    return subdivide(builder, bx, by, brx, bry, alx, aly, ax, ay, limit);
 }

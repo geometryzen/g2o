@@ -79,8 +79,6 @@ export function getComponentOnCubicBezier(t: number, a: number, b: number, c: nu
 }
 
 /**
- * @name Two.Utils.subdivide
- * @function
  * @param {Number} x1 - x position of first anchor point.
  * @param {Number} y1 - y position of first anchor point.
  * @param {Number} x2 - x position of first anchor point's "right" bezier handle.
@@ -89,28 +87,27 @@ export function getComponentOnCubicBezier(t: number, a: number, b: number, c: nu
  * @param {Number} y3 - y position of second anchor point's "left" bezier handle.
  * @param {Number} x4 - x position of second anchor point.
  * @param {Number} y4 - y position of second anchor point.
- * @param {Number} [limit=Two.Utils.Curve.RecursionLimit] - The amount of vertices to create by subdividing.
- * @returns {Anchor[]} A list of anchor points ordered in between `x1`, `y1` and `x4`, `y4`
+ * @param limit The amount of vertices to create by subdividing.
+ * @returns A list of points ordered in between `x1`, `y1` and `x4`, `y4`
  * @description Given 2 points (a, b) and corresponding control point for each return an array of points that represent points plotted along the curve. The number of returned points is determined by `limit`.
  */
-export function subdivide(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, x4: number, y4: number, limit: number): Anchor[] {
+export function subdivide<T>(builder: (x: number, y: number) => T, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, x4: number, y4: number, limit: number = Curve.RecursionLimit): T[] {
 
-    limit = limit || Curve.RecursionLimit;
     const amount = limit + 1;
 
     // TODO: Abstract 0.001 to a limiting variable
     // Don't recurse if the end points are identical
     if (Math.abs(x1 - x4) < 0.001 && Math.abs(y1 - y4) < 0.001) {
-        return [new Anchor(x4, y4)];
+        return [builder(x4, y4)];
     }
 
-    const result = [];
+    const result: T[] = [];
 
     for (let i = 0; i < amount; i++) {
         const t = i / amount;
         const x = getComponentOnCubicBezier(t, x1, x2, x3, x4);
         const y = getComponentOnCubicBezier(t, y1, y2, y3, y4);
-        result.push(new Anchor(x, y));
+        result.push(builder(x, y));
     }
 
     return result;
