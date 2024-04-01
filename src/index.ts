@@ -6,7 +6,7 @@ export { Gradient } from './lib/effects/gradient';
 // export { ImageSequence } from './lib/effects/image-sequence';
 export { LinearGradient } from './lib/effects/linear-gradient';
 export { RadialGradient } from './lib/effects/radial-gradient';
-// export { Sprite } from './lib/effects/sprite';
+export { Sprite } from './lib/effects/sprite';
 export { Stop } from './lib/effects/stop';
 export { Texture } from './lib/effects/texture';
 export { Element } from './lib/element';
@@ -29,6 +29,5 @@ export { RoundedRectangle } from './lib/shapes/rounded-rectangle';
 export { Star } from './lib/shapes/star';
 export { Text, TextStyles } from './lib/text';
 // export { Two, TwoOptions } from './lib/two';
-// export { Curve } from './lib/utils/curves';
 export { Vector } from './lib/vector';
 

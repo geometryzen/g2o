@@ -17,12 +17,12 @@ import { RoundedRectangle } from '../shapes/rounded-rectangle.js';
 import { Text } from '../text.js';
 import { Two } from '../two.js';
 import { Vector } from '../vector.js';
+import { MatrixDecomposition } from './MatrixDecomposition.js';
 import { getReflection } from './curves.js';
+import { decomposeMatrix } from './decompose_matrix.js';
 import { TwoError } from './error.js';
-import { MatrixDecomposition, decomposeMatrix } from './math.js';
 import { Commands } from './path-commands.js';
 import { root } from './root.js';
-import { _ } from './underscore.js';
 
 // https://github.com/jonobr1/two.js/issues/507#issuecomment-777159213
 const regex = {
@@ -272,7 +272,7 @@ function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyl
 
                 if (m === null) break;
 
-                transforms = decomposeMatrix(m);
+                transforms = decomposeMatrix(m.a, m.b, m.c, m.d, m.e, m.f);
 
                 switch (elem._renderer.type) {
                     case 'linear-gradient':
@@ -304,7 +304,7 @@ function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyl
                 if (Constants.AutoCalculateImportedMatrices) {
 
                     // Decompose and infer Two.js related properties.
-                    transforms = decomposeMatrix(m);
+                    transforms = decomposeMatrix(m.a, m.b, m.c, m.d, m.e, m.f);
 
                     elem.translation.set(transforms.translateX, transforms.translateY);
                     elem.rotation = Math.PI * (transforms.rotation / 180);

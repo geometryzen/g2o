@@ -8,9 +8,9 @@ import { Path } from '../path.js';
 import { Shape } from '../shape.js';
 import { Points } from '../shapes/points.js';
 import { Text } from '../text.js';
-import { decomposeMatrix, mod, toFixed } from '../utils/math.js';
+import { decomposeMatrix } from '../utils/decompose_matrix.js';
+import { mod, toFixed } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
-import { _ } from '../utils/underscore.js';
 import { Vector } from '../vector.js';
 
 type DOMElement = HTMLElement | SVGElement;
@@ -71,9 +71,7 @@ const svg = {
         const tag = name;
         const elem = document.createElementNS(svg.ns, tag);
         if (tag === 'svg') {
-            attrs = _.defaults(attrs || {}, {
-                version: svg.version
-            });
+            attrs.version = `${svg.version}`;
         }
         if (attrs && Object.keys(attrs).length > 0) {
             svg.setAttributes(elem, attrs);
@@ -302,7 +300,7 @@ const svg = {
 
         },
 
-        removeChild: function (object: Shape) {
+        removeChild: function (this: DomContext, object: Shape) {
 
             const elem = object._renderer.elem;
 
@@ -317,14 +315,14 @@ const svg = {
             }
 
             // Defer subtractions while clipping.
-            if (object._clip) {
+            if (object.clip) {
                 return;
             }
 
             this.elem.removeChild(elem);
         },
 
-        orderChild: function (object) {
+        orderChild: function (this: DomContext, object: Shape) {
             this.elem.appendChild(object._renderer.elem);
         },
 
@@ -332,7 +330,7 @@ const svg = {
             svg[child._renderer.type].render.call(child, this);
         },
 
-        render: function (this: Group, domElement: HTMLElement | SVGElement): void {
+        render: function (this: Group, domElement: DOMElement): void {
 
             // Shortcut for hidden objects.
             // Doesn't reset the flags, so changes are stored and
@@ -352,7 +350,7 @@ const svg = {
 
             // _Update styles for the <g>
             const flagMatrix = this._matrix.manual || this._flagMatrix;
-            const context: DomContext = {
+            const dom_context: DomContext = {
                 domElement: domElement,
                 elem: this._renderer.elem
             };
@@ -383,15 +381,15 @@ const svg = {
             }
 
             if (this._flagAdditions) {
-                this.additions.forEach(svg.group.appendChild, context);
+                this.additions.forEach(svg.group.appendChild, dom_context);
             }
 
             if (this._flagSubtractions) {
-                this.subtractions.forEach(svg.group.removeChild, context);
+                this.subtractions.forEach(svg.group.removeChild, dom_context);
             }
 
             if (this._flagOrder) {
-                this.children.forEach(svg.group.orderChild, context);
+                this.children.forEach(svg.group.orderChild, dom_context);
             }
 
             // Commented two-way functionality of clips / masks with groups and
@@ -437,8 +435,7 @@ const svg = {
         },
 
         'path': {
-
-            render: function (this: Path, domElement) {
+            render: function (this: Path, domElement: DOMElement) {
 
                 // Shortcut for hidden objects.
                 // Doesn't reset the flags, so changes are stored and
@@ -837,8 +834,7 @@ const svg = {
         },
 
         'linear-gradient': {
-
-            render: function (this: LinearGradient, domElement, silent) {
+            render: function (this: LinearGradient, domElement: DOMElement, silent = false) {
 
                 if (!silent) {
                     this._update();
@@ -881,7 +877,7 @@ const svg = {
                 }
 
                 if (this._renderer.elem.parentNode === null) {
-                    domElement.defs.appendChild(this._renderer.elem);
+                    get_dom_element_defs(domElement).appendChild(this._renderer.elem);
                 }
 
                 if (this._flagStops) {
@@ -921,20 +917,15 @@ const svg = {
                             this._renderer.elem.appendChild(stop._renderer.elem);
                         }
                         stop.flagReset();
-
                     }
-
                 }
-
                 return this.flagReset();
-
             }
 
         },
 
         'radial-gradient': {
-
-            render: function (this: RadialGradient, domElement, silent) {
+            render: function (this: RadialGradient, domElement: DOMElement, silent = false) {
 
                 if (!silent) {
                     this._update();
@@ -1032,8 +1023,7 @@ const svg = {
         },
 
         'texture': {
-
-            render: function (this: Texture, domElement: HTMLElement | SVGElement, silent) {
+            render: function (this: Texture, domElement: DOMElement, silent = false) {
 
                 if (!silent) {
                     this._update();
@@ -1171,11 +1161,8 @@ const svg = {
                 }
 
                 return this.flagReset();
-
             }
-
         }
-
     }
 
 } as const;

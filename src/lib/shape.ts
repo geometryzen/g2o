@@ -6,7 +6,7 @@ import { Texture } from './effects/texture.js';
 import { Element } from './element.js';
 import { Group } from './group.js';
 import { Matrix } from './matrix.js';
-import { getComputedMatrix } from './utils/math.js';
+import { getComputedMatrix } from './utils/get_computed_matrix.js';
 import { Vector } from './vector.js';
 
 export abstract class Shape extends Element<Group> implements IShape {

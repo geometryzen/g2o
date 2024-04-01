@@ -1,5 +1,5 @@
 import { lerp } from '../utils/math.js';
-import { _ } from '../utils/underscore.js';
+import { performance } from '../utils/performance.js';
 
 import { Rectangle } from '../shapes/rectangle.js';
 import { Vector } from '../vector.js';
@@ -23,46 +23,11 @@ export class Sprite extends Rectangle {
 
     // Exposed through getter-setter
 
-    /**
-     * @name Two.Sprite#_texture
-     * @private
-     * @see {@link Two.Sprite#texture}
-     */
     _texture: Texture | null = null;
-
-    /**
-     * @name Two.Sprite#_columns
-     * @private
-     * @see {@link Two.Sprite#columns}
-     */
     _columns = 1;
-
-    /**
-     * @name Two.Sprite#_rows
-     * @private
-     * @see {@link Two.Sprite#rows}
-     */
     _rows = 1;
-
-    /**
-     * @name Two.Sprite#_frameRate
-     * @private
-     * @see {@link Two.Sprite#frameRate}
-     */
     _frameRate = 0;
-
-    /**
-     * @name Two.Sprite#_index
-     * @private
-     * @property {Number} - The current frame the {@link Two.Sprite} is currently displaying.
-     */
     _index = 0;
-
-    /**
-     * @name Two.Sprite#_origin
-     * @private
-     * @see {@link Two.Sprite#origin}
-     */
     _origin: Vector = null;
 
     _onLastFrame: () => void;
@@ -146,12 +111,12 @@ export class Sprite extends Rectangle {
      * @param {Function} [onLastFrame] - Optional callback function to be triggered after playing the last frame. This fires multiple times when the sprite is looped.
      * @description Initiate animation playback of a {@link Two.Sprite}.
      */
-    play(firstFrame = 0, lastFrame?: number, onLastFrame?: () => void) {
+    play(firstFrame = 0, lastFrame?: number, onLastFrame?: () => void): this {
 
         this._playing = true;
         this._firstFrame = 0;
         this._lastFrame = this._amount - 1;
-        this._startTime = _.performance.now();
+        this._startTime = performance.now();
 
         if (typeof firstFrame === 'number') {
             this._firstFrame = firstFrame;
@@ -167,8 +132,7 @@ export class Sprite extends Rectangle {
         }
 
         if (this._index !== this._firstFrame) {
-            this._startTime -= 1000 * Math.abs(this._index - this._firstFrame)
-                / this._frameRate;
+            this._startTime -= 1000 * Math.abs(this._index - this._firstFrame) / this._frameRate;
         }
 
         return this;
@@ -250,12 +214,12 @@ export class Sprite extends Rectangle {
 
                 if (this._playing && this._frameRate > 0) {
 
-                    if (_.isNaN(this._lastFrame)) {
+                    if (isNaN(this._lastFrame)) {
                         this._lastFrame = amount - 1;
                     }
 
                     // TODO: Offload perf logic to instance of `Two`.
-                    elapsed = _.performance.now() - this._startTime;
+                    elapsed = performance.now() - this._startTime;
                     frames = this._lastFrame + 1;
                     duration = 1000 * (frames - this._firstFrame) / this._frameRate;
 

@@ -1,70 +1,7 @@
-import { Group } from '../group.js';
-import { Matrix } from '../matrix.js';
-import { Shape } from '../shape.js';
 import { root } from './root.js';
 
 export const TWO_PI = Math.PI * 2;
 export const HALF_PI = Math.PI * 0.5;
-
-export interface MatrixDecomposition {
-    translateX: number;
-    translateY: number;
-    scaleX: number;
-    scaleY: number;
-    rotation: number
-}
-
-/**
- * @name Two.Utils.decomposeMatrix
- * @function
- * @param {Two.Matrix} matrix - The matrix to decompose.
- * @returns {Object} An object containing relevant skew values.
- * @description Decompose a 2D 3x3 Matrix to find the skew.
- */
-export function decomposeMatrix(a: number, b: number, c: number, d: number, e: number, f: number): MatrixDecomposition {
-
-    // TODO: Include skewX, skewY
-    // https://math.stackexchange.com/questions/237369/given-this-transformation-matrix-how-do-i-decompose-it-into-translation-rotati/417813
-    // https://stackoverflow.com/questions/45159314/decompose-2d-transformation-matrix
-
-    return {
-        translateX: e,
-        translateY: f,
-        scaleX: Math.sqrt(a * a + b * b),
-        scaleY: Math.sqrt(c * c + d * d),
-        rotation: 180 * Math.atan2(b, a) / Math.PI
-    };
-
-}
-
-/**
- * @name Two.Utils.getComputedMatrix
- * @function
- * @param {Two.Shape} object - The Two.js object that has a matrix property to calculate from.
- * @param {Two.Matrix} [matrix] - The matrix to apply calculated transformations to if available.
- * @returns {Two.Matrix} The computed matrix of a nested object. If no `matrix` was passed in arguments then a `new Two.Matrix` is returned.
- * @description Method to get the world space transformation of a given object in a Two.js scene.
- */
-export function getComputedMatrix(object: Shape, matrix: Matrix): Matrix {
-
-    matrix = (matrix && matrix.identity()) || new Matrix();
-    let parent: Shape | Group = object;
-    const matrices: Matrix[] = [];
-
-    while (parent && parent._matrix) {
-        matrices.push(parent._matrix);
-        parent = parent.parent;
-    }
-
-    matrices.reverse();
-
-    for (let i = 0; i < matrices.length; i++) {
-        const m = matrices[i];
-        matrix.multiply(m.a, m.b, m.c, m.d, m.e, m.f, m.g, m.h, m.i);
-    }
-
-    return matrix;
-}
 
 /**
  * @name Two.Utils.lerp

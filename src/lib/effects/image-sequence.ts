@@ -1,7 +1,7 @@
 import { Collection } from '../collection.js';
 import { Events } from '../events.js';
 import { lerp } from '../utils/math.js';
-import { _ } from '../utils/underscore.js';
+// import { _ } from '../utils/underscore.js';
 
 import { Vector } from '../vector.js';
 import { Rectangle } from '../shapes/rectangle.js';

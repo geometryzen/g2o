@@ -5,7 +5,7 @@ import { Group } from '../group.js';
 import { Path } from '../path.js';
 import { Curve } from '../utils/curves.js';
 import { getRatio } from '../utils/device-pixel-ratio.js';
-import { TWO_PI, decomposeMatrix, mod } from '../utils/math.js';
+import { TWO_PI, mod } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 import { Vector } from '../vector.js';
 import { View } from './View.js';
