@@ -1,6 +1,5 @@
 import { Anchor } from '../anchor';
 import { Path } from '../path';
-import { TwoError } from '../utils/error';
 
 export class Line extends Path {
     /**
@@ -21,7 +20,7 @@ export class Line extends Path {
             this.vertices.splice(0, 1, v);
         }
         else {
-            const error = new TwoError('Line.left argument is not an object.');
+            const error = new Error('Line.left argument is not an object.');
             // eslint-disable-next-line no-console
             console.warn(error.name, error.message);
         }
@@ -34,7 +33,7 @@ export class Line extends Path {
             this.vertices.splice(1, 1, v);
         }
         else {
-            const error = new TwoError('Line.right argument is not an object.');
+            const error = new Error('Line.right argument is not an object.');
             // eslint-disable-next-line no-console
             console.warn(error.name, error.message);
         }

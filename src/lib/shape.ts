@@ -75,13 +75,6 @@ export abstract class Shape extends Element<Group> implements IShape {
 
         super();
 
-        /**
-         * @name Two.Shape#renderer
-         * @property {Object}
-         * @description Object access to store relevant renderer specific variables. Warning: manipulating this object can create unintended consequences.
-         * @nota-bene With the {@link Two.SVGRenderer} you can access the underlying SVG element created via `shape.renderer.elem`.
-         */
-        this._renderer.flagMatrix = FlagMatrix.bind(this);
         this.isShape = true;
 
         /**
@@ -297,14 +290,4 @@ export abstract class Shape extends Element<Group> implements IShape {
     set worldMatrix(v: Matrix) {
         this._worldMatrix = v;
     }
-}
-
-/**
- * @name FlagMatrix
- * @function
- * @private
- * @description Utility function used in conjunction with event handlers to update the flagMatrix of a shape.
- */
-function FlagMatrix(this: Shape): void {
-    this._flagMatrix = true;
 }

@@ -20,7 +20,6 @@ import { Vector } from '../vector.js';
 import { MatrixDecomposition } from './MatrixDecomposition.js';
 import { getReflection } from './curves.js';
 import { decomposeMatrix } from './decompose_matrix.js';
-import { TwoError } from './error.js';
 import { Commands } from './path-commands.js';
 import { root } from './root.js';
 
@@ -447,7 +446,7 @@ function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyl
                     break;
                 }
                 if (value.match('[a-z%]$') && !value.endsWith('px')) {
-                    error = new TwoError('only pixel values are supported with the ' + key + ' attribute.');
+                    error = new Error('only pixel values are supported with the ' + key + ' attribute.');
                     // eslint-disable-next-line no-console
                     console.warn(error.name, error.message);
                 }
@@ -606,15 +605,16 @@ export const read = {
 
         const href = node.getAttribute('href') || node.getAttribute('xlink:href');
         if (!href) {
-            error = new TwoError('encountered <use /> with no href.');
+            error = new Error('encountered <use /> with no href.');
+            // eslint-disable-next-line no-console
             console.warn(error.name, error.message);
             return null;
         }
 
         const id = href.slice(1);
         if (!get_defs_current().contains(id)) {
-            error = new TwoError(
-                'unable to find element for reference ' + href + '.');
+            error = new Error('unable to find element for reference ' + href + '.');
+            // eslint-disable-next-line no-console
             console.warn(error.name, error.message);
             return null;
         }
@@ -1187,14 +1187,13 @@ export const read = {
 
     },
 
-    lineargradient: function (node: HTMLElement, parentStyles) {
+    lineargradient: function (node: HTMLElement, parentStyles: ParentStyles) {
 
         let units = node.getAttribute('gradientUnits');
-        let spread = node.getAttribute('spreadMethod');
-
         if (!units) {
             units = 'objectBoundingBox';
         }
+        let spread = node.getAttribute('spreadMethod') as 'pad' | 'reflect' | 'repeat';
         if (!spread) {
             spread = 'pad';
         }
@@ -1373,7 +1372,7 @@ export const read = {
 
         const href = node.getAttribute('href') || node.getAttribute('xlink:href');
         if (!href) {
-            error = new TwoError('encountered <image /> with no href.');
+            error = new Error('encountered <image /> with no href.');
             console.warn(error.name, error.message);
             return null;
         }

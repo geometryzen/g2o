@@ -1,23 +1,12 @@
-// Utils
-
-// Core Classes
+import { BehaviorSubject, Observable, Subscription, debounceTime, fromEvent } from 'rxjs';
 import { Anchor } from './anchor.js';
 import { Constants } from './constants.js';
-import { Gradient } from './effects/gradient.js';
-import { ImageSequence } from './effects/image-sequence.js';
-import { LinearGradient } from './effects/linear-gradient.js';
-import { RadialGradient } from './effects/radial-gradient.js';
 import { Sprite } from './effects/sprite.js';
-// Effects
-import { Stop } from './effects/stop.js';
 import { Texture } from './effects/texture.js';
-import { EventHandler, Events } from './events.js';
 import { Group } from './group.js';
 import { Path } from './path.js';
-// Renderers
-import { View } from './renderers/View.js';
+import { Renderer } from './renderers/Renderer.js';
 import { Shape } from './shape.js';
-// Secondary Classes
 import { ArcSegment } from './shapes/arc-segment.js';
 import { Circle } from './shapes/circle.js';
 import { Ellipse } from './shapes/ellipse.js';
@@ -27,12 +16,18 @@ import { Rectangle } from './shapes/rectangle.js';
 import { RoundedRectangle } from './shapes/rounded-rectangle.js';
 import { Star } from './shapes/star.js';
 import { Text } from './text.js';
-import { dom } from './utils/dom.js';
-import { read } from './utils/interpret-svg.js';
 import { Commands } from './utils/path-commands.js';
+import { performance } from './utils/performance.js';
 import { xhr } from './utils/xhr.js';
 
-export type RendererType = 'CanvasRenderer' | 'SVGRenderer' | 'WebGLRenderer';
+export interface RendererParams {
+    domElement: HTMLElement;
+    scene: Group;
+    overdraw?: boolean;
+    smoothing?: boolean;
+}
+
+export type RendererFactory = (model: RendererParams) => Renderer;
 
 export interface TwoOptions {
     /**
@@ -55,71 +50,46 @@ export interface TwoOptions {
      */
     width: number;
     /**
-     * The type of renderer to setup drawing with.
-     */
-    type: RendererType;
-    /**
-     * Set to `true` to add the instance to draw on `requestAnimationFrame`.
-     * This is a convenient substitute for {@link Two#play}.
-     */
-    autostart: boolean;
-    /**
      * The canvas or SVG element to draw into. This overrides the `options.type` argument.
      */
-    domElement: Element;
+    domElement: HTMLElement;
 }
 
 export class Two {
 
-    // Warning: inherit events while overriding static properties
-    /**
-     * @private
-     */
-    #events = new Events();
+    renderer: Renderer = null;
+    #renderer_resize_subscription: Subscription | null = null;
 
+    readonly scene: Group = new Group();
 
     /**
-     * @name Two#type
-     * @property {String} - A string representing which type of renderer the instance has instantiated.
-     */
-    type = '';
-
-    /**
-     * @name Two#renderer
-     * @property {(Two.SVGRenderer|Two.CanvasRenderer|Two.WebGLRenderer)} - The instantiated rendering class for the instance. For a list of possible rendering types check out Two.Types.
-     */
-    renderer: View = null;
-
-    /**
-     * @name Two#scene
-     * @property {Two.Group} - The base level {@link Two.Group} which houses all objects for the instance. Because it is a {@link Two.Group} transformations can be applied to it that will affect all objects in the instance. This is handy as a makeshift inverted camera.
-     */
-    scene: Group = null;
-
-    /**
-     * @name Two#width
-     * @property {Number} - The width of the instance's dom element.
+     * The width of the instance's dom element.
      */
     width = 0;
 
     /**
-     * @name Two#height
-     * @property {Number} - The height of the instance's dom element.
+     * The height of the instance's dom element.
      */
     height = 0;
+
+    readonly #size = new BehaviorSubject({ width: this.width, height: this.height });
+    readonly size$ = this.#size.asObservable();
 
     /**
      * 
      */
     ratio: number | undefined = void 0;
 
-    fit: EventHandler;
+    readonly fitter = new Fitter(this);
 
     /**
-     * @name Two#frameCount
-     * @property {Number} - An integer representing how many frames have elapsed.
+     * An integer representing how many frames have elapsed.
      */
     frameCount = 0;
+
+    // DGH: Do I need to keep the separate variable of does next() do the updating?
+    readonly #frameCount: BehaviorSubject<number>;
+    readonly frameCount$: Observable<number>;
 
     /**
      * @name Two#timeDelta
@@ -133,80 +103,34 @@ export class Two {
      */
     playing = false;
 
-    constructor(options: Partial<TwoOptions>) {
+    _lastFrame: number;
 
-        // Determine what Renderer to use and setup a scene.
 
-        const params: TwoOptions = _.defaults(options || {}, {
-            fullscreen: false,
-            fitted: false,
-            width: 640,
-            height: 480,
-            type: Two.Types.svg,
-            autostart: false
-        });
+    constructor(rendererFactory: RendererFactory, options: Partial<TwoOptions> = {}) {
 
-        _.each(params, function (v, k) {
-            if (/fullscreen/i.test(k) || /autostart/i.test(k)) {
-                return;
-            }
-            this[k] = v;
-        }, this);
+        const params: TwoOptions = {
+            fullscreen: !options.fullscreen,
+            fitted: !!options.fitted,
+            width: typeof options.width === 'number' ? options.width : 640,
+            height: typeof options.height === 'number' ? options.height : 480,
+            domElement: options.domElement
+        };
 
-        // Specified domElement overrides type declaration only if the element does not support declared renderer type.
-        if (_.isElement(params.domElement)) {
-            const tagName = params.domElement.tagName.toLowerCase();
-            // TODO: Reconsider this if statement's logic.
-            if (!/^(CanvasRenderer-canvas|WebGLRenderer-canvas|SVGRenderer-svg)$/.test(this.type + '-' + tagName)) {
-                this.type = Two.Types[tagName];
-            }
-        }
-
-        this.renderer = new Two[this.type](this);
-        this.setPlaying(params.autostart);
+        this.renderer = rendererFactory({ domElement: params.domElement, scene: this.scene });
         this.frameCount = 0;
+        this.#frameCount = new BehaviorSubject(this.frameCount);
+        this.frameCount$ = this.#frameCount.asObservable();
 
-        /**
-         * @name Two#fit
-         * @function
-         * @description If `options.fullscreen` or `options.fitted` in construction create this function. It sets the `width` and `height` of the instance to its respective parent `window` or `element` depending on the `options` passed.
-         */
         if (params.fullscreen) {
-
-            this.fit = fitToWindow.bind(this);
-            this.fit.domElement = window;
-            this.fit.attached = true;
-            _.extend(document.body.style, {
-                overflow: 'hidden',
-                margin: 0,
-                padding: 0,
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                position: 'fixed'
-            });
-            _.extend(this.renderer.domElement.style, {
-                display: 'block',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                position: 'fixed'
-            });
-            dom.bind(this.fit.domElement, 'resize', this.fit);
-            this.fit();
-
+            this.fitter.set_target(window);
+            this.fitter.bind();
+            this.fitter.resize();
         }
         else if (params.fitted) {
-
-            this.fit = fitToParent.bind(this);
-            _.extend(this.renderer.domElement.style, {
-                display: 'block'
-            });
-
+            this.renderer.domElement.style.display = 'block';
+            // this.fitter.fitToParent();
         }
-        else if (!_.isElement(params.domElement)) {
+        else if (!params.domElement) {
 
             this.renderer.setSize(params.width, params.height, this.ratio);
             this.width = params.width;
@@ -214,110 +138,22 @@ export class Two {
 
         }
 
-        this.renderer.bind(Events.Types.resize, updateDimensions.bind(this));
-        this.scene = this.renderer.scene;
+        this.#renderer_resize_subscription = this.renderer.size$.subscribe(({ width, height }) => {
+            this.width = width;
+            this.height = height;
+            this.#size.next({ width, height });
+        });
+    }
 
-        Two.Instances.push(this);
-        if (params.autostart) {
-            raf.init();
+    dispose(): void {
+        if (this.#renderer_resize_subscription) {
+            this.#renderer_resize_subscription.unsubscribe();
+            this.#renderer_resize_subscription = null;
         }
-
+        this.fitter.unbind();
     }
-    // Getters and setters aren't enumerable
-    get _bound() {
-        return this.#events.bound;
-    }
-    set _bound(v) {
-        this.#events.bound = v;
-    }
-
-    addEventListener() {
-        return this.#events.addEventListener.apply(this, arguments);
-    }
-    on() {
-        return this.#events.addEventListener.apply(this, arguments);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    bind(name: 'resize' | 'update', handler: EventHandler): this {
-        this.#events.addEventListener(name, handler);
-        return this;
-    }
-    removeEventListener() {
-        return this.#events.removeEventListener.apply(this, arguments);
-    }
-    off() {
-        return this.#events.removeEventListener.apply(this, arguments);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    unbind(name: 'update', handler: EventHandler): this {
-        this.#events.removeEventListener(name, handler);
-        return this;
-    }
-    dispatchEvent() {
-        return this.#events.dispatchEvent.apply(this, arguments);
-    }
-    trigger(type: 'pause' | 'play' | 'render' | 'resize' | 'update', ...args: unknown[]): this {
-        this.#events.dispatchEvent(type, ...args);
-        return this;
-    }
-    ignore() {
-        return this.#events.ignore.apply(this, arguments);
-    }
-
-
-    static nextFrameID = Constants.nextFrameID;
 
     // Primitive
-
-    /**
-     * @name Two.Types
-     * @property {Object} - The different rendering types available in the library.
-     */
-    static Types = Constants.Types;
-
-    /**
-     * @name Two.Version
-     * @property {String} - The current working version of the library, `$version`.
-     */
-    static Version = Constants.Version;
-
-    /**
-     * @name Two.PublishDate
-     * @property {String} - The automatically generated publish date in the build process to verify version release candidates.
-     */
-    static PublishDate = Constants.PublishDate;
-
-    /**
-     * @name Two.Identifier
-     * @property {String} - String prefix for all Two.js object's ids. This trickles down to SVG ids.
-     */
-    static Identifier = Constants.Identifier;
-
-    /**
-     * @name Two.Resolution
-     * @property {Number} - Default amount of vertices to be used for interpreting Arcs and ArcSegments.
-     */
-    static Resolution = Constants.Resolution;
-
-    /**
-     * @name Two.AutoCalculateImportedMatrices
-     * @property {Boolean} - When importing SVGs through the {@link Two#interpret} and {@link Two#load}, this boolean determines whether Two.js infers and then overrides the exact transformation matrix of the reference SVG.
-     * @nota-bene `false` copies the exact transformation matrix values, but also sets the path's `matrix.manual = true`.
-     */
-    static AutoCalculateImportedMatrices = Constants.AutoCalculateImportedMatrices;
-
-    /**
-     * @name Two.Instances
-     * @property {Two[]} - Registered list of all Two.js instances in the current session.
-     */
-    static Instances = Constants.Instances;
-
-    /**
-     * @function Two.uniqueId
-     * @description Simple method to access an incrementing value. Used for `id` allocation on all Two.js objects.
-     * @returns {Number} Ever increasing Number.
-     */
-    static uniqueId = Constants.uniqueId;
 
     /**
      * @name Two#appendTo
@@ -329,13 +165,11 @@ export class Two {
 
         elem.appendChild(this.renderer.domElement);
 
-        if (this.fit) {
-            if (this.fit.domElement !== window) {
-                this.fit.domElement = elem;
-                this.fit.attached = false;
-            }
-            this.update();
+        if (!this.fitter.is_target_window()) {
+            this.fitter.set_target(elem);
         }
+
+        this.update();
 
         return this;
 
@@ -350,8 +184,9 @@ export class Two {
      */
     play(): this {
         this.playing = true;
-        raf.init();
-        return this.trigger(Events.Types.play);
+        // raf.init();
+        // return this.trigger(Events.Types.play);
+        return this;
     }
 
     /**
@@ -362,7 +197,7 @@ export class Two {
      */
     pause() {
         this.playing = false;
-        return this.trigger(Events.Types.pause);
+        // return this.trigger(Events.Types.pause);
     }
 
     setPlaying(p: boolean): void {
@@ -370,168 +205,54 @@ export class Two {
     }
 
     /**
-     * @name Two#release
-     * @function
-     * @param {Object} obj
-     * @returns {Object} The object passed for event deallocation.
-     * @description Release an arbitrary class' events from the Two.js corpus and recurse through its children and or vertices.
-     */
-    release(obj: object): object {
-
-        let i, v, child;
-
-        if (!_.isObject(obj)) {
-            return this.release(this.scene);
-        }
-
-        if (typeof obj.unbind === 'function') {
-            obj.unbind();
-        }
-
-        if (obj.vertices) {
-            if (typeof obj.vertices.unbind === 'function') {
-                obj.vertices.unbind();
-            }
-            for (i = 0; i < obj.vertices.length; i++) {
-                v = obj.vertices[i];
-                if (typeof v.unbind === 'function') {
-                    v.unbind();
-                }
-                if (v.controls) {
-                    if (v.controls.left && typeof v.controls.left.unbind === 'function') {
-                        v.controls.left.unbind();
-                    }
-                    if (v.controls.right && typeof v.controls.right.unbind === 'function') {
-                        v.controls.right.unbind();
-                    }
-                }
-            }
-        }
-
-        if (obj.children) {
-            for (i = 0; i < obj.children.length; i++) {
-                child = obj.children[i];
-                this.release(child);
-            }
-            if (typeof obj.children.unbind === 'function') {
-                obj.children.unbind();
-            }
-        }
-
-        return obj;
-
-    }
-
-    /**
-     * @name Two#update
-     * @function
-     * @fires update
-     * @description Update positions and calculations in one pass before rendering. Then render to the canvas.
-     * @nota-bene This function is called automatically if using {@link Two#play} or the `autostart` parameter in construction.
+     * Update positions and calculations in one pass before rendering.
      */
     update() {
-
         const animated = !!this._lastFrame;
-        const now = _.performance.now();
+        const now = performance.now();
 
         if (animated) {
             this.timeDelta = parseFloat((now - this._lastFrame).toFixed(3));
         }
         this._lastFrame = now;
 
-        if (this.fit && this.fit.domElement && !this.fit.attached) {
-            dom.bind(this.fit.domElement, 'resize', this.fit);
-            this.fit.attached = true;
-            this.fit();
+        if (this.fitter.has_target() && !this.fitter.is_bound()) {
+            this.fitter.bind();
+            this.fitter.resize();
         }
 
         const width = this.width;
         const height = this.height;
         const renderer = this.renderer;
 
-        // Update width / height for the renderer
         if (width !== renderer.width || height !== renderer.height) {
             renderer.setSize(width, height, this.ratio);
         }
 
-        this.trigger(Events.Types.update, this.frameCount, this.timeDelta);
-
-        return this.render();
-
-    }
-
-    /**
-     * @name Two#render
-     * @function
-     * @fires render
-     * @description Render all drawable and visible objects of the scene.
-     */
-    render() {
+        // DGH: Do we really need both update and frameCount?
+        // this.trigger(Events.Types.update, this.frameCount, this.timeDelta);
 
         this.renderer.render();
-        return this.trigger(Events.Types.render, this.frameCount++);
 
+        this.#frameCount.next(this.frameCount++);
     }
 
-    // Convenience Methods
-
-    /**
-     * @name Two#add
-     * @function
-     * @param {(Two.Shape[]|...Two.Shape)} [objects] - An array of Two.js objects. Alternatively can add objects as individual arguments.
-     * @description A shorthand method to add specific Two.js objects to the scene.
-     */
-    add(...objects: (Shape | Gradient)[]) {
-
-        if (!(objects instanceof Array)) {
-            objects = Array.prototype.slice.call(arguments);
-        }
-
-        this.scene.add(objects);
+    add(...shapes: Shape[]): this {
+        this.scene.add(...shapes);
         return this;
-
     }
 
-    /**
-     * @name Two#remove
-     * @function
-     * @param {(Two.Shape[]|...Two.Shape)} [objects] - An array of Two.js objects.
-     * @description A shorthand method to remove specific Two.js objects from the scene.
-     */
-    remove(objects) {
-
-        if (!(objects instanceof Array)) {
-            objects = Array.prototype.slice.call(arguments);
-        }
-
-        this.scene.remove(objects);
-
+    remove(...shapes: Shape[]): this {
+        this.scene.remove(...shapes);
         return this;
-
     }
-
-    /**
-     * @name Two#clear
-     * @function
-     * @description Removes all objects from the instance's scene. If you intend to have the browser garbage collect this, don't forget to delete the references in your application as well.
-     */
+    /*
     clear() {
-
         this.scene.remove(this.scene.children);
         return this;
-
     }
+    */
 
-    /**
-     * @name Two#makeLine
-     * @function
-     * @param {Number} x1
-     * @param {Number} y1
-     * @param {Number} x2
-     * @param {Number} y2
-     * @returns {Two.Line}
-     * @description Creates a Two.js line and adds it to the scene.
-     */
     makeLine(x1: number, y1: number, x2: number, y2: number): Line {
 
         const line = new Line(x1, y1, x2, y2);
@@ -541,16 +262,6 @@ export class Two {
 
     }
 
-    /**
-     * @name Two#makeArrow
-     * @function
-     * @param {Number} x1
-     * @param {Number} y1
-     * @param {Number} x2
-     * @param {Number} y2
-     * @returns {Two.Path}
-     * @description Creates a Two.js arrow and adds it to the scene.
-     */
     makeArrow(x1: number, y1: number, x2: number, y2: number, size?: number): Path {
 
         const headlen = typeof size === 'number' ? size : 10;
@@ -586,16 +297,6 @@ export class Two {
         return path;
     }
 
-    /**
-     * @name Two#makeRectangle
-     * @function
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} width
-     * @param {Number} height
-     * @returns {Two.Rectangle}
-     * @description Creates a Two.js rectangle and adds it to the scene.
-     */
     makeRectangle(x: number, y: number, width: number, height: number): Rectangle {
 
         const rect = new Rectangle(x, y, width, height);
@@ -605,17 +306,6 @@ export class Two {
 
     }
 
-    /**
-     * @name Two#makeRoundedRectangle
-     * @function
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} width
-     * @param {Number} height
-     * @param {Number} sides
-     * @returns {Two.RoundedRectangle}
-     * @description Creates a Two.js rounded rectangle and adds it to the scene.
-     */
     makeRoundedRectangle(x: number, y: number, width: number, height: number, sides: number): RoundedRectangle {
 
         const rect = new RoundedRectangle(x, y, width, height, sides);
@@ -625,16 +315,6 @@ export class Two {
 
     }
 
-    /**
-     * @name Two#makeCircle
-     * @function
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} radius
-     * @param {Number} [resolution=4]
-     * @returns {Two.Circle}
-     * @description Creates a Two.js circle and adds it to the scene.
-     */
     makeCircle(x: number, y: number, radius: number, resolution: number = 4): Circle {
 
         const circle = new Circle(x, y, radius, resolution);
@@ -644,17 +324,6 @@ export class Two {
 
     }
 
-    /**
-     * @name Two#makeEllipse
-     * @function
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} rx
-     * @param {Number} ry
-     * @param {Number} [resolution=4]
-     * @returns {Two.Ellipse}
-     * @description Creates a Two.js ellipse and adds it to the scene.
-     */
     makeEllipse(x: number, y: number, rx: number, ry: number, resolution: number = 4): Ellipse {
 
         const ellipse = new Ellipse(x, y, rx, ry, resolution);
@@ -663,17 +332,6 @@ export class Two {
         return ellipse;
     }
 
-    /**
-     * @name Two#makeStar
-     * @function
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} outerRadius
-     * @param {Number} innerRadius
-     * @param {Number} sides
-     * @returns {Two.Star}
-     * @description Creates a Two.js star and adds it to the scene.
-     */
     makeStar(x: number, y: number, outerRadius: number, innerRadius: number, sides: number): Star {
 
         const star = new Star(x, y, outerRadius, innerRadius, sides);
@@ -683,53 +341,15 @@ export class Two {
 
     }
 
-    /**
-     * @name Two#makeCurve
-     * @function
-     * @param {Two.Anchor[]} [points] - An array of {@link Two.Anchor} points.
-     * @param {...Number} - Alternatively you can pass alternating `x` / `y` coordinate values as individual arguments. These will be combined into {@link Two.Anchor}s for use in the path.
-     * @returns {Two.Path} - Where `path.curved` is set to `true`.
-     * @description Creates a Two.js path that is curved and adds it to the scene.
-     * @nota-bene In either case of passing an array or passing numbered arguments the last argument is an optional `Boolean` that defines whether the path should be open or closed.
-     */
-    makeCurve(points: Anchor[]): Path {
-
-        const l = arguments.length;
-
-        if (!Array.isArray(points)) {
-            points = [];
-            for (let i = 0; i < l; i += 2) {
-                const x = arguments[i];
-                if (typeof x !== 'number') {
-                    break;
-                }
-                const y = arguments[i + 1];
-                points.push(new Anchor(x, y));
-            }
-        }
-
-        const last = arguments[l - 1];
-        const curve = new Path(points, !(typeof last === 'boolean' ? last : undefined), true);
+    makeCurve(closed: boolean, ...anchors: Anchor[]): Path {
+        const curved = true;
+        const curve = new Path(anchors, closed, curved);
         const rect = curve.getBoundingClientRect();
-        curve.center().translation
-            .set(rect.left + rect.width / 2, rect.top + rect.height / 2);
-
+        curve.center().translation.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
         this.scene.add(curve);
-
         return curve;
-
     }
 
-    /**
-     * @name Two#makePolygon
-     * @function
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} radius
-     * @param {Number} sides
-     * @returns {Two.Polygon}
-     * @description Creates a Two.js polygon and adds it to the scene.
-     */
     makePolygon(x: number, y: number, radius: number, sides: number): Polygon {
 
         const poly = new Polygon(x, y, radius, sides);
@@ -739,19 +359,7 @@ export class Two {
 
     }
 
-    /**
-     * @name Two#makeArcSegment
-     * @function
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} innerRadius
-     * @param {Number} outerRadius
-     * @param {Number} startAngle
-     * @param {Number} endAngle
-     * @param {Number} [resolution=Two.Resolution] - The number of vertices that should comprise the arc segment.
-     * @returns {Two.ArcSegment}
-     */
-    makeArcSegment(x: number, y: number, innerRadius: number, outerRadius: number, startAngle: number, endAngle: number, resolution: number = Two.Resolution): ArcSegment {
+    makeArcSegment(x: number, y: number, innerRadius: number, outerRadius: number, startAngle: number, endAngle: number, resolution: number = Constants.Resolution): ArcSegment {
         const arcSegment = new ArcSegment(x, y, innerRadius, outerRadius, startAngle, endAngle, resolution);
         this.scene.add(arcSegment);
         return arcSegment;
@@ -784,11 +392,6 @@ export class Two {
     }
     */
 
-    /**
-     * Creates a Path and adds it to the scene.
-     * @param closed Determines whether the path should be open or closed.
-     * @param points The points making up the Path.
-     */
     makePath(closed: boolean, ...points: Anchor[]): Path {
 
         const path = new Path(points, closed);
@@ -803,76 +406,26 @@ export class Two {
         return path;
     }
 
-    /**
-     * @name Two#makeText
-     * @function
-     * @param {String} message
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Object} [styles] - An object to describe any of the {@link Two.Text.Properties} including `fill`, `stroke`, `linewidth`, `family`, `alignment`, `leading`, `opacity`, etc..
-     * @returns {Two.Text}
-     * @description Creates a Two.js text object and adds it to the scene.
-     */
     makeText(message: string, x: number, y: number, styles?: object): Text {
         const text = new Text(message, x, y, styles);
         this.add(text);
         return text;
     }
-
-    /**
-     * @name Two#makeLinearGradient
-     * @function
-     * @param {Number} x1
-     * @param {Number} y1
-     * @param {Number} x2
-     * @param {Number} y2
-     * @param {...Two.Stop} stops - Any number of color stops sometimes referred to as ramp stops. If none are supplied then the default black-to-white two stop gradient is applied.
-     * @returns {Two.LinearGradient}
-     * @description Creates a Two.js linear gradient and adds it to the scene. In the case of an effect it's added to an invisible "definitions" group.
-     */
+    /*
     makeLinearGradient(x1: number, y1: number, x2: number, y2: number, ...stops: Stop[]): LinearGradient {
-
         const gradient = new LinearGradient(x1, y1, x2, y2, stops);
-
         this.add(gradient);
-
         return gradient;
-
     }
-
-    /**
-     * @name Two#makeRadialGradient
-     * @function
-     * @param {Number} x1
-     * @param {Number} y1
-     * @param {Number} radius
-     * @param {...Two.Stop} stops - Any number of color stops sometimes referred to as ramp stops. If none are supplied then the default black-to-white two stop gradient is applied.
-     * @returns {Two.RadialGradient}
-     * @description Creates a Two.js linear-gradient object and adds it to the scene. In the case of an effect it's added to an invisible "definitions" group.
-     */
+    */
+    /*
     makeRadialGradient(x1: number, y1: number, radius: number, ...stops: Stop[]): RadialGradient {
-
         const gradient = new RadialGradient(x1, y1, radius, stops);
-
         this.add(gradient);
-
         return gradient;
-
     }
+    */
 
-    /**
-     * @name Two#makeSprite
-     * @function
-     * @param {(String|Two.Texture)} pathOrTexture - The URL path to an image or an already created {@link Two.Texture}.
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} [columns=1]
-     * @param {Number} [rows=1]
-     * @param {Number} [frameRate=0]
-     * @param {Boolean} [autostart=false]
-     * @returns {Two.Sprite}
-     * @description Creates a Two.js sprite object and adds it to the scene. Sprites can be used for still images as well as animations.
-     */
     makeSprite(pathOrTexture: (string | Texture), x: number, y: number, columns: number, rows: number, frameRate: number, autostart: boolean): Sprite {
 
         const sprite = new Sprite(pathOrTexture, x, y, columns, rows, frameRate);
@@ -885,74 +438,30 @@ export class Two {
 
     }
 
-    /**
-     * @name Two#makeImageSequence
-     * @function
-     * @param {(String[]|Two.Texture[])} pathsOrTextures - An array of paths or of {@link Two.Textures}.
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} [frameRate=0]
-     * @param {Boolean} [autostart=false]
-     * @returns {Two.ImageSequence}
-     * @description Creates a Two.js image sequence object and adds it to the scene.
-     */
+    /*
     makeImageSequence(pathsOrTextures: (string[] | Texture[]), x: number, y: number, frameRate: number, autostart: boolean): ImageSequence {
-
         const imageSequence = new ImageSequence(pathsOrTextures, x, y, frameRate);
         if (autostart) {
             imageSequence.play();
         }
         this.add(imageSequence);
-
         return imageSequence;
-
     }
+    */
 
-    /**
-     * @name Two#makeTexture
-     * @function
-     * @param {(String|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)} [pathOrSource] - The URL path to an image or a DOM image-like element.
-     * @param {Function} [callback] - Function to be invoked when the image is loaded.
-     * @returns {Two.Texture}
-     * @description Creates a Two.js texture object.
-     */
-    makeTexture(pathOrSource: (string | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement), callback: Function): Texture {
-
+    makeTexture(pathOrSource: (string | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement), callback: () => void): Texture {
         const texture = new Texture(pathOrSource, callback);
         return texture;
-
     }
 
-    /**
-     * @name Two#makeGroup
-     * @function
-     * @param {(Two.Shape[]|...Two.Shape)} [objects] - Two.js objects to be added to the group in the form of an array or as individual arguments.
-     * @returns {Two.Group}
-     * @description Creates a Two.js group object and adds it to the scene.
-     */
-    makeGroup(...objects: Shape[]): Group {
-
-        if (!(objects instanceof Array)) {
-            objects = Array.prototype.slice.call(arguments);
-        }
-
-        const group = new Group();
+    makeGroup(...shapes: Shape[]): Group {
+        const group = new Group(shapes);
         this.scene.add(group);
-        group.add(objects);
-
         return group;
-
     }
 
-    /**
-     * @name Two#interpret
-     * @function
-     * @param {SVGElement} svg - The SVG node to be parsed.
-     * @param {Boolean} shallow - Don't create a top-most group but append all content directly.
-     * @param {Boolean} [add=true] – Automatically add the reconstructed SVG node to scene.
-     * @returns {Two.Group}
-     * @description Interpret an SVG Node and add it to this instance's scene. The distinction should be made that this doesn't `import` svg's, it solely interprets them into something compatible for Two.js - this is slightly different than a direct transcription.
-     */
+    // TODO
+    /*
     interpret(svg: SVGElement, shallow?: boolean, add?: boolean): Group {
 
         const tag = svg.tagName.toLowerCase() as 'svg';
@@ -977,98 +486,145 @@ export class Two {
         return node;
 
     }
+    */
 
 
     /**
      * Load an SVG file or SVG text and interpret it into Two.js legible objects.
      */
-    load(url: string, callback: (group: Group, svg: unknown) => void): Group {
+    load(url: string): Promise<Group> {
+        return new Promise<Group>((resolve, reject) => {
+            const group = new Group();
+            // let elem, i, child;
 
-        const group = new Group();
-        let elem, i, child;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const attach = (responseText: string) => {
+                // TODO
+                /*
+                dom.temp.innerHTML = responseText;
 
-        const attach = (data: string) => {
+                for (i = 0; i < dom.temp.children.length; i++) {
+                    elem = dom.temp.children[i];
+                    child = this.interpret(elem, false, false);
+                    if (child !== null) {
+                        group.add(child);
+                    }
+                }
 
-            dom.temp.innerHTML = data;
+                if (typeof callback === 'function') {
+                    const svg = dom.temp.children.length <= 1
+                        ? dom.temp.children[0] : dom.temp.children;
+                    callback(group, svg);
+                }
+                */
+            };
 
-            for (i = 0; i < dom.temp.children.length; i++) {
-                elem = dom.temp.children[i];
-                child = this.interpret(elem, false, false);
-                if (child !== null) {
-                    group.add(child);
+            if (/\.svg$/i.test(url)) {
+                try {
+                    xhr(url, attach);
+                    resolve(group);
+                }
+                catch (e) {
+                    reject(e);
                 }
             }
-
-            if (typeof callback === 'function') {
-                const svg = dom.temp.children.length <= 1
-                    ? dom.temp.children[0] : dom.temp.children;
-                callback(group, svg);
+            else {
+                attach(url);
+                resolve(group);
             }
+        });
+    }
+}
 
-        };
+class Fitter {
+    readonly #two: Two;
+    #target: Element | Window | null = null;
+    #target_resize_subscription: Subscription | null = null;
+    constructor(two: Two) {
+        this.#two = two;
+    }
+    dispose(): void {
+        this.unbind();
+    }
+    is_bound(): boolean {
+        return !!this.#target_resize_subscription;
+    }
+    bind(): void {
+        this.#target_resize_subscription = fromEvent(this.#target, 'resize')
+            .pipe(debounceTime(200))
+            .subscribe(() => {
+                this.resize();
+            });
+    }
+    unbind(): void {
+        if (this.#target_resize_subscription) {
+            this.#target_resize_subscription.unsubscribe();
+            this.#target_resize_subscription = null;
+        }
+    }
+    has_target(): boolean {
+        return !!this.#target;
+    }
+    set_target(elem: Element | Window): this {
+        this.#target = elem;
+        if (this.is_target_window()) {
 
-        if (/\.svg$/i.test(url)) {
-            xhr(url, attach);
-            return group;
+            document.body.style.overflow = 'hidden';
+            document.body.style.margin = '0';
+            document.body.style.padding = '0';
+            document.body.style.top = '0';
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.bottom = '0';
+            document.body.style.position = 'fixed';
+
+            const two = this.#two;
+            two.renderer.domElement.style.display = 'block';
+            two.renderer.domElement.style.top = '0';
+            two.renderer.domElement.style.left = '0';
+            two.renderer.domElement.style.right = '0';
+            two.renderer.domElement.style.bottom = '0';
+            two.renderer.domElement.style.position = 'fixed';
+        }
+        return this;
+    }
+    is_target_window(): boolean {
+        return this.#target === window;
+    }
+    resize(): void {
+        if (this.is_target_window()) {
+            this.#resize_to_window();
         }
         else {
-            attach(url);
-            return group;
+            this.#resize_to_parent();
         }
     }
-}
+    #resize_to_window() {
+        const two = this.#two;
+        const wr = document.body.getBoundingClientRect();
 
-function fitToWindow(this: Two) {
+        const width = two.width = wr.width;
+        const height = two.height = wr.height;
 
-    const wr = document.body.getBoundingClientRect();
-
-    const width = this.width = wr.width;
-    const height = this.height = wr.height;
-
-    this.renderer.setSize(width, height, this.ratio);
-
-}
-
-function fitToParent(this: Two) {
-
-    const parent = this.renderer.domElement.parentElement;
-    if (!parent) {
-        console.warn('Two.js: Attempting to fit to parent, but no parent found.');
-        return;
+        two.renderer.setSize(width, height, two.ratio);
     }
-    const wr = parent.getBoundingClientRect();
+    #resize_to_parent() {
+        const two = this.#two;
 
-    const width = this.width = wr.width;
-    const height = this.height = wr.height;
-
-    this.renderer.setSize(width, height, this.ratio);
-
-}
-
-function updateDimensions(this: Two, width: number, height: number) {
-    this.width = width;
-    this.height = height;
-    this.trigger(Events.Types.resize, width, height);
-}
-
-// Request Animation Frame
-
-const raf = dom.getRequestAnimationFrame();
-
-function loop() {
-
-    for (let i = 0; i < Two.Instances.length; i++) {
-        const t = Two.Instances[i];
-        if (t.playing) {
-            t.update();
+        const parent = two.renderer.domElement.parentElement;
+        if (!parent) {
+            // eslint-disable-next-line no-console
+            console.warn('Attempting to size to parent, but no parent found.');
+            return;
         }
+        const wr = parent.getBoundingClientRect();
+
+        const width = two.width = wr.width;
+        const height = two.height = wr.height;
+
+        two.renderer.setSize(width, height, two.ratio);
+
     }
-
-    Two.nextFrameID = raf(loop);
-
 }
 
-raf.init = function () {
-    loop();
-    raf.init = function () { };
-};
+

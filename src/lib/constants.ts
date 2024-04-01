@@ -41,8 +41,7 @@ export const Constants = {
     Identifier: 'two-',
 
     /**
-     * @name Two.Resolution
-     * @property {Number} - Default amount of vertices to be used for interpreting Arcs and ArcSegments.
+     * Default amount of vertices to be used for interpreting Arcs and ArcSegments.
      */
     Resolution: 12,
 

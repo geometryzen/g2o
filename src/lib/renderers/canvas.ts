@@ -1,18 +1,21 @@
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Anchor } from '../anchor.js';
 import { Constants } from '../constants.js';
+import { Texture } from '../effects/texture.js';
 import { Group } from '../group.js';
-import { Path } from '../path.js';
+import { Path, get_dashes_offset } from '../path.js';
+import { Points } from '../shapes/points.js';
+import { Text } from '../text.js';
+import { RendererParams } from '../two.js';
 import { Curve } from '../utils/curves.js';
 import { getRatio } from '../utils/device-pixel-ratio.js';
 import { TWO_PI, mod } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 import { Vector } from '../vector.js';
-import { View } from './View.js';
-
+import { Renderer } from './Renderer.js';
+import { LinearGradient } from '../effects/linear-gradient.js';
 
 // Constants
-const emptyArray = [];
+const emptyArray: number[] = [];
 
 const max = Math.max,
     min = Math.min,
@@ -39,7 +42,8 @@ const canvas = {
         baseline: 'alphabetic'
     },
 
-    shim: function (elem, name) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    shim: function (elem: any, name?: string) {
         elem.tagName = elem.nodeName = name || 'canvas';
         elem.nodeType = 1;
         elem.getAttribute = function (prop) {
@@ -58,7 +62,7 @@ const canvas = {
             canvas[child._renderer.type].render.call(child, this.ctx, true, this.clip);
         },
 
-        render: function (this: Group, ctx) {
+        render: function (this: Group, ctx: CanvasRenderingContext2D) {
 
             if (!this._visible) {
                 return this;
@@ -120,20 +124,17 @@ const canvas = {
 
     },
 
-    path: {
+    'path': {
+        render: function (this: Path, ctx: CanvasRenderingContext2D, forced: boolean, parentClipped: boolean) {
 
-        render: function (this: Path, ctx, forced, parentClipped) {
+            let prev, a, b, c, d, ux, uy, vx, vy,
+                ar, bl, br, cl, x, y, isOffset;
 
-            let matrix, stroke, linewidth, fill, opacity, visible, cap, join, miter,
-                closed, commands, length, last, prev, a, b, c, d, ux, uy, vx, vy,
-                ar, bl, br, cl, x, y, mask, clip, defaultMatrix, isOffset, dashes, po;
-
-            po = (this.parent && this.parent._renderer)
-                ? this.parent._renderer.opacity : 1;
-            mask = this._mask;
-            clip = this._clip;
-            opacity = this._opacity * (po || 1);
-            visible = this._visible;
+            const po = (this.parent && this.parent._renderer) ? this.parent._renderer.opacity : 1;
+            const mask = this._mask;
+            const clip = this._clip;
+            const opacity = this._opacity * (po || 1);
+            const visible = this._visible;
 
             if (!forced && (!visible || clip || opacity === 0)) {
                 return this;
@@ -141,19 +142,19 @@ const canvas = {
 
             this._update();
 
-            matrix = this._matrix.elements;
-            stroke = this._stroke;
-            linewidth = this._linewidth;
-            fill = this._fill;
-            cap = this._cap;
-            join = this._join;
-            miter = this._miter;
-            closed = this._closed;
-            commands = this._renderer.vertices; // Commands
-            length = commands.length;
-            last = length - 1;
-            defaultMatrix = isDefaultMatrix(matrix);
-            dashes = this.dashes;
+            const matrix = this._matrix.elements;
+            const stroke = this._stroke;
+            const linewidth = this._linewidth;
+            const fill = this._fill;
+            const cap = this._cap;
+            const join = this._join;
+            const miter = this._miter;
+            const closed = this._closed;
+            const commands = this._renderer.vertices; // Commands
+            const length = commands.length;
+            const last = length - 1;
+            const defaultMatrix = isDefaultMatrix(matrix);
+            const dashes = this.dashes;
 
             // Transform
             if (!defaultMatrix) {
@@ -193,10 +194,10 @@ const canvas = {
                     ctx.miterLimit = miter;
                 }
                 if (join) {
-                    ctx.lineJoin = join;
+                    ctx.lineJoin = join as CanvasLineJoin;
                 }
                 if (!closed && cap) {
-                    ctx.lineCap = cap;
+                    ctx.lineCap = cap as CanvasLineCap;
                 }
             }
             if (typeof opacity === 'number') {
@@ -204,7 +205,7 @@ const canvas = {
             }
 
             if (dashes && dashes.length > 0) {
-                ctx.lineDashOffset = dashes.offset || 0;
+                ctx.lineDashOffset = get_dashes_offset(dashes) || 0;
                 ctx.setLineDash(dashes);
             }
 
@@ -252,7 +253,7 @@ const canvas = {
                         ar = (a.controls && a.controls.right) || Vector.zero;
                         bl = (b.controls && b.controls.left) || Vector.zero;
 
-                        if (a._relative) {
+                        if (a.relative) {
                             vx = (ar.x + a.x);
                             vy = (ar.y + a.y);
                         }
@@ -261,7 +262,7 @@ const canvas = {
                             vy = ar.y;
                         }
 
-                        if (b._relative) {
+                        if (b.relative) {
                             ux = (bl.x + b.x);
                             uy = (bl.y + b.y);
                         }
@@ -279,7 +280,7 @@ const canvas = {
                             br = (b.controls && b.controls.right) || Vector.zero;
                             cl = (c.controls && c.controls.left) || Vector.zero;
 
-                            if (b._relative) {
+                            if (b.relative) {
                                 vx = (br.x + b.x);
                                 vy = (br.y + b.y);
                             }
@@ -288,7 +289,7 @@ const canvas = {
                                 vy = br.y;
                             }
 
-                            if (c._relative) {
+                            if (c.relative) {
                                 ux = (cl.x + c.x);
                                 uy = (cl.y + c.y);
                             }
@@ -301,7 +302,6 @@ const canvas = {
                             y = c.y;
 
                             ctx.bezierCurveTo(vx, vy, ux, uy, x, y);
-
                         }
 
                         break;
@@ -314,7 +314,6 @@ const canvas = {
                         d = b;
                         ctx.moveTo(x, y);
                         break;
-
                 }
             }
 
@@ -371,9 +370,9 @@ const canvas = {
 
     },
 
-    points: {
+    'points': {
 
-        render: function (ctx, forced, parentClipped) {
+        render: function (this: Points, ctx: CanvasRenderingContext2D, forced: boolean, parentClipped: boolean) {
 
             let me, stroke, linewidth, fill, opacity, visible, size, commands,
                 length, b, x, y, defaultMatrix, isOffset, dashes, po;
@@ -504,9 +503,8 @@ const canvas = {
 
     },
 
-    text: {
-
-        render: function (ctx, forced, parentClipped) {
+    'text': {
+        render: function (this: Text, ctx: CanvasRenderingContext2D, forced: boolean, parentClipped: boolean) {
 
             const po = (this.parent && this.parent._renderer)
                 ? this.parent._renderer.opacity : 1;
@@ -528,8 +526,7 @@ const canvas = {
             const decoration = this._decoration;
             const direction = this._direction;
             const defaultMatrix = isDefaultMatrix(matrix);
-            const isOffset = fill._renderer && fill._renderer.offset
-                && stroke._renderer && stroke._renderer.offset;
+            const isOffset = fill._renderer && fill._renderer.offset && stroke._renderer && stroke._renderer.offset;
             const dashes = this.dashes;
             const alignment = canvas.alignments[this._alignment] || this._alignment;
             const baseline = canvas.baselines[this._baseline] || this._baseline;
@@ -555,7 +552,7 @@ const canvas = {
             }
 
             ctx.textAlign = alignment;
-            ctx.textBaseline = baseline;
+            ctx.textBaseline = baseline as CanvasTextBaseline;
             ctx.direction = direction;
 
             // Styles
@@ -728,8 +725,7 @@ const canvas = {
     },
 
     'linear-gradient': {
-
-        render: function (ctx, parent) {
+        render: function (this:LinearGradient, ctx: CanvasRenderingContext2D, parent) {
 
             if (!parent) {
                 return;
@@ -741,10 +737,10 @@ const canvas = {
                 || this._flagUnits) {
 
                 let rect;
-                let lx = this.left._x;
-                let ly = this.left._y;
-                let rx = this.right._x;
-                let ry = this.right._y;
+                let lx = this.left.x;
+                let ly = this.left.y;
+                let rx = this.right.x;
+                let ry = this.right.y;
 
                 if (/objectBoundingBox/i.test(this._units)) {
                     // Convert objectBoundingBox units to userSpaceOnUse units
@@ -763,11 +759,8 @@ const canvas = {
                 }
 
             }
-
             return this.flagReset();
-
         }
-
     },
 
     'radial-gradient': {
@@ -816,9 +809,8 @@ const canvas = {
 
     },
 
-    texture: {
-
-        render: function (ctx) {
+    'texture': {
+        render: function (this: Texture, ctx: CanvasRenderingContext2D) {
 
             this._update();
 
@@ -875,7 +867,7 @@ const canvas = {
 
     },
 
-    renderSvgArcCommand: function (ctx, ax, ay, rx, ry, largeArcFlag, sweepFlag, xAxisRotation, x, y) {
+    renderSvgArcCommand: function (ctx: CanvasRenderingContext2D, ax, ay, rx, ry, largeArcFlag, sweepFlag: number, xAxisRotation: number, x, y) {
 
         xAxisRotation = xAxisRotation * Math.PI / 180;
 
@@ -937,7 +929,6 @@ const canvas = {
             clockwise, xAxisRotation);
 
     }
-
 };
 
 /**
@@ -947,24 +938,39 @@ const canvas = {
  * @param {Boolean} [parameters.smoothing=true] - Determines whether the canvas should antialias drawing. Set it to `false` when working with pixel art. `false` can lead to better performance, since it would use a cheaper interpolation algorithm.
  * @description This class is used by {@link Two} when constructing with `type` of `Two.Types.canvas`. It takes Two.js' scenegraph and renders it to a `<canvas />`.
  */
-export class CanvasRenderer implements View {
+export class CanvasRenderer implements Renderer {
 
     readonly domElement: HTMLCanvasElement;
+    readonly scene: Group;
     readonly ctx: CanvasRenderingContext2D;
 
-    readonly #resize: BehaviorSubject<{ width: number; height: number }>;
-    readonly resize$: Observable<{ width: number; height: number }>;
+    width: number = 0;
+    height: number = 0;
+    readonly #size: BehaviorSubject<{ width: number; height: number }>;
+    readonly size$: Observable<{ width: number; height: number }>;
 
-    constructor(params) {
+    ratio: number;
+
+    readonly overdraw: boolean;
+
+    constructor(params: RendererParams) {
+
+        if (params.domElement) {
+            if (params.domElement instanceof HTMLCanvasElement) {
+                this.domElement = params.domElement;
+            }
+            else {
+                throw new Error("params.domElement must be an HTMLCanvasElement");
+            }
+            this.domElement = (params.domElement as HTMLCanvasElement) || document.createElement('canvas');
+        }
+        else {
+            this.domElement = document.createElement('canvas');
+        }
 
         // It might not make a big difference on GPU backed canvases.
         const smoothing = (params.smoothing !== false);
 
-        /**
-         * @name Two.CanvasRenderer#domElement
-         * @property {Element} - The `<canvas />` associated with the Two.js scene.
-         */
-        this.domElement = params.domElement || document.createElement('canvas');
 
         /**
          * @name Two.CanvasRenderer#ctx
@@ -983,38 +989,13 @@ export class CanvasRenderer implements View {
             this.ctx.imageSmoothingEnabled = smoothing;
         }
 
-        /**
-         * @name Two.CanvasRenderer#scene
-         * @property {Two.Group} - The root group of the scenegraph.
-         */
-        this.scene = new Group();
+        this.scene = params.scene;
         this.scene.parent = this;
 
-        this.#resize = new BehaviorSubject({ width: this.width, height: this.height });
-        this.resize$ = this.#resize.asObservable();
+        this.#size = new BehaviorSubject({ width: this.width, height: this.height });
+        this.size$ = this.#size.asObservable();
     }
-    clip: SVGClipPathElement;
-    elem: HTMLElement | SVGElement;
-    scene: Group;
-    type: 'group' | 'linear-gradient' | 'path' | 'points' | 'radial-gradient' | 'stop' | 'text' | 'texture';
-    vertices: Anchor[];
-    collection: Anchor[];
 
-    /**
-     * @name Two.CanvasRenderer.Utils
-     * @property {Object} - A massive object filled with utility functions and properties to render Two.js objects to a `<canvas />`.
-     */
-    static Utils = canvas;
-
-    /**
-     * @name Two.CanvasRenderer#setSize
-     * @function
-     * @fires resize
-     * @param {Number} width - The new width of the renderer.
-     * @param {Number} height - The new height of the renderer.
-     * @param {Number} [ratio] - The new pixel ratio (pixel density) of the renderer. Defaults to calculate the pixel density of the user's screen.
-     * @description Change the size of the renderer.
-     */
     setSize(width: number, height: number, ratio: number) {
 
         this.width = width;
@@ -1030,7 +1011,7 @@ export class CanvasRenderer implements View {
             this.domElement.style.height = `${height}px`;
         }
 
-        this.#resize.next({ width, height });
+        this.#size.next({ width, height });
     }
 
     /**
@@ -1063,7 +1044,7 @@ export class CanvasRenderer implements View {
 
 }
 
-function renderArcEstimate(ctx, ox, oy, rx, ry, startAngle, endAngle, clockwise, xAxisRotation) {
+function renderArcEstimate(ctx: CanvasRenderingContext2D, ox: number, oy: number, rx: number, ry: number, startAngle: number, endAngle: number, clockwise: boolean, xAxisRotation: number) {
 
     const delta = endAngle - startAngle;
     const epsilon = Curve.Tolerance.epsilon;
@@ -1073,33 +1054,21 @@ function renderArcEstimate(ctx, ox, oy, rx, ry, startAngle, endAngle, clockwise,
     let deltaAngle = mod(delta, TWO_PI);
 
     if (deltaAngle < epsilon) {
-
         if (samePoints) {
-
             deltaAngle = 0;
-
         }
         else {
-
             deltaAngle = TWO_PI;
-
         }
-
     }
 
     if (clockwise === true && !samePoints) {
-
         if (deltaAngle === TWO_PI) {
-
             deltaAngle = - TWO_PI;
-
         }
         else {
-
             deltaAngle = deltaAngle - TWO_PI;
-
         }
-
     }
 
     for (let i = 0; i < Constants.Resolution; i++) {
@@ -1121,16 +1090,12 @@ function renderArcEstimate(ctx, ox, oy, rx, ry, startAngle, endAngle, clockwise,
             // Rotate the point about the center of the ellipse.
             x = tx * cos - ty * sin + ox;
             y = tx * sin + ty * cos + oy;
-
         }
-
         ctx.lineTo(x, y);
-
     }
-
 }
 
-function svgAngle(ux, uy, vx, vy) {
+function svgAngle(ux: number, uy: number, vx: number, vy: number): number {
 
     const dot = ux * vx + uy * vy;
     const len = sqrt(ux * ux + uy * uy) * sqrt(vx * vx + vy * vy);
@@ -1141,10 +1106,9 @@ function svgAngle(ux, uy, vx, vy) {
     }
 
     return ang;
-
 }
 
 // Returns true if this is a non-transforming matrix
-function isDefaultMatrix(m) {
+function isDefaultMatrix(m: number[] | Float32Array): boolean {
     return (m[0] == 1 && m[3] == 0 && m[1] == 0 && m[4] == 1 && m[2] == 0 && m[5] == 0);
 }

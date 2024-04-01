@@ -1,4 +1,3 @@
-import { TwoError } from './error.js';
 
 export const shaders = {
 
@@ -12,7 +11,7 @@ export const shaders = {
         if (!compiled) {
             const error = gl.getShaderInfoLog(shader);
             gl.deleteShader(shader);
-            throw new TwoError('unable to compile shader ' + shader + ': ' + error);
+            throw new Error('unable to compile shader ' + shader + ': ' + error);
         }
 
         return shader;

@@ -4,7 +4,9 @@ import { Gradient } from './gradient.js';
 import { Stop } from './stop.js';
 
 export class LinearGradient extends Gradient {
-    #flagEndPoints = false;
+
+    _flagEndPoints = false;
+
     #left: Vector | null = null;
     #left_change_subscription: Subscription | null = null;
     #right: Vector | null = null;
@@ -42,7 +44,7 @@ export class LinearGradient extends Gradient {
      * @nota-bene Try not to call this method more than once a frame.
      */
     _update() {
-        if (this.#flagEndPoints || this._flagSpread || this._flagStops) {
+        if (this._flagEndPoints || this._flagSpread || this._flagStops) {
             this._change.next(this);
         }
         return this;
@@ -55,7 +57,7 @@ export class LinearGradient extends Gradient {
      * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
      */
     flagReset() {
-        this.#flagEndPoints = false;
+        this._flagEndPoints = false;
         super.flagReset.call(this);
         return this;
     }
@@ -69,9 +71,9 @@ export class LinearGradient extends Gradient {
         }
         this.#left = v;
         this.#left_change_subscription = this.#left.change$.subscribe(() => {
-            this.#flagEndPoints = true;
+            this._flagEndPoints = true;
         });
-        this.#flagEndPoints = true;
+        this._flagEndPoints = true;
     }
     get right() {
         return this.#right;
@@ -83,8 +85,8 @@ export class LinearGradient extends Gradient {
         }
         this.#right = v;
         this.#right_change_subscription = this.#right.change$.subscribe(() => {
-            this.#flagEndPoints = true;
+            this._flagEndPoints = true;
         });
-        this.#flagEndPoints = true;
+        this._flagEndPoints = true;
     }
 }

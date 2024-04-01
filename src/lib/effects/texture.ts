@@ -1,17 +1,27 @@
-import { Element } from '../element.js';
-import { CanvasShim } from '../utils/canvas-shim.js';
-import { TwoError } from '../utils/error.js';
-import { root } from '../utils/root.js';
-
-import { Registry } from '../registry.js';
-import { Vector } from '../vector.js';
-
-import { CanvasRenderer } from '../renderers/canvas.js';
-
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { Constants } from '../constants.js';
+import { Element } from '../element.js';
 import { Group } from '../group.js';
-import { View } from '../renderers/View.js';
+import { Registry } from '../registry.js';
+import { Renderer } from '../renderers/Renderer.js';
+import { root } from '../utils/root.js';
+import { Vector } from '../vector.js';
+
+function is_canvas(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLCanvasElement {
+    const tagName = (element && element.nodeName && element.nodeName.toLowerCase());
+    return tagName === 'canvas';
+}
+
+function is_img(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLImageElement {
+    const tagName = (element && element.nodeName && element.nodeName.toLowerCase());
+    return tagName === 'img';
+}
+
+function is_video(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLVideoElement {
+    const tagName = (element && element.nodeName && element.nodeName.toLowerCase());
+    return tagName === 'video';
+}
+
 
 let anchor: HTMLAnchorElement | null = null;
 
@@ -36,7 +46,7 @@ export class Texture extends Element<Group> {
     _flagScale = false;
 
     _src = '';
-    _image: HTMLImageElement | HTMLVideoElement | null = null;
+    _image: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | null = null;
     _loaded = false;
     _repeat = 'no-repeat';
 
@@ -56,11 +66,11 @@ export class Texture extends Element<Group> {
      * @param src The URL path to an image file or an `<img />` element.
      * @param callback An optional callback function once the image has been loaded.
      */
-    constructor(src?: string | HTMLImageElement, callback?: () => void) {
+    constructor(src?: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement, callback?: () => void) {
 
         super();
 
-        this._renderer = {} as View;
+        this._renderer = {} as Renderer;
 
         this._renderer.type = 'texture';
 
@@ -127,7 +137,7 @@ export class Texture extends Element<Group> {
      * @property {Two.Registry} - A canonical listing of image data used in a single session of Two.js.
      * @nota-bene This object is used to cache image data between different textures.
      */
-    static ImageRegistry: Registry<HTMLImageElement | HTMLVideoElement> = new Registry();
+    static ImageRegistry: Registry<HTMLCanvasElement | HTMLImageElement | HTMLVideoElement> = new Registry();
 
     /**
      * @name Two.Texture.getAbsoluteURL
@@ -145,28 +155,16 @@ export class Texture extends Element<Group> {
     }
 
     /**
-     * @name Two.Texture.loadHeadlessBuffer
-     * @property {Function} - Loads an image as a buffer in headless environments.
-     * @param {Two.Texture} texture - The {@link Two.Texture} to be loaded.
-     * @param {Function} loaded - The callback function to be triggered once the image is loaded.
-     * @nota-bene - This function uses node's `fs.readFileSync` to spoof the `<img />` loading process in the browser.
-     */
-    static loadHeadlessBuffer(texture: Texture, loaded: (this: GlobalEventHandlers, ev: Event) => void) {
-        texture.image.onload = loaded;
-        texture.image.src = texture.src;
-    }
-
-    /**
      * Retrieves the tag name of an image, video, or canvas node.
      * @param image The image to infer the tag name from.
      * @returns the tag name of an image, video, or canvas node.
      */
-    static getTag(image: HTMLImageElement | HTMLVideoElement): 'canvas' | 'img' | 'video' {
+    static getTag(image: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): 'canvas' | 'img' | 'video' {
         // Headless environments
         return (image && image.nodeName && image.nodeName.toLowerCase()) as 'canvas' | 'img' | 'video' || 'img';
     }
 
-    static getImage(src: string): HTMLImageElement | HTMLVideoElement {
+    static getImage(src: string): HTMLCanvasElement | HTMLImageElement | HTMLVideoElement {
 
         const absoluteSrc = Texture.getAbsoluteURL(src);
 
@@ -176,12 +174,7 @@ export class Texture extends Element<Group> {
 
         let image: HTMLImageElement | HTMLVideoElement;
 
-        if (CanvasShim.Image) {
-            // TODO: Fix for headless environments
-            image = new CanvasShim.Image();
-            CanvasRenderer.Utils.shim(image, 'img');
-        }
-        else if (root.document) {
+        if (root.document) {
             if (regex.video.test(absoluteSrc)) {
                 image = document.createElement('video');
             }
@@ -221,7 +214,7 @@ export class Texture extends Element<Group> {
             const image = texture.image;
 
             const loaded = function () {
-                if (!CanvasShim.isHeadless && image.removeEventListener && typeof image.removeEventListener === 'function') {
+                if (image.removeEventListener && typeof image.removeEventListener === 'function') {
                     image.removeEventListener('load', loaded, false);
                     image.removeEventListener('error', error, false);
                 }
@@ -230,51 +223,42 @@ export class Texture extends Element<Group> {
                 }
             };
             const error = function () {
-                if (!CanvasShim.isHeadless && typeof image.removeEventListener === 'function') {
+                if (typeof image.removeEventListener === 'function') {
                     image.removeEventListener('load', loaded, false);
                     image.removeEventListener('error', error, false);
                 }
-                throw new TwoError('unable to load ' + texture.src);
+                throw new Error('unable to load ' + texture.src);
             };
 
             if (typeof image.width === 'number' && image.width > 0
                 && typeof image.height === 'number' && image.height > 0) {
                 loaded();
             }
-            else if (!CanvasShim.isHeadless && typeof image.addEventListener === 'function') {
+            else if (typeof image.addEventListener === 'function') {
                 image.addEventListener('load', loaded, false);
                 image.addEventListener('error', error, false);
             }
 
             texture._src = Texture.getAbsoluteURL(texture._src);
 
-            if (!CanvasShim.isHeadless && image && image.getAttribute('two-src')) {
+            if (image && image.getAttribute('two-src')) {
                 return;
             }
 
-            if (!CanvasShim.isHeadless) {
-                image.setAttribute('two-src', texture.src);
-            }
+            image.setAttribute('two-src', texture.src);
 
             Texture.ImageRegistry.add(texture.src, image);
-
-            if (CanvasShim.isHeadless) {
-
-                Texture.loadHeadlessBuffer(texture, loaded);
-
+            if (is_canvas(texture.image)) {
+                // texture.image.src = texture.src;
             }
-            else {
-
+            else if (is_img(texture.image)) {
                 texture.image.src = texture.src;
-
             }
-
+            else if (is_video(texture.image)) {
+                texture.image.src = texture.src;
+            }
         },
         video: function (texture: Texture, callback: () => void) {
-
-            if (CanvasShim.isHeadless) {
-                throw new TwoError('video textures are not implemented in headless environments.');
-            }
 
             const loaded = function () {
                 const image = texture.image as HTMLVideoElement;
@@ -289,7 +273,7 @@ export class Texture extends Element<Group> {
             const error = function () {
                 texture.image.removeEventListener('canplaythrough', loaded, false);
                 texture.image.removeEventListener('error', error, false);
-                throw new TwoError('unable to load ' + texture.src);
+                throw new Error('unable to load ' + texture.src);
             };
 
             texture._src = Texture.getAbsoluteURL(texture._src);
@@ -320,26 +304,31 @@ export class Texture extends Element<Group> {
      */
     static load(texture: Texture, callback: () => void): void {
 
-        let image = texture.image;
-        const candidateTag = Texture.getTag(image);
-
         if (texture._flagImage) {
-            if (/canvas/i.test(candidateTag)) {
+            if (is_canvas(texture.image)) {
                 Texture.Register.canvas(texture, callback);
             }
-            else {
-                texture._src = (!CanvasShim.isHeadless && image.getAttribute('two-src')) || image.src;
-                Texture.Register[candidateTag](texture, callback);
+            else if (is_img(texture.image)) {
+                Texture.Register.img(texture, callback);
+            }
+            else if (is_video(texture.image)) {
+                Texture.Register.video(texture, callback);
             }
         }
 
         if (texture._flagSrc) {
-            if (!image) {
-                image = Texture.getImage(texture.src);
-                texture.image = image;
+            if (!texture.image) {
+                texture.image = Texture.getImage(texture.src);
+                if (is_canvas(texture.image)) {
+                    Texture.Register.canvas(texture, callback);
+                }
+                else if (is_img(texture.image)) {
+                    Texture.Register.img(texture, callback);
+                }
+                else if (is_video(texture.image)) {
+                    Texture.Register.video(texture, callback);
+                }
             }
-            const tag = Texture.getTag(image) as 'canvas' | 'img' | 'video';
-            Texture.Register[tag](texture, callback);
         }
     }
 
@@ -377,20 +366,20 @@ export class Texture extends Element<Group> {
         return this._image;
     }
     set image(image) {
-
-        const tag = Texture.getTag(image);
-        let index;
-
-        switch (tag) {
-            case 'canvas':
-                index = '#' + image.id;
-                break;
-            default:
-                index = image.src;
+        // DRY: This is how we index the image registry. 
+        let index: string;
+        if (is_canvas(image)) {
+            index = '#' + image.id;
+        }
+        else if (is_img(image)) {
+            index = image.src;
+        }
+        else if (is_video(image)) {
+            index = image.src;
         }
 
         if (Texture.ImageRegistry.contains(index)) {
-            this._image = Texture.ImageRegistry.get(image.src);
+            this._image = Texture.ImageRegistry.get(index);
         }
         else {
             this._image = image;

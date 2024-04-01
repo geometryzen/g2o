@@ -4,62 +4,25 @@ import { Gradient } from './gradient.js';
 
 export class Stop extends Element<Gradient> {
 
-    /**
-     * @name Two.Stop#_flagOffset
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Stop#offset} needs updating.
-     */
     _flagOffset = true;
-
-    /**
-     * @name Two.Stop#_flagOpacity
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Stop#opacity} needs updating.
-     */
     _flagOpacity = true;
-
-    /**
-     * @name Two.Stop#_flagColor
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Stop#color} needs updating.
-     */
     _flagColor = true;
 
-    /**
-     * @name Two.Stop#_offset
-     * @private
-     * @see {@link Two.Stop#offset}
-     */
     _offset = 0;
-
-    /**
-     * @name Two.Stop#_opacity
-     * @private
-     * @see {@link Two.Stop#opacity}
-     */
     _opacity = 1;
-
-    /**
-     * @name Two.Stop#_color
-     * @private
-     * @see {@link Two.Stop#color}
-     */
     _color = '#fff';
 
     readonly #change: BehaviorSubject<this>;
     readonly change$: Observable<this>;
 
     /**
-     * @param {Number} [offset] - The offset percentage of the stop represented as a zero-to-one value. Default value flip flops from zero-to-one as new stops are created.
-     * @param {String} [color] - The color of the stop. Default value flip flops from white to black as new stops are created.
-     * @param {Number} [opacity] - The opacity value. Default value is 1, cannot be lower than 0.
-     * @nota-bene Used specifically in conjunction with {@link Two.Gradient}s to control color graduation.
+     * @param offset The offset percentage of the stop represented as a zero-to-one value. Default value flip flops from zero-to-one as new stops are created.
+     * @param color The color of the stop. Default value flip flops from white to black as new stops are created.
+     * @param opacity The opacity value. Default value is 1, cannot be lower than 0.
      */
     constructor(offset?: number, color?: string, opacity?: number) {
 
         super();
-
-        this._renderer.type = 'stop';
 
         /**
          * @name Two.Stop#offset

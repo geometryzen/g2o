@@ -3,7 +3,6 @@ import { Anchor } from '../anchor.js';
 import { Gradient } from '../effects/gradient.js';
 import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
-import { Stop } from '../effects/stop.js';
 import { Texture } from '../effects/texture.js';
 import { Element as ElementBase } from '../element.js';
 import { Group } from '../group.js';
@@ -11,12 +10,18 @@ import { Path, get_dashes_offset } from '../path.js';
 import { Shape } from '../shape.js';
 import { Points } from '../shapes/points.js';
 import { Text } from '../text.js';
+import { RendererParams } from '../two.js';
 import { decomposeMatrix } from '../utils/decompose_matrix.js';
 import { mod, toFixed } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 import { Vector } from '../vector.js';
+import { Renderer } from './Renderer.js';
 
 type DOMElement = HTMLElement | SVGElement;
+
+export function svg_view(model: RendererParams): Renderer {
+    return new SVGRenderer(model);
+}
 
 
 function set_dom_element_defs(domElement: DOMElement, defs: SVGDefsElement): void {
@@ -75,6 +80,7 @@ export interface SVGAttributes {
      * Defines the path to be drawn as a list of path commands and their parameters.
      */
     'd'?: string;
+    'direction'?: 'ltr' | 'rtl';
     'dominant-baseline'?: 'auto' | 'middle' | 'hanging';
     'fill'?: string;
     'fill-opacity'?: string;
@@ -84,6 +90,7 @@ export interface SVGAttributes {
     'font-weight'?: string;
     'fx'?: string;
     'fy'?: string;
+    'gradientUnits'?: 'userSpaceOnUse' | 'objectBoundingBox';
     'height'?: string;
     'href'?: 'string';
     'id'?: string;
@@ -861,13 +868,6 @@ const svg = {
 
         },
 
-        'stop': {
-            render: function (this: Stop) {
-                // DGH 'stop' has only been added by me because it is a possible type.
-                throw new Error();
-            }
-        },
-
         'text': {
 
             render: function (this: Text, domElement: DOMElement) {
@@ -906,7 +906,7 @@ const svg = {
                     changed['font-style'] = this._style;
                 }
                 if (this._flagWeight) {
-                    changed['font-weight'] = this._weight;
+                    changed['font-weight'] = `${this._weight}`;
                 }
                 if (this._flagDecoration) {
                     changed['text-decoration'] = this._decoration;
@@ -1021,15 +1021,15 @@ const svg = {
                     changed.id = this._id;
                 }
 
-                if (this.#flagEndPoints) {
-                    changed.x1 = this.left._x;
-                    changed.y1 = this.left._y;
-                    changed.x2 = this.right._x;
-                    changed.y2 = this.right._y;
+                if (this._flagEndPoints) {
+                    changed.x1 = this.left.x;
+                    changed.y1 = this.left.y;
+                    changed.x2 = this.right.x;
+                    changed.y2 = this.right.y;
                 }
 
                 if (this._flagSpread) {
-                    changed.spreadMethod = this._spread;
+                    changed.spreadMethod = this.spread;
                 }
 
                 if (this._flagUnits) {
@@ -1334,7 +1334,7 @@ export interface SVGRendererParams {
     domElement: HTMLElement;
 }
 
-export class SVGRenderer {
+export class SVGRenderer implements Renderer {
 
     readonly domElement: HTMLElement | SVGElement;
     readonly scene: Group;
@@ -1343,36 +1343,24 @@ export class SVGRenderer {
     width?: number;
     height?: number;
 
-    readonly #resize: BehaviorSubject<{ width: number; height: number }>;
-    readonly resize$: Observable<{ width: number; height: number }>;
+    readonly #size: BehaviorSubject<{ width: number; height: number }>;
+    readonly size$: Observable<{ width: number; height: number }>;
 
-    constructor(params: SVGRendererParams) {
+    constructor(params: RendererParams) {
 
         this.domElement = params.domElement || svg.createElement('svg');
-
-        this.scene = new Group();
+        this.scene = params.scene;
         this.scene.parent = this;
 
-        /**
-         * @name Two.SVGRenderer#defs
-         * @property {SvgDefintionsElement} - The `<defs />` to apply gradients, patterns, and bitmap imagery.
-         */
         this.defs = svg.createElement('defs') as SVGDefsElement;
         set_defs_flag_update(this.defs, false);
-        this.defs._flagUpdate = false;
         this.domElement.appendChild(this.defs);
         set_dom_element_defs(this.domElement, this.defs);
         this.domElement.style.overflow = 'hidden';
 
-        this.#resize = new BehaviorSubject({ width: this.width, height: this.height });
-        this.resize$ = this.#resize.asObservable();
+        this.#size = new BehaviorSubject({ width: this.width, height: this.height });
+        this.size$ = this.#size.asObservable();
     }
-
-    /**
-     * @name Two.SVGRenderer.Utils
-     * @property {Object} - A massive object filled with utility functions and properties to render Two.js objects to a `<svg />`.
-     */
-    static Utils = svg;
 
     setSize(width: number, height: number): this {
         this.width = width;
@@ -1381,7 +1369,7 @@ export class SVGRenderer {
             width: `${width}`,
             height: `${height}`
         });
-        this.#resize.next({ width, height });
+        this.#size.next({ width, height });
         return this;
     }
 

@@ -14,8 +14,8 @@ export abstract class Gradient extends Element<Group> {
     _flagSpread = false;
     _flagUnits = false;
 
-    _spread = '';
-    _units = '';
+    _spread: 'pad' | 'reflect' | 'repeat' | null = null;
+    _units: 'userSpaceOnUse' | 'objectBoundingBox' | null = null;
 
     _stops: Children<Stop> | null = null;
     _stops_insert_subscription: Subscription | null = null;
@@ -143,10 +143,10 @@ export abstract class Gradient extends Element<Group> {
         super.flagReset.call(this);
         return this;
     }
-    get spread(): string {
+    get spread(): 'pad' | 'reflect' | 'repeat' | null {
         return this._spread;
     }
-    set spread(v: string) {
+    set spread(v: 'pad' | 'reflect' | 'repeat' | null) {
         this._spread = v;
         this._flagSpread = true;
     }
@@ -158,10 +158,10 @@ export abstract class Gradient extends Element<Group> {
         this.#unset_children();
         this.#set_children(stops);
     }
-    get units(): string {
+    get units(): 'userSpaceOnUse' | 'objectBoundingBox' | null {
         return this._units;
     }
-    set units(v: string) {
+    set units(v: 'userSpaceOnUse' | 'objectBoundingBox' | null) {
         this._units = v;
         this._flagUnits = true;
     }

@@ -1,24 +1,18 @@
+import { BehaviorSubject, Observable } from 'rxjs';
 import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
 import { Texture } from '../effects/texture.js';
-import { Events } from '../events.js';
 import { Group } from '../group.js';
 import { Matrix } from '../matrix.js';
 import { Registry } from '../registry.js';
 import { getRatio } from '../utils/device-pixel-ratio.js';
-import { TwoError } from '../utils/error.js';
-import { getPoT, mod, NumArray, TWO_PI } from '../utils/math.js';
+import { NumArray, TWO_PI, getPoT, mod } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 import { root } from '../utils/root.js';
 import { shaders } from '../utils/shaders.js';
-//import { _ } from '../utils/underscore.js';
 import { Vector } from '../vector.js';
+import { Renderer } from './Renderer.js';
 import { CanvasRenderer } from './canvas.js';
-import { View } from './View.js';
-
-
-
-
 
 // Constants
 
@@ -53,7 +47,7 @@ const webgl = {
 
     matrix: new Matrix(),
 
-    group: {
+    'group': {
 
         removeChild: function (child, gl) {
             if (child.children) {
@@ -171,7 +165,7 @@ const webgl = {
 
     },
 
-    path: {
+    'path': {
 
         updateCanvas: function (gl, elem) {
 
@@ -1456,23 +1450,20 @@ const webgl = {
 
     program: {
 
-        create: function (gl, shaders) {
-            let program, linked, error;
-            program = gl.createProgram();
+        create: function (gl: WebGLRenderingContext, shaders): WebGLProgram {
+            const program = gl.createProgram();
             _.each(shaders, function (s) {
                 gl.attachShader(program, s);
             });
 
             gl.linkProgram(program);
-            linked = gl.getProgramParameter(program, gl.LINK_STATUS);
+            const linked = gl.getProgramParameter(program, gl.LINK_STATUS);
             if (!linked) {
-                error = gl.getProgramInfoLog(program);
+                const info = gl.getProgramInfoLog(program);
                 gl.deleteProgram(program);
-                throw new TwoError('unable to link program: ' + error);
+                throw new Error('unable to link program: ' + info);
             }
-
             return program;
-
         }
 
     },
@@ -1512,13 +1503,15 @@ webgl.ctx = webgl.canvas.getContext('2d');
  * @description This class is used by {@link Two} when constructing with `type` of `Two.Types.webgl`. It takes Two.js' scenegraph and renders it to a `<canvas />` through the WebGL api.
  * @see {@link https://www.khronos.org/registry/webgl/specs/latest/1.0/}
  */
-export class WebGLRenderer implements View {
+export class WebGLRenderer implements Renderer {
 
     readonly domElement: HTMLCanvasElement;
+    readonly ctx: WebGLRenderingContext;    // or maybe WebGL2...
+
+    readonly #size: BehaviorSubject<{ width: number; height: number }>;
+    readonly size$: Observable<{ width: number; height: number }>;
 
     constructor(params) {
-
-        super();
 
         let program, vs, fs;
 
@@ -1570,12 +1563,10 @@ export class WebGLRenderer implements View {
          * @name Two.WebGLRenderer#ctx
          * @property {WebGLContext} - Associated two dimensional context to render on the `<canvas />`.
          */
-        const gl = this.ctx = this.domElement.getContext('webgl', params) ||
-            this.domElement.getContext('experimental-webgl', params);
+        const gl = this.ctx = this.domElement.getContext('webgl', params) || this.domElement.getContext('experimental-webgl', params);
 
         if (!this.ctx) {
-            throw new TwoError(
-                'unable to create a webgl context. Try using another renderer.');
+            throw new Error('unable to create a webgl context. Try using another renderer.');
         }
 
         // Compile Base Shaders to draw in pixel space.
@@ -1639,26 +1630,13 @@ export class WebGLRenderer implements View {
 
         gl.blendEquation(gl.FUNC_ADD);
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+        this.#size = new BehaviorSubject({ width: this.width, height: this.height });
+        this.size$ = this.#size.asObservable();
     }
 
-    /**
-     * @name Two.WebGLRenderer.Utils
-     * @property {Object} - A massive object filled with utility functions and properties to render Two.js objects to a `<canvas />` through the WebGL API.
-     */
-    static Utils = webgl;
-
-    /**
-     * @name Two.WebGLRenderer#setSize
-     * @function
-     * @fires resize
-     * @param {Number} width - The new width of the renderer.
-     * @param {Number} height - The new height of the renderer.
-     * @param {Number} [ratio] - The new pixel ratio (pixel density) of the renderer. Defaults to calculate the pixel density of the user's screen.
-     * @description Change the size of the renderer.
-     */
     setSize(width: number, height: number, ratio: number) {
 
-        let w, h;
         const ctx = this.ctx;
 
         this.width = width;
@@ -1681,8 +1659,8 @@ export class WebGLRenderer implements View {
 
         this._flagMatrix = true;
 
-        w = width * this.ratio;
-        h = height * this.ratio;
+        const w = width * this.ratio;
+        const h = height * this.ratio;
 
         ctx.viewport(0, 0, w, h);
 
@@ -1691,8 +1669,7 @@ export class WebGLRenderer implements View {
         this.programs.resolution.ratio = this.ratio;
         this.programs.resolution.flagged = true;
 
-        return this.trigger(Events.Types.resize, width, height, ratio);
-
+        this.#size.next({ width, height });
     }
 
     /**

@@ -1,6 +1,16 @@
 import { CanvasRenderer } from '../renderers/canvas.js';
 
-export const CanvasShim = {
+interface ImageConstructor {
+    new(): HTMLImageElement | HTMLVideoElement;
+}
+
+interface CanvasShimType {
+    Image: ImageConstructor | null;
+    isHeadless: boolean;
+    shim(canvas: unknown, image: unknown): unknown;
+}
+
+export const CanvasShim: CanvasShimType = {
 
     Image: null,
 
@@ -14,7 +24,7 @@ export const CanvasShim = {
      * @returns {canvas} Returns the instanced canvas object you passed from with additional attributes needed for Two.js.
      * @description Convenience method for defining all the dependencies from the npm package `node-canvas`. See [node-canvas](https://github.com/Automattic/node-canvas) for additional information on setting up HTML5 `<canvas />` drawing in a node.js environment.
      */
-    shim: function (canvas, Image) {
+    shim: function (canvas, Image: ImageConstructor) {
         CanvasRenderer.Utils.shim(canvas);
         if (typeof Image !== 'undefined') {
             CanvasShim.Image = Image;
@@ -22,5 +32,4 @@ export const CanvasShim = {
         CanvasShim.isHeadless = true;
         return canvas;
     }
-
 };

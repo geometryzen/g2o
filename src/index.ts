@@ -13,7 +13,7 @@ export { Element } from './lib/element';
 export { Group } from './lib/group';
 export { Matrix } from './lib/matrix';
 export { Path } from './lib/path';
-export { View as Renderer } from './lib/renderers/View';
+export { Renderer as Renderer } from './lib/renderers/Renderer';
 // export { CanvasRenderer } from './lib/renderers/canvas';
 // export { SVGRenderer } from './lib/renderers/svg';
 // export { WebGLRenderer } from './lib/renderers/webgl';
@@ -28,6 +28,6 @@ export { Rectangle } from './lib/shapes/rectangle';
 export { RoundedRectangle } from './lib/shapes/rounded-rectangle';
 export { Star } from './lib/shapes/star';
 export { Text, TextStyles } from './lib/text';
-/// export { Two, TwoOptions } from './lib/two';
+export { Two, TwoOptions } from './lib/two';
 export { Vector } from './lib/vector';
 

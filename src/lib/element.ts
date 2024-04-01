@@ -1,6 +1,6 @@
 import { Observable, Subject } from 'rxjs';
 import { Child } from './children.js';
-import { View } from './renderers/View.js';
+import { Renderer } from './renderers/Renderer.js';
 
 /**
  * The foundational object for the scenegraph.
@@ -18,7 +18,7 @@ export abstract class Element<P> implements Child {
     _flagId = false;
     _flagClassName = false;
 
-    _renderer: View = {} as View;
+    _renderer: Renderer = {} as Renderer;
 
     _id: string | null = null;
     readonly #id: Subject<{ id: string, previous_id: string | null }>;
@@ -36,10 +36,10 @@ export abstract class Element<P> implements Child {
     flagReset() {
         this._flagId = this._flagClassName = false;
     }
-    get renderer(): View {
+    get renderer(): Renderer {
         return this._renderer;
     }
-    set renderer(renderer: View) {
+    set renderer(renderer: Renderer) {
         this._renderer = renderer;
     }
     get id(): string {
