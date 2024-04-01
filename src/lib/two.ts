@@ -27,23 +27,10 @@ import { Rectangle } from './shapes/rectangle.js';
 import { RoundedRectangle } from './shapes/rounded-rectangle.js';
 import { Star } from './shapes/star.js';
 import { Text } from './text.js';
-import { CanvasShim } from './utils/canvas-shim.js';
-import * as Curves from './utils/curves.js';
-import { getRatio } from './utils/device-pixel-ratio.js';
 import { dom } from './utils/dom.js';
-import { TwoError } from './utils/error.js';
 import { read } from './utils/interpret-svg.js';
-import * as math from './utils/math.js';
 import { Commands } from './utils/path-commands.js';
-import { _ } from './utils/underscore.js';
 import { xhr } from './utils/xhr.js';
-
-const Utils = _.extend({
-    Error: TwoError,
-    getRatio,
-    read,
-    xhr
-}, _, CanvasShim, Curves, math);
 
 export type RendererType = 'CanvasRenderer' | 'SVGRenderer' | 'WebGLRenderer';
 

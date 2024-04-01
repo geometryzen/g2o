@@ -1,228 +1,148 @@
-import { Commands } from '../utils/path-commands.js';
 import { TWO_PI } from '../utils/math.js';
+import { Commands } from '../utils/path-commands.js';
 
-import { Path } from '../path.js';
 import { Anchor } from '../anchor.js';
+import { Path } from '../path.js';
 
 const cos = Math.cos, sin = Math.sin;
 
-/**
- * @name Two.Polygon
- * @class
- * @extends Two.Path
- * @param {Number} [x=0] - The x position of the polygon.
- * @param {Number} [y=0] - The y position of the polygon.
- * @param {Number} [radius=0] - The radius value of the polygon.
- * @param {Number} [sides=12] - The number of vertices used to construct the polygon.
- */
 export class Polygon extends Path {
 
-  /**
-   * @name Two.Polygon#_flagWidth
-   * @private
-   * @property {Boolean} - Determines whether the {@link Two.Polygon#width} needs updating.
-   */
-  _flagWidth = false;
-  /**
-   * @name Two.Polygon#_flagHeight
-   * @private
-   * @property {Boolean} - Determines whether the {@link Two.Polygon#height} needs updating.
-   */
-  _flagHeight = false;
-  /**
-   * @name Two.Polygon#_flagSides
-   * @private
-   * @property {Boolean} - Determines whether the {@link Two.Polygon#sides} needs updating.
-   */
-  _flagSides = false;
+    _flagWidth = false;
+    _flagHeight = false;
+    _flagSides = false;
 
-  /**
-   * @name Two.Polygon#_radius
-   * @private
-   * @see {@link Two.Polygon#radius}
-   */
-  _radius = 0;
-  /**
-   * @name Two.Polygon#_width
-   * @private
-   * @see {@link Two.Polygon#width}
-   */
-  _width = 0;
-  /**
-   * @name Two.Polygon#_height
-   * @private
-   * @see {@link Two.Polygon#height}
-   */
-  _height = 0;
-  /**
-   * @name Two.Polygon#_sides
-   * @private
-   * @see {@link Two.Polygon#sides}
-   */
-  _sides = 0;
-
-  constructor(x, y, radius, sides) {
-
-    sides = Math.max(sides || 0, 3);
-
-    super();
-
-    for (let prop in proto) {
-      Object.defineProperty(this, prop, proto[prop]);
-    }
-
-    this.closed = true;
-    this.automatic = false;
+    _radius = 0;
+    _width = 0;
+    _height = 0;
+    _sides = 0;
 
     /**
-     * @name Two.Polygon#radius
-     * @property {Number} - The radius value of the polygon.
-     * @nota-bene This property is tied to {@link Two.Polygon#width} and {@link Two.Polygon#height}. When you set `radius`, it affects `width` and `height`. Likewise, if you set `width` or `height` it will change the `radius`.
+     * @param x The x position of the polygon.
+     * @param y The y position of the polygon.
+     * @param radius The radius value of the polygon.
+     * @param sides The number of vertices used to construct the polygon.
      */
-    if (typeof radius === 'number') {
-      this.radius = radius;
-    }
+    constructor(x = 0, y = 0, radius = 0, sides = 12) {
 
-    /**
-     * @name Two.Polygon#width
-     * @property {Number} - The size of the width of the polygon.
-     * @nota-bene This property is tied to {@link Two.Polygon#radius}. When you set `radius`, it affects the `width`. Likewise, if you set `width` it will change the `radius`.
-     */
+        sides = Math.max(sides || 0, 3);
 
-    /**
-     * @name Two.Polygon#height
-     * @property {Number} - The size of the height of the polygon.
-     * @nota-bene This property is tied to {@link Two.Polygon#radius}. When you set `radius`, it affects the `height`. Likewise, if you set `height` it will change the `radius`.
-     */
+        super();
 
-    /**
-     * @name Two.Polygon#sides
-     * @property {Number} - The amount of sides the polyogn has.
-     */
-    if (typeof sides === 'number') {
-      this.sides = sides;
-    }
+        this.closed = true;
+        this.automatic = false;
 
-    this._update();
-
-    if (typeof x === 'number') {
-      this.translation.x = x;
-    }
-    if (typeof y === 'number') {
-      this.translation.y = y;
-    }
-
-  }
-
-  /**
-   * @name Two.Polygon.Properties
-   * @property {String[]} - A list of properties that are on every {@link Two.Polygon}.
-   */
-  static Properties = ['width', 'height', 'sides'];
-
-  /**
-   * @name Two.Polygon#_update
-   * @function
-   * @private
-   * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-   * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-   * @nota-bene Try not to call this method more than once a frame.
-   */
-  _update() {
-
-    if (this._flagVertices || this._flagWidth || this._flagHeight || this._flagSides) {
-
-      const sides = this._sides;
-      const amount = sides + 1;
-      let length = this.vertices.length;
-
-      if (length > sides) {
-        this.vertices.splice(sides - 1, length - sides);
-        length = sides;
-      }
-
-      for (let i = 0; i < amount; i++) {
-
-        const pct = (i + 0.5) / sides;
-        const theta = TWO_PI * pct + Math.PI / 2;
-        const x = this._width * cos(theta) / 2;
-        const y = this._height * sin(theta) / 2;
-
-        if (i >= length) {
-          this.vertices.push(new Anchor(x, y));
-        } else {
-          this.vertices[i].set(x, y);
+        /**
+         * @name Two.Polygon#radius
+         * @property {Number} - The radius value of the polygon.
+         * @nota-bene This property is tied to {@link Two.Polygon#width} and {@link Two.Polygon#height}. When you set `radius`, it affects `width` and `height`. Likewise, if you set `width` or `height` it will change the `radius`.
+         */
+        if (typeof radius === 'number') {
+            this.radius = radius;
         }
 
-        this.vertices[i].command = i === 0 ? Commands.move : Commands.line;
+        /**
+         * @name Two.Polygon#width
+         * @property {Number} - The size of the width of the polygon.
+         * @nota-bene This property is tied to {@link Two.Polygon#radius}. When you set `radius`, it affects the `width`. Likewise, if you set `width` it will change the `radius`.
+         */
 
-      }
+        /**
+         * @name Two.Polygon#height
+         * @property {Number} - The size of the height of the polygon.
+         * @nota-bene This property is tied to {@link Two.Polygon#radius}. When you set `radius`, it affects the `height`. Likewise, if you set `height` it will change the `radius`.
+         */
+
+        /**
+         * @name Two.Polygon#sides
+         * @property {Number} - The amount of sides the polyogn has.
+         */
+        if (typeof sides === 'number') {
+            this.sides = sides;
+        }
+
+        this._update();
+
+        if (typeof x === 'number') {
+            this.translation.x = x;
+        }
+        if (typeof y === 'number') {
+            this.translation.y = y;
+        }
 
     }
 
-    super._update.call(this);
-    return this;
+    static Properties = ['width', 'height', 'sides'];
 
-  }
+    _update() {
 
-  /**
-   * @name Two.Polygon#flagReset
-   * @function
-   * @private
-   * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-   */
-  flagReset() {
+        if (this._flagVertices || this._flagWidth || this._flagHeight || this._flagSides) {
 
-    this._flagWidth = this._flagHeight = this._flagSides = false;
-    super.flagReset.call(this);
+            const sides = this._sides;
+            const amount = sides + 1;
+            let length = this.vertices.length;
 
-    return this;
+            if (length > sides) {
+                this.vertices.splice(sides - 1, length - sides);
+                length = sides;
+            }
 
-  }
+            for (let i = 0; i < amount; i++) {
+
+                const pct = (i + 0.5) / sides;
+                const theta = TWO_PI * pct + Math.PI / 2;
+                const x = this._width * cos(theta) / 2;
+                const y = this._height * sin(theta) / 2;
+
+                if (i >= length) {
+                    this.vertices.push(new Anchor(x, y));
+                }
+                else {
+                    this.vertices.getAt(i).origin.set(x, y);
+                }
+
+                this.vertices.getAt(i).command = i === 0 ? Commands.move : Commands.line;
+            }
+        }
+
+        super._update.call(this);
+        return this;
+    }
+
+    flagReset() {
+        this._flagWidth = this._flagHeight = this._flagSides = false;
+        super.flagReset.call(this);
+        return this;
+    }
+    get radius() {
+        return this._radius;
+    }
+    set radius(v) {
+        this._radius = v;
+        this.width = v * 2;
+        this.height = v * 2;
+    }
+    get width() {
+        return this._width;
+    }
+    set width(v) {
+        this._width = v;
+        this._flagWidth = true;
+        this._radius = Math.max(this.width, this.height) / 2;
+    }
+    get height() {
+        return this._height;
+    }
+    set height(v) {
+        this._height = v;
+        this._flagHeight = true;
+        this._radius = Math.max(this.width, this.height) / 2;
+    }
+    get sides() {
+        return this._sides;
+    }
+    set sides(v) {
+        this._sides = v;
+        this._flagSides = true;
+    }
 }
-
-const proto = {
-  radius: {
-    enumerable: true,
-    get: function() {
-      return this._radius;
-    },
-    set: function(v) {
-      this._radius = v;
-      this.width = v * 2;
-      this.height = v * 2;
-    }
-  },
-  width: {
-    enumerable: true,
-    get: function() {
-      return this._width;
-    },
-    set: function(v) {
-      this._width = v;
-      this._flagWidth = true;
-      this._radius = Math.max(this.width, this.height) / 2;
-    }
-  },
-  height: {
-    enumerable: true,
-    get: function() {
-      return this._height;
-    },
-    set: function(v) {
-      this._height = v;
-      this._flagHeight = true;
-      this._radius = Math.max(this.width, this.height) / 2;
-    }
-  },
-  sides: {
-    enumerable: true,
-    get: function() {
-      return this._sides;
-    },
-    set: function(v) {
-      this._sides = v;
-      this._flagSides = true;
-    }
-  }
-};

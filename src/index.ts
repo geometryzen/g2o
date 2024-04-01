@@ -23,11 +23,11 @@ export { Circle } from './lib/shapes/circle';
 export { Ellipse } from './lib/shapes/ellipse';
 export { Line } from './lib/shapes/line';
 // export { Points } from './lib/shapes/points';
-// export { Polygon } from './lib/shapes/polygon';
+export { Polygon } from './lib/shapes/polygon';
 export { Rectangle } from './lib/shapes/rectangle';
 export { RoundedRectangle } from './lib/shapes/rounded-rectangle';
 export { Star } from './lib/shapes/star';
 export { Text, TextStyles } from './lib/text';
-// export { Two, TwoOptions } from './lib/two';
+/// export { Two, TwoOptions } from './lib/two';
 export { Vector } from './lib/vector';
 

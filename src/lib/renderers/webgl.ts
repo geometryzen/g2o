@@ -1505,9 +1505,6 @@ const webgl = {
 webgl.ctx = webgl.canvas.getContext('2d');
 
 /**
- * @name Two.WebGLRenderer
- * @class
- * @extends Two.Events
  * @param {Object} [parameters] - This object is inherited when constructing a new instance of {@link Two}.
  * @param {Element} [parameters.domElement] - The `<canvas />` to draw to. If none given a new one will be constructed.
  * @param {HTMLCanvasElement} [parameters.offscreenElement] - The offscreen two dimensional `<canvas />` to render each element on WebGL texture updates.
