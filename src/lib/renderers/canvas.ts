@@ -1,19 +1,19 @@
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Anchor } from '../anchor.js';
 import { Constants } from '../constants.js';
-import { Events } from '../events.js';
 import { Group } from '../group.js';
 import { Path } from '../path.js';
 import { Curve } from '../utils/curves.js';
 import { getRatio } from '../utils/device-pixel-ratio.js';
 import { TWO_PI, decomposeMatrix, mod } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
-import { _ } from '../utils/underscore.js';
 import { Vector } from '../vector.js';
 import { View } from './View.js';
 
 
 // Constants
 const emptyArray = [];
+
 const max = Math.max,
     min = Math.min,
     abs = Math.abs,
@@ -950,14 +950,15 @@ const canvas = {
  * @param {Boolean} [parameters.smoothing=true] - Determines whether the canvas should antialias drawing. Set it to `false` when working with pixel art. `false` can lead to better performance, since it would use a cheaper interpolation algorithm.
  * @description This class is used by {@link Two} when constructing with `type` of `Two.Types.canvas`. It takes Two.js' scenegraph and renders it to a `<canvas />`.
  */
-export class CanvasRenderer extends Events implements View {
+export class CanvasRenderer implements View {
 
     readonly domElement: HTMLCanvasElement;
     readonly ctx: CanvasRenderingContext2D;
 
-    constructor(params) {
+    readonly #resize: BehaviorSubject<{ width: number; height: number }>;
+    readonly resize$: Observable<{ width: number; height: number }>;
 
-        super();
+    constructor(params) {
 
         // It might not make a big difference on GPU backed canvases.
         const smoothing = (params.smoothing !== false);
@@ -992,6 +993,8 @@ export class CanvasRenderer extends Events implements View {
         this.scene = new Group();
         this.scene.parent = this;
 
+        this.#resize = new BehaviorSubject({ width: this.width, height: this.height });
+        this.resize$ = this.#resize.asObservable();
     }
     clip: SVGClipPathElement;
     elem: HTMLElement | SVGElement;
@@ -1026,14 +1029,11 @@ export class CanvasRenderer extends Events implements View {
         this.domElement.height = height * this.ratio;
 
         if (this.domElement.style) {
-            _.extend(this.domElement.style, {
-                width: width + 'px',
-                height: height + 'px'
-            });
+            this.domElement.style.width = `${width}px`;
+            this.domElement.style.height = `${height}px`;
         }
 
-        return this.trigger(Events.Types.resize, width, height, ratio);
-
+        this.#resize.next({ width, height });
     }
 
     /**

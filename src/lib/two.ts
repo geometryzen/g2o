@@ -15,10 +15,7 @@ import { EventHandler, Events } from './events.js';
 import { Group } from './group.js';
 import { Path } from './path.js';
 // Renderers
-import { CanvasRenderer } from './renderers/canvas.js';
-import { SVGRenderer } from './renderers/svg.js';
 import { View } from './renderers/View.js';
-import { WebGLRenderer } from './renderers/webgl.js';
 import { Shape } from './shape.js';
 // Secondary Classes
 import { ArcSegment } from './shapes/arc-segment.js';

@@ -2,31 +2,31 @@ import { TwoError } from './error.js';
 
 export const shaders = {
 
-  create: function(gl, source, type) {
+    create: function (gl: WebGLRenderingContext, source: string, type: 'VERTEX_SHADER' | 'FRAGMENT_SHADER') {
 
-    const shader = gl.createShader(gl[type]);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
+        const shader = gl.createShader(gl[type]);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
 
-    const compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-    if (!compiled) {
-      const error = gl.getShaderInfoLog(shader);
-      gl.deleteShader(shader);
-      throw new TwoError('unable to compile shader ' + shader + ': ' + error);
-    }
+        const compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+        if (!compiled) {
+            const error = gl.getShaderInfoLog(shader);
+            gl.deleteShader(shader);
+            throw new TwoError('unable to compile shader ' + shader + ': ' + error);
+        }
 
-    return shader;
+        return shader;
 
-  },
+    },
 
-  types: {
-    vertex: 'VERTEX_SHADER',
-    fragment: 'FRAGMENT_SHADER'
-  },
+    types: {
+        vertex: 'VERTEX_SHADER',
+        fragment: 'FRAGMENT_SHADER'
+    },
 
-  path : {
+    path: {
 
-    vertex:`
+        vertex: `
       precision mediump float;
       attribute vec2 a_position;
 
@@ -47,7 +47,7 @@ export const shaders = {
       }
     `,
 
-    fragment: `
+        fragment: `
       precision mediump float;
 
       uniform sampler2D u_image;
@@ -62,11 +62,11 @@ export const shaders = {
       }
     `,
 
-  },
+    },
 
-  points: {
+    points: {
 
-    vertex: `
+        vertex: `
       precision mediump float;
       attribute vec2 a_position;
 
@@ -87,7 +87,7 @@ export const shaders = {
       }
     `,
 
-    fragment: `
+        fragment: `
       precision mediump float;
 
       uniform sampler2D u_image;
@@ -101,6 +101,6 @@ export const shaders = {
       }
     `
 
-  }
+    }
 
 };

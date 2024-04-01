@@ -4,7 +4,6 @@ import { Texture } from './effects/texture.js';
 import { get_dashes_offset, set_dashes_offset } from './path.js';
 import { Shape } from './shape.js';
 import { root } from './utils/root.js';
-import { _ } from './utils/underscore.js';
 
 let canvas: HTMLCanvasElement;
 const min = Math.min, max = Math.max;
@@ -185,7 +184,7 @@ export class Text extends Shape {
      * @param y The position in the y direction for the object.
      * @param styles An object where styles are applied. Attribute must exist in Two.Text.Properties.
      */
-    constructor(message: string, x: number = 0, y: number = 0, styles?: TextStyles) {
+    constructor(message: string, x: number = 0, y: number = 0, styles: Partial<TextStyles> = {}) {
 
         super();
 
@@ -209,10 +208,6 @@ export class Text extends Shape {
         this.dashes = [];
 
         set_dashes_offset(this.dashes, 0);
-
-        if (!_.isObject(styles)) {
-            return this;
-        }
 
         for (let i = 0; i < Text.Properties.length; i++) {
             const property = Text.Properties[i];
