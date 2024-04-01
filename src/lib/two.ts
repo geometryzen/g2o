@@ -80,7 +80,7 @@ export class Two {
      */
     ratio: number | undefined = void 0;
 
-    readonly fitter = new Fitter(this);
+    readonly #fitter = new Fitter(this);
 
     /**
      * An integer representing how many frames have elapsed.
@@ -92,15 +92,10 @@ export class Two {
     readonly frameCount$: Observable<number>;
 
     /**
-     * @name Two#timeDelta
-     * @property {Number} - A number representing how much time has elapsed since the last frame in milliseconds.
+     * A number representing how much time has elapsed since the last frame in milliseconds.
      */
     timeDelta = 0;
 
-    /**
-     * @name Two#playing
-     * @property {Boolean} - A boolean representing whether or not the instance is being updated through the automatic `requestAnimationFrame`.
-     */
     playing = false;
 
     _lastFrame: number;
@@ -122,9 +117,9 @@ export class Two {
         this.frameCount$ = this.#frameCount.asObservable();
 
         if (params.fullscreen) {
-            this.fitter.set_target(window);
-            this.fitter.bind();
-            this.fitter.resize();
+            this.#fitter.set_target(window);
+            this.#fitter.bind();
+            this.#fitter.resize();
         }
         else if (params.fitted) {
             this.renderer.domElement.style.display = 'block';
@@ -150,38 +145,21 @@ export class Two {
             this.#renderer_resize_subscription.unsubscribe();
             this.#renderer_resize_subscription = null;
         }
-        this.fitter.unbind();
+        this.#fitter.unbind();
     }
 
-    // Primitive
-
-    /**
-     * @name Two#appendTo
-     * @function
-     * @param {Element} elem - The DOM element to append the Two.js stage to.
-     * @description Shorthand method to append your instance of Two.js to the `document`.
-     */
     appendTo(elem: Element) {
-
         elem.appendChild(this.renderer.domElement);
 
-        if (!this.fitter.is_target_window()) {
-            this.fitter.set_target(elem);
+        if (!this.#fitter.is_target_window()) {
+            this.#fitter.set_target(elem);
         }
 
         this.update();
 
         return this;
-
     }
 
-    /**
-     * @name Two#play
-     * @function
-     * @fires play
-     * @description Call to start an internal animation loop.
-     * @nota-bene This function initiates a `requestAnimationFrame` loop.
-     */
     play(): this {
         this.playing = true;
         // raf.init();
@@ -189,12 +167,6 @@ export class Two {
         return this;
     }
 
-    /**
-     * @name Two#pause
-     * @function
-     * @fires pause
-     * @description Call to stop the internal animation loop for a specific instance of Two.js.
-     */
     pause() {
         this.playing = false;
         // return this.trigger(Events.Types.pause);
@@ -216,9 +188,9 @@ export class Two {
         }
         this._lastFrame = now;
 
-        if (this.fitter.has_target() && !this.fitter.is_bound()) {
-            this.fitter.bind();
-            this.fitter.resize();
+        if (this.#fitter.has_target() && !this.#fitter.is_bound()) {
+            this.#fitter.bind();
+            this.#fitter.resize();
         }
 
         const width = this.width;
@@ -298,47 +270,33 @@ export class Two {
     }
 
     makeRectangle(x: number, y: number, width: number, height: number): Rectangle {
-
         const rect = new Rectangle(x, y, width, height);
         this.scene.add(rect);
-
         return rect;
-
     }
 
     makeRoundedRectangle(x: number, y: number, width: number, height: number, sides: number): RoundedRectangle {
-
         const rect = new RoundedRectangle(x, y, width, height, sides);
         this.scene.add(rect);
-
         return rect;
-
     }
 
     makeCircle(x: number, y: number, radius: number, resolution: number = 4): Circle {
-
         const circle = new Circle(x, y, radius, resolution);
         this.scene.add(circle);
-
         return circle;
-
     }
 
     makeEllipse(x: number, y: number, rx: number, ry: number, resolution: number = 4): Ellipse {
-
         const ellipse = new Ellipse(x, y, rx, ry, resolution);
         this.scene.add(ellipse);
-
         return ellipse;
     }
 
     makeStar(x: number, y: number, outerRadius: number, innerRadius: number, sides: number): Star {
-
         const star = new Star(x, y, outerRadius, innerRadius, sides);
         this.scene.add(star);
-
         return star;
-
     }
 
     makeCurve(closed: boolean, ...anchors: Anchor[]): Path {
@@ -351,12 +309,9 @@ export class Two {
     }
 
     makePolygon(x: number, y: number, radius: number, sides: number): Polygon {
-
         const poly = new Polygon(x, y, radius, sides);
         this.scene.add(poly);
-
         return poly;
-
     }
 
     makeArcSegment(x: number, y: number, innerRadius: number, outerRadius: number, startAngle: number, endAngle: number, resolution: number = Constants.Resolution): ArcSegment {
@@ -393,16 +348,13 @@ export class Two {
     */
 
     makePath(closed: boolean, ...points: Anchor[]): Path {
-
         const path = new Path(points, closed);
         const rect = path.getBoundingClientRect();
         if (typeof rect.top === 'number' && typeof rect.left === 'number' &&
             typeof rect.right === 'number' && typeof rect.bottom === 'number') {
             path.center().translation.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
         }
-
         this.scene.add(path);
-
         return path;
     }
 
@@ -427,15 +379,12 @@ export class Two {
     */
 
     makeSprite(pathOrTexture: (string | Texture), x: number, y: number, columns: number, rows: number, frameRate: number, autostart: boolean): Sprite {
-
         const sprite = new Sprite(pathOrTexture, x, y, columns, rows, frameRate);
         if (autostart) {
             sprite.play();
         }
         this.add(sprite);
-
         return sprite;
-
     }
 
     /*
