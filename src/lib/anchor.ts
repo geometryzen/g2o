@@ -136,7 +136,8 @@ export class Anchor {
      * Invoked when the path is manual (not automatic).
      */
     listen(): void {
-        throw new Error("TODO: Anchor.listen()");
+        // Do nothing.
+        // throw new Error("TODO: Anchor.listen()");
     }
 
     /**
