@@ -29,6 +29,9 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
      */
     _worldMatrix: Matrix = null;
 
+    /**
+     * TODO: Can I make this #private without breaking extending classes?
+     */
     _position: Vector = null;
     #position_change: Subscription | null = null;
 
