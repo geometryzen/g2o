@@ -30,7 +30,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     _worldMatrix: Matrix = null;
 
     _position: Vector = null;
-    _position_change_subscription: Subscription | null = null;
+    #position_change: Subscription | null = null;
 
     /**
      * TODO: Replace with attitude and Geometric Algebra.
@@ -141,13 +141,6 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         this.viewInfo = v;
     }
 
-    get translation() {
-        return this.position;
-    }
-    set translation(v) {
-        this.position = v;
-    }
-
     /**
      * @name Two.Shape#_update
      * @function
@@ -207,12 +200,12 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         return this._position;
     }
     set position(v) {
-        if (this._position_change_subscription) {
-            this._position_change_subscription.unsubscribe();
-            this._position_change_subscription = null;
+        if (this.#position_change) {
+            this.#position_change.unsubscribe();
+            this.#position_change = null;
         }
         this._position = v;
-        this._position_change_subscription = this._position.change$.subscribe(() => {
+        this.#position_change = this._position.change$.subscribe(() => {
             this._flagMatrix = true;
         });
     }

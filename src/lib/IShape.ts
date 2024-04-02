@@ -22,8 +22,8 @@ export interface IShape<P> extends Child {
     linewidth: number;
     miter: number;
     parent: P;
+    position: Vector;
     stroke: string | Gradient | Texture;
-    translation: Vector;
     visible: boolean;
     getBoundingClientRect(shallow?: boolean): { width?: number; height?: number; top?: number; left?: number; right?: number; bottom?: number };
     // const regex = /texture|gradient/i;

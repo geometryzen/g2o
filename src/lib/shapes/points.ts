@@ -182,10 +182,10 @@ export class Points extends Shape<Group> {
         }
         /*
         if (this.mask) {
-            this.mask.translation.x -= cx;
-            this.mask.translation.x += hw;
-            this.mask.translation.y -= cy;
-            this.mask.translation.y += hh;
+            this.mask.position.x -= cx;
+            this.mask.position.x += hw;
+            this.mask.position.y -= cy;
+            this.mask.position.y += hh;
         }
         */
 
@@ -196,8 +196,8 @@ export class Points extends Shape<Group> {
     center() {
         const rect = this.getBoundingClientRect(true);
 
-        const cx = rect.left + rect.width / 2 - this.translation.x;
-        const cy = rect.top + rect.height / 2 - this.translation.y;
+        const cx = rect.left + rect.width / 2 - this.position.x;
+        const cy = rect.top + rect.height / 2 - this.position.y;
 
         for (let i = 0; i < this.vertices.length; i++) {
             const v = this.vertices.getAt(i);
@@ -206,8 +206,8 @@ export class Points extends Shape<Group> {
         }
         /*
         if (this.mask) {
-            this.mask.translation.x -= cx;
-            this.mask.translation.y -= cy;
+            this.mask.position.x -= cx;
+            this.mask.position.y -= cy;
         }
         */
         return this;
@@ -237,8 +237,8 @@ export class Points extends Shape<Group> {
                 }
             }
             else {
-                border *= typeof this.scale === 'number'
-                    ? this.scale : Math.max(this.scale.x, this.scale.y);
+                // TODO: Need an API for non-uniform scaling.
+                border *= typeof this.scale === 'number' ? this.scale : Math.max(this.scale.x, this.scale.y);
             }
         }
 

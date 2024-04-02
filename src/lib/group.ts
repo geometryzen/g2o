@@ -161,13 +161,13 @@ export class Group extends Shape<unknown> {
 
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
-            child.translation.x -= rect.left;
-            child.translation.y -= rect.top;
+            child.position.x -= rect.left;
+            child.position.y -= rect.top;
         }
 
         if (this.mask) {
-            this.mask.translation.x -= rect.left;
-            this.mask.translation.y -= rect.top;
+            this.mask.position.x -= rect.left;
+            this.mask.position.y -= rect.top;
         }
 
         return this;
@@ -182,20 +182,20 @@ export class Group extends Shape<unknown> {
     center() {
 
         const rect = this.getBoundingClientRect(true);
-        const cx = rect.left + rect.width / 2 - this.translation.x;
-        const cy = rect.top + rect.height / 2 - this.translation.y;
+        const cx = rect.left + rect.width / 2 - this.position.x;
+        const cy = rect.top + rect.height / 2 - this.position.y;
 
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             if (child.isShape) {
-                child.translation.x -= cx;
-                child.translation.y -= cy;
+                child.position.x -= cx;
+                child.position.y -= cy;
             }
         }
 
         if (this.mask) {
-            this.mask.translation.x -= cx;
-            this.mask.translation.y -= cy;
+            this.mask.position.x -= cx;
+            this.mask.position.y -= cy;
         }
 
         return this;

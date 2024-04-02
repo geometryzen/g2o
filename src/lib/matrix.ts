@@ -22,7 +22,7 @@ export class Matrix {
     /**
      * @name Two.Matrix#manual
      * @property {Boolean} - Determines whether Two.js automatically calculates the values for the matrix or if the developer intends to manage the matrix.
-     * @nota-bene - Setting to `true` nullifies {@link Two.Shape#translation}, {@link Two.Shape#rotation}, and {@link Two.Shape#scale}.
+     * @nota-bene - Setting to `true` nullifies {@link Shape#position}, {@link Two.Shape#rotation}, and {@link Two.Shape#scale}.
      */
     manual = false;
 
@@ -302,8 +302,8 @@ export class Matrix {
     /**
      * @name Two.Matrix#translate
      * @function
-     * @param {Number} x - The horizontal translation value to apply.
-     * @param {Number} y - The vertical translation value to apply.
+     * @param x The horizontal translation value to apply.
+     * @param y The vertical translation value to apply.
      * @description Translate the matrix.
      */
     translate(x: number, y: number): this {

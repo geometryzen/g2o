@@ -323,7 +323,7 @@ export class Two {
         const curved = true;
         const curve = new Path(anchors, closed, curved);
         const rect = curve.getBoundingClientRect();
-        curve.center().translation.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        curve.center().position.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
         this.#scene.add(curve);
         return curve;
     }
@@ -372,7 +372,7 @@ export class Two {
         const rect = path.getBoundingClientRect();
         if (typeof rect.top === 'number' && typeof rect.left === 'number' &&
             typeof rect.right === 'number' && typeof rect.bottom === 'number') {
-            path.center().translation.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            path.center().position.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
         }
         this.#scene.add(path);
         return path;

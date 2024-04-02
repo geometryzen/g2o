@@ -113,10 +113,10 @@ export class ArcSegment extends Path {
         this._update();
 
         if (typeof x === 'number') {
-            this.translation.x = x;
+            this.position.x = x;
         }
         if (typeof y === 'number') {
-            this.translation.y = y;
+            this.position.y = y;
         }
 
     }

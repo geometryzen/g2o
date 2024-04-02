@@ -1,18 +1,36 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 
+/**
+ * A multivector for two dimensions with a Euclidean metric.
+ */
 export class Vector {
-
+    #a: number;
     #x: number;
     #y: number;
+    #b: number;
+
     readonly #change: BehaviorSubject<this>;
     readonly change$: Observable<this>;
 
-    constructor(x = 0, y = 0) {
+    constructor(x = 0, y = 0, a = 0, b = 0) {
         this.#x = x;
         this.#y = y;
+        this.#a = a;
+        this.#b = b;
 
         this.#change = new BehaviorSubject(this);
         this.change$ = this.#change.asObservable();
+    }
+
+    get a(): number {
+        return this.#a;
+    }
+
+    set a(a: number) {
+        if (this.a !== a) {
+            this.#a = a;
+            this.#change.next(this);
+        }
     }
 
     get x(): number {
@@ -37,18 +55,39 @@ export class Vector {
         }
     }
 
+    get b(): number {
+        return this.#b;
+    }
+
+    set b(b: number) {
+        if (this.b !== b) {
+            this.#b = b;
+            this.#change.next(this);
+        }
+    }
+
+    static one = new Vector(0, 0, 1, 0);
     static zero = new Vector(0, 0);
     static left = new Vector(-1, 0);
     static right = new Vector(1, 0);
     static up = new Vector(0, -1);
     static down = new Vector(0, 1);
+    static I = new Vector(0, 0, 0, 1);
 
     static add(v1: Vector, v2: Vector): Vector {
-        return new Vector(v1.x + v2.x, v1.y + v2.y);
+        const x = v1.x + v2.x;
+        const y = v1.y + v2.y;
+        const a = v1.a + v2.a;
+        const b = v1.b + v2.b;
+        return new Vector(x, y, a, b);
     }
 
     static sub(v1: Vector, v2: Vector): Vector {
-        return new Vector(v1.x - v2.x, v1.y - v2.y);
+        const x = v1.x - v2.x;
+        const y = v1.y - v2.y;
+        const a = v1.a - v2.a;
+        const b = v1.b - v2.b;
+        return new Vector(x, y, a, b);
     }
 
     static subtract(v1: Vector, v2: Vector): Vector {
@@ -81,45 +120,59 @@ export class Vector {
         return dx * dx + dy * dy;
     }
 
-    set(x: number, y: number): this {
+    set(x: number, y: number, a = 0, b = 0): this {
         this.x = x;
         this.y = y;
+        this.a = a;
+        this.b = b;
         return this;
     }
 
     copy(v: Vector): this {
         this.x = v.x;
         this.y = v.y;
+        this.a = v.a;
+        this.b = v.b;
         return this;
     }
 
     clear(): this {
         this.x = 0;
         this.y = 0;
+        this.a = 0;
+        this.b = 0;
         return this;
     }
 
     add(rhs: Vector): this {
         this.x += rhs.x;
         this.y += rhs.y;
+        this.a += rhs.a;
+        this.b += rhs.b;
         return this;
     }
 
-    sub(rhs: Vector) {
+    sub(rhs: Vector): this {
         this.x -= rhs.x;
         this.y -= rhs.y;
+        this.a -= rhs.a;
+        this.b -= rhs.b;
         return this;
     }
 
-    multiplyScalar(s: number) {
+    multiplyScalar(s: number): this {
         this.x = this.x * s;
         this.y = this.y * s;
+        this.a = this.a * s;
+        this.b = this.b * s;
         return this;
     }
 
-    divideScalar(s: number) {
+    divideScalar(s: number): this {
         this.x = this.x / s;
         this.y = this.y / s;
+        this.a = this.a / s;
+        this.b = this.b / s;
         return this;
     }
 
@@ -165,7 +218,9 @@ export class Vector {
     lerp(v: Vector, t: number): this {
         const x = (v.x - this.x) * t + this.x;
         const y = (v.y - this.y) * t + this.y;
-        return this.set(x, y);
+        const a = (v.a - this.a) * t + this.a;
+        const b = (v.b - this.b) * t + this.b;
+        return this.set(x, y, a, b);
     }
 
     isZero(eps: number): boolean {

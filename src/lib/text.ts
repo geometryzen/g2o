@@ -86,13 +86,13 @@ export class Text extends Shape<Group> {
     _leading = 17;
 
     /**
-     * Alignment of text in relation to {@link Text#translation}'s coordinates.
+     * Alignment of text in relation to {@link Text#position}'s coordinates.
      * Possible values include `'left'`, `'center'`, `'right'`. Defaults to `'center'`.
      */
     _alignment: 'center' | 'left' | 'right' = 'center';
 
     /**
-     * The vertical aligment of the text in relation to {@link Two.Text#translation}'s coordinates.
+     * The vertical aligment of the text in relation to {@link Two.Text#position}'s coordinates.
      * Possible values include `'top'`, `'middle'`, `'bottom'`, and `'baseline'`. Defaults to `'baseline'`.
      * @nota-bene In headless environments where the canvas is based on {@link https://github.com/Automattic/node-canvas}, `baseline` seems to be the only valid property.
      */
@@ -194,10 +194,10 @@ export class Text extends Shape<Group> {
         this.value = message;
 
         if (typeof x === 'number') {
-            this.translation.x = x;
+            this.position.x = x;
         }
         if (typeof y === 'number') {
-            this.translation.y = y;
+            this.position.y = y;
         }
 
         /**
