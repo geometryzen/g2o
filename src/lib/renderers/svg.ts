@@ -1316,11 +1316,11 @@ const svg = {
 
 } as const;
 
-export interface SVGRendererParams {
+export interface SVGViewParams {
     svgElement?: SVGElement;
 }
 
-export class SVGRenderer implements View {
+export class SVGView implements View {
 
     readonly domElement: SVGElement;
     readonly scene: Group;
@@ -1332,7 +1332,7 @@ export class SVGRenderer implements View {
     readonly #size: BehaviorSubject<{ width: number; height: number }>;
     readonly size$: Observable<{ width: number; height: number }>;
 
-    constructor(scene: Group, params: SVGRendererParams = {}) {
+    constructor(scene: Group, params: SVGViewParams = {}) {
         if (scene instanceof Group) {
             this.scene = scene;
             this.scene.parent = this;

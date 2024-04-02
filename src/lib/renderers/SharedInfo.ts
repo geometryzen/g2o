@@ -1,7 +1,7 @@
 import { Anchor } from "../anchor";
 
 /**
- * 
+ * Information that is shared between the model and the view.
  */
 export interface SharedInfo {
     appended?: boolean;
@@ -11,7 +11,7 @@ export interface SharedInfo {
      */
     effect?: CanvasPattern;
     /**
-     * The element corresponding to some Shape. It will share the same identifier.
+     * The element corresponding to some Shape and used by the SVG renderer. It will share the same identifier.
      */
     elem?: HTMLElement | SVGElement;
     /**

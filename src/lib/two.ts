@@ -50,7 +50,7 @@ export interface TwoOptions {
     /**
      * The canvas or SVG element to draw into. This overrides the `options.type` argument.
      */
-    domElement: HTMLElement;
+    container: HTMLElement;
 }
 
 export class Two {
@@ -119,7 +119,7 @@ export class Two {
             fitted: !!options.fitted,
             width: typeof options.width === 'number' ? options.width : 640,
             height: typeof options.height === 'number' ? options.height : 480,
-            domElement: options.domElement
+            container: options.container
         };
 
         this.renderer = view;
@@ -136,12 +136,13 @@ export class Two {
             this.renderer.domElement.style.display = 'block';
             // this.fitter.fitToParent();
         }
-        else if (!params.domElement) {
-
+        else if (params.container) {
+            this.appendTo(params.container);
+        }
+        else {
             this.renderer.setSize(params.width, params.height, this.ratio);
             this.width = params.width;
             this.height = params.height;
-
         }
 
         this.#renderer_resize_subscription = this.renderer.size$.subscribe(({ width, height }) => {
@@ -150,13 +151,6 @@ export class Two {
             this.#size.next({ width, height });
         });
     }
-
-    /*
-    addView(view: Renderer): this {
-        this.renderer = view;
-        return this;
-    }
-    */
 
     dispose(): void {
         if (this.#renderer_resize_subscription) {

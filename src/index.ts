@@ -1,7 +1,4 @@
 export { Anchor } from './lib/anchor';
-export { Children } from './lib/children';
-export { Collection } from './lib/collection';
-// export { Constants } from './lib/constants';
 export { Gradient } from './lib/effects/gradient';
 // export { ImageSequence } from './lib/effects/image-sequence';
 export { LinearGradient } from './lib/effects/linear-gradient';
@@ -15,7 +12,7 @@ export { Matrix } from './lib/matrix';
 export { Path } from './lib/path';
 // export { CanvasRenderer } from './lib/renderers/canvas';
 export { View } from './lib/renderers/View';
-export { SVGRenderer, SVGRendererParams } from './lib/renderers/svg';
+export { SVGView, SVGViewParams } from './lib/renderers/svg';
 // export { WebGLRenderer } from './lib/renderers/webgl';
 export { Shape } from './lib/shape';
 export { ArcSegment } from './lib/shapes/arc-segment';
