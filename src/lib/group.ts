@@ -1,79 +1,26 @@
 import { Subscription } from 'rxjs';
 import { IShape } from './IShape.js';
 import { Children } from './children.js';
-import { Shape } from './shape.js';
+import { Parent, Shape } from './shape.js';
+
+export interface IGroup extends Parent {
+    remove(...shapes: Shape<IGroup>[]): void;
+}
 
 // Constants
 
 const min = Math.min, max = Math.max;
 
-export class Group extends Shape implements IShape {
-
-    /**
-     * @name Two.Group#_flagAdditions
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Group#additions} needs updating.
-     */
+export class Group extends Shape<unknown> {
     _flagAdditions = false;
-
-    /**
-     * @name Two.Group#_flagSubtractions
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Group#subtractions} needs updating.
-     */
     _flagSubtractions = false;
-
-    /**
-     * @name Two.Group#_flagOrder
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Group#order} needs updating.
-     */
     _flagOrder = false;
-
-    /**
-     * @name Two.Group#_flagVisible
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Group#visible} needs updating.
-     */
-
-    /**
-     * @name Two.Group#_flagOpacity
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Group#opacity} needs updating.
-     */
     _flagOpacity = true;
-
-    /**
-     * @name Two.Group#_flagBeginning
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Group#beginning} needs updating.
-     */
     _flagBeginning = false;
-
-    /**
-     * @name Two.Group#_flagEnding
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Group#ending} needs updating.
-     */
     _flagEnding = false;
-
-    /**
-     * @name Two.Group#_flagLength
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Group#length} needs updating.
-     */
     _flagLength = false;
-
-    /**
-     * @name Two.Group#_flagMask
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Group#mask} needs updating.
-     */
     _flagMask = false;
-
     _flagVisible = false;
-
-    // Underlying Properties
 
     _fill = '#fff';
     _stroke = '#000';
@@ -113,9 +60,9 @@ export class Group extends Shape implements IShape {
      * @name Two.Group#mask
      * @property {Two.Shape} - The Two.js object to clip from a group's rendering.
      */
-    _mask: Shape = null;
+    _mask: Shape<Group> = null;
 
-    _shapes: Children<Shape>;
+    _shapes: Children<Shape<Group>>;
     #shapes_insert_subscription: Subscription | null = null;
     #shapes_remove_subscription: Subscription | null = null;
     #shapes_order_subscription: Subscription | null = null;
@@ -125,13 +72,13 @@ export class Group extends Shape implements IShape {
     /**
      * An automatically updated list of shapes that need to be appended to the renderer's scenegraph.
      */
-    readonly additions: Shape[] = [];
+    readonly additions: Shape<Group>[] = [];
     /**
      * An automatically updated list of children that need to be removed from the renderer's scenegraph.
      */
-    readonly subtractions: Shape[] = [];
+    readonly subtractions: Shape<Group>[] = [];
 
-    constructor(shapes: Shape[] = []) {
+    constructor(shapes: Shape<Group>[] = []) {
 
         super();
 
@@ -154,13 +101,13 @@ export class Group extends Shape implements IShape {
     }
 
     #subscribe_to_shapes(): void {
-        this.#shapes_insert_subscription = this._shapes.insert$.subscribe((inserts: Shape[]) => {
+        this.#shapes_insert_subscription = this._shapes.insert$.subscribe((inserts: Shape<Group>[]) => {
             for (const shape of inserts) {
                 update_shape_group(shape, this);
             }
         });
 
-        this.#shapes_remove_subscription = this._shapes.remove$.subscribe((removes: Shape[]) => {
+        this.#shapes_remove_subscription = this._shapes.remove$.subscribe((removes: Shape<Group>[]) => {
             for (const shape of removes) {
                 update_shape_group(shape, null);
             }
@@ -261,9 +208,9 @@ export class Group extends Shape implements IShape {
      * @description Recursively search for id. Returns the first element found.
      * @returns {Two.Shape} - Or `null` if nothing is found.
      */
-    getById(id: string): IShape {
+    getById(id: string): IShape<unknown> {
         let found = null;
-        function search(node: IShape): IShape {
+        function search(node: IShape<unknown>): IShape<unknown> {
             if (node.id === id) {
                 return node;
             }
@@ -280,9 +227,9 @@ export class Group extends Shape implements IShape {
         return search(this);
     }
 
-    getByClassName(className: string): IShape[] {
-        const found: IShape[] = [];
-        function search(node: IShape) {
+    getByClassName(className: string): IShape<unknown>[] {
+        const found: IShape<unknown>[] = [];
+        function search(node: IShape<unknown>) {
             if (Array.prototype.indexOf.call(node.classList, className) >= 0) {
                 found.push(node);
             }
@@ -298,9 +245,9 @@ export class Group extends Shape implements IShape {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getByType(type: any): IShape[] {
-        const found: IShape[] = [];
-        function search(node: IShape) {
+    getByType(type: any): IShape<unknown>[] {
+        const found: IShape<unknown>[] = [];
+        function search(node: IShape<unknown>) {
             if (node instanceof type) {
                 found.push(node);
             }
@@ -315,7 +262,7 @@ export class Group extends Shape implements IShape {
         return search(this);
     }
 
-    add(...shapes: Shape[]) {
+    add(...shapes: Shape<Group>[]) {
 
         for (let i = 0; i < shapes.length; i++) {
             const child = shapes[i];
@@ -333,16 +280,18 @@ export class Group extends Shape implements IShape {
 
     }
 
-    remove(...shapes: Shape[]) {
+    remove(...shapes: Shape<Group>[]) {
 
-        const l = arguments.length,
-            grandparent = this.parent;
+        const l = arguments.length;
+        const grandparent = this.parent;
 
         // TODO: I don't like this double-meaning. It's in Shape too.
         // Allow to call remove without arguments
         // This will detach the object from its own parent.
         if (l <= 0 && grandparent) {
-            grandparent.remove(this);
+            if (grandparent instanceof Group) {
+                (grandparent as IGroup).remove(this as Shape<IGroup>);
+            }
             return this;
         }
 
@@ -552,7 +501,7 @@ export class Group extends Shape implements IShape {
      * @description A list of all the children in the scenegraph.
      * @nota-bene Ther order of this list indicates the order each element is rendered to the screen.
      */
-    get children(): Children<Shape> {
+    get children(): Children<Shape<Group>> {
         return this._shapes;
     }
     set children(children) {
@@ -638,10 +587,10 @@ export class Group extends Shape implements IShape {
             child.linewidth = v;
         }
     }
-    get mask(): Shape {
+    get mask(): Shape<Group> {
         return this._mask;
     }
-    set mask(v: Shape) {
+    set mask(v: Shape<Group>) {
         this._mask = v;
         this._flagMask = true;
         if (!v.clip) {
@@ -692,7 +641,7 @@ export class Group extends Shape implements IShape {
 //  * and updates parent-child relationships
 //  * Calling with one arguments will simply remove the parenting
 //  */
-export function update_shape_group(child: Shape, parent?: Group) {
+export function update_shape_group(child: Shape<Group>, parent?: Group) {
 
     const previous_parent = child.parent;
     let index;

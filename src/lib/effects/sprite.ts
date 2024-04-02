@@ -1,5 +1,5 @@
 import { lerp } from '../utils/math.js';
-import { performance } from '../utils/performance.js';
+import { dateTime } from '../utils/performance.js';
 
 import { Rectangle } from '../shapes/rectangle.js';
 import { Vector } from '../vector.js';
@@ -116,7 +116,7 @@ export class Sprite extends Rectangle {
         this._playing = true;
         this._firstFrame = 0;
         this._lastFrame = this._amount - 1;
-        this._startTime = performance.now();
+        this._startTime = dateTime.now();
 
         if (typeof firstFrame === 'number') {
             this._firstFrame = firstFrame;
@@ -219,7 +219,7 @@ export class Sprite extends Rectangle {
                     }
 
                     // TODO: Offload perf logic to instance of `Two`.
-                    elapsed = performance.now() - this._startTime;
+                    elapsed = dateTime.now() - this._startTime;
                     frames = this._lastFrame + 1;
                     duration = 1000 * (frames - this._firstFrame) / this._frameRate;
 

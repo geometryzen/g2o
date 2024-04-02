@@ -5,6 +5,7 @@ import { Gradient } from './effects/gradient';
 import { LinearGradient } from './effects/linear-gradient';
 import { RadialGradient } from './effects/radial-gradient';
 import { Texture } from './effects/texture';
+import { Group } from './group';
 import { Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
 import { decomposeMatrix } from './utils/decompose_matrix';
@@ -43,93 +44,20 @@ const vector = new Vector();
  * @param {Boolean} [manual=false] - Describes whether the developer controls how vertices are plotted or if Two.js automatically plots coordinates based on closed and curved booleans.
  * @description This is the primary primitive class for creating all drawable shapes in Two.js. Unless specified methods return their instance of `Two.Path` for the purpose of chaining.
  */
-export class Path extends Shape {
+export class Path extends Shape<Group> {
 
-    /**
-     * @name Two.Path#_flagVertices
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#vertices} need updating.
-     */
     _flagVertices = true;
-
-    /**
-     * @name Two.Path#_flagLength
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#length} needs updating.
-     */
     _flagLength = true;
-
-    /**
-     * @name Two.Path#_flagFill
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#fill} needs updating.
-     */
     _flagFill = true;
-
-    /**
-     * @name Two.Path#_flagStroke
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#stroke} needs updating.
-     */
     _flagStroke = true;
-
-    /**
-     * @name Two.Path#_flagLinewidth
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#linewidth} needs updating.
-     */
     _flagLinewidth = true;
-
-    /**
-     * @name Two.Path#_flagOpacity
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#opacity} needs updating.
-     */
     _flagOpacity = true;
-
-    /**
-     * @name Two.Path#_flagVisible
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#visible} needs updating.
-     */
     _flagVisible = true;
-
-    /**
-     * @name Two.Path#_flagCap
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#cap} needs updating.
-     */
     _flagCap = true;
-
-    /**
-     * @name Two.Path#_flagJoin
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#join} needs updating.
-     */
     _flagJoin = true;
-
-    /**
-     * @name Two.Path#_flagMiter
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#miter} needs updating.
-     */
     _flagMiter = true;
-
-    /**
-     * @name Two.Path#_flagMask
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#mask} needs updating.
-     */
     _flagMask = false;
-
-    /**
-     * @name Two.Path#_flagClip
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Path#clip} needs updating.
-     */
     _flagClip = false;
-
-    // Underlying Properties
 
     /**
      * @name Two.Path#_length
@@ -233,7 +161,7 @@ export class Path extends Shape {
      */
     _ending = 1.0;
 
-    _mask: Shape | null = null;
+    _mask: Shape<Group> | null = null;
 
     /**
      * @name Two.Path#_clip
@@ -260,8 +188,8 @@ export class Path extends Shape {
         super();
 
         this.viewInfo.type = 'path';
-        this.viewInfo.vertices = [];
-        this.viewInfo.collection = [];
+        this.viewInfo.anchor_vertices = [];
+        this.viewInfo.anchor_collection = [];
 
         /**
          * @name Two.Path#closed
@@ -470,7 +398,7 @@ export class Path extends Shape {
         const matrix = shallow ? this.matrix : this.worldMatrix;
 
         let border = (this.linewidth || 0) / 2;
-        const l = this.viewInfo.vertices.length;
+        const l = this.viewInfo.anchor_vertices.length;
 
         if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
@@ -497,10 +425,10 @@ export class Path extends Shape {
 
         for (let i = 0; i < l; i++) {
 
-            const v1 = this.viewInfo.vertices[i];
+            const v1 = this.viewInfo.anchor_vertices[i];
             // If i = 0, then this "wraps around" to the last vertex. Otherwise, it's the previous vertex.
             // This is important for handling cyclic paths.
-            const v0 = this.viewInfo.vertices[(i + l - 1) % l];
+            const v0 = this.viewInfo.anchor_vertices[(i + l - 1) % l];
 
             const [v0x, v0y] = matrix.multiply_vector(v0.x, v0.y);
             const [v1x, v1y] = matrix.multiply_vector(v1.x, v1.y);
@@ -908,23 +836,23 @@ export class Path extends Shape {
                  */
                 let next: Anchor;
 
-                this.viewInfo.vertices.length = 0;
+                this.viewInfo.anchor_vertices.length = 0;
                 {
                     let right: Anchor;
                     let prev: Anchor;
                     for (let i = 0; i < l; i++) {
 
-                        if (this.viewInfo.collection.length <= i) {
+                        if (this.viewInfo.anchor_collection.length <= i) {
                             // Expected to be `relative` anchor points.
-                            this.viewInfo.collection.push(new Anchor());
+                            this.viewInfo.anchor_collection.push(new Anchor());
                         }
 
                         if (i > high && !right) {
 
-                            const v = this.viewInfo.collection[i].copy(this._collection.getAt(i));
+                            const v = this.viewInfo.anchor_collection[i].copy(this._collection.getAt(i));
                             this.getPointAt(ending, v);
-                            v.command = this.viewInfo.collection[i].command;
-                            this.viewInfo.vertices.push(v);
+                            v.command = this.viewInfo.anchor_collection[i].command;
+                            this.viewInfo.anchor_vertices.push(v);
 
                             right = v;
                             prev = this._collection.getAt(i - 1);
@@ -941,12 +869,12 @@ export class Path extends Shape {
                                 }
 
                                 if (prev.relative) {
-                                    this.viewInfo.collection[i - 1].controls.right
+                                    this.viewInfo.anchor_collection[i - 1].controls.right
                                         .copy(prev.controls.right)
                                         .lerp(Vector.zero, 1 - v.t);
                                 }
                                 else {
-                                    this.viewInfo.collection[i - 1].controls.right
+                                    this.viewInfo.anchor_collection[i - 1].controls.right
                                         .copy(prev.controls.right)
                                         .lerp(prev.origin, 1 - v.t);
                                 }
@@ -956,8 +884,8 @@ export class Path extends Shape {
                         }
                         else if (i >= low && i <= high) {
 
-                            const v = this.viewInfo.collection[i].copy(this._collection.getAt(i));
-                            this.viewInfo.vertices.push(v);
+                            const v = this.viewInfo.anchor_collection[i].copy(this._collection.getAt(i));
+                            this.viewInfo.anchor_vertices.push(v);
 
                             if (i === high && contains(this, ending)) {
                                 right = v;
@@ -993,10 +921,10 @@ export class Path extends Shape {
 
                     const i = low - 1;
 
-                    const v = this.viewInfo.collection[i].copy(this._collection.getAt(i));
+                    const v = this.viewInfo.anchor_collection[i].copy(this._collection.getAt(i));
                     this.getPointAt(beginning, v);
                     v.command = Commands.move;
-                    this.viewInfo.vertices.unshift(v);
+                    this.viewInfo.anchor_vertices.unshift(v);
 
                     next = this._collection.getAt(i + 1);
 
@@ -1007,13 +935,13 @@ export class Path extends Shape {
                         v.controls.left.clear();
 
                         if (next.relative) {
-                            this.viewInfo.collection[i + 1].controls.left
+                            this.viewInfo.anchor_collection[i + 1].controls.left
                                 .copy(next.controls.left)
                                 .lerp(Vector.zero, v.t);
                         }
                         else {
                             vector.copy(next.origin);
-                            this.viewInfo.collection[i + 1].controls.left
+                            this.viewInfo.anchor_collection[i + 1].controls.left
                                 .copy(next.controls.left)
                                 .lerp(next.origin, v.t);
                         }
@@ -1164,10 +1092,10 @@ export class Path extends Shape {
         this._linewidth = v;
         this._flagLinewidth = true;
     }
-    get mask(): Shape | null {
+    get mask(): Shape<Group> | null {
         return this._mask;
     }
-    set mask(mask: Shape | null) {
+    set mask(mask: Shape<Group> | null) {
         this._mask = mask;
         this._flagMask = true;
         if (mask instanceof Shape && !mask.clip) {

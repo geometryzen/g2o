@@ -1,6 +1,7 @@
 import { Subscription } from 'rxjs';
 import { Gradient } from './effects/gradient.js';
 import { Texture } from './effects/texture.js';
+import { Group } from './group.js';
 import { get_dashes_offset, set_dashes_offset } from './path.js';
 import { Shape } from './shape.js';
 import { root } from './utils/root.js';
@@ -30,7 +31,7 @@ export interface TextStyles {
     weight: number;
 }
 
-export class Text extends Shape {
+export class Text extends Shape<Group> {
     automatic: boolean;
     beginning: number;
     cap: string;
@@ -162,7 +163,7 @@ export class Text extends Shape {
      * @property {Two.Shape} - The shape whose alpha property becomes a clipping area for the text.
      * @nota-bene This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
      */
-    _mask: Shape | null = null;
+    _mask: Shape<Group> | null = null;
 
     /**
      * @name Two.Text#clip
@@ -511,7 +512,7 @@ export class Text extends Shape {
         this._linewidth = v;
         this._flagLinewidth = true;
     }
-    get mask(): Shape | null {
+    get mask(): Shape<Group> | null {
         return this._mask;
     }
     set mask(mask) {

@@ -1,6 +1,6 @@
 import { Group } from "../group";
 import { Matrix } from "../matrix";
-import { Shape } from "../shape";
+import { Parent, Shape } from "../shape";
 
 /**
  * @param {Two.Shape} object - The Two.js object that has a matrix property to calculate from.
@@ -8,15 +8,17 @@ import { Shape } from "../shape";
  * @returns {Two.Matrix} The computed matrix of a nested object. If no `matrix` was passed in arguments then a `new Two.Matrix` is returned.
  * @description Method to get the world space transformation of a given object in a Two.js scene.
  */
-export function getComputedMatrix(object: Shape, matrix: Matrix): Matrix {
+export function getComputedMatrix<P extends Parent>(object: Shape<P>, matrix: Matrix): Matrix {
 
     matrix = (matrix && matrix.identity()) || new Matrix();
-    let parent: Shape | Group = object;
+    let parent: Shape<P> | Group = object;
     const matrices: Matrix[] = [];
 
     while (parent && parent._matrix) {
         matrices.push(parent._matrix);
-        parent = parent.parent;
+        // The parent may not be a Group, it could be a View we have reached the top level.
+        // However, the test for a local matrix will exclude the view.
+        parent = parent.parent as Group;
     }
 
     matrices.reverse();

@@ -608,7 +608,7 @@ const svg = {
                 }
 
                 if (this._flagVertices) {
-                    const vertices = svg.toString(this.viewInfo.vertices, this._closed);
+                    const vertices = svg.toString(this.viewInfo.anchor_vertices, this._closed);
                     changed.d = vertices;
                 }
 
@@ -796,7 +796,7 @@ const svg = {
                         const m = decomposeMatrix(me[0], me[3], me[1], me[4], me[2], me[5]);
                         size /= Math.max(m.scaleX, m.scaleY);
                     }
-                    const vertices = svg.pointsToString(this.viewInfo.collection, size);
+                    const vertices = svg.pointsToString(this.viewInfo.anchor_collection, size);
                     changed.d = vertices;
                 }
 

@@ -1,3 +1,5 @@
 import { root } from './root.js';
-
-export const performance = ((root.performance && root.performance.now) ? root.performance : Date);
+/**
+ * In the browser this is simply the Date constructor.
+ */
+export const dateTime = ((root.performance && root.performance.now) ? root.performance : Date);

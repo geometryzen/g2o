@@ -1,7 +1,7 @@
-import { Shape } from "../src/index";
+import { Group, Shape } from "../src/index";
 import { Constants } from "../src/lib/constants";
 
-class MockShape extends Shape {
+class MockShape extends Shape<Group> {
     _flagVisible: boolean;
     automatic: boolean;
     beginning: number;

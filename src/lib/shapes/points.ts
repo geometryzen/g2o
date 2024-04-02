@@ -4,9 +4,10 @@ import { Gradient } from '../effects/gradient.js';
 import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
 import { Texture } from '../effects/texture.js';
+import { Group } from '../group.js';
 import { get_dashes_offset, set_dashes_offset } from '../path.js';
 import { Shape } from '../shape.js';
-import { getCurveLength as gcl, getCurveBoundingBox, subdivide } from '../utils/curves.js';
+import { getCurveLength as gcl, subdivide } from '../utils/curves.js';
 import { decomposeMatrix } from '../utils/decompose_matrix.js';
 import { getIdByLength } from '../utils/shape.js';
 import { Vector } from '../vector.js';
@@ -22,7 +23,14 @@ const floor = Math.floor;
  * And yet we need to implement some methods that are just like path.
  * We also need the appropriate interface for getIdByLength (IPathOrPoints)
  */
-export class Points extends Shape {
+export class Points extends Shape<Group> {
+    automatic: boolean;
+    cap: string;
+    clip: boolean;
+    closed: boolean;
+    curved: boolean;
+    join: string;
+    miter: number;
 
     _flagVertices = true;
     _flagLength = true;
@@ -63,8 +71,8 @@ export class Points extends Shape {
         super();
 
         this.viewInfo.type = 'points';
-        this.viewInfo.vertices = null;
-        this.viewInfo.collection = null;
+        this.viewInfo.vector_vertices = null;
+        this.viewInfo.vector_collection = null;
 
         /**
          * @name Two.Points#sizeAttenuation
@@ -216,7 +224,7 @@ export class Points extends Shape {
         const matrix = shallow ? this.matrix : this.worldMatrix;
 
         let border = (this.linewidth || 0) / 2;
-        const l = this.viewInfo.vertices.length;
+        const l = this.viewInfo.vector_vertices.length;
 
         if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
@@ -243,66 +251,27 @@ export class Points extends Shape {
 
         for (let i = 0; i < l; i++) {
 
-            const v1 = this.viewInfo.vertices[i];
+            const v1 = this.viewInfo.vector_vertices[i];
             // If i = 0, then this "wraps around" to the last vertex. Otherwise, it's the previous vertex.
             // This is important for handling cyclic paths.
-            const v0 = this.viewInfo.vertices[(i + l - 1) % l];
+            const v0 = this.viewInfo.vector_vertices[(i + l - 1) % l];
 
             const [v0x, v0y] = matrix.multiply_vector(v0.x, v0.y);
             const [v1x, v1y] = matrix.multiply_vector(v1.x, v1.y);
 
-            if (v0.controls && v1.controls) {
+            if (i <= 1) {
 
-                let rx = v0.controls.right.x;
-                let ry = v0.controls.right.y;
-
-                if (v0.relative) {
-                    rx += v0.x;
-                    ry += v0.y;
-                }
-
-                const [c0x, c0y] = matrix.multiply_vector(rx, ry);
-
-                let lx = v1.controls.left.x;
-                let ly = v1.controls.left.y;
-
-                if (v1.relative) {
-                    lx += v1.x;
-                    ly += v1.y;
-                }
-
-                const [c1x, c1y] = matrix.multiply_vector(lx, ly);
-
-                const bb = getCurveBoundingBox(
-                    v0x, v0y,
-                    c0x, c0y,
-                    c1x, c1y,
-                    v1x, v1y
-                );
-
-                top = min(bb.min.y - border, top);
-                left = min(bb.min.x - border, left);
-                right = max(bb.max.x + border, right);
-                bottom = max(bb.max.y + border, bottom);
+                top = min(v0y - border, top);
+                left = min(v0x - border, left);
+                right = max(v0x + border, right);
+                bottom = max(v0y + border, bottom);
 
             }
-            else {
 
-                if (i <= 1) {
-
-                    top = min(v0y - border, top);
-                    left = min(v0x - border, left);
-                    right = max(v0x + border, right);
-                    bottom = max(v0y + border, bottom);
-
-                }
-
-                top = min(v1y - border, top);
-                left = min(v1x - border, left);
-                right = max(v1x + border, right);
-                bottom = max(v1y + border, bottom);
-
-            }
+            top = min(v1y - border, top);
+            left = min(v1x - border, left);
+            right = max(v1x + border, right);
+            bottom = max(v1y + border, bottom);
 
         }
 
@@ -315,6 +284,10 @@ export class Points extends Shape {
             height: bottom - top
         };
 
+    }
+
+    hasBoundingClientRect(): boolean {
+        return true;
     }
 
     /**
@@ -398,7 +371,6 @@ export class Points extends Shape {
     }
 
     _update() {
-
         if (this._flagVertices) {
 
             if (this._flagLength) {
@@ -414,29 +386,26 @@ export class Points extends Shape {
             const low = ceil(bid);
             const high = floor(eid);
 
-            let j = 0, v;
 
-            this.viewInfo.vertices = [];
-            this.viewInfo.collection = [];
+            this.viewInfo.vector_vertices = [];
+            this.viewInfo.vector_collection = [];
+
+            // let j = 0;
 
             for (let i = 0; i < this._collection.length; i++) {
-
                 if (i >= low && i <= high) {
-                    v = this._collection.getAt(i);
-                    this.viewInfo.collection.push(v);
-                    this.viewInfo.vertices[j * 2 + 0] = v.x;
-                    this.viewInfo.vertices[j * 2 + 1] = v.y;
-                    j++;
+                    const v = this._collection.getAt(i);
+                    this.viewInfo.vector_collection.push(v);
+                    // TODO: This doesn't make sense.
+                    throw new Error();
+                    // this.viewInfo.vector_vertices[j * 2 + 0] = v.x;
+                    // this.viewInfo.anchor_vertices[j * 2 + 1] = v.y;
+                    // j++;
                 }
-
             }
-
         }
-
         super._update();
-
         return this;
-
     }
 
     flagReset() {

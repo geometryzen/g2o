@@ -4,12 +4,15 @@ import { Constants } from './constants.js';
 import { Gradient } from './effects/gradient.js';
 import { Texture } from './effects/texture.js';
 import { Element } from './element.js';
-import { Group } from './group.js';
 import { Matrix } from './matrix.js';
 import { getComputedMatrix } from './utils/get_computed_matrix.js';
 import { Vector } from './vector.js';
 
-export abstract class Shape extends Element<Group> implements IShape {
+export interface Parent {
+    _update?(): void;
+}
+
+export abstract class Shape<P extends Parent> extends Element<P> implements IShape<P> {
 
     _flagMatrix = true;
     _flagScale = false;
@@ -144,34 +147,6 @@ export abstract class Shape extends Element<Group> implements IShape {
     }
 
     /**
-     * @name Two.Shape#addTo
-     * @function
-     * @param {Two.Group} group - The parent the shape adds itself to.
-     * @description Convenience method to add itself to the scenegraph.
-     */
-    addTo(group: Group): this {
-        group.add(this);
-        return this;
-    }
-
-    /**
-     * @name Two.Shape#remove
-     * @function
-     * @description Remove self from the scene / parent.
-     */
-    remove() {
-
-        if (!this.parent) {
-            return this;
-        }
-
-        this.parent.remove(this);
-
-        return this;
-
-    }
-
-    /**
      * @name Two.Shape#_update
      * @function
      * @private
@@ -200,13 +175,15 @@ export abstract class Shape extends Element<Group> implements IShape {
         }
 
         if (bubbles) {
-            if (this.parent && this.parent._update) {
-                this.parent._update();
+            // Ultimately we get to the top of the hierarchy of components.
+            // The current design allows a Group to be parented by a View.
+            // The view will not support the _update() method.
+            const parent = this.parent;
+            if (typeof parent._update === 'function') {
+                parent._update();
             }
         }
-
         return this;
-
     }
 
     /**

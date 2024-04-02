@@ -1,13 +1,12 @@
 import { Child } from "./children";
 import { Gradient } from "./effects/gradient";
 import { Texture } from "./effects/texture";
-import { Group } from "./group";
 import { Vector } from "./vector";
 
 /**
  * TODO: rename to Shape when the hierarchy has been flattened.
  */
-export interface IShape extends Child {
+export interface IShape<P> extends Child {
     // FIXME!
     isShape: boolean;
     automatic: boolean;
@@ -22,7 +21,7 @@ export interface IShape extends Child {
     length: number;
     linewidth: number;
     miter: number;
-    parent: Group;
+    parent: P;
     stroke: string | Gradient | Texture;
     translation: Vector;
     visible: boolean;

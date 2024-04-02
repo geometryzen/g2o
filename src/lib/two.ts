@@ -17,7 +17,7 @@ import { RoundedRectangle } from './shapes/rounded-rectangle.js';
 import { Star } from './shapes/star.js';
 import { Text } from './text.js';
 import { Commands } from './utils/path-commands.js';
-import { performance } from './utils/performance.js';
+import { dateTime } from './utils/performance.js';
 import { xhr } from './utils/xhr.js';
 
 export interface RendererParams {
@@ -55,8 +55,8 @@ export interface TwoOptions {
 
 export class Two {
 
-    readonly renderer: View;
-    #renderer_resize_subscription: Subscription | null = null;
+    readonly #view: View;
+    #view_resize: Subscription | null = null;
 
     readonly #scene: Group;
 
@@ -78,7 +78,10 @@ export class Two {
      */
     ratio: number | undefined = void 0;
 
-    readonly #fitter = new Fitter(this);
+    /**
+     * A helper to handle sizing.
+     */
+    readonly #fitter: Fitter;
 
     /**
      * An integer representing how many frames have elapsed.
@@ -92,12 +95,13 @@ export class Two {
     /**
      * A number representing how much time has elapsed since the last frame in milliseconds.
      */
-    timeDelta = 0;
+    elapsed_time_in_millis = 0;
 
     playing = false;
 
-    _lastFrame: number;
-
+    // Used to compute the elapsed time between frames.
+    #curr_now: number | null = null;
+    #prev_now: number | null = null;
 
     constructor(scene: Group, view: View, options: Partial<TwoOptions> = {}) {
         if (scene instanceof Group) {
@@ -108,7 +112,7 @@ export class Two {
         }
 
         if (typeof view === 'object') {
-            this.renderer = view;
+            this.#view = view;
         }
         else {
             throw new Error("view must be defined");
@@ -122,30 +126,33 @@ export class Two {
             container: options.container
         };
 
-        this.renderer = view;
+        this.#view = view;
+        this.#fitter = new Fitter(this, view);
+
+
         this.frameCount = 0;
         this.#frameCount = new BehaviorSubject(this.frameCount);
         this.frameCount$ = this.#frameCount.asObservable();
 
         if (params.fullscreen) {
             this.#fitter.set_target(window);
-            this.#fitter.bind();
+            this.#fitter.subscribe();
             this.#fitter.resize();
         }
         else if (params.fitted) {
-            this.renderer.domElement.style.display = 'block';
+            this.#view.domElement.style.display = 'block';
             // this.fitter.fitToParent();
         }
         else if (params.container) {
             this.appendTo(params.container);
         }
         else {
-            this.renderer.setSize(params.width, params.height, this.ratio);
+            this.#view.setSize(params.width, params.height, this.ratio);
             this.width = params.width;
             this.height = params.height;
         }
 
-        this.#renderer_resize_subscription = this.renderer.size$.subscribe(({ width, height }) => {
+        this.#view_resize = this.#view.size$.subscribe(({ width, height }) => {
             this.width = width;
             this.height = height;
             this.#size.next({ width, height });
@@ -153,15 +160,15 @@ export class Two {
     }
 
     dispose(): void {
-        if (this.#renderer_resize_subscription) {
-            this.#renderer_resize_subscription.unsubscribe();
-            this.#renderer_resize_subscription = null;
+        if (this.#view_resize) {
+            this.#view_resize.unsubscribe();
+            this.#view_resize = null;
         }
-        this.#fitter.unbind();
+        this.#fitter.unsubscribe();
     }
 
     appendTo(container: Element) {
-        container.appendChild(this.renderer.domElement);
+        container.appendChild(this.#view.domElement);
 
         if (!this.#fitter.is_target_window()) {
             this.#fitter.set_target(container);
@@ -188,45 +195,46 @@ export class Two {
         this.playing = p;
     }
 
+    getElapsedTime(fractionalDigits = 3): number | null {
+        if (typeof this.#prev_now === 'number') {
+            return parseFloat((this.#curr_now - this.#prev_now).toFixed(fractionalDigits));
+        }
+        else {
+            return null;
+        }
+    }
+
     /**
      * Update positions and calculations in one pass before rendering.
      */
     update() {
-        const animated = !!this._lastFrame;
-        const now = performance.now();
-
-        if (animated) {
-            this.timeDelta = parseFloat((now - this._lastFrame).toFixed(3));
-        }
-        this._lastFrame = now;
+        this.#prev_now = this.#curr_now;
+        this.#curr_now = dateTime.now();
 
         if (this.#fitter.has_target() && !this.#fitter.is_bound()) {
-            this.#fitter.bind();
+            this.#fitter.subscribe();
             this.#fitter.resize();
         }
 
         const width = this.width;
         const height = this.height;
-        const renderer = this.renderer;
+        const renderer = this.#view;
 
         if (width !== renderer.width || height !== renderer.height) {
             renderer.setSize(width, height, this.ratio);
         }
 
-        // DGH: Do we really need both update and frameCount?
-        // this.trigger(Events.Types.update, this.frameCount, this.timeDelta);
-
-        this.renderer.render();
+        this.#view.render();
 
         this.#frameCount.next(this.frameCount++);
     }
 
-    add(...shapes: Shape[]): this {
+    add(...shapes: Shape<Group>[]): this {
         this.#scene.add(...shapes);
         return this;
     }
 
-    remove(...shapes: Shape[]): this {
+    remove(...shapes: Shape<Group>[]): this {
         this.#scene.remove(...shapes);
         return this;
     }
@@ -415,9 +423,9 @@ export class Two {
         return texture;
     }
 
-    makeGroup(...shapes: Shape[]): Group {
+    makeGroup(...shapes: Shape<Group>[]): Group {
         const group = new Group(shapes);
-        this.#scene.add(group);
+        this.#scene.add(group as Shape<Group>);
         return group;
     }
 
@@ -497,30 +505,44 @@ export class Two {
     }
 }
 
+/**
+ * A helper for 
+ */
 class Fitter {
     readonly #two: Two;
+    readonly #view: View;
+    readonly #domElement: HTMLElement | SVGElement;
     #target: Element | Window | null = null;
-    #target_resize_subscription: Subscription | null = null;
-    constructor(two: Two) {
+    #target_resize: Subscription | null = null;
+    constructor(two: Two, view: View) {
         this.#two = two;
+        this.#view = view;
+        this.#domElement = view.domElement;
     }
     dispose(): void {
-        this.unbind();
+        this.unsubscribe();
     }
     is_bound(): boolean {
-        return !!this.#target_resize_subscription;
+        return !!this.#target_resize;
     }
-    bind(): void {
-        this.#target_resize_subscription = fromEvent(this.#target, 'resize')
+    /**
+     * Idempotent subscribe to 'resize' events of the target.
+     */
+    subscribe(): void {
+        this.unsubscribe();
+        this.#target_resize = fromEvent(this.#target, 'resize')
             .pipe(debounceTime(200))
             .subscribe(() => {
                 this.resize();
             });
     }
-    unbind(): void {
-        if (this.#target_resize_subscription) {
-            this.#target_resize_subscription.unsubscribe();
-            this.#target_resize_subscription = null;
+    /**
+     * Idempotent unsubscribe from 'resize' events of the target.
+     */
+    unsubscribe(): void {
+        if (this.#target_resize) {
+            this.#target_resize.unsubscribe();
+            this.#target_resize = null;
         }
     }
     has_target(): boolean {
@@ -540,13 +562,12 @@ class Fitter {
             document.body.style.position = 'fixed';
 
             // TODO: The controller should take care of this...
-            const two = this.#two;
-            two.renderer.domElement.style.display = 'block';
-            two.renderer.domElement.style.top = '0';
-            two.renderer.domElement.style.left = '0';
-            two.renderer.domElement.style.right = '0';
-            two.renderer.domElement.style.bottom = '0';
-            two.renderer.domElement.style.position = 'fixed';
+            this.#domElement.style.display = 'block';
+            this.#domElement.style.top = '0';
+            this.#domElement.style.left = '0';
+            this.#domElement.style.right = '0';
+            this.#domElement.style.bottom = '0';
+            this.#domElement.style.position = 'fixed';
         }
         return this;
     }
@@ -568,12 +589,12 @@ class Fitter {
         const width = two.width = wr.width;
         const height = two.height = wr.height;
 
-        two.renderer.setSize(width, height, two.ratio);
+        this.#view.setSize(width, height, two.ratio);
     }
     #resize_to_parent() {
         const two = this.#two;
 
-        const parent = two.renderer.domElement.parentElement;
+        const parent = this.#domElement.parentElement;
         if (!parent) {
             // eslint-disable-next-line no-console
             console.warn('Attempting to size to parent, but no parent found.');
@@ -584,8 +605,7 @@ class Fitter {
         const width = two.width = wr.width;
         const height = two.height = wr.height;
 
-        two.renderer.setSize(width, height, two.ratio);
-
+        this.#view.setSize(width, height, two.ratio);
     }
 }
 
