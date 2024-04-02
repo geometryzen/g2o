@@ -1,6 +1,6 @@
 import { Observable, Subject } from 'rxjs';
 import { Child } from './children.js';
-import { Renderer } from './renderers/Renderer.js';
+import { SharedInfo } from './renderers/SharedInfo.js';
 
 /**
  * The foundational object for the scenegraph.
@@ -18,7 +18,11 @@ export abstract class Element<P> implements Child {
     _flagId = false;
     _flagClassName = false;
 
-    _renderer: Renderer = {} as Renderer;
+    /**
+     * TODO: Since every element has an identifier, it should be possible to store this information that is shared
+     * between the model and view in a map elsewhere. I suspect, though, that this is faster.
+     */
+    viewInfo: SharedInfo = {};
 
     _id: string | null = null;
     readonly #id: Subject<{ id: string, previous_id: string | null }>;
@@ -36,11 +40,11 @@ export abstract class Element<P> implements Child {
     flagReset() {
         this._flagId = this._flagClassName = false;
     }
-    get renderer(): Renderer {
-        return this._renderer;
+    get renderer(): SharedInfo {
+        return this.viewInfo;
     }
-    set renderer(renderer: Renderer) {
-        this._renderer = renderer;
+    set renderer(renderer: SharedInfo) {
+        this.viewInfo = renderer;
     }
     get id(): string {
         return this._id;

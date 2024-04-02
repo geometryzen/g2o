@@ -5,7 +5,7 @@ import { Sprite } from './effects/sprite.js';
 import { Texture } from './effects/texture.js';
 import { Group } from './group.js';
 import { Path } from './path.js';
-import { Renderer } from './renderers/Renderer.js';
+import { View } from './renderers/View.js';
 import { Shape } from './shape.js';
 import { ArcSegment } from './shapes/arc-segment.js';
 import { Circle } from './shapes/circle.js';
@@ -26,8 +26,6 @@ export interface RendererParams {
     overdraw?: boolean;
     smoothing?: boolean;
 }
-
-export type RendererFactory = (model: RendererParams) => Renderer;
 
 export interface TwoOptions {
     /**
@@ -57,7 +55,7 @@ export interface TwoOptions {
 
 export class Two {
 
-    readonly renderer: Renderer = null;
+    readonly renderer: View;
     #renderer_resize_subscription: Subscription | null = null;
 
     readonly #scene: Group;
@@ -101,7 +99,7 @@ export class Two {
     _lastFrame: number;
 
 
-    constructor(scene: Group, view: Renderer, options: Partial<TwoOptions> = {}) {
+    constructor(scene: Group, view: View, options: Partial<TwoOptions> = {}) {
         if (scene instanceof Group) {
             this.#scene = scene;
         }

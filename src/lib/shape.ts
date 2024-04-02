@@ -130,10 +130,10 @@ export abstract class Shape extends Element<Group> implements IShape {
     }
 
     get renderer() {
-        return this._renderer;
+        return this.viewInfo;
     }
     set renderer(v) {
-        this._renderer = v;
+        this.viewInfo = v;
     }
 
     get translation() {

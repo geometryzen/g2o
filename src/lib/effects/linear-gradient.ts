@@ -22,7 +22,7 @@ export class LinearGradient extends Gradient {
      */
     constructor(x1 = 0, y1 = 0, x2 = 0, y2 = 0, stops: Stop[] = []) {
         super(stops);
-        this._renderer.type = 'linear-gradient';
+        this.viewInfo.type = 'linear-gradient';
         this.left = new Vector(x1, y1);
         this.right = new Vector(x2, y2);
     }

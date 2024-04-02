@@ -27,7 +27,7 @@ export class RadialGradient extends Gradient {
 
         super(stops);
 
-        this._renderer.type = 'radial-gradient';
+        this.viewInfo.type = 'radial-gradient';
 
         this.center = new Vector(cx, cy);
 

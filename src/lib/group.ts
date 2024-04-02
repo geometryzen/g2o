@@ -141,7 +141,7 @@ export class Group extends Shape implements IShape {
 
         //
 
-        this._renderer.type = 'group';
+        this.viewInfo.type = 'group';
     }
 
     hasBoundingClientRect(): boolean {

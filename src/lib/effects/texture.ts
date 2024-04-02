@@ -3,21 +3,21 @@ import { Constants } from '../constants.js';
 import { Element } from '../element.js';
 import { Group } from '../group.js';
 import { Registry } from '../registry.js';
-import { Renderer } from '../renderers/Renderer.js';
+import { SharedInfo } from '../renderers/SharedInfo.js';
 import { root } from '../utils/root.js';
 import { Vector } from '../vector.js';
 
-function is_canvas(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLCanvasElement {
+export function is_canvas(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLCanvasElement {
     const tagName = (element && element.nodeName && element.nodeName.toLowerCase());
     return tagName === 'canvas';
 }
 
-function is_img(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLImageElement {
+export function is_img(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLImageElement {
     const tagName = (element && element.nodeName && element.nodeName.toLowerCase());
     return tagName === 'img';
 }
 
-function is_video(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLVideoElement {
+export function is_video(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLVideoElement {
     const tagName = (element && element.nodeName && element.nodeName.toLowerCase());
     return tagName === 'video';
 }
@@ -70,9 +70,9 @@ export class Texture extends Element<Group> {
 
         super();
 
-        this._renderer = {} as Renderer;
+        this.viewInfo = {} as SharedInfo;
 
-        this._renderer.type = 'texture';
+        this.viewInfo.type = 'texture';
 
         this.id = Constants.Identifier + Constants.uniqueId();
         this.classList = [];

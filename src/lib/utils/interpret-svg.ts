@@ -273,7 +273,7 @@ function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyl
 
                 transforms = decomposeMatrix(m.a, m.b, m.c, m.d, m.e, m.f);
 
-                switch (elem._renderer.type) {
+                switch (elem.viewInfo.type) {
                     case 'linear-gradient':
                         applyTransformsToVector(transforms, elem.left);
                         applyTransformsToVector(transforms, elem.right);
@@ -387,7 +387,7 @@ function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyl
                             ref = ref.childNodes[0];
                             tagName = getTagName(ref.nodeName);
                             elem.mask = read[tagName].call(this, ref, {});
-                            switch (elem._renderer.type) {
+                            switch (elem.viewInfo.type) {
                                 case 'text':
                                 case 'path':
                                     // The matrix here needs to change to insure that the object

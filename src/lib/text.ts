@@ -188,7 +188,7 @@ export class Text extends Shape {
 
         super();
 
-        this._renderer.type = 'text';
+        this.viewInfo.type = 'text';
 
         this.value = message;
 

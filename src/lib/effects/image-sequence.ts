@@ -327,8 +327,8 @@ export class ImageSequence extends Rectangle {
     }
     set textures(textures) {
 
-        const bindTextures = this._renderer.bindTextures;
-        const unbindTextures = this._renderer.unbindTextures;
+        const bindTextures = this.viewInfo.bindTextures;
+        const unbindTextures = this.viewInfo.unbindTextures;
 
         // Remove previous listeners
         if (this._textures) {

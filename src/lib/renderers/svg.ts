@@ -3,7 +3,7 @@ import { Anchor } from '../anchor.js';
 import { Gradient } from '../effects/gradient.js';
 import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
-import { Texture } from '../effects/texture.js';
+import { Texture, is_canvas, is_img, is_video } from '../effects/texture.js';
 import { Element as ElementBase } from '../element.js';
 import { Group } from '../group.js';
 import { Path, get_dashes_offset } from '../path.js';
@@ -14,7 +14,7 @@ import { decomposeMatrix } from '../utils/decompose_matrix.js';
 import { mod, toFixed } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 import { Vector } from '../vector.js';
-import { Renderer } from './Renderer.js';
+import { View } from './View.js';
 
 type DOMElement = HTMLElement | SVGElement;
 
@@ -86,9 +86,13 @@ export interface SVGAttributes {
     'fy'?: string;
     'gradientUnits'?: 'userSpaceOnUse' | 'objectBoundingBox';
     'height'?: string;
-    'href'?: 'string';
+    'href'?: string;
     'id'?: string;
     'line-height'?: string;
+    /**
+     * TODO: offset is not a documented SVG attribute. How do we account for it?
+     */
+    'offset'?: string;
     'opacity'?: string;
     'text-anchor'?: 'start' | 'middle' | 'end';
     'r'?: string;
@@ -103,6 +107,7 @@ export interface SVGAttributes {
     'stroke-miterlimit'?: string;
     'stroke-opacity'?: string;
     'stroke-width'?: string;
+    'text-decoration'?: string;
     'transform'?: string;
     'visibility'?: 'visible' | 'hidden';
     'width'?: string;
@@ -370,9 +375,9 @@ const svg = {
     },
 
     getClip: function (shape: Shape, domElement: DOMElement) {
-        let clip = shape._renderer.clip;
+        let clip = shape.viewInfo.clip;
         if (!clip) {
-            clip = shape._renderer.clip = svg.createElement('clipPath', {
+            clip = shape.viewInfo.clip = svg.createElement('clipPath', {
                 'clip-rule': 'nonzero'
             }) as SVGClipPathElement;
         }
@@ -405,7 +410,7 @@ const svg = {
 
         appendChild: function (this: DomContext, object: Shape) {
 
-            const elem = object._renderer.elem;
+            const elem = object.viewInfo.elem;
 
             if (!elem) {
                 return;
@@ -423,7 +428,7 @@ const svg = {
 
         removeChild: function (this: DomContext, object: Shape) {
 
-            const elem = object._renderer.elem;
+            const elem = object.viewInfo.elem;
 
             if (!elem || elem.parentNode != this.elem) {
                 return;
@@ -444,13 +449,13 @@ const svg = {
         },
 
         orderChild: function (this: DomContext, object: Shape) {
-            this.elem.appendChild(object._renderer.elem);
+            this.elem.appendChild(object.viewInfo.elem);
         },
         /**
          * DGH: This doesn't seem to be used. 
          */
         renderChild: function (this: DOMElement, child: ElementBase<unknown>) {
-            const type = child._renderer.type;
+            const type = child.viewInfo.type;
             switch (type) {
                 case 'group': {
                     svg.group.render.call(child as Group, this);
@@ -483,22 +488,22 @@ const svg = {
 
             this._update();
 
-            if (!this._renderer.elem) {
-                this._renderer.elem = svg.createElement('g', {
+            if (!this.viewInfo.elem) {
+                this.viewInfo.elem = svg.createElement('g', {
                     id: this.id
                 });
-                domElement.appendChild(this._renderer.elem);
+                domElement.appendChild(this.viewInfo.elem);
             }
 
             // _Update styles for the <g>
             const flagMatrix = this._matrix.manual || this._flagMatrix;
             const dom_context: DomContext = {
                 domElement: domElement,
-                elem: this._renderer.elem
+                elem: this.viewInfo.elem
             };
 
             if (flagMatrix) {
-                this._renderer.elem.setAttribute('transform', 'matrix(' + this._matrix.toString() + ')');
+                this.viewInfo.elem.setAttribute('transform', 'matrix(' + this._matrix.toString() + ')');
             }
 
             for (let i = 0; i < this.children.length; i++) {
@@ -510,19 +515,19 @@ const svg = {
             }
 
             if (this._flagId) {
-                this._renderer.elem.setAttribute('id', this._id);
+                this.viewInfo.elem.setAttribute('id', this._id);
             }
 
             if (this._flagOpacity) {
-                this._renderer.elem.setAttribute('opacity', `${this.opacity}`);
+                this.viewInfo.elem.setAttribute('opacity', `${this.opacity}`);
             }
 
             if (this._flagVisible) {
-                this._renderer.elem.setAttribute('display', this._visible ? 'inline' : 'none');
+                this.viewInfo.elem.setAttribute('display', this._visible ? 'inline' : 'none');
             }
 
             if (this._flagClassName) {
-                this._renderer.elem.setAttribute('class', this.classList.join(' '));
+                this.viewInfo.elem.setAttribute('class', this.classList.join(' '));
             }
 
             if (this._flagAdditions) {
@@ -561,16 +566,16 @@ const svg = {
 
                 if (this._flagMask) {
                     if (this._mask) {
-                        svg[this._mask._renderer.type].render.call(this._mask, domElement);
-                        this._renderer.elem.setAttribute('clip-path', 'url(#' + this._mask.id + ')');
+                        svg[this._mask.viewInfo.type].render.call(this._mask, domElement);
+                        this.viewInfo.elem.setAttribute('clip-path', 'url(#' + this._mask.id + ')');
                     }
                     else {
-                        this._renderer.elem.removeAttribute('clip-path');
+                        this.viewInfo.elem.removeAttribute('clip-path');
                     }
                 }
 
                 if (this.dataset) {
-                    Object.assign(this._renderer.elem.dataset, this.dataset);
+                    Object.assign(this.viewInfo.elem.dataset, this.dataset);
                 }
 
                 this.flagReset();
@@ -603,14 +608,14 @@ const svg = {
                 }
 
                 if (this._flagVertices) {
-                    const vertices = svg.toString(this._renderer.vertices, this._closed);
+                    const vertices = svg.toString(this.viewInfo.vertices, this._closed);
                     changed.d = vertices;
                 }
 
                 if (this._fill && is_gradient_or_texture(this._fill)) {
-                    this._renderer.hasFillEffect = true;
+                    this.viewInfo.hasFillEffect = true;
                     this._fill._update();
-                    const type = this._fill._renderer.type as 'linear-gradient' | 'radial-gradient' | 'texture';
+                    const type = this._fill.viewInfo.type as 'linear-gradient' | 'radial-gradient' | 'texture';
                     switch (type) {
                         case 'linear-gradient': {
                             svg.group['linear-gradient'].render.call(this._fill as unknown as LinearGradient, domElement, true);
@@ -634,16 +639,16 @@ const svg = {
                     if (this._fill) {
                         changed.fill = serialize_color(this._fill);
                     }
-                    if (this._renderer.hasFillEffect && typeof this._fill === 'string') {
+                    if (this.viewInfo.hasFillEffect && typeof this._fill === 'string') {
                         set_defs_flag_update(get_dom_element_defs(domElement), true);
-                        delete this._renderer.hasFillEffect;
+                        delete this.viewInfo.hasFillEffect;
                     }
                 }
 
                 if (this._stroke && is_gradient_or_texture(this._stroke)) {
-                    this._renderer.hasStrokeEffect = true;
+                    this.viewInfo.hasStrokeEffect = true;
                     this._stroke._update();
-                    const type = this._stroke._renderer.type as 'linear-gradient' | 'radial-gradient' | 'texture';
+                    const type = this._stroke.viewInfo.type as 'linear-gradient' | 'radial-gradient' | 'texture';
                     switch (type) {
                         case 'linear-gradient': {
                             svg.group['linear-gradient'].render.call(this._fill as unknown as LinearGradient, domElement, true);
@@ -667,9 +672,9 @@ const svg = {
                     if (this._stroke) {
                         changed.stroke = serialize_color(this._stroke);
                     }
-                    if (this._renderer.hasStrokeEffect && typeof this._stroke === 'string') {
+                    if (this.viewInfo.hasStrokeEffect && typeof this._stroke === 'string') {
                         set_defs_flag_update(get_dom_element_defs(domElement), true);
-                        delete this._renderer.hasStrokeEffect;
+                        delete this.viewInfo.hasStrokeEffect;
                     }
                 }
 
@@ -709,21 +714,21 @@ const svg = {
 
                 // If there is no attached DOM element yet,
                 // create it with all necessary attributes.
-                if (!this._renderer.elem) {
+                if (!this.viewInfo.elem) {
                     changed.id = this._id;
-                    this._renderer.elem = svg.createElement('path', changed);
-                    domElement.appendChild(this._renderer.elem);
+                    this.viewInfo.elem = svg.createElement('path', changed);
+                    domElement.appendChild(this.viewInfo.elem);
 
                     // Otherwise apply all pending attributes
                 }
                 else {
-                    svg.setAttributes(this._renderer.elem, changed);
+                    svg.setAttributes(this.viewInfo.elem, changed);
                 }
 
                 if (this._flagClip) {
 
                     const clip = svg.getClip(this, domElement);
-                    const elem = this._renderer.elem;
+                    const elem = this.viewInfo.elem;
 
                     if (this._clip) {
                         elem.removeAttribute('id');
@@ -733,7 +738,7 @@ const svg = {
                     else {
                         clip.removeAttribute('id');
                         elem.setAttribute('id', this.id);
-                        this.parent._renderer.elem.appendChild(elem); // TODO: should be insertBefore
+                        this.parent.viewInfo.elem.appendChild(elem); // TODO: should be insertBefore
                     }
 
                 }
@@ -744,11 +749,11 @@ const svg = {
 
                 if (this._flagMask) {
                     if (this._mask) {
-                        svg[this._mask._renderer.type].render.call(this._mask, domElement);
-                        this._renderer.elem.setAttribute('clip-path', 'url(#' + this._mask.id + ')');
+                        svg[this._mask.viewInfo.type].render.call(this._mask, domElement);
+                        this.viewInfo.elem.setAttribute('clip-path', 'url(#' + this._mask.id + ')');
                     }
                     else {
-                        this._renderer.elem.removeAttribute('clip-path');
+                        this.viewInfo.elem.removeAttribute('clip-path');
                     }
                 }
 
@@ -791,12 +796,12 @@ const svg = {
                         const m = decomposeMatrix(me[0], me[3], me[1], me[4], me[2], me[5]);
                         size /= Math.max(m.scaleX, m.scaleY);
                     }
-                    const vertices = svg.pointsToString(this._renderer.collection, size);
+                    const vertices = svg.pointsToString(this.viewInfo.collection, size);
                     changed.d = vertices;
                 }
 
                 if (this._fill && this._fill._renderer) {
-                    this._renderer.hasFillEffect = true;
+                    this.viewInfo.hasFillEffect = true;
                     this._fill._update();
                     svg[this._fill._renderer.type].render.call(this._fill, domElement, true);
                 }
@@ -804,14 +809,14 @@ const svg = {
                 if (this._flagFill) {
                     changed.fill = this._fill && this._fill.id
                         ? 'url(#' + this._fill.id + ')' : this._fill;
-                    if (this._renderer.hasFillEffect && typeof this._fill.id === 'undefined') {
+                    if (this.viewInfo.hasFillEffect && typeof this._fill.id === 'undefined') {
                         domElement.defs._flagUpdate = true;
-                        delete this._renderer.hasFillEffect;
+                        delete this.viewInfo.hasFillEffect;
                     }
                 }
 
                 if (this._stroke && this._stroke._renderer) {
-                    this._renderer.hasStrokeEffect = true;
+                    this.viewInfo.hasStrokeEffect = true;
                     this._stroke._update();
                     svg[this._stroke._renderer.type].render.call(this._stroke, domElement, true);
                 }
@@ -819,9 +824,9 @@ const svg = {
                 if (this._flagStroke) {
                     changed.stroke = this._stroke && this._stroke.id
                         ? 'url(#' + this._stroke.id + ')' : this._stroke;
-                    if (this._renderer.hasStrokeEffect && typeof this._stroke.id === 'undefined') {
+                    if (this.viewInfo.hasStrokeEffect && typeof this._stroke.id === 'undefined') {
                         set_defs_flag_update(get_dom_element_defs(domElement), true);
-                        delete this._renderer.hasStrokeEffect;
+                        delete this.viewInfo.hasStrokeEffect;
                     }
                 }
 
@@ -844,31 +849,22 @@ const svg = {
 
                 if (this.dashes && this.dashes.length > 0) {
                     changed['stroke-dasharray'] = this.dashes.join(' ');
-                    changed['stroke-dashoffset'] = this.dashes.offset || 0;
+                    changed['stroke-dashoffset'] = `${get_dashes_offset(this.dashes) || 0}`;
                 }
 
-                // If there is no attached DOM element yet,
-                // create it with all necessary attributes.
-                if (!this._renderer.elem) {
-
+                if (!this.viewInfo.elem) {
                     changed.id = this._id;
-                    this._renderer.elem = svg.createElement('path', changed);
-                    domElement.appendChild(this._renderer.elem);
-
-                    // Otherwise apply all pending attributes
+                    this.viewInfo.elem = svg.createElement('path', changed);
+                    domElement.appendChild(this.viewInfo.elem);
                 }
                 else {
-                    svg.setAttributes(this._renderer.elem, changed);
+                    svg.setAttributes(this.viewInfo.elem, changed);
                 }
-
                 return this.flagReset();
-
             }
-
         },
 
         'text': {
-
             render: function (this: Text, domElement: DOMElement) {
 
                 this._update();
@@ -887,56 +883,56 @@ const svg = {
                 }
 
                 if (this._flagFamily) {
-                    changed['font-family'] = this._family;
+                    changed['font-family'] = this.family;
                 }
                 if (this._flagSize) {
-                    changed['font-size'] = `${this._size}`;
+                    changed['font-size'] = `${this.size}`;
                 }
                 if (this._flagLeading) {
-                    changed['line-height'] = `${this._leading}`;
+                    changed['line-height'] = `${this.leading}`;
                 }
                 if (this._flagAlignment) {
-                    changed['text-anchor'] = svg.alignments[this._alignment]/* || this._alignment*/;
+                    changed['text-anchor'] = svg.alignments[this.alignment]/* || this._alignment*/;
                 }
                 if (this._flagBaseline) {
-                    changed['dominant-baseline'] = svg.baselines[this._baseline]/* || this._baseline*/;
+                    changed['dominant-baseline'] = svg.baselines[this.baseline]/* || this._baseline*/;
                 }
                 if (this._flagStyle) {
-                    changed['font-style'] = this._style;
+                    changed['font-style'] = this.style;
                 }
                 if (this._flagWeight) {
-                    changed['font-weight'] = `${this._weight}`;
+                    changed['font-weight'] = `${this.weight}`;
                 }
                 if (this._flagDecoration) {
-                    changed['text-decoration'] = this._decoration;
+                    changed['text-decoration'] = this.decoration;
                 }
                 if (this._flagDirection) {
-                    changed['direction'] = this._direction;
+                    changed['direction'] = this.direction;
                 }
                 if (this._fill && this._fill._renderer) {
-                    this._renderer.hasFillEffect = true;
+                    this.viewInfo.hasFillEffect = true;
                     this._fill._update();
                     svg[this._fill._renderer.type].render.call(this._fill, domElement, true);
                 }
                 if (this._flagFill) {
                     changed.fill = this._fill && this._fill.id
                         ? 'url(#' + this._fill.id + ')' : this._fill;
-                    if (this._renderer.hasFillEffect && typeof this._fill.id === 'undefined') {
+                    if (this.viewInfo.hasFillEffect && typeof this._fill.id === 'undefined') {
                         domElement.defs._flagUpdate = true;
-                        delete this._renderer.hasFillEffect;
+                        delete this.viewInfo.hasFillEffect;
                     }
                 }
                 if (this._stroke && this._stroke._renderer) {
-                    this._renderer.hasStrokeEffect = true;
+                    this.viewInfo.hasStrokeEffect = true;
                     this._stroke._update();
                     svg[this._stroke._renderer.type].render.call(this._stroke, domElement, true);
                 }
                 if (this._flagStroke) {
                     changed.stroke = this._stroke && this._stroke.id
                         ? 'url(#' + this._stroke.id + ')' : this._stroke;
-                    if (this._renderer.hasStrokeEffect && typeof this._stroke.id === 'undefined') {
+                    if (this.viewInfo.hasStrokeEffect && typeof this._stroke.id === 'undefined') {
                         domElement.defs._flagUpdate = true;
-                        delete this._renderer.hasStrokeEffect;
+                        delete this.viewInfo.hasStrokeEffect;
                     }
                 }
                 if (this._flagLinewidth) {
@@ -953,22 +949,22 @@ const svg = {
                 }
                 if (this.dashes && this.dashes.length > 0) {
                     changed['stroke-dasharray'] = this.dashes.join(' ');
-                    changed['stroke-dashoffset'] = this.dashes.offset || 0;
+                    changed['stroke-dashoffset'] = `${get_dashes_offset(this.dashes) || 0}`;
                 }
 
-                if (this._renderer.elem) {
-                    svg.setAttributes(this._renderer.elem, changed);
+                if (this.viewInfo.elem) {
+                    svg.setAttributes(this.viewInfo.elem, changed);
                 }
                 else {
                     changed.id = this._id;
-                    this._renderer.elem = svg.createElement('text', changed);
-                    domElement.appendChild(this._renderer.elem);
+                    this.viewInfo.elem = svg.createElement('text', changed);
+                    domElement.appendChild(this.viewInfo.elem);
                 }
 
                 if (this._flagClip) {
 
                     const clip = svg.getClip(this, domElement);
-                    const elem = this._renderer.elem;
+                    const elem = this.viewInfo.elem;
 
                     if (this._clip) {
                         elem.removeAttribute('id');
@@ -978,7 +974,7 @@ const svg = {
                     else {
                         clip.removeAttribute('id');
                         elem.setAttribute('id', this.id);
-                        this.parent._renderer.elem.appendChild(elem); // TODO: should be insertBefore
+                        this.parent.viewInfo.elem.appendChild(elem); // TODO: should be insertBefore
                     }
 
                 }
@@ -989,16 +985,16 @@ const svg = {
 
                 if (this._flagMask) {
                     if (this._mask) {
-                        svg[this._mask._renderer.type].render.call(this._mask, domElement);
-                        this._renderer.elem.setAttribute('clip-path', 'url(#' + this._mask.id + ')');
+                        svg[this._mask.viewInfo.type].render.call(this._mask, domElement);
+                        this.viewInfo.elem.setAttribute('clip-path', 'url(#' + this._mask.id + ')');
                     }
                     else {
-                        this._renderer.elem.removeAttribute('clip-path');
+                        this.viewInfo.elem.removeAttribute('clip-path');
                     }
                 }
 
                 if (this._flagValue) {
-                    this._renderer.elem.textContent = this._value;
+                    this.viewInfo.elem.textContent = this._value;
                 }
 
                 return this.flagReset();
@@ -1021,10 +1017,10 @@ const svg = {
                 }
 
                 if (this._flagEndPoints) {
-                    changed.x1 = this.left.x;
-                    changed.y1 = this.left.y;
-                    changed.x2 = this.right.x;
-                    changed.y2 = this.right.y;
+                    changed.x1 = `${this.left.x}`;
+                    changed.y1 = `${this.left.y}`;
+                    changed.x2 = `${this.right.x}`;
+                    changed.y2 = `${this.right.y}`;
                 }
 
                 if (this._flagSpread) {
@@ -1037,31 +1033,30 @@ const svg = {
 
                 // If there is no attached DOM element yet,
                 // create it with all necessary attributes.
-                if (!this._renderer.elem) {
+                if (!this.viewInfo.elem) {
 
                     changed.id = this._id;
-                    this._renderer.elem = svg.createElement('linearGradient', changed);
+                    this.viewInfo.elem = svg.createElement('linearGradient', changed);
 
                     // Otherwise apply all pending attributes
                 }
                 else {
 
-                    svg.setAttributes(this._renderer.elem, changed);
+                    svg.setAttributes(this.viewInfo.elem, changed);
 
                 }
 
-                if (this._renderer.elem.parentNode === null) {
-                    get_dom_element_defs(domElement).appendChild(this._renderer.elem);
+                if (this.viewInfo.elem.parentNode === null) {
+                    get_dom_element_defs(domElement).appendChild(this.viewInfo.elem);
                 }
 
                 if (this._flagStops) {
 
-                    const lengthChanged = this._renderer.elem.childNodes.length
-                        !== this.stops.length;
+                    const lengthChanged = this.viewInfo.elem.childNodes.length !== this.stops.length;
 
                     if (lengthChanged) {
-                        while (this._renderer.elem.lastChild) {
-                            this._renderer.elem.removeChild(this._renderer.elem.lastChild);
+                        while (this.viewInfo.elem.lastChild) {
+                            this.viewInfo.elem.removeChild(this.viewInfo.elem.lastChild);
                         }
                     }
 
@@ -1077,18 +1072,18 @@ const svg = {
                             attrs['stop-color'] = stop._color;
                         }
                         if (stop._flagOpacity) {
-                            attrs['stop-opacity'] = stop._opacity;
+                            attrs['stop-opacity'] = `${stop._opacity}`;
                         }
 
-                        if (!stop._renderer.elem) {
-                            stop._renderer.elem = svg.createElement('stop', attrs);
+                        if (!stop.viewInfo.elem) {
+                            stop.viewInfo.elem = svg.createElement('stop', attrs);
                         }
                         else {
-                            svg.setAttributes(stop._renderer.elem, attrs);
+                            svg.setAttributes(stop.viewInfo.elem, attrs);
                         }
 
                         if (lengthChanged) {
-                            this._renderer.elem.appendChild(stop._renderer.elem);
+                            this.viewInfo.elem.appendChild(stop.viewInfo.elem);
                         }
                         stop.flagReset();
                     }
@@ -1111,15 +1106,15 @@ const svg = {
                     changed.id = this._id;
                 }
                 if (this._flagCenter) {
-                    changed.cx = this.center.x;
-                    changed.cy = this.center.y;
+                    changed.cx = `${this.center.x}`;
+                    changed.cy = `${this.center.y}`;
                 }
                 if (this._flagFocal) {
-                    changed.fx = this.focal.x;
-                    changed.fy = this.focal.y;
+                    changed.fx = `${this.focal.x}`;
+                    changed.fy = `${this.focal.y}`;
                 }
                 if (this._flagRadius) {
-                    changed.r = this.radius;
+                    changed.r = `${this.radius}`;
                 }
                 if (this._flagSpread) {
                     changed.spreadMethod = this._spread;
@@ -1129,34 +1124,25 @@ const svg = {
                     changed.gradientUnits = this._units;
                 }
 
-                // If there is no attached DOM element yet,
-                // create it with all necessary attributes.
-                if (!this._renderer.elem) {
-
-                    changed.id = this._id;
-                    const styles: StylesMap = serialize_svg_props(changed);
-                    this._renderer.elem = svg.createElement('radialGradient', styles);
-
-                    // Otherwise apply all pending attributes
+                if (this.viewInfo.elem) {
+                    svg.setAttributes(this.viewInfo.elem, changed);
                 }
                 else {
-
-                    svg.setAttributes(this._renderer.elem, changed);
-
+                    changed.id = this._id;
+                    this.viewInfo.elem = svg.createElement('radialGradient', changed);
                 }
 
-                if (this._renderer.elem.parentNode === null) {
-                    domElement.defs.appendChild(this._renderer.elem);
+                if (this.viewInfo.elem.parentNode === null) {
+                    get_dom_element_defs(domElement).appendChild(this.viewInfo.elem);
                 }
 
                 if (this._flagStops) {
 
-                    const lengthChanged = this._renderer.elem.childNodes.length
-                        !== this.stops.length;
+                    const lengthChanged = this.viewInfo.elem.childNodes.length !== this.stops.length;
 
                     if (lengthChanged) {
-                        while (this._renderer.elem.lastChild) {
-                            this._renderer.elem.removeChild(this._renderer.elem.lastChild);
+                        while (this.viewInfo.elem.lastChild) {
+                            this.viewInfo.elem.removeChild(this.viewInfo.elem.lastChild);
                         }
                     }
 
@@ -1172,18 +1158,18 @@ const svg = {
                             attrs['stop-color'] = stop._color;
                         }
                         if (stop._flagOpacity) {
-                            attrs['stop-opacity'] = stop._opacity;
+                            attrs['stop-opacity'] = `${stop._opacity}`;
                         }
 
-                        if (!stop._renderer.elem) {
-                            stop._renderer.elem = svg.createElement('stop', attrs);
+                        if (stop.viewInfo.elem) {
+                            svg.setAttributes(stop.viewInfo.elem, attrs);
                         }
                         else {
-                            svg.setAttributes(stop._renderer.elem, attrs);
+                            stop.viewInfo.elem = svg.createElement('stop', attrs);
                         }
 
                         if (lengthChanged) {
-                            this._renderer.elem.appendChild(stop._renderer.elem);
+                            this.viewInfo.elem.appendChild(stop.viewInfo.elem);
                         }
                         stop.flagReset();
 
@@ -1204,6 +1190,7 @@ const svg = {
                     this._update();
                 }
 
+                // TODO: Texture rendering will need testing of the conversion to SVGAttributes...
                 const changed: SVGProperties = {};
 
                 const styles: SVGAttributes = { x: '0', y: '0' };
@@ -1216,20 +1203,18 @@ const svg = {
 
                 if (this._flagLoaded && this.loaded) {
 
-                    switch (image.nodeName.toLowerCase()) {
-
-                        case 'canvas': {
-                            // toDataURL is a member of HTMLCanvasElement
-                            styles.href = image.toDataURL('image/png');
-                            break;
-                        }
-                        case 'img':
-                        case 'image':
-                            styles.href = this.src;
-                            break;
-
+                    if (is_canvas(image)) {
+                        styles.href = image.toDataURL('image/png');
                     }
-
+                    else if (is_img(image)) {
+                        styles.href = this.src;
+                    }
+                    else if (is_video(image)) {
+                        styles.href = this.src;
+                    }
+                    else {
+                        throw new Error();
+                    }
                 }
 
                 if (this._flagOffset || this._flagLoaded || this._flagScale) {
@@ -1268,8 +1253,10 @@ const svg = {
 
                     if (image) {
 
-                        styles.width = changed.width = image.width;
-                        styles.height = changed.height = image.height;
+                        changed.width = image.width;
+                        styles.width = `${image.width}`;
+                        changed.height = image.height;
+                        styles.height = `${image.height}`;
 
                         // TODO: Hack / Band-aid
                         switch (this._repeat) {
@@ -1292,34 +1279,34 @@ const svg = {
                 }
 
                 if (this._flagScale || this._flagLoaded) {
-                    if (!this._renderer.image) {
-                        this._renderer.image = svg.createElement('image', styles);
+                    if (!this.viewInfo.image) {
+                        this.viewInfo.image = svg.createElement('image', styles) as SVGImageElement;
                     }
                     else {
-                        svg.setAttributes(this._renderer.image, styles);
+                        svg.setAttributes(this.viewInfo.image, styles);
                     }
                 }
 
-                if (!this._renderer.elem) {
+                if (!this.viewInfo.elem) {
 
                     changed.id = this._id;
                     changed.patternUnits = 'userSpaceOnUse';
-                    this._renderer.elem = svg.createElement('pattern', serialize_svg_props(changed));
+                    this.viewInfo.elem = svg.createElement('pattern', serialize_svg_props(changed));
 
                 }
                 else if (Object.keys(changed).length !== 0) {
 
-                    svg.setAttributes(this._renderer.elem, serialize_svg_props(changed));
+                    svg.setAttributes(this.viewInfo.elem, serialize_svg_props(changed));
 
                 }
 
-                if (this._renderer.elem.parentNode === null) {
-                    domElement.defs.appendChild(this._renderer.elem);
+                if (this.viewInfo.elem.parentNode === null) {
+                    get_dom_element_defs(domElement).appendChild(this.viewInfo.elem);
                 }
 
-                if (this._renderer.elem && this._renderer.image && !this._renderer.appended) {
-                    this._renderer.elem.appendChild(this._renderer.image);
-                    this._renderer.appended = true;
+                if (this.viewInfo.elem && this.viewInfo.image && !this.viewInfo.appended) {
+                    this.viewInfo.elem.appendChild(this.viewInfo.image);
+                    this.viewInfo.appended = true;
                 }
 
                 return this.flagReset();
@@ -1333,7 +1320,7 @@ export interface SVGRendererParams {
     svgElement?: SVGElement;
 }
 
-export class SVGRenderer implements Renderer {
+export class SVGRenderer implements View {
 
     readonly domElement: SVGElement;
     readonly scene: Group;
@@ -1345,7 +1332,7 @@ export class SVGRenderer implements Renderer {
     readonly #size: BehaviorSubject<{ width: number; height: number }>;
     readonly size$: Observable<{ width: number; height: number }>;
 
-    constructor(scene: Group, params: SVGRendererParams) {
+    constructor(scene: Group, params: SVGRendererParams = {}) {
         if (scene instanceof Group) {
             this.scene = scene;
             this.scene.parent = this;

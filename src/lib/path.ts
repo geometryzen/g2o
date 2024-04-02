@@ -259,9 +259,9 @@ export class Path extends Shape {
 
         super();
 
-        this._renderer.type = 'path';
-        this._renderer.vertices = [];
-        this._renderer.collection = [];
+        this.viewInfo.type = 'path';
+        this.viewInfo.vertices = [];
+        this.viewInfo.collection = [];
 
         /**
          * @name Two.Path#closed
@@ -470,7 +470,7 @@ export class Path extends Shape {
         const matrix = shallow ? this.matrix : this.worldMatrix;
 
         let border = (this.linewidth || 0) / 2;
-        const l = this._renderer.vertices.length;
+        const l = this.viewInfo.vertices.length;
 
         if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
@@ -497,10 +497,10 @@ export class Path extends Shape {
 
         for (let i = 0; i < l; i++) {
 
-            const v1 = this._renderer.vertices[i];
+            const v1 = this.viewInfo.vertices[i];
             // If i = 0, then this "wraps around" to the last vertex. Otherwise, it's the previous vertex.
             // This is important for handling cyclic paths.
-            const v0 = this._renderer.vertices[(i + l - 1) % l];
+            const v0 = this.viewInfo.vertices[(i + l - 1) % l];
 
             const [v0x, v0y] = matrix.multiply_vector(v0.x, v0.y);
             const [v1x, v1y] = matrix.multiply_vector(v1.x, v1.y);
@@ -908,23 +908,23 @@ export class Path extends Shape {
                  */
                 let next: Anchor;
 
-                this._renderer.vertices.length = 0;
+                this.viewInfo.vertices.length = 0;
                 {
                     let right: Anchor;
                     let prev: Anchor;
                     for (let i = 0; i < l; i++) {
 
-                        if (this._renderer.collection.length <= i) {
+                        if (this.viewInfo.collection.length <= i) {
                             // Expected to be `relative` anchor points.
-                            this._renderer.collection.push(new Anchor());
+                            this.viewInfo.collection.push(new Anchor());
                         }
 
                         if (i > high && !right) {
 
-                            const v = this._renderer.collection[i].copy(this._collection.getAt(i));
+                            const v = this.viewInfo.collection[i].copy(this._collection.getAt(i));
                             this.getPointAt(ending, v);
-                            v.command = this._renderer.collection[i].command;
-                            this._renderer.vertices.push(v);
+                            v.command = this.viewInfo.collection[i].command;
+                            this.viewInfo.vertices.push(v);
 
                             right = v;
                             prev = this._collection.getAt(i - 1);
@@ -941,12 +941,12 @@ export class Path extends Shape {
                                 }
 
                                 if (prev.relative) {
-                                    this._renderer.collection[i - 1].controls.right
+                                    this.viewInfo.collection[i - 1].controls.right
                                         .copy(prev.controls.right)
                                         .lerp(Vector.zero, 1 - v.t);
                                 }
                                 else {
-                                    this._renderer.collection[i - 1].controls.right
+                                    this.viewInfo.collection[i - 1].controls.right
                                         .copy(prev.controls.right)
                                         .lerp(prev.origin, 1 - v.t);
                                 }
@@ -956,8 +956,8 @@ export class Path extends Shape {
                         }
                         else if (i >= low && i <= high) {
 
-                            const v = this._renderer.collection[i].copy(this._collection.getAt(i));
-                            this._renderer.vertices.push(v);
+                            const v = this.viewInfo.collection[i].copy(this._collection.getAt(i));
+                            this.viewInfo.vertices.push(v);
 
                             if (i === high && contains(this, ending)) {
                                 right = v;
@@ -993,10 +993,10 @@ export class Path extends Shape {
 
                     const i = low - 1;
 
-                    const v = this._renderer.collection[i].copy(this._collection.getAt(i));
+                    const v = this.viewInfo.collection[i].copy(this._collection.getAt(i));
                     this.getPointAt(beginning, v);
                     v.command = Commands.move;
-                    this._renderer.vertices.unshift(v);
+                    this.viewInfo.vertices.unshift(v);
 
                     next = this._collection.getAt(i + 1);
 
@@ -1007,13 +1007,13 @@ export class Path extends Shape {
                         v.controls.left.clear();
 
                         if (next.relative) {
-                            this._renderer.collection[i + 1].controls.left
+                            this.viewInfo.collection[i + 1].controls.left
                                 .copy(next.controls.left)
                                 .lerp(Vector.zero, v.t);
                         }
                         else {
                             vector.copy(next.origin);
-                            this._renderer.collection[i + 1].controls.left
+                            this.viewInfo.collection[i + 1].controls.left
                                 .copy(next.controls.left)
                                 .lerp(next.origin, v.t);
                         }

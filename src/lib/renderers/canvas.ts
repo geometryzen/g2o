@@ -1,5 +1,6 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Constants } from '../constants.js';
+import { LinearGradient } from '../effects/linear-gradient.js';
 import { Texture } from '../effects/texture.js';
 import { Group } from '../group.js';
 import { Path, get_dashes_offset } from '../path.js';
@@ -11,8 +12,7 @@ import { getRatio } from '../utils/device-pixel-ratio.js';
 import { TWO_PI, mod } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 import { Vector } from '../vector.js';
-import { Renderer } from './Renderer.js';
-import { LinearGradient } from '../effects/linear-gradient.js';
+import { View } from './View.js';
 
 // Constants
 const emptyArray: number[] = [];
@@ -72,8 +72,8 @@ const canvas = {
 
             const matrix = this._matrix.elements;
             const parent = this.parent;
-            this._renderer.opacity = this._opacity
-                * (parent && parent._renderer ? parent._renderer.opacity : 1);
+            this.viewInfo.opacity = this._opacity
+                * (parent && parent.viewInfo ? parent.viewInfo.opacity : 1);
 
             const mask = this._mask;
             // const clip = this._clip;
@@ -81,11 +81,11 @@ const canvas = {
             const defaultMatrix = isDefaultMatrix(matrix);
             const shouldIsolate = !defaultMatrix || !!mask;
 
-            if (!this._renderer.context) {
-                this._renderer.context = {};
+            if (!this.viewInfo.context) {
+                this.viewInfo.context = {};
             }
 
-            this._renderer.context.ctx = ctx;
+            this.viewInfo.context.ctx = ctx;
             // this._renderer.context.clip = clip;
 
             if (shouldIsolate) {
@@ -97,7 +97,7 @@ const canvas = {
             }
 
             if (mask) {
-                canvas[mask._renderer.type].render.call(mask, ctx, true);
+                canvas[mask.viewInfo.type].render.call(mask, ctx, true);
             }
 
             if (this._opacity > 0 && this._scale !== 0) {
@@ -130,7 +130,7 @@ const canvas = {
             let prev, a, b, c, d, ux, uy, vx, vy,
                 ar, bl, br, cl, x, y, isOffset;
 
-            const po = (this.parent && this.parent._renderer) ? this.parent._renderer.opacity : 1;
+            const po = (this.parent && this.parent.viewInfo) ? this.parent.viewInfo.opacity : 1;
             const mask = this._mask;
             const clip = this._clip;
             const opacity = this._opacity * (po || 1);
@@ -150,7 +150,7 @@ const canvas = {
             const join = this._join;
             const miter = this._miter;
             const closed = this._closed;
-            const commands = this._renderer.vertices; // Commands
+            const commands = this.viewInfo.vertices; // Commands
             const length = commands.length;
             const last = length - 1;
             const defaultMatrix = isDefaultMatrix(matrix);
@@ -166,7 +166,7 @@ const canvas = {
             // polygons. Uncomment when this bug is fixed:
             // https://code.google.com/p/chromium/issues/detail?id=370951
             if (mask) {
-                canvas[mask._renderer.type].render.call(mask, ctx, true);
+                canvas[mask.viewInfo.type].render.call(mask, ctx, true);
             }
 
             // Styles
@@ -175,8 +175,8 @@ const canvas = {
                     ctx.fillStyle = fill;
                 }
                 else {
-                    canvas[fill._renderer.type].render.call(fill, ctx, this);
-                    ctx.fillStyle = fill._renderer.effect;
+                    canvas[fill.viewInfo.type].render.call(fill, ctx, this);
+                    ctx.fillStyle = fill.viewInfo.effect;
                 }
             }
             if (stroke) {
@@ -184,8 +184,8 @@ const canvas = {
                     ctx.strokeStyle = stroke;
                 }
                 else {
-                    canvas[stroke._renderer.type].render.call(stroke, ctx, this);
-                    ctx.strokeStyle = stroke._renderer.effect;
+                    canvas[stroke.viewInfo.type].render.call(stroke, ctx, this);
+                    ctx.strokeStyle = stroke.viewInfo.effect;
                 }
                 if (linewidth) {
                     ctx.lineWidth = linewidth;
@@ -377,8 +377,8 @@ const canvas = {
             let me, stroke, linewidth, fill, opacity, visible, size, commands,
                 length, b, x, y, defaultMatrix, isOffset, dashes, po;
 
-            po = (this.parent && this.parent._renderer)
-                ? this.parent._renderer.opacity : 1;
+            po = (this.parent && this.parent.viewInfo)
+                ? this.parent.viewInfo.opacity : 1;
             opacity = this._opacity * (po || 1);
             visible = this._visible;
 
@@ -392,7 +392,7 @@ const canvas = {
             stroke = this._stroke;
             linewidth = this._linewidth;
             fill = this._fill;
-            commands = this._renderer.collection; // Commands
+            commands = this.viewInfo.collection; // Commands
             length = commands.length;
             defaultMatrix = isDefaultMatrix(me);
             dashes = this.dashes;
@@ -410,8 +410,8 @@ const canvas = {
                     ctx.fillStyle = fill;
                 }
                 else {
-                    canvas[fill._renderer.type].render.call(fill, ctx, this);
-                    ctx.fillStyle = fill._renderer.effect;
+                    canvas[fill.viewInfo.type].render.call(fill, ctx, this);
+                    ctx.fillStyle = fill.viewInfo.effect;
                 }
             }
             if (stroke) {
@@ -419,8 +419,8 @@ const canvas = {
                     ctx.strokeStyle = stroke;
                 }
                 else {
-                    canvas[stroke._renderer.type].render.call(stroke, ctx, this);
-                    ctx.strokeStyle = stroke._renderer.effect;
+                    canvas[stroke.viewInfo.type].render.call(stroke, ctx, this);
+                    ctx.strokeStyle = stroke.viewInfo.effect;
                 }
                 if (linewidth) {
                     ctx.lineWidth = linewidth;
@@ -506,8 +506,8 @@ const canvas = {
     'text': {
         render: function (this: Text, ctx: CanvasRenderingContext2D, forced: boolean, parentClipped: boolean) {
 
-            const po = (this.parent && this.parent._renderer)
-                ? this.parent._renderer.opacity : 1;
+            const po = (this.parent && this.parent.viewInfo)
+                ? this.parent.viewInfo.opacity : 1;
             const opacity = this._opacity * po;
             const visible = this._visible;
             const mask = this._mask;
@@ -543,7 +543,7 @@ const canvas = {
             // polygons. Uncomment when this bug is fixed:
             // https://code.google.com/p/chromium/issues/detail?id=370951
             if (mask) {
-                canvas[mask._renderer.type].render.call(mask, ctx, true);
+                canvas[mask.viewInfo.type].render.call(mask, ctx, true);
             }
 
             if (!isOffset) {
@@ -561,8 +561,8 @@ const canvas = {
                     ctx.fillStyle = fill;
                 }
                 else {
-                    canvas[fill._renderer.type].render.call(fill, ctx, this);
-                    ctx.fillStyle = fill._renderer.effect;
+                    canvas[fill.viewInfo.type].render.call(fill, ctx, this);
+                    ctx.fillStyle = fill.viewInfo.effect;
                 }
             }
             if (stroke) {
@@ -570,8 +570,8 @@ const canvas = {
                     ctx.strokeStyle = stroke;
                 }
                 else {
-                    canvas[stroke._renderer.type].render.call(stroke, ctx, this);
-                    ctx.strokeStyle = stroke._renderer.effect;
+                    canvas[stroke.viewInfo.type].render.call(stroke, ctx, this);
+                    ctx.strokeStyle = stroke.viewInfo.effect;
                 }
                 if (linewidth) {
                     ctx.lineWidth = linewidth;
@@ -725,7 +725,7 @@ const canvas = {
     },
 
     'linear-gradient': {
-        render: function (this:LinearGradient, ctx: CanvasRenderingContext2D, parent) {
+        render: function (this: LinearGradient, ctx: CanvasRenderingContext2D, parent) {
 
             if (!parent) {
                 return;
@@ -733,7 +733,7 @@ const canvas = {
 
             this._update();
 
-            if (!this._renderer.effect || this._flagEndPoints || this._flagStops
+            if (!this.viewInfo.effect || this._flagEndPoints || this._flagStops
                 || this._flagUnits) {
 
                 let rect;
@@ -751,11 +751,11 @@ const canvas = {
                     ry = (ry - 0.5) * rect.height;
                 }
 
-                this._renderer.effect = ctx.createLinearGradient(lx, ly, rx, ry);
+                this.viewInfo.effect = ctx.createLinearGradient(lx, ly, rx, ry);
 
                 for (let i = 0; i < this.stops.length; i++) {
                     const stop = this.stops[i];
-                    this._renderer.effect.addColorStop(stop._offset, stop._color);
+                    this.viewInfo.effect.addColorStop(stop._offset, stop._color);
                 }
 
             }
@@ -816,31 +816,31 @@ const canvas = {
 
             const image = this.image;
 
-            if (!this._renderer.effect || ((this._flagLoaded || this._flagImage || this._flagVideo || this._flagRepeat) && this.loaded)) {
-                this._renderer.effect = ctx.createPattern(this.image, this._repeat);
+            if (!this.viewInfo.effect || ((this._flagLoaded || this._flagImage || this._flagVideo || this._flagRepeat) && this.loaded)) {
+                this.viewInfo.effect = ctx.createPattern(this.image, this._repeat);
             }
 
             if (this._flagOffset || this._flagLoaded || this._flagScale) {
 
-                if (!(this._renderer.offset instanceof Vector)) {
-                    this._renderer.offset = new Vector();
+                if (!(this.viewInfo.offset instanceof Vector)) {
+                    this.viewInfo.offset = new Vector();
                 }
 
-                this._renderer.offset.x = - this._offset.x;
-                this._renderer.offset.y = - this._offset.y;
+                this.viewInfo.offset.x = - this._offset.x;
+                this.viewInfo.offset.y = - this._offset.y;
 
                 if (image) {
 
-                    this._renderer.offset.x += image.width / 2;
-                    this._renderer.offset.y += image.height / 2;
+                    this.viewInfo.offset.x += image.width / 2;
+                    this.viewInfo.offset.y += image.height / 2;
 
                     if (this._scale instanceof Vector) {
-                        this._renderer.offset.x *= this._scale.x;
-                        this._renderer.offset.y *= this._scale.y;
+                        this.viewInfo.offset.x *= this._scale.x;
+                        this.viewInfo.offset.y *= this._scale.y;
                     }
                     else {
-                        this._renderer.offset.x *= this._scale;
-                        this._renderer.offset.y *= this._scale;
+                        this.viewInfo.offset.x *= this._scale;
+                        this.viewInfo.offset.y *= this._scale;
                     }
                 }
 
@@ -848,15 +848,15 @@ const canvas = {
 
             if (this._flagScale || this._flagLoaded) {
 
-                if (!(this._renderer.scale instanceof Vector)) {
-                    this._renderer.scale = new Vector();
+                if (!(this.viewInfo.scale instanceof Vector)) {
+                    this.viewInfo.scale = new Vector();
                 }
 
                 if (this._scale instanceof Vector) {
-                    this._renderer.scale.copy(this._scale);
+                    this.viewInfo.scale.copy(this._scale);
                 }
                 else {
-                    this._renderer.scale.set(this._scale, this._scale);
+                    this.viewInfo.scale.set(this._scale, this._scale);
                 }
 
             }
@@ -938,7 +938,7 @@ const canvas = {
  * @param {Boolean} [parameters.smoothing=true] - Determines whether the canvas should antialias drawing. Set it to `false` when working with pixel art. `false` can lead to better performance, since it would use a cheaper interpolation algorithm.
  * @description This class is used by {@link Two} when constructing with `type` of `Two.Types.canvas`. It takes Two.js' scenegraph and renders it to a `<canvas />`.
  */
-export class CanvasRenderer implements Renderer {
+export class CanvasRenderer implements View {
 
     readonly domElement: HTMLCanvasElement;
     readonly scene: Group;

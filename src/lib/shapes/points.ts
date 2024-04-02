@@ -62,9 +62,9 @@ export class Points extends Shape {
 
         super();
 
-        this._renderer.type = 'points';
-        this._renderer.vertices = null;
-        this._renderer.collection = null;
+        this.viewInfo.type = 'points';
+        this.viewInfo.vertices = null;
+        this.viewInfo.collection = null;
 
         /**
          * @name Two.Points#sizeAttenuation
@@ -216,7 +216,7 @@ export class Points extends Shape {
         const matrix = shallow ? this.matrix : this.worldMatrix;
 
         let border = (this.linewidth || 0) / 2;
-        const l = this._renderer.vertices.length;
+        const l = this.viewInfo.vertices.length;
 
         if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
@@ -243,10 +243,10 @@ export class Points extends Shape {
 
         for (let i = 0; i < l; i++) {
 
-            const v1 = this._renderer.vertices[i];
+            const v1 = this.viewInfo.vertices[i];
             // If i = 0, then this "wraps around" to the last vertex. Otherwise, it's the previous vertex.
             // This is important for handling cyclic paths.
-            const v0 = this._renderer.vertices[(i + l - 1) % l];
+            const v0 = this.viewInfo.vertices[(i + l - 1) % l];
 
             const [v0x, v0y] = matrix.multiply_vector(v0.x, v0.y);
             const [v1x, v1y] = matrix.multiply_vector(v1.x, v1.y);
@@ -416,16 +416,16 @@ export class Points extends Shape {
 
             let j = 0, v;
 
-            this._renderer.vertices = [];
-            this._renderer.collection = [];
+            this.viewInfo.vertices = [];
+            this.viewInfo.collection = [];
 
             for (let i = 0; i < this._collection.length; i++) {
 
                 if (i >= low && i <= high) {
                     v = this._collection.getAt(i);
-                    this._renderer.collection.push(v);
-                    this._renderer.vertices[j * 2 + 0] = v.x;
-                    this._renderer.vertices[j * 2 + 1] = v.y;
+                    this.viewInfo.collection.push(v);
+                    this.viewInfo.vertices[j * 2 + 0] = v.x;
+                    this.viewInfo.vertices[j * 2 + 1] = v.y;
                     j++;
                 }
 
