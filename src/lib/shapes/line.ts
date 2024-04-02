@@ -10,7 +10,7 @@ export class Line extends Path {
      */
     constructor(x1 = 0, y1 = 0, x2 = 0, y2 = 0) {
         super([new Anchor(x1, y1, 0, 0, 0, 0, 'M'), new Anchor(x2, y2, 0, 0, 0, 0, 'L')]);
-        this.automatic = false;
+        // this.automatic = false;
     }
     get left() {
         return this.vertices.getAt(0);
