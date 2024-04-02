@@ -38,9 +38,11 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     _rotation: number = 0;
 
     /**
-     * The scale value in Number. Can be a vector for non-uniform scaling.
+     * The scale supports non-uniform scaling.
+     * The API provides more convenient access for uniform scaling.
+     * Make the easy things easy...
      */
-    _scale: number | Vector = 1;
+    _scale: Vector = new Vector(1, 1);
     _scale_change_subscription: Subscription | null = null;
 
     _skewX = 0;
@@ -221,15 +223,23 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         this._rotation = v;
         this._flagMatrix = true;
     }
-    get scale(): number | Vector {
-        return this._scale;
+    get scale(): number {
+        if (this._scale.x === this._scale.y) {
+            return this._scale.x;
+        }
+        else {
+            // Some message to indicate non-uniform scaling is in effect.
+            throw new Error();
+        }
     }
-    set scale(v: number | Vector) {
+    set scale(scale: number) {
+        // TODO: We need another API to support non-uniform scaling.
         if (this._scale_change_subscription) {
             this._scale_change_subscription.unsubscribe();
             this._scale_change_subscription = null;
         }
-        this._scale = v;
+        this._scale.x = scale;
+        this._scale.y = scale;
         if (this._scale instanceof Vector) {
             this._scale_change_subscription = this._scale.change$.subscribe(() => {
                 this._flagMatrix = true;
