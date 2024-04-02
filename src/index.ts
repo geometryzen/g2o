@@ -13,7 +13,6 @@ export { Element } from './lib/element';
 export { Group } from './lib/group';
 export { Matrix } from './lib/matrix';
 export { Path } from './lib/path';
-export { SharedInfo as Renderer } from './lib/renderers/SharedInfo';
 // export { CanvasRenderer } from './lib/renderers/canvas';
 export { View } from './lib/renderers/View';
 export { SVGRenderer, SVGRendererParams } from './lib/renderers/svg';
