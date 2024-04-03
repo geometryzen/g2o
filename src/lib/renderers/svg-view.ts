@@ -566,9 +566,9 @@ const svg = {
                 // }
 
                 if (this._flagMask) {
-                    if (this._mask) {
-                        svg[this._mask.viewInfo.type].render.call(this._mask, domElement);
-                        this.viewInfo.elem.setAttribute('clip-path', 'url(#' + this._mask.id + ')');
+                    if (this.mask) {
+                        svg[this.mask.viewInfo.type].render.call(this.mask, domElement);
+                        this.viewInfo.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
                     }
                     else {
                         this.viewInfo.elem.removeAttribute('clip-path');

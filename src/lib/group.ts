@@ -1,6 +1,6 @@
-import { Subscription } from 'rxjs';
 import { IShape } from './IShape.js';
 import { Children } from './children.js';
+import { Subscription } from './rxjs/Subscription';
 import { Parent, Shape } from './shape.js';
 
 export interface IGroup extends Parent {
@@ -62,10 +62,10 @@ export class Group extends Shape<unknown> {
      */
     _mask: Shape<Group> = null;
 
-    _shapes: Children<Shape<Group>>;
-    #shapes_insert_subscription: Subscription | null = null;
-    #shapes_remove_subscription: Subscription | null = null;
-    #shapes_order_subscription: Subscription | null = null;
+    #shapes: Children<Shape<Group>>;
+    #shapes_insert: Subscription | null = null;
+    #shapes_remove: Subscription | null = null;
+    #shapes_order: Subscription | null = null;
 
     clip: boolean;
 
@@ -82,7 +82,7 @@ export class Group extends Shape<unknown> {
 
         super();
 
-        this._shapes = new Children(shapes);
+        this.#shapes = new Children(shapes);
 
         this.#subscribe_to_shapes();
 
@@ -97,39 +97,39 @@ export class Group extends Shape<unknown> {
 
     dispose() {
         this.#unsubscribe_from_shapes();
-        this._shapes.dispose();
+        this.#shapes.dispose();
     }
 
     #subscribe_to_shapes(): void {
-        this.#shapes_insert_subscription = this._shapes.insert$.subscribe((inserts: Shape<Group>[]) => {
+        this.#shapes_insert = this.#shapes.insert$.subscribe((inserts: Shape<Group>[]) => {
             for (const shape of inserts) {
                 update_shape_group(shape, this);
             }
         });
 
-        this.#shapes_remove_subscription = this._shapes.remove$.subscribe((removes: Shape<Group>[]) => {
+        this.#shapes_remove = this.#shapes.remove$.subscribe((removes: Shape<Group>[]) => {
             for (const shape of removes) {
                 update_shape_group(shape, null);
             }
         });
 
-        this.#shapes_order_subscription = this._shapes.order$.subscribe(() => {
+        this.#shapes_order = this.#shapes.order$.subscribe(() => {
             this._flagOrder = true;
         });
     }
 
     #unsubscribe_from_shapes(): void {
-        if (this.#shapes_insert_subscription) {
-            this.#shapes_insert_subscription.unsubscribe();
-            this.#shapes_insert_subscription = null;
+        if (this.#shapes_insert) {
+            this.#shapes_insert.unsubscribe();
+            this.#shapes_insert = null;
         }
-        if (this.#shapes_remove_subscription) {
-            this.#shapes_remove_subscription.unsubscribe();
-            this.#shapes_remove_subscription = null;
+        if (this.#shapes_remove) {
+            this.#shapes_remove.unsubscribe();
+            this.#shapes_remove = null;
         }
-        if (this.#shapes_order_subscription) {
-            this.#shapes_order_subscription.unsubscribe();
-            this.#shapes_order_subscription = null;
+        if (this.#shapes_order) {
+            this.#shapes_order.unsubscribe();
+            this.#shapes_order = null;
         }
     }
 
@@ -502,14 +502,14 @@ export class Group extends Shape<unknown> {
      * @nota-bene Ther order of this list indicates the order each element is rendered to the screen.
      */
     get children(): Children<Shape<Group>> {
-        return this._shapes;
+        return this.#shapes;
     }
     set children(children) {
 
         this.#unsubscribe_from_shapes();
-        this._shapes.dispose();
+        this.#shapes.dispose();
 
-        this._shapes = children;
+        this.#shapes = children;
         this.#subscribe_to_shapes();
 
         for (let i = 0; i < children.length; i++) {
@@ -590,11 +590,11 @@ export class Group extends Shape<unknown> {
     get mask(): Shape<Group> {
         return this._mask;
     }
-    set mask(v: Shape<Group>) {
-        this._mask = v;
+    set mask(mask: Shape<Group>) {
+        this._mask = mask;
         this._flagMask = true;
-        if (!v.clip) {
-            v.clip = true;
+        if (!mask.clip) {
+            mask.clip = true;
         }
     }
     get miter(): number {

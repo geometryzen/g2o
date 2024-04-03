@@ -121,19 +121,6 @@ export class Vector {
         return dx * dx + dy * dy;
     }
 
-    set(x: number, y: number, a = 0, b = 0): this {
-        // Take special care to only fire changed event if necessary.
-        const changed = (this.x !== x || this.y !== y || this.a !== a || this.b != b);
-        this.#x = x;
-        this.#y = y;
-        this.#a = a;
-        this.#b = b;
-        if (changed) {
-            this.#change.next(this);
-        }
-        return this;
-    }
-
     copy(v: Vector): this {
         return this.set(v.x, v.y, v.a, v.b);
     }
@@ -182,6 +169,19 @@ export class Vector {
         return this.x * v.x + this.y * v.y;
     }
 
+    exp(): this {
+        const w = this.a;
+        const z = this.b;
+        const expW = Math.exp(w);
+        // φ is actually the absolute value of one half the rotation angle.
+        // The orientation of the rotation gets carried in the bivector components.
+        const φ = Math.sqrt(z * z);
+        const s = expW * (φ !== 0 ? Math.sin(φ) / φ : 1);
+        const a = expW * Math.cos(φ);
+        const b = z * s;
+        return this.set(0, 0, a, b);
+    }
+
     length(): number {
         return Math.sqrt(this.lengthSquared());
     }
@@ -202,6 +202,19 @@ export class Vector {
         const dx = this.x - v.x;
         const dy = this.y - v.y;
         return dx * dx + dy * dy;
+    }
+
+    set(x: number, y: number, a = 0, b = 0): this {
+        // Take special care to only fire changed event if necessary.
+        const changed = (this.x !== x || this.y !== y || this.a !== a || this.b != b);
+        this.#x = x;
+        this.#y = y;
+        this.#a = a;
+        this.#b = b;
+        if (changed) {
+            this.#change.next(this);
+        }
+        return this;
     }
 
     setLength(l: number): this {
