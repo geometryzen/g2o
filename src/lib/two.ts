@@ -119,7 +119,7 @@ export class Two {
         }
 
         const params: TwoOptions = {
-            fullscreen: !options.fullscreen,
+            fullscreen: !!options.fullscreen,
             fitted: !!options.fitted,
             width: typeof options.width === 'number' ? options.width : 640,
             height: typeof options.height === 'number' ? options.height : 480,
