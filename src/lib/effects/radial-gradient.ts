@@ -1,4 +1,4 @@
-import { Subscription } from 'rxjs';
+import { Subscription } from '../rxjs/Subscription';
 import { Vector } from '../vector.js';
 import { Gradient } from './gradient.js';
 import { Stop } from './stop.js';
@@ -48,7 +48,7 @@ export class RadialGradient extends Gradient {
 
     _update() {
         if (this._flagRadius || this._flagCenter || this._flagFocal || this._flagSpread || this._flagStops) {
-            this.#change.next(this);
+            this._change.next(this);
         }
         return this;
     }
