@@ -1,5 +1,5 @@
 import { Subscription } from '../rxjs/Subscription';
-import { Vector } from '../vector.js';
+import { G20 } from '../vector.js';
 import { Gradient } from './gradient.js';
 import { Stop } from './stop.js';
 
@@ -7,9 +7,9 @@ export class LinearGradient extends Gradient {
 
     _flagEndPoints = false;
 
-    #left: Vector | null = null;
+    #left: G20 | null = null;
     #left_change_subscription: Subscription | null = null;
-    #right: Vector | null = null;
+    #right: G20 | null = null;
     #right_change_subscription: Subscription | null = null;
 
     /**
@@ -23,8 +23,8 @@ export class LinearGradient extends Gradient {
     constructor(x1 = 0, y1 = 0, x2 = 0, y2 = 0, stops: Stop[] = []) {
         super(stops);
         this.viewInfo.type = 'linear-gradient';
-        this.left = new Vector(x1, y1);
-        this.right = new Vector(x2, y2);
+        this.left = new G20(x1, y1);
+        this.right = new G20(x2, y2);
     }
 
     static Properties = ['left', 'right'];

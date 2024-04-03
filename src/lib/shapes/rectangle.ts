@@ -1,11 +1,11 @@
 import { Anchor } from '../anchor';
 import { Path, PathOptions } from '../path';
 import { Subscription } from '../rxjs/Subscription';
-import { Vector } from '../vector';
+import { G20 } from '../vector';
 
 export interface RectangleOptions {
-    position?: Vector;
-    attitude?: Vector;
+    position?: G20;
+    attitude?: G20;
     width?: number;
     height?: number;
 }
@@ -17,7 +17,7 @@ export class Rectangle extends Path {
     _width = 0;
     _height = 0;
 
-    _origin: Vector = null;
+    _origin: G20 = null;
     // DGH: How does origin differ from position?
     #origin_change_subscription: Subscription | null = null;
 
@@ -39,7 +39,7 @@ export class Rectangle extends Path {
         this._height = typeof options.height === 'number' ? options.height : 1;
         this._flagHeight = true;
 
-        this.origin = new Vector();
+        this.origin = new G20();
 
         this._update();
     }
@@ -85,10 +85,10 @@ export class Rectangle extends Path {
         this._height = v;
         this._flagHeight = true;
     }
-    get origin(): Vector {
+    get origin(): G20 {
         return this._origin;
     }
-    set origin(v: Vector) {
+    set origin(v: G20) {
         if (this.#origin_change_subscription) {
             this.#origin_change_subscription.unsubscribe();
             this.#origin_change_subscription = null;

@@ -1,7 +1,7 @@
 {
     "name": "g2o",
-    "version": "0.9.1",
-    "description": "Template TypeScript Library",
+    "version": "0.9.92",
+    "description": "Geometric Algebra 2D Graphics Library",
     "exports": {
         ".": {
             "import": "./dist/esm/index.min.js",

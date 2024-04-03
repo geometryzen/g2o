@@ -2,7 +2,7 @@ import { Anchor } from '../anchor';
 import { Path } from '../path';
 import { Subscription } from '../rxjs/Subscription';
 import { Commands } from '../utils/path-commands';
-import { Vector } from '../vector';
+import { G20 } from '../vector';
 
 export class RoundedRectangle extends Path {
 
@@ -13,7 +13,7 @@ export class RoundedRectangle extends Path {
     _width = 0;
     _height = 0;
 
-    _radius: number | Vector = 12;
+    _radius: number | G20 = 12;
     #radius_change_subscription: Subscription | null = null;
 
     /**
@@ -88,7 +88,7 @@ export class RoundedRectangle extends Path {
 
             let rx, ry;
 
-            if (this._radius instanceof Vector) {
+            if (this._radius instanceof G20) {
                 rx = this._radius.x;
                 ry = this._radius.y;
             }
@@ -209,7 +209,7 @@ export class RoundedRectangle extends Path {
 
         this._radius = radius;
 
-        if (radius instanceof Vector) {
+        if (radius instanceof G20) {
             this.#radius_change_subscription = radius.change$.subscribe(() => {
                 this._flagRadius = true;
             });

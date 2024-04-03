@@ -1,5 +1,5 @@
 import { Anchor } from "../anchor";
-import { Vector } from "../vector";
+import { G20 } from "../vector";
 
 /**
  * Information that is shared between the model and the view.
@@ -30,6 +30,6 @@ export interface SharedInfo {
     anchor_vertices?: Anchor[];
     anchor_collection?: Anchor[];
     // Used by Points
-    vector_vertices?: Vector[];
-    vector_collection?: Vector[];
+    vector_vertices?: G20[];
+    vector_collection?: G20[];
 }

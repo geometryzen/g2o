@@ -10,7 +10,7 @@ import { Shape } from '../shape.js';
 import { getCurveLength as gcl, subdivide } from '../utils/curves.js';
 import { decomposeMatrix } from '../utils/decompose_matrix.js';
 import { getIdByLength } from '../utils/shape.js';
-import { Vector } from '../vector.js';
+import { G20 } from '../vector.js';
 
 const min = Math.min;
 const max = Math.max;
@@ -19,7 +19,7 @@ const floor = Math.floor;
 
 /**
  * DGH: We can't extend Path because a path is composed of Anchor(s).
- * Points are composed of Vector(s).
+ * Points are composed of G20(s).
  * And yet we need to implement some methods that are just like path.
  * We also need the appropriate interface for getIdByLength (IPathOrPoints)
  */
@@ -60,13 +60,13 @@ export class Points extends Shape<Group> {
     _ending = 1.0;
     _dashes: number[] | null = null;
 
-    _collection: Collection<Vector>;
+    _collection: Collection<G20>;
     #collection_insert_subscription: Subscription | null = null;
     #collection_remove_subscription: Subscription | null = null;
 
-    readonly #vector_change_subscriptions = new Map<Vector, Subscription>();
+    readonly #vector_change_subscriptions = new Map<G20, Subscription>();
 
-    constructor(vertices: Vector[]) {
+    constructor(vertices: G20[]) {
 
         super();
 
@@ -127,8 +127,8 @@ export class Points extends Shape<Group> {
 
         /**
          * @name Two.Points#vertices
-         * @property {Two.Vector[]} - An ordered list of vector points for rendering points.
-         * @description A list of {@link Two.Vector} objects that consist of which coordinates to draw points at.
+         * @property {G20[]} - An ordered list of vector points for rendering points.
+         * @description A list of {@link G20} objects that consist of which coordinates to draw points at.
          * @nota-bene The array when manipulating is actually a {@link Two.Collection}.
          */
         this.vertices = new Collection(vertices);
@@ -291,12 +291,12 @@ export class Points extends Shape<Group> {
 
     /**
      * @param limit - How many times to recurse subdivisions.
-     * Insert a {@link Vector} at the midpoint between every item in {@link Points#vertices}.
+     * Insert a {@link G20} at the midpoint between every item in {@link Points#vertices}.
      */
     subdivide(limit: number) {
         // TODO: DRYness (function below)
         this._update();
-        let points: Vector[] = [];
+        let points: G20[] = [];
         for (let i = 0; i < this.vertices.length; i++) {
 
             const a = this.vertices.getAt(i);
@@ -310,7 +310,7 @@ export class Points extends Shape<Group> {
             const ay = a.y;
             const bx = b.x;
             const by = b.y;
-            const builder = (x: number, y: number) => new Vector(x, y);
+            const builder = (x: number, y: number) => new G20(x, y);
             const subdivisions = subdivide(builder, ax, ay, ax, ay, bx, by, bx, by, limit);
 
             points = points.concat(subdivisions);
@@ -339,7 +339,7 @@ export class Points extends Shape<Group> {
         let b = this.vertices.getAt(last);
         let sum = 0;
 
-        this.vertices.forEach((a: Vector, i: number) => {
+        this.vertices.forEach((a: G20, i: number) => {
 
             if (i <= 0 && !closed) {
                 b = a;
@@ -552,7 +552,7 @@ export class Points extends Shape<Group> {
 
 
         // Listen for Collection changes and bind / unbind
-        this.#collection_insert_subscription = this._collection.insert$.subscribe((inserts: Vector[]) => {
+        this.#collection_insert_subscription = this._collection.insert$.subscribe((inserts: G20[]) => {
             let i = inserts.length;
             while (i--) {
                 const anchor = inserts[i];
@@ -565,7 +565,7 @@ export class Points extends Shape<Group> {
             this._flagVertices = true;
         });
 
-        this.#collection_remove_subscription = this._collection.remove$.subscribe((removes: Vector[]) => {
+        this.#collection_remove_subscription = this._collection.remove$.subscribe((removes: G20[]) => {
             let i = removes.length;
             while (i--) {
                 const anchor = removes[i];
@@ -577,7 +577,7 @@ export class Points extends Shape<Group> {
         });
 
         // Bind Initial Vertices
-        this._collection.forEach((anchor: Vector) => {
+        this._collection.forEach((anchor: G20) => {
             const subscription = anchor.change$.subscribe(() => {
                 this._flagVertices = true;
             });
@@ -593,7 +593,7 @@ export class Points extends Shape<Group> {
     }
 }
 
-export function get_vector_vector_curve_length(a: Vector, b: Vector, limit: number): number {
+export function get_vector_vector_curve_length(a: G20, b: G20, limit: number): number {
 
     const x1 = b.x;
     const y1 = b.y;

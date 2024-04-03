@@ -1,7 +1,7 @@
 import { Child } from "./children";
 import { Gradient } from "./effects/gradient";
 import { Texture } from "./effects/texture";
-import { Vector } from "./vector";
+import { G20 } from "./vector";
 
 /**
  * TODO: rename to Shape when the hierarchy has been flattened.
@@ -22,7 +22,7 @@ export interface IShape<P> extends Child {
     linewidth: number;
     miter: number;
     parent: P;
-    position: Vector;
+    position: G20;
     stroke: string | Gradient | Texture;
     visible: boolean;
     getBoundingClientRect(shallow?: boolean): { width?: number; height?: number; top?: number; left?: number; right?: number; bottom?: number };

@@ -22,7 +22,7 @@ import { Text } from './text.js';
 import { Commands } from './utils/path-commands.js';
 import { dateTime } from './utils/performance.js';
 import { xhr } from './utils/xhr.js';
-import { Vector } from './vector.js';
+import { G20 } from './vector.js';
 
 export interface RendererParams {
     domElement: HTMLElement;
@@ -283,7 +283,7 @@ export class Board {
     }
 
     makeRectangle(x: number, y: number, width: number, height: number): Rectangle {
-        const rect = new Rectangle({ position: new Vector(x, y), width, height });
+        const rect = new Rectangle({ position: new G20(x, y), width, height });
         this.#scene.add(rect);
         return rect;
     }
@@ -295,7 +295,7 @@ export class Board {
     }
 
     makeCircle(x: number = 0, y: number = 0, radius: number, resolution: number = 4): Circle {
-        const options: CircleOptions = { position: new Vector(x, y), radius, resolution };
+        const options: CircleOptions = { position: new G20(x, y), radius, resolution };
         const circle = new Circle(options);
         this.#scene.add(circle);
         return circle;
@@ -335,7 +335,7 @@ export class Board {
     }
 
     /*
-    makePoints(p: Vector[]): Points {
+    makePoints(p: G20[]): Points {
 
         const l = arguments.length;
         let vertices = p;
@@ -348,7 +348,7 @@ export class Board {
                     break;
                 }
                 const y = arguments[i + 1];
-                vertices.push(new Vector(x, y));
+                vertices.push(new G20(x, y));
             }
         }
 

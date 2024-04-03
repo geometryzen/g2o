@@ -14,7 +14,7 @@ import { Text } from '../text';
 import { decomposeMatrix } from '../utils/decompose_matrix';
 import { mod, toFixed } from '../utils/math';
 import { Commands } from '../utils/path-commands';
-import { Vector } from '../vector';
+import { G20 } from '../vector';
 import { View } from './View';
 
 type DOMElement = HTMLElement | SVGElement;
@@ -276,8 +276,8 @@ const svg = {
 
                 case Commands.curve:
 
-                    ar = (a.controls && a.controls.right) || Vector.zero;
-                    bl = (b.controls && b.controls.left) || Vector.zero;
+                    ar = (a.controls && a.controls.right) || G20.zero;
+                    bl = (b.controls && b.controls.left) || G20.zero;
 
                     if (a.relative) {
                         vx = toFixed((ar.x + a.x));
@@ -1228,7 +1228,7 @@ const svg = {
                         changed.x -= image.width / 2;
                         changed.y -= image.height / 2;
 
-                        if (this.scale instanceof Vector) {
+                        if (this.scale instanceof G20) {
                             changed.x *= this.scale.x;
                             changed.y *= this.scale.y;
                         }
@@ -1267,7 +1267,7 @@ const svg = {
                                 break;
                         }
 
-                        if (this.scale instanceof Vector) {
+                        if (this.scale instanceof G20) {
                             changed.width *= this.scale.x;
                             changed.height *= this.scale.y;
                         }

@@ -4,7 +4,7 @@ import { Observable } from './rxjs/Observable';
 /**
  * A multivector for two dimensions with a Euclidean metric.
  */
-export class Vector {
+export class G20 {
     #a: number;
     #x: number;
     #y: number;
@@ -67,39 +67,39 @@ export class Vector {
         }
     }
 
-    static one = new Vector(0, 0, 1, 0);
-    static zero = new Vector(0, 0);
-    static left = new Vector(-1, 0);
-    static right = new Vector(1, 0);
-    static up = new Vector(0, -1);
-    static down = new Vector(0, 1);
-    static I = new Vector(0, 0, 0, 1);
+    static one = new G20(0, 0, 1, 0);
+    static zero = new G20(0, 0);
+    static left = new G20(-1, 0);
+    static right = new G20(1, 0);
+    static up = new G20(0, -1);
+    static down = new G20(0, 1);
+    static I = new G20(0, 0, 0, 1);
 
-    static add(v1: Vector, v2: Vector): Vector {
+    static add(v1: G20, v2: G20): G20 {
         const x = v1.x + v2.x;
         const y = v1.y + v2.y;
         const a = v1.a + v2.a;
         const b = v1.b + v2.b;
-        return new Vector(x, y, a, b);
+        return new G20(x, y, a, b);
     }
 
-    static sub(v1: Vector, v2: Vector): Vector {
+    static sub(v1: G20, v2: G20): G20 {
         const x = v1.x - v2.x;
         const y = v1.y - v2.y;
         const a = v1.a - v2.a;
         const b = v1.b - v2.b;
-        return new Vector(x, y, a, b);
+        return new G20(x, y, a, b);
     }
 
-    static subtract(v1: Vector, v2: Vector): Vector {
-        return Vector.sub(v1, v2);
+    static subtract(v1: G20, v2: G20): G20 {
+        return G20.sub(v1, v2);
     }
 
-    static ratioBetween(v1: Vector, v2: Vector): number {
+    static ratioBetween(v1: G20, v2: G20): number {
         return (v1.x * v2.x + v1.y * v2.y) / (v1.length() * v2.length());
     }
 
-    static angleBetween(v1: Vector, v2: Vector): number {
+    static angleBetween(v1: G20, v2: G20): number {
 
         const dx = v1.x - v2.x;
         const dy = v1.y - v2.y;
@@ -107,13 +107,13 @@ export class Vector {
         return Math.atan2(dy, dx);
     }
 
-    static distanceBetween(v1: Vector, v2: Vector): number {
+    static distanceBetween(v1: G20, v2: G20): number {
 
-        return Math.sqrt(Vector.distanceBetweenSquared(v1, v2));
+        return Math.sqrt(G20.distanceBetweenSquared(v1, v2));
 
     }
 
-    static distanceBetweenSquared(v1: Vector, v2: Vector): number {
+    static distanceBetweenSquared(v1: G20, v2: G20): number {
 
         const dx = v1.x - v2.x;
         const dy = v1.y - v2.y;
@@ -121,7 +121,7 @@ export class Vector {
         return dx * dx + dy * dy;
     }
 
-    copy(v: Vector): this {
+    copy(v: G20): this {
         return this.set(v.x, v.y, v.a, v.b);
     }
 
@@ -129,11 +129,11 @@ export class Vector {
         return this.set(0, 0, 0, 0);
     }
 
-    clone(): Vector {
-        return new Vector(this.x, this.y, this.a, this.b);
+    clone(): G20 {
+        return new G20(this.x, this.y, this.a, this.b);
     }
 
-    add(rhs: Vector): this {
+    add(rhs: G20): this {
         const x = this.x + rhs.x;
         const y = this.y + rhs.y;
         const a = this.a + rhs.a;
@@ -141,7 +141,7 @@ export class Vector {
         return this.set(x, y, a, b);
     }
 
-    sub(rhs: Vector): this {
+    sub(rhs: G20): this {
         const x = this.x - rhs.x;
         const y = this.y - rhs.y;
         const a = this.a - rhs.a;
@@ -169,7 +169,7 @@ export class Vector {
         return this.multiplyScalar(-1);
     }
 
-    dot(v: Vector): number {
+    dot(v: G20): number {
         return this.x * v.x + this.y * v.y;
     }
 
@@ -198,11 +198,11 @@ export class Vector {
         return this.divideScalar(this.length());
     }
 
-    distanceTo(v: Vector): number {
+    distanceTo(v: G20): number {
         return Math.sqrt(this.distanceToSquared(v));
     }
 
-    distanceToSquared(v: Vector): number {
+    distanceToSquared(v: G20): number {
         const dx = this.x - v.x;
         const dy = this.y - v.y;
         return dx * dx + dy * dy;
@@ -225,12 +225,12 @@ export class Vector {
         return this.normalize().multiplyScalar(l);
     }
 
-    equals(v: Vector, eps?: number): boolean {
+    equals(v: G20, eps?: number): boolean {
         eps = (typeof eps === 'undefined') ? 0.0001 : eps;
         return (this.distanceTo(v) < eps);
     }
 
-    lerp(v: Vector, t: number): this {
+    lerp(v: G20, t: number): this {
         const x = (v.x - this.x) * t + this.x;
         const y = (v.y - this.y) * t + this.y;
         const a = (v.a - this.a) * t + this.a;

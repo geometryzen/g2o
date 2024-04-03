@@ -7,7 +7,7 @@ import { SharedInfo } from '../renderers/SharedInfo';
 import { Observable } from '../rxjs/Observable';
 import { Subscription } from '../rxjs/Subscription';
 import { root } from '../utils/root';
-import { Vector } from '../vector';
+import { G20 } from '../vector';
 
 export function is_canvas(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLCanvasElement {
     const tagName = (element && element.nodeName && element.nodeName.toLowerCase());
@@ -52,10 +52,10 @@ export class Texture extends Element<Group> {
     _loaded = false;
     _repeat = 'no-repeat';
 
-    _scale: Vector | number = 1;
+    _scale: G20 | number = 1;
     #scale_change: Subscription | null = null;
 
-    _offset: Vector | null = null;
+    _offset: G20 | null = null;
     #offset_change: Subscription | null = null;
 
     readonly #change: BehaviorSubject<this>;
@@ -90,7 +90,7 @@ export class Texture extends Element<Group> {
         /**
          * A two-component vector describing any pixel offset of the texture when applied to a {@link Path}.
          */
-        this.offset = new Vector();
+        this.offset = new G20();
 
         this.#loaded = new BehaviorSubject(this);
         this.loaded$ = this.#change.asObservable();
@@ -427,7 +427,7 @@ export class Texture extends Element<Group> {
             this.#scale_change = null;
         }
         this._scale = v;
-        if (this._scale instanceof Vector) {
+        if (this._scale instanceof G20) {
             this.#scale_change = this._scale.change$.subscribe(() => {
                 this._flagScale = true;
             });

@@ -16,7 +16,7 @@ import { Rectangle } from '../shapes/rectangle.js';
 import { RoundedRectangle } from '../shapes/rounded-rectangle.js';
 import { Text } from '../text.js';
 import { Two } from '../two.js';
-import { Vector } from '../vector.js';
+import { G20 } from '../vector.js';
 import { MatrixDecomposition } from './MatrixDecomposition.js';
 import { getReflection } from './curves.js';
 import { decomposeMatrix } from './decompose_matrix.js';
@@ -178,7 +178,7 @@ function applySvgViewBox(node: Group, viewBox: string): void {
         node.translation.y += node.y;
     }
     if (widthExists || heightExists) {
-        node.scale = new Vector(1, 1);
+        node.scale = new G20(1, 1);
     }
     if (widthExists) {
         node.scale.x = node.width / width;
@@ -307,7 +307,7 @@ function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyl
 
                     elem.translation.set(transforms.translateX, transforms.translateY);
                     elem.rotation = Math.PI * (transforms.rotation / 180);
-                    elem.scale = new Vector(transforms.scaleX, transforms.scaleY);
+                    elem.scale = new G20(transforms.scaleX, transforms.scaleY);
 
                     x = parseFloat((styles.x + '').replace('px'));
                     y = parseFloat((styles.y + '').replace('px'));

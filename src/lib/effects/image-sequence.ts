@@ -3,7 +3,7 @@ import { lerp } from '../utils/math.js';
 // import { _ } from '../utils/underscore.js';
 
 import { Rectangle } from '../shapes/rectangle.js';
-import { Vector } from '../vector.js';
+import { G20 } from '../vector.js';
 import { Texture } from './texture.js';
 
 export class ImageSequence extends Rectangle {
@@ -105,7 +105,7 @@ export class ImageSequence extends Rectangle {
 
     constructor(paths: (string | Texture)[], ox = 0, oy = 0, frameRate = 30) {
 
-        super({ position: new Vector(ox, oy), width: 0, height: 0 });
+        super({ position: new G20(ox, oy), width: 0, height: 0 });
 
         this.noStroke();
         this.noFill();
@@ -122,7 +122,7 @@ export class ImageSequence extends Rectangle {
             this.textures = [ensure_texture(paths)];
         }
 
-        this.origin = new Vector();
+        this.origin = new G20();
 
         this._update();
 

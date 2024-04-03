@@ -12,7 +12,7 @@ import { decomposeMatrix } from './utils/decompose_matrix';
 import { lerp, mod } from './utils/math';
 import { Commands } from './utils/path-commands';
 import { contains, getCurveLength, getIdByLength, getSubdivisions } from './utils/shape';
-import { Vector } from './vector.js';
+import { G20 } from './vector.js';
 
 export function get_dashes_offset(dashes: number[]): number | undefined {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,11 +32,11 @@ const max = Math.max;
 const ceil = Math.ceil;
 const floor = Math.floor;
 
-const vector = new Vector();
+const vector = new G20();
 
 export interface PathOptions {
-    position?: Vector;
-    attitude?: Vector;
+    position?: G20;
+    attitude?: G20;
 }
 
 export class Path extends Shape<Group> {
@@ -508,10 +508,10 @@ export class Path extends Shape<Group> {
      * TODO: Bad name. THis function is called for its side effects which are to modify the Anchor.
      * Originally the function appears to promote a Vector and return an Anchor, but this is not used
      * and the call always involves an Anchor.
-     * @param t Percentage value describing where on the {@link Two.Path} to estimate and assign coordinate values.
-     * @param {Two.Vector} [obj] - Object to apply calculated x, y to. If none available returns new `Object`.
+     * @param t Percentage value describing where on the {@link Path} to estimate and assign coordinate values.
+     * @param obj - Object to apply calculated x, y to. If none available returns new `Object`.
      * @returns {Object}
-     * @description Given a float `t` from 0 to 1, return a point or assign a passed `obj`'s coordinates to that percentage on this {@link Two.Path}'s curve.
+     * @description Given a float `t` from 0 to 1, return a point or assign a passed `obj`'s coordinates to that percentage on this {@link Path}'s curve.
      */
     getPointAt(t: number, obj: Anchor): Anchor {
 
@@ -872,7 +872,7 @@ export class Path extends Shape<Group> {
                                 if (prev.relative) {
                                     this.viewInfo.anchor_collection[i - 1].controls.right
                                         .copy(prev.controls.right)
-                                        .lerp(Vector.zero, 1 - v.t);
+                                        .lerp(G20.zero, 1 - v.t);
                                 }
                                 else {
                                     this.viewInfo.anchor_collection[i - 1].controls.right
@@ -938,7 +938,7 @@ export class Path extends Shape<Group> {
                         if (next.relative) {
                             this.viewInfo.anchor_collection[i + 1].controls.left
                                 .copy(next.controls.left)
-                                .lerp(Vector.zero, v.t);
+                                .lerp(G20.zero, v.t);
                         }
                         else {
                             vector.copy(next.origin);

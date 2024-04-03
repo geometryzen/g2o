@@ -2,7 +2,7 @@
 import { Anchor } from '../anchor.js';
 import { Collection } from '../collection.js';
 import { Constants } from '../constants.js';
-import { Vector } from '../vector.js';
+import { G20 } from '../vector.js';
 import { HALF_PI, mod } from './math.js';
 import { Commands } from './path-commands.js';
 
@@ -305,11 +305,11 @@ export function getCurveFromPoints(points: Collection<Anchor>, closed: boolean):
  */
 export function getControlPoints(a: Anchor, b: Anchor, c: Anchor): Anchor {
 
-    const a1 = Vector.angleBetween(a.origin, b.origin);
-    const a2 = Vector.angleBetween(c.origin, b.origin);
+    const a1 = G20.angleBetween(a.origin, b.origin);
+    const a2 = G20.angleBetween(c.origin, b.origin);
 
-    let d1 = Vector.distanceBetween(a.origin, b.origin);
-    let d2 = Vector.distanceBetween(c.origin, b.origin);
+    let d1 = G20.distanceBetween(a.origin, b.origin);
+    let d2 = G20.distanceBetween(c.origin, b.origin);
 
     let mid = (a1 + a2) / 2;
 
@@ -354,16 +354,16 @@ export function getControlPoints(a: Anchor, b: Anchor, c: Anchor): Anchor {
 /**
  * @name Two.Utils.getReflection
  * @function
- * @param {Vector} a
- * @param {Vector} b
+ * @param {G20} a
+ * @param {G20} b
  * @param {Boolean} [relative=false]
- * @returns {Vector} New {@link Vector} that represents the reflection point.
+ * @returns {G20} New {@link G20} that represents the reflection point.
  * @description Get the reflection of a point `b` about point `a`. Where `a` is in absolute space and `b` is relative to `a`.
  * @see {@link http://www.w3.org/TR/SVG11/implnote.html#PathElementImplementationNotes}
  */
-export function getReflection(a: Vector, b: Vector, relative = false): Vector {
+export function getReflection(a: G20, b: G20, relative = false): G20 {
 
-    return new Vector(
+    return new G20(
         2 * a.x - (b.x + a.x) - (relative ? a.x : 0),
         2 * a.y - (b.y + a.y) - (relative ? a.y : 0)
     );
@@ -373,7 +373,7 @@ export function getReflection(a: Vector, b: Vector, relative = false): Vector {
 /**
  * @name Two.Utils.getAnchorsFromArcData
  * @function
- * @param {Vector} center
+ * @param {G20} center
  * @param {Number} xAxisRotation
  * @param {Number} rx - x radius
  * @param {Number} ry - y radius
@@ -381,7 +381,7 @@ export function getReflection(a: Vector, b: Vector, relative = false): Vector {
  * @param {Number} td
  * @param {Boolean} [ccw=false] - Set path traversal to counter-clockwise
  */
-export function getAnchorsFromArcData(center: Vector, xAxisRotation: number, rx: number, ry: number, ts: number, td: number, ccw = false): void {
+export function getAnchorsFromArcData(center: G20, xAxisRotation: number, rx: number, ry: number, ts: number, td: number, ccw = false): void {
 
     const resolution = Constants.Resolution;
     const anchors = [];

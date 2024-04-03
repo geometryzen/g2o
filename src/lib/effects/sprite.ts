@@ -2,12 +2,12 @@ import { lerp } from '../utils/math.js';
 import { dateTime } from '../utils/performance.js';
 
 import { Rectangle } from '../shapes/rectangle.js';
-import { Vector } from '../vector.js';
+import { G20 } from '../vector.js';
 import { Texture } from './texture.js';
 
 export interface SpriteOptions {
-    position?: Vector;
-    attitude?: Vector;
+    position?: G20;
+    attitude?: G20;
 }
 
 export class Sprite extends Rectangle {
@@ -33,7 +33,7 @@ export class Sprite extends Rectangle {
     _rows = 1;
     _frameRate = 0;
     _index = 0;
-    _origin: Vector = null;
+    _origin: G20 = null;
 
     _onLastFrame: () => void;
 
@@ -48,7 +48,7 @@ export class Sprite extends Rectangle {
      */
     constructor(path: string | Texture, ox = 0, oy = 0, cols = 1, rows = 1, frameRate = 0) {
 
-        super({ position: new Vector(ox, oy), width: 0, height: 0 });
+        super({ position: new G20(ox, oy), width: 0, height: 0 });
 
         this.noStroke();
         this.noFill();
@@ -64,7 +64,7 @@ export class Sprite extends Rectangle {
             this.texture = new Texture(path);
         }
 
-        this.origin = new Vector();
+        this.origin = new G20();
 
         this._update();
 

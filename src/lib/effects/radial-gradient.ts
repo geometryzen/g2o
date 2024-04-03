@@ -1,5 +1,5 @@
 import { Subscription } from '../rxjs/Subscription';
-import { Vector } from '../vector.js';
+import { G20 } from '../vector.js';
 import { Gradient } from './gradient.js';
 import { Stop } from './stop.js';
 
@@ -10,9 +10,9 @@ export class RadialGradient extends Gradient {
     _flagFocal = false;
 
     #radius = 0;
-    #center: Vector | null = null;
+    #center: G20 | null = null;
     #center_change_subscription: Subscription | null = null;
-    #focal: Vector | null = null;
+    #focal: G20 | null = null;
     #focal_change_subscription: Subscription | null = null;
 
     /**
@@ -29,11 +29,11 @@ export class RadialGradient extends Gradient {
 
         this.viewInfo.type = 'radial-gradient';
 
-        this.center = new Vector(cx, cy);
+        this.center = new G20(cx, cy);
 
         this.radius = r;
 
-        this.focal = new Vector(fx, fy);
+        this.focal = new G20(fx, fy);
         this.focal.copy(this.center);
         if (typeof fx === 'number') {
             this.focal.x = fx;

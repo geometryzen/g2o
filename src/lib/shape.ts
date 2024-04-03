@@ -6,15 +6,15 @@ import { Element } from './element';
 import { Matrix } from './matrix';
 import { Subscription } from './rxjs/Subscription';
 import { getComputedMatrix } from './utils/get_computed_matrix';
-import { Vector } from './vector';
+import { G20 } from './vector';
 
 export interface Parent {
     _update?(): void;
 }
 
 export interface ShapeOptions {
-    position?: Vector;
-    attitude?: Vector;
+    position?: G20;
+    attitude?: G20;
 }
 
 export abstract class Shape<P extends Parent> extends Element<P> implements IShape<P> {
@@ -34,10 +34,10 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
      */
     _worldMatrix: Matrix = null;
 
-    #position: Vector;
+    #position: G20;
     #position_change: Subscription;
 
-    #attitude: Vector;
+    #attitude: G20;
     #attitude_change: Subscription;
 
     /**
@@ -50,7 +50,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
      * The API provides more convenient access for uniform scaling.
      * Make the easy things easy...
      */
-    _scale: Vector = new Vector(1, 1);
+    _scale: G20 = new G20(1, 1);
     #scale_change: Subscription | null = null;
 
     _skewX = 0;
@@ -112,7 +112,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
             this.#position_change = this.#position_change_bind();
         }
         else {
-            this.#position = new Vector(0, 0);
+            this.#position = new G20(0, 0);
             this.#position_change = this.#position_change_bind();
         }
 
@@ -121,7 +121,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
             this.#attitude_change = this.#attitude_change_bind();
         }
         else {
-            this.#attitude = new Vector(0, 0, 1, 0);
+            this.#attitude = new G20(0, 0, 1, 0);
             this.#attitude_change = this.#attitude_change_bind();
         }
 
@@ -134,7 +134,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         /**
          * @name Two.Shape#scale
          * @property {Number} - The value for how much the shape is scaled relative to its parent.
-         * @nota-bene This value can be replaced with a {@link Two.Vector} to do non-uniform scaling. e.g: `shape.scale = new Two.Vector(2, 1);`
+         * @nota-bene This value can be replaced with a {@link G20} to do non-uniform scaling. e.g: `shape.scale = new G20(2, 1);`
          */
         this.scale = 1;
 
@@ -174,7 +174,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
                 .identity()
                 .translate(this.position.x, this.position.y);
 
-            if (this._scale instanceof Vector) {
+            if (this._scale instanceof G20) {
                 this._matrix.scale(this._scale.x, this._scale.y);
             }
             else {
@@ -204,7 +204,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         super.flagReset();
         return this;
     }
-    useAttitude(attitude: Vector): void {
+    useAttitude(attitude: G20): void {
         this.#attitude_change_unbind();
         this.#attitude = attitude;
         this.#attitude_change = this.#attitude_change_bind();
@@ -220,7 +220,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
             this.#attitude_change = null;
         }
     }
-    usePosition(position: Vector): void {
+    usePosition(position: G20): void {
         this.#position_change_unbind();
         this.#position = position;
         this.#position_change = this.#position_change_bind();
@@ -236,10 +236,10 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
             this.#position_change = null;
         }
     }
-    get position(): Vector {
+    get position(): G20 {
         return this.#position;
     }
-    set position(position: Vector) {
+    set position(position: G20) {
         this.#position.set(position.x, position.y, 0, 0);
     }
     get attitude() {
@@ -272,7 +272,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         }
         this._scale.x = scale;
         this._scale.y = scale;
-        if (this._scale instanceof Vector) {
+        if (this._scale instanceof G20) {
             this.#scale_change = this._scale.change$.subscribe(() => {
                 this._flagMatrix = true;
             });
@@ -280,10 +280,10 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         this._flagMatrix = true;
         this._flagScale = true;
     }
-    get scaleXY(): Vector {
+    get scaleXY(): G20 {
         return this._scale;
     }
-    set scaleXY(scale: Vector) {
+    set scaleXY(scale: G20) {
         // TODO: We need another API to support non-uniform scaling.
         // TODO: Why bother to do all this? Make it readonly.
         if (this.#scale_change) {
@@ -291,7 +291,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
             this.#scale_change = null;
         }
         this._scale.set(scale.x, scale.y, 0, 0);
-        if (this._scale instanceof Vector) {
+        if (this._scale instanceof G20) {
             this.#scale_change = this._scale.change$.subscribe(() => {
                 this._flagMatrix = true;
             });

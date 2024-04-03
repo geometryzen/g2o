@@ -2,17 +2,17 @@ import { BehaviorSubject } from 'rxjs';
 import { Observable } from './rxjs/Observable.js';
 import { Subscription } from './rxjs/Subscription.js';
 import { Commands } from './utils/path-commands.js';
-import { Vector } from './vector.js';
+import { G20 } from './vector.js';
 
 export class Anchor {
     /**
      * default is zero.
      */
-    readonly origin = new Vector();
+    readonly origin = new G20();
     #origin_change: Subscription | null = null;
     readonly controls = {
-        left: new Vector(),
-        right: new Vector()
+        left: new G20(),
+        right: new G20()
     };
     #a_change: Subscription | null = null;
     #b_change: Subscription | null = null;
