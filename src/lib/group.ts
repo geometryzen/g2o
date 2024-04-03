@@ -617,19 +617,23 @@ export class Group extends Shape<unknown> {
     get stroke(): string {
         return this._stroke;
     }
-    set stroke(v: string) {
-        this._stroke = v;
+    set stroke(stroke: string) {
+        this._stroke = stroke;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
-            child.stroke = v;
+            child.stroke = stroke;
         }
     }
     get visible(): boolean {
         return this._visible;
     }
-    set visible(v: boolean) {
-        this._flagVisible = this._visible !== v || this._flagVisible;
-        this._visible = v;
+    set visible(visible: boolean) {
+        this._flagVisible = this._visible !== visible || this._flagVisible;
+        this._visible = visible;
+        for (let i = 0; i < this.children.length; i++) {
+            const child = this.children.getAt(i);
+            child.visible = visible;
+        }
     }
 }
 
