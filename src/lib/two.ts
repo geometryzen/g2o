@@ -532,6 +532,7 @@ class Fitter {
      */
     subscribe(): void {
         this.unsubscribe();
+        console.log("Fitter.subscribe()");
         this.#target_resize = fromEvent(this.#target, 'resize')
             .pipe(debounceTime(200))
             .subscribe(() => {
@@ -543,6 +544,7 @@ class Fitter {
      */
     unsubscribe(): void {
         if (this.#target_resize) {
+            console.log("Fitter.unsubscribe()");
             this.#target_resize.unsubscribe();
             this.#target_resize = null;
         }
@@ -550,8 +552,9 @@ class Fitter {
     has_target(): boolean {
         return !!this.#target;
     }
-    set_target(elem: Element | Window): this {
-        this.#target = elem;
+    set_target(target: Element | Window): this {
+        console.log(`Fitter.set_target(windox=${target === window})`);
+        this.#target = target;
         if (this.is_target_window()) {
             // TODO: The controller should take care of this...
             document.body.style.overflow = 'hidden';
