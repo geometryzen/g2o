@@ -1,10 +1,10 @@
-# @geometryzen/two
+# g2o
 
-Template TypeScript Library
+Geometric Algebra 2D Graphics Library
 
-[![version](https://img.shields.io/npm/v/@geometryzen/two.svg)](https://www.npmjs.com/package/@geometryzen/two) 
+[![version](https://img.shields.io/npm/v/g2o.svg)](https://www.npmjs.com/package/g2o) 
 
-[![npm downloads](https://img.shields.io/npm/dm/@geometryzen/two.svg)](https://npm-stat.com/charts.html?package=@geometryzen/two&from=2024-03-27)
+[![npm downloads](https://img.shields.io/npm/dm/g2o.svg)](https://npm-stat.com/charts.html?package=g2o&from=2024-03-27)
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
