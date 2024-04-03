@@ -237,8 +237,7 @@ export class Points extends Shape<Group> {
                 }
             }
             else {
-                // TODO: Need an API for non-uniform scaling.
-                border *= typeof this.scale === 'number' ? this.scale : Math.max(this.scale.x, this.scale.y);
+                border *= Math.max(this.scaleXY.x, this.scaleXY.y);
             }
         }
 

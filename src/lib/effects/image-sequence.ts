@@ -105,7 +105,7 @@ export class ImageSequence extends Rectangle {
 
     constructor(paths: (string | Texture)[], ox = 0, oy = 0, frameRate = 30) {
 
-        super(new Vector(ox, oy), 0, 0);
+        super({ position: new Vector(ox, oy), width: 0, height: 0 });
 
         this.noStroke();
         this.noFill();

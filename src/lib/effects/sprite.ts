@@ -5,6 +5,11 @@ import { Rectangle } from '../shapes/rectangle.js';
 import { Vector } from '../vector.js';
 import { Texture } from './texture.js';
 
+export interface SpriteOptions {
+    position?: Vector;
+    attitude?: Vector;
+}
+
 export class Sprite extends Rectangle {
 
     _flagTexture = false;
@@ -43,7 +48,7 @@ export class Sprite extends Rectangle {
      */
     constructor(path: string | Texture, ox = 0, oy = 0, cols = 1, rows = 1, frameRate = 0) {
 
-        super(new Vector(ox, oy), 0, 0);
+        super({ position: new Vector(ox, oy), width: 0, height: 0 });
 
         this.noStroke();
         this.noFill();

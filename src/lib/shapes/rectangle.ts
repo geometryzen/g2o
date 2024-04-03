@@ -1,12 +1,19 @@
 import { Anchor } from '../anchor';
-import { Path } from '../path';
+import { Path, PathOptions } from '../path';
 import { Subscription } from '../rxjs/Subscription';
 import { Vector } from '../vector';
 
+export interface RectangleOptions {
+    position?: Vector;
+    attitude?: Vector;
+    width?: number;
+    height?: number;
+}
+
 export class Rectangle extends Path {
 
-    _flagWidth = false;
-    _flagHeight = false;
+    _flagWidth: boolean;
+    _flagHeight: boolean;
     _width = 0;
     _height = 0;
 
@@ -14,7 +21,7 @@ export class Rectangle extends Path {
     // DGH: How does origin differ from position?
     #origin_change_subscription: Subscription | null = null;
 
-    constructor(position: Vector = new Vector(0, 0), width = 1, height = 1) {
+    constructor(options: RectangleOptions = {}) {
 
         const points = [
             new Anchor(0, 0, 0, 0, 0, 0, 'M'),
@@ -24,14 +31,15 @@ export class Rectangle extends Path {
             // new Anchor() // TODO: Figure out how to handle this for `beginning` / `ending` animations
         ];
 
-        super(points, true, false, true);
+        super(points, true, false, true, path_options_from_rectangle_options(options));
 
-        this.width = width;
-        this.height = height;
+        this._width = typeof options.width === 'number' ? options.width : 1;
+        this._flagWidth = true;
+
+        this._height = typeof options.height === 'number' ? options.height : 1;
+        this._flagHeight = true;
 
         this.origin = new Vector();
-
-        this.usePosition(position);
 
         this._update();
     }
@@ -98,4 +106,12 @@ export class Rectangle extends Path {
         this._width = v;
         this._flagWidth = true;
     }
+}
+
+function path_options_from_rectangle_options(circle_options: RectangleOptions): PathOptions {
+    const path_options: PathOptions = {
+        attitude: circle_options.attitude,
+        position: circle_options.position
+    };
+    return path_options;
 }
