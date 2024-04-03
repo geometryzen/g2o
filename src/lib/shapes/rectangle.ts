@@ -4,14 +4,17 @@ import { Subscription } from '../rxjs/Subscription';
 import { Vector } from '../vector';
 
 export class Rectangle extends Path {
+
+    _flagWidth = false;
+    _flagHeight = false;
+    _width = 0;
+    _height = 0;
+
+    _origin: Vector = null;
+    // DGH: How does origin differ from position?
     #origin_change_subscription: Subscription | null = null;
-    /**
-     * @param x The x position of the rectangle.
-     * @param y The y position of the rectangle.
-     * @param width The width value of the rectangle.
-     * @param height The width value of the rectangle.
-     */
-    constructor(x = 0, y = 0, width = 1, height = 1) {
+
+    constructor(position: Vector = new Vector(0, 0), width = 1, height = 1) {
 
         const points = [
             new Anchor(0, 0, 0, 0, 0, 0, 'M'),
@@ -28,24 +31,10 @@ export class Rectangle extends Path {
 
         this.origin = new Vector();
 
-        if (typeof x === 'number') {
-            this.position.x = x;
-        }
-        if (typeof y === 'number') {
-            this.position.y = y;
-        }
+        this.usePosition(position);
 
         this._update();
     }
-
-    static Properties = ['width', 'height'];
-
-    _flagWidth = false;
-    _flagHeight = false;
-    _width = 0;
-    _height = 0;
-
-    _origin: Vector = null;
 
     _update(): this {
         if (this._flagVertices || this._flagWidth || this._flagHeight) {
@@ -75,10 +64,10 @@ export class Rectangle extends Path {
         return this;
     }
 
-    flagReset() {
-        this._flagWidth = false;
-        this._flagHeight = false;
-        super.flagReset();
+    flagReset(dirtyFlag = false) {
+        this._flagWidth = dirtyFlag;
+        this._flagHeight = dirtyFlag;
+        super.flagReset(dirtyFlag);
         return this;
     }
     get height(): number {

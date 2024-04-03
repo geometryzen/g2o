@@ -284,7 +284,7 @@ export class Two {
     }
 
     makeRectangle(x: number, y: number, width: number, height: number): Rectangle {
-        const rect = new Rectangle(x, y, width, height);
+        const rect = new Rectangle(new Vector(x, y), width, height);
         this.#scene.add(rect);
         return rect;
     }

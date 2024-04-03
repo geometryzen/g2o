@@ -30,6 +30,10 @@ export class Circle extends Path {
         this._update();
     }
 
+    dispose(): void {
+        super.dispose();
+    }
+
     _update() {
 
         if (this._flagVertices || this._flagRadius) {
