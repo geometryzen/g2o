@@ -148,6 +148,10 @@ export class Two {
         this.#fitter.unsubscribe();
     }
 
+    get scene(): Group {
+        return this.#scene;
+    }
+
     appendTo(container: Element) {
         if (container && typeof container.nodeType === 'number') {
             if (container.nodeType === Node.ELEMENT_NODE) {
