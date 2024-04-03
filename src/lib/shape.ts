@@ -171,6 +171,8 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
 
         if (!this._matrix.manual && this._flagMatrix) {
 
+            console.log("matrix is being updated", this.position.x, this.position.y);
+
             this._matrix
                 .identity()
                 .translate(this.position.x, this.position.y);

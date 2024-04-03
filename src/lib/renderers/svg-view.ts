@@ -727,10 +727,12 @@ const svg = {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     this.viewInfo.position_change = this.position.change$.subscribe((position) => {
                         console.log("position changed", position.x, position.y);
+                        console.log("flagMatrix", this._flagMatrix);
                         // The position could be used to compute the transform.
                         this._update();
                         const change: SVGAttributes = {};
                         change.transform = 'matrix(' + this.matrix.toString() + ')';
+                        console.log("transform", change.transform);
                         svg.setAttributes(this.viewInfo.elem, changed);
                     });
                 }
