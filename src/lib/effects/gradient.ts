@@ -23,7 +23,7 @@ export abstract class Gradient extends Element<Group> {
     _stops_insert: Subscription | null = null;
     _stops_remove: Subscription | null = null;
 
-    readonly #change: BehaviorSubject<this>;
+    readonly _change: BehaviorSubject<this>;
     readonly change$: Observable<this>;
 
     readonly _stop_subscriptions: { [id: string]: Subscription } = {};
@@ -52,8 +52,8 @@ export abstract class Gradient extends Element<Group> {
 
         this.#set_children(stops);
 
-        this.#change = new BehaviorSubject(this);
-        this.change$ = this.#change.asObservable();
+        this._change = new BehaviorSubject(this);
+        this.change$ = this._change.asObservable();
     }
 
     dispose(): void {
@@ -129,7 +129,7 @@ export abstract class Gradient extends Element<Group> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _update(bubbles = false): this {
         if (this._flagSpread || this._flagStops) {
-            this.#change.next(this);
+            this._change.next(this);
         }
         return this;
     }
