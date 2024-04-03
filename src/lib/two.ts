@@ -156,7 +156,6 @@ export class Two {
     appendTo(container: Element) {
         if (container && typeof container.nodeType === 'number') {
             if (container.nodeType === Node.ELEMENT_NODE) {
-                console.log(`Two.appendTo ${container.nodeType}`);
                 container.appendChild(this.#view.domElement);
 
                 if (!this.#fitter.is_target_body()) {
@@ -525,7 +524,6 @@ class Fitter {
      */
     subscribe(): void {
         this.unsubscribe();
-        console.log("Fitter.subscribe()");
         this.#target_resize = fromEvent(this.#target, 'resize')
             .pipe(debounceTime(200))
             .subscribe(() => {
@@ -537,7 +535,6 @@ class Fitter {
      */
     unsubscribe(): void {
         if (this.#target_resize) {
-            console.log("Fitter.unsubscribe()");
             this.#target_resize.unsubscribe();
             this.#target_resize = null;
         }
@@ -546,7 +543,6 @@ class Fitter {
         return !!this.#target;
     }
     set_target(target: Element): this {
-        console.log(`Fitter.set_target(body=${target === document.body})`);
         this.#target = target;
         if (this.is_target_body()) {
             // TODO: The controller should take care of this...
@@ -573,7 +569,6 @@ class Fitter {
         return this.#target === document.body;
     }
     resize(): void {
-        console.log("Fitter.#resize()");
         const two = this.#two;
         const size = this.#target.getBoundingClientRect();
 
