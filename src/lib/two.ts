@@ -124,15 +124,14 @@ export class Two {
 
         switch (params.resizeTarget) {
             case 'body': {
-                // Does document.body make more sense?
-                this.#fitter.set_target(window);
+                this.#fitter.set_target(document.body);
                 this.#fitter.subscribe();
                 this.#fitter.resize();
                 break;
             }
             case 'container': {
                 if (params.container) {
-                    this.#fitter.set_target(window);
+                    this.#fitter.set_target(params.container);
                     this.#fitter.subscribe();
                     this.#fitter.resize();
                 }
@@ -146,7 +145,10 @@ export class Two {
                 break;
             }
             case 'window': {
-                // Not yet supported, but this would be going to full screen.
+                this.#fitter.set_target(window);
+                this.#fitter.subscribe();
+                this.#fitter.resize();
+                break;
                 break;
             }
             default: {
@@ -179,8 +181,8 @@ export class Two {
     }
 
     appendTo(container: Element) {
-        if (container) {
-            if (container.nodeType) {
+        if (container && typeof container.nodeType === 'number') {
+            if (container.nodeType === Node.ELEMENT_NODE) {
                 console.log(`Two.appendTo ${container.nodeType}`);
                 container.appendChild(this.#view.domElement);
 
