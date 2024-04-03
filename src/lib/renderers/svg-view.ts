@@ -1067,7 +1067,7 @@ const svg = {
                         const attrs: SVGAttributes = {};
 
                         if (stop._flagOffset) {
-                            attrs.offset = 100 * stop._offset + '%';
+                            attrs.offset = 100 * stop.offset + '%';
                         }
                         if (stop._flagColor) {
                             attrs['stop-color'] = stop._color;
@@ -1153,7 +1153,7 @@ const svg = {
                         const attrs: SVGAttributes = {};
 
                         if (stop._flagOffset) {
-                            attrs.offset = 100 * stop._offset + '%';
+                            attrs.offset = 100 * stop.offset + '%';
                         }
                         if (stop._flagColor) {
                             attrs['stop-color'] = stop._color;

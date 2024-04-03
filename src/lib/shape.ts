@@ -29,13 +29,12 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
      */
     _worldMatrix: Matrix = null;
 
-    /**
-     * TODO: Can I make this #private without breaking extending classes?
-     */
-    #position: Vector = null;
-    #position_change: Subscription | null = null;
+    readonly #position = new Vector(0, 0, 0, 0);
+    readonly #position_change: Subscription = this.#position.change$.subscribe(() => {
+        this._flagMatrix = true;
+    });
 
-    readonly #attitude: Vector = new Vector(0, 0, 1, 0);
+    readonly #attitude = new Vector(0, 0, 1, 0);
     readonly #attitude_change: Subscription = this.#attitude.change$.subscribe(() => {
         this._flagMatrix = true;
     });
@@ -143,6 +142,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     }
 
     dispose(): void {
+        this.#position_change.unsubscribe();
         this.#attitude_change.unsubscribe();
     }
 
@@ -153,14 +153,6 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         this.viewInfo = v;
     }
 
-    /**
-     * @name Two.Shape#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
     _update(bubbles?: boolean): this {
 
         if (!this._matrix.manual && this._flagMatrix) {
@@ -193,29 +185,18 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         return this;
     }
 
-    /**
-     * @name Two.Shape#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
-    flagReset() {
-        this._flagMatrix = this._flagScale = false;
-        super.flagReset.call(this);
+    flagReset(dirtyFlag = false) {
+        this._flagMatrix = dirtyFlag;
+        this._flagScale = dirtyFlag;
+        super.flagReset();
         return this;
     }
     get position() {
         return this.#position;
     }
-    set position(v) {
-        if (this.#position_change) {
-            this.#position_change.unsubscribe();
-            this.#position_change = null;
-        }
-        this.#position = v;
-        this.#position_change = this.#position.change$.subscribe(() => {
-            this._flagMatrix = true;
-        });
+    set position(position) {
+        // Essentially a copy but we'll force the grade zero and grade two parts to be zero.
+        this.#position.set(position.x, position.y, 0, 0);
     }
     get attitude() {
         return this.#attitude;

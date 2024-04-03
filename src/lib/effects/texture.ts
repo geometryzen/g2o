@@ -53,10 +53,10 @@ export class Texture extends Element<Group> {
     _repeat = 'no-repeat';
 
     _scale: Vector | number = 1;
-    #scale_change_subscription: Subscription | null = null;
+    #scale_change: Subscription | null = null;
 
     _offset: Vector | null = null;
-    #offset_change_subscription: Subscription | null = null;
+    #offset_change: Subscription | null = null;
 
     readonly #change: BehaviorSubject<this>;
     readonly change$: Observable<this>;
@@ -401,12 +401,12 @@ export class Texture extends Element<Group> {
         return this._offset;
     }
     set offset(v) {
-        if (this.#offset_change_subscription) {
-            this.#offset_change_subscription.unsubscribe();
-            this.#offset_change_subscription = null;
+        if (this.#offset_change) {
+            this.#offset_change.unsubscribe();
+            this.#offset_change = null;
         }
         this._offset = v;
-        this.#offset_change_subscription = this._offset.change$.subscribe(() => {
+        this.#offset_change = this._offset.change$.subscribe(() => {
             this._flagOffset = true;
         });
         this._flagOffset = true;
@@ -422,13 +422,13 @@ export class Texture extends Element<Group> {
         return this._scale;
     }
     set scale(v) {
-        if (this.#scale_change_subscription) {
-            this.#scale_change_subscription.unsubscribe();
-            this.#scale_change_subscription = null;
+        if (this.#scale_change) {
+            this.#scale_change.unsubscribe();
+            this.#scale_change = null;
         }
         this._scale = v;
         if (this._scale instanceof Vector) {
-            this.#scale_change_subscription = this._scale.change$.subscribe(() => {
+            this.#scale_change = this._scale.change$.subscribe(() => {
                 this._flagScale = true;
             });
         }
