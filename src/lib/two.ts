@@ -97,11 +97,6 @@ export class Two {
     readonly #frameCount: BehaviorSubject<number>;
     readonly frameCount$: Observable<number>;
 
-    /**
-     * A number representing how much time has elapsed since the last frame in milliseconds.
-     */
-    elapsed_time_in_millis = 0;
-
     playing = false;
 
     // Used to compute the elapsed time between frames.
@@ -199,6 +194,9 @@ export class Two {
         this.playing = p;
     }
 
+    /**
+     * A number representing how much time has elapsed since the last frame in milliseconds.
+     */
     getElapsedTime(fractionalDigits = 3): number | null {
         if (typeof this.#prev_now === 'number') {
             return parseFloat((this.#curr_now - this.#prev_now).toFixed(fractionalDigits));
@@ -587,15 +585,17 @@ class Fitter {
         }
     }
     #resize_to_window() {
+        console.log("Fitter.#resize_to_window()");
         const two = this.#two;
-        const wr = document.body.getBoundingClientRect();
+        const body_size = document.body.getBoundingClientRect();
 
-        const width = two.width = wr.width;
-        const height = two.height = wr.height;
+        const width = two.width = body_size.width;
+        const height = two.height = body_size.height;
 
         this.#view.setSize(width, height, two.ratio);
     }
     #resize_to_parent() {
+        console.log("Fitter.#resize_to_parent()");
         const two = this.#two;
 
         const parent = this.#domElement.parentElement;
