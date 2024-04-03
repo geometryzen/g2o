@@ -1,11 +1,13 @@
-import { BehaviorSubject, Observable, Subscription } from 'rxjs';
-import { Constants } from '../constants.js';
-import { Element } from '../element.js';
-import { Group } from '../group.js';
+import { BehaviorSubject } from 'rxjs';
+import { Constants } from '../constants';
+import { Element } from '../element';
+import { Group } from '../group';
 import { Registry } from '../registry.js';
-import { SharedInfo } from '../renderers/SharedInfo.js';
-import { root } from '../utils/root.js';
-import { Vector } from '../vector.js';
+import { SharedInfo } from '../renderers/SharedInfo';
+import { Observable } from '../rxjs/Observable';
+import { Subscription } from '../rxjs/Subscription';
+import { root } from '../utils/root';
+import { Vector } from '../vector';
 
 export function is_canvas(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLCanvasElement {
     const tagName = (element && element.nodeName && element.nodeName.toLowerCase());

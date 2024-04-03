@@ -1,0 +1,1 @@
+The goal of this folder is to provide interfacesthat can be published with the existing API without relying on 'rxjs' to prob=vide types.

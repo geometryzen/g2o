@@ -1,6 +1,7 @@
-import { Observable, Subject } from 'rxjs';
-import { Child } from './children.js';
-import { SharedInfo } from './renderers/SharedInfo.js';
+import { Subject } from 'rxjs';
+import { Child } from './children';
+import { SharedInfo } from './renderers/SharedInfo';
+import { Observable } from './rxjs/Observable';
 
 /**
  * The foundational object for the scenegraph.

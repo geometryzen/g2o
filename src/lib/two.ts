@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable, Subscription, debounceTime, fromEvent } from 'rxjs';
+import { BehaviorSubject, debounceTime, fromEvent } from 'rxjs';
 import { Anchor } from './anchor.js';
 import { Constants } from './constants.js';
 import { Sprite } from './effects/sprite.js';
@@ -6,6 +6,8 @@ import { Texture } from './effects/texture.js';
 import { Group } from './group.js';
 import { Path } from './path.js';
 import { View } from './renderers/View.js';
+import { Observable } from './rxjs/Observable.js';
+import { Subscription } from './rxjs/Subscription.js';
 import { Shape } from './shape.js';
 import { ArcSegment } from './shapes/arc-segment.js';
 import { Circle } from './shapes/circle.js';
@@ -71,7 +73,7 @@ export class Two {
     height = 0;
 
     readonly #size = new BehaviorSubject({ width: this.width, height: this.height });
-    readonly size$ = this.#size.asObservable();
+    readonly size$: Observable<{ width: number; height: number }> = this.#size.asObservable();
 
     /**
      * 

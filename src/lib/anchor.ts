@@ -1,4 +1,6 @@
-import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
+import { Observable } from './rxjs/Observable.js';
+import { Subscription } from './rxjs/Subscription.js';
 import { Commands } from './utils/path-commands.js';
 import { Vector } from './vector.js';
 
@@ -7,13 +9,13 @@ export class Anchor {
      * default is zero.
      */
     readonly origin = new Vector();
-    #origin_change_subscription: Subscription | null = null;
+    #origin_change: Subscription | null = null;
     readonly controls = {
         left: new Vector(),
         right: new Vector()
     };
-    #a_change_subscription: Subscription | null = null;
-    #b_change_subscription: Subscription | null = null;
+    #a_change: Subscription | null = null;
+    #b_change: Subscription | null = null;
 
     #command: 'M' | 'L' | 'C' | 'A' | 'Z';
     #relative: boolean;
@@ -57,29 +59,29 @@ export class Anchor {
         this.#change = new BehaviorSubject(this);
         this.change$ = this.#change.asObservable();
 
-        this.#origin_change_subscription = this.origin.change$.subscribe(() => {
+        this.#origin_change = this.origin.change$.subscribe(() => {
             this.#change.next(this);
         });
-        this.#a_change_subscription = this.controls.left.change$.subscribe(() => {
+        this.#a_change = this.controls.left.change$.subscribe(() => {
             this.#change.next(this);
         });
-        this.#b_change_subscription = this.controls.right.change$.subscribe(() => {
+        this.#b_change = this.controls.right.change$.subscribe(() => {
             this.#change.next(this);
         });
     }
 
     dispose(): void {
-        if (this.#origin_change_subscription) {
-            this.#origin_change_subscription.unsubscribe();
-            this.#origin_change_subscription = null;
+        if (this.#origin_change) {
+            this.#origin_change.unsubscribe();
+            this.#origin_change = null;
         }
-        if (this.#a_change_subscription) {
-            this.#a_change_subscription.unsubscribe();
-            this.#a_change_subscription = null;
+        if (this.#a_change) {
+            this.#a_change.unsubscribe();
+            this.#a_change = null;
         }
-        if (this.#b_change_subscription) {
-            this.#b_change_subscription.unsubscribe();
-            this.#b_change_subscription = null;
+        if (this.#b_change) {
+            this.#b_change.unsubscribe();
+            this.#b_change = null;
         }
     }
 

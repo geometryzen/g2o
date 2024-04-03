@@ -1,8 +1,8 @@
-import { Subscription } from 'rxjs';
-import { Anchor } from '../anchor.js';
-import { Path } from '../path.js';
-import { Commands } from '../utils/path-commands.js';
-import { Vector } from '../vector.js';
+import { Anchor } from '../anchor';
+import { Path } from '../path';
+import { Subscription } from '../rxjs/Subscription';
+import { Commands } from '../utils/path-commands';
+import { Vector } from '../vector';
 
 export class RoundedRectangle extends Path {
 

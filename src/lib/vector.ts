@@ -1,4 +1,5 @@
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
+import { Observable } from './rxjs/Observable';
 
 /**
  * A multivector for two dimensions with a Euclidean metric.

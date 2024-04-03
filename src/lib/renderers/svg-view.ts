@@ -1,20 +1,21 @@
-import { BehaviorSubject, Observable } from 'rxjs';
-import { Anchor } from '../anchor.js';
-import { Gradient } from '../effects/gradient.js';
-import { LinearGradient } from '../effects/linear-gradient.js';
-import { RadialGradient } from '../effects/radial-gradient.js';
-import { Texture, is_canvas, is_img, is_video } from '../effects/texture.js';
-import { Element as ElementBase } from '../element.js';
-import { Group } from '../group.js';
-import { Path, get_dashes_offset } from '../path.js';
-import { Shape } from '../shape.js';
-import { Points } from '../shapes/points.js';
-import { Text } from '../text.js';
-import { decomposeMatrix } from '../utils/decompose_matrix.js';
-import { mod, toFixed } from '../utils/math.js';
-import { Commands } from '../utils/path-commands.js';
-import { Vector } from '../vector.js';
-import { View } from './View.js';
+import { BehaviorSubject } from 'rxjs';
+import { Anchor } from '../anchor';
+import { Gradient } from '../effects/gradient';
+import { LinearGradient } from '../effects/linear-gradient';
+import { RadialGradient } from '../effects/radial-gradient';
+import { Texture, is_canvas, is_img, is_video } from '../effects/texture';
+import { Element as ElementBase } from '../element';
+import { Group } from '../group';
+import { Path, get_dashes_offset } from '../path';
+import { Observable } from '../rxjs/Observable';
+import { Shape } from '../shape';
+import { Points } from '../shapes/points';
+import { Text } from '../text';
+import { decomposeMatrix } from '../utils/decompose_matrix';
+import { mod, toFixed } from '../utils/math';
+import { Commands } from '../utils/path-commands';
+import { Vector } from '../vector';
+import { View } from './View';
 
 type DOMElement = HTMLElement | SVGElement;
 
@@ -374,7 +375,7 @@ const svg = {
         return string;
     },
 
-    getClip: function (shape: Shape, domElement: DOMElement) {
+    getClip: function (shape: Shape<Group>, domElement: DOMElement) {
         let clip = shape.viewInfo.clip;
         if (!clip) {
             clip = shape.viewInfo.clip = svg.createElement('clipPath', {
@@ -408,7 +409,7 @@ const svg = {
 
     group: {
 
-        appendChild: function (this: DomContext, object: Shape) {
+        appendChild: function (this: DomContext, object: Shape<Group>) {
 
             const elem = object.viewInfo.elem;
 
@@ -426,7 +427,7 @@ const svg = {
 
         },
 
-        removeChild: function (this: DomContext, object: Shape) {
+        removeChild: function (this: DomContext, object: Shape<Group>) {
 
             const elem = object.viewInfo.elem;
 
@@ -448,7 +449,7 @@ const svg = {
             this.elem.removeChild(elem);
         },
 
-        orderChild: function (this: DomContext, object: Shape) {
+        orderChild: function (this: DomContext, object: Shape<Group>) {
             this.elem.appendChild(object.viewInfo.elem);
         },
         /**
@@ -918,7 +919,7 @@ const svg = {
                     changed.fill = this._fill && this._fill.id
                         ? 'url(#' + this._fill.id + ')' : this._fill;
                     if (this.viewInfo.hasFillEffect && typeof this._fill.id === 'undefined') {
-                        domElement.defs._flagUpdate = true;
+                        set_defs_flag_update(get_dom_element_defs(domElement), true);
                         delete this.viewInfo.hasFillEffect;
                     }
                 }
@@ -931,7 +932,7 @@ const svg = {
                     changed.stroke = this._stroke && this._stroke.id
                         ? 'url(#' + this._stroke.id + ')' : this._stroke;
                     if (this.viewInfo.hasStrokeEffect && typeof this._stroke.id === 'undefined') {
-                        domElement.defs._flagUpdate = true;
+                        set_defs_flag_update(get_dom_element_defs(domElement), true);
                         delete this.viewInfo.hasStrokeEffect;
                     }
                 }

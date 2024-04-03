@@ -1,10 +1,10 @@
-import { Subscription } from 'rxjs';
-import { Gradient } from './effects/gradient.js';
-import { Texture } from './effects/texture.js';
-import { Group } from './group.js';
-import { get_dashes_offset, set_dashes_offset } from './path.js';
-import { Shape } from './shape.js';
-import { root } from './utils/root.js';
+import { Gradient } from './effects/gradient';
+import { Texture } from './effects/texture';
+import { Group } from './group';
+import { get_dashes_offset, set_dashes_offset } from './path';
+import { Subscription } from './rxjs/Subscription';
+import { Shape } from './shape';
+import { root } from './utils/root';
 
 let canvas: HTMLCanvasElement;
 const min = Math.min, max = Math.max;

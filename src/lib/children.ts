@@ -1,5 +1,6 @@
-import { Observable, Subscription } from 'rxjs';
 import { Collection } from './collection.js';
+import { Observable } from './rxjs/Observable.js';
+import { Subscription } from './rxjs/Subscription.js';
 
 export interface Child {
     id: string;

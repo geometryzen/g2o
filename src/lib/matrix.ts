@@ -1,4 +1,5 @@
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
+import { Observable } from './rxjs/Observable.js';
 import { NumArray, toFixed } from './utils/math.js';
 
 // Constants

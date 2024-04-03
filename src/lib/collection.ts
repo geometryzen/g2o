@@ -1,4 +1,5 @@
-import { Observable, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
+import { Observable } from './rxjs/Observable';
 
 /**
  * TODO: If this was iterable then there would be less need for the length and getAt.

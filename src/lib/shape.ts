@@ -1,12 +1,12 @@
-import { Subscription } from 'rxjs';
-import { IShape } from './IShape.js';
-import { Constants } from './constants.js';
-import { Gradient } from './effects/gradient.js';
-import { Texture } from './effects/texture.js';
-import { Element } from './element.js';
-import { Matrix } from './matrix.js';
-import { getComputedMatrix } from './utils/get_computed_matrix.js';
-import { Vector } from './vector.js';
+import { IShape } from './IShape';
+import { Constants } from './constants';
+import { Gradient } from './effects/gradient';
+import { Texture } from './effects/texture';
+import { Element } from './element';
+import { Matrix } from './matrix';
+import { Subscription } from './rxjs/Subscription';
+import { getComputedMatrix } from './utils/get_computed_matrix';
+import { Vector } from './vector';
 
 export interface Parent {
     _update?(): void;

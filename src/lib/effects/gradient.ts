@@ -1,9 +1,11 @@
-import { BehaviorSubject, Observable, Subscription } from 'rxjs';
-import { Children } from '../children.js';
-import { Constants } from '../constants.js';
-import { Element } from '../element.js';
-import { Group } from '../group.js';
-import { Stop } from './stop.js';
+import { BehaviorSubject } from 'rxjs';
+import { Children } from '../children';
+import { Constants } from '../constants';
+import { Element } from '../element';
+import { Group } from '../group';
+import { Observable } from '../rxjs/Observable';
+import { Subscription } from '../rxjs/Subscription';
+import { Stop } from './stop';
 
 /**
  *
@@ -18,10 +20,10 @@ export abstract class Gradient extends Element<Group> {
     _units: 'userSpaceOnUse' | 'objectBoundingBox' | null = null;
 
     _stops: Children<Stop> | null = null;
-    _stops_insert_subscription: Subscription | null = null;
-    _stops_remove_subscription: Subscription | null = null;
+    _stops_insert: Subscription | null = null;
+    _stops_remove: Subscription | null = null;
 
-    protected readonly _change: BehaviorSubject<this>;
+    readonly #change: BehaviorSubject<this>;
     readonly change$: Observable<this>;
 
     readonly _stop_subscriptions: { [id: string]: Subscription } = {};
@@ -50,8 +52,8 @@ export abstract class Gradient extends Element<Group> {
 
         this.#set_children(stops);
 
-        this._change = new BehaviorSubject(this);
-        this.change$ = this._change.asObservable();
+        this.#change = new BehaviorSubject(this);
+        this.change$ = this.#change.asObservable();
     }
 
     dispose(): void {
@@ -64,7 +66,7 @@ export abstract class Gradient extends Element<Group> {
     #set_children(children: Stop[]): void {
         this._stops = new Children((children || []).slice(0));
 
-        this._stops_insert_subscription = this._stops.insert$.subscribe((stops: Stop[]) => {
+        this._stops_insert = this._stops.insert$.subscribe((stops: Stop[]) => {
             let i = stops.length;
             while (i--) {
                 const stop = stops[i];
@@ -75,7 +77,7 @@ export abstract class Gradient extends Element<Group> {
             }
         });
 
-        this._stops_remove_subscription = this._stops.remove$.subscribe((stops: Stop[]) => {
+        this._stops_remove = this._stops.remove$.subscribe((stops: Stop[]) => {
             let i = stops.length;
             while (i--) {
                 const stop = stops[i];
@@ -91,13 +93,13 @@ export abstract class Gradient extends Element<Group> {
     }
 
     #unset_children(): void {
-        if (this._stops_insert_subscription) {
-            this._stops_insert_subscription.unsubscribe();
-            this._stops_insert_subscription = null;
+        if (this._stops_insert) {
+            this._stops_insert.unsubscribe();
+            this._stops_insert = null;
         }
-        if (this._stops_remove_subscription) {
-            this._stops_remove_subscription.unsubscribe();
-            this._stops_remove_subscription = null;
+        if (this._stops_remove) {
+            this._stops_remove.unsubscribe();
+            this._stops_remove = null;
         }
         if (this._stops) {
             this._stops.dispose();
@@ -127,7 +129,7 @@ export abstract class Gradient extends Element<Group> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _update(bubbles = false): this {
         if (this._flagSpread || this._flagStops) {
-            this._change.next(this);
+            this.#change.next(this);
         }
         return this;
     }

@@ -45,7 +45,7 @@ export class LinearGradient extends Gradient {
      */
     _update() {
         if (this._flagEndPoints || this._flagSpread || this._flagStops) {
-            this._change.next(this);
+            this.#change.next(this);
         }
         return this;
     }

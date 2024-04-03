@@ -1,4 +1,3 @@
-import { Subscription } from 'rxjs';
 import { Collection } from '../collection.js';
 import { Gradient } from '../effects/gradient.js';
 import { LinearGradient } from '../effects/linear-gradient.js';
@@ -6,6 +5,7 @@ import { RadialGradient } from '../effects/radial-gradient.js';
 import { Texture } from '../effects/texture.js';
 import { Group } from '../group.js';
 import { get_dashes_offset, set_dashes_offset } from '../path.js';
+import { Subscription } from '../rxjs/Subscription';
 import { Shape } from '../shape.js';
 import { getCurveLength as gcl, subdivide } from '../utils/curves.js';
 import { decomposeMatrix } from '../utils/decompose_matrix.js';
