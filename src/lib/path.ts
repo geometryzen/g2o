@@ -804,6 +804,7 @@ export class Path extends Shape<Group> {
      * @nota-bene Try not to call this method more than once a frame.
      */
     _update() {
+        console.log("Path.update()");
 
         if (this._flagVertices) {
 

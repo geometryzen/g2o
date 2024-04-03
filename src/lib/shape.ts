@@ -1,8 +1,8 @@
-import { IShape } from './IShape';
 import { Constants } from './constants';
 import { Gradient } from './effects/gradient';
 import { Texture } from './effects/texture';
 import { Element } from './element';
+import { IShape } from './IShape';
 import { Matrix } from './matrix';
 import { Subscription } from './rxjs/Subscription';
 import { getComputedMatrix } from './utils/get_computed_matrix';
@@ -167,6 +167,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     }
 
     _update(bubbles?: boolean): this {
+        console.log("Shape.update()", "matrix.manual", this.matrix.manual, "flagMatrix", this._flagMatrix);
 
         if (!this._matrix.manual && this._flagMatrix) {
 
@@ -195,6 +196,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
                 parent._update();
             }
         }
+        // There's no update on the super type.
         return this;
     }
 

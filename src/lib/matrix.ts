@@ -328,13 +328,13 @@ export class Matrix {
 
     }
 
+    /**
+     * WARNING: This is critical because it is used to buld the SVG transform matrix.
+     */
     toString(fullMatrix = false): string {
-
         array.length = 0;
         this.toTransformArray(fullMatrix, array);
-
         return array.map(toFixed).join(' ');
-
     }
 
     /**
