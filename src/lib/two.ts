@@ -31,7 +31,7 @@ export interface RendererParams {
 }
 
 export interface TwoOptions {
-    resizeTarget?: 'window' | 'body' | 'container' | 'fixed';
+    resizeTarget?: Element;
     scene?: Group;
     view?: View;
     /**
@@ -122,38 +122,10 @@ export class Two {
         this.#frameCount = new BehaviorSubject(this.frameCount);
         this.frameCount$ = this.#frameCount.asObservable();
 
-        switch (params.resizeTarget) {
-            case 'body': {
-                this.#fitter.set_target(document.body);
-                this.#fitter.subscribe();
-                this.#fitter.resize();
-                break;
-            }
-            case 'container': {
-                if (params.container) {
-                    this.#fitter.set_target(params.container);
-                    this.#fitter.subscribe();
-                    this.#fitter.resize();
-                }
-                else {
-                    // We don't know the container yet so wait until appendTo is called.
-                }
-                break;
-            }
-            case 'fixed': {
-                // We are not tracking anything in this mode.
-                break;
-            }
-            case 'window': {
-                this.#fitter.set_target(window);
-                this.#fitter.subscribe();
-                this.#fitter.resize();
-                break;
-                break;
-            }
-            default: {
-                throw new Error("resizeTarget must be one of 'body', 'container', 'fixed', or 'window'.");
-            }
+        if (params.resizeTarget) {
+            this.#fitter.set_target(params.resizeTarget);
+            this.#fitter.subscribe();
+            this.#fitter.resize();
         }
 
         if (params.container) {
@@ -186,7 +158,7 @@ export class Two {
                 console.log(`Two.appendTo ${container.nodeType}`);
                 container.appendChild(this.#view.domElement);
 
-                if (!this.#fitter.is_target_window()) {
+                if (!this.#fitter.is_target_body()) {
                     this.#fitter.set_target(container);
                 }
 
@@ -533,7 +505,7 @@ class Fitter {
     readonly #two: Two;
     readonly #view: View;
     readonly #domElement: HTMLElement | SVGElement;
-    #target: Element | Window | null = null;
+    #target: Element | null = null;
     #target_resize: Subscription | null = null;
     constructor(two: Two, view: View) {
         this.#two = two;
@@ -571,10 +543,10 @@ class Fitter {
     has_target(): boolean {
         return !!this.#target;
     }
-    set_target(target: Element | Window): this {
-        console.log(`Fitter.set_target(windox=${target === window})`);
+    set_target(target: Element): this {
+        console.log(`Fitter.set_target(body=${target === document.body})`);
         this.#target = target;
-        if (this.is_target_window()) {
+        if (this.is_target_body()) {
             // TODO: The controller should take care of this...
             document.body.style.overflow = 'hidden';
             document.body.style.margin = '0';
@@ -595,41 +567,16 @@ class Fitter {
         }
         return this;
     }
-    is_target_window(): boolean {
-        return this.#target === window;
+    is_target_body(): boolean {
+        return this.#target === document.body;
     }
     resize(): void {
-        if (this.is_target_window()) {
-            this.#resize_to_window();
-        }
-        else {
-            this.#resize_to_parent();
-        }
-    }
-    #resize_to_window() {
-        console.log("Fitter.#resize_to_window()");
+        console.log("Fitter.#resize()");
         const two = this.#two;
-        const body_size = document.body.getBoundingClientRect();
+        const size = this.#target.getBoundingClientRect();
 
-        const width = two.width = body_size.width;
-        const height = two.height = body_size.height;
-
-        this.#view.setSize(width, height, two.ratio);
-    }
-    #resize_to_parent() {
-        console.log("Fitter.#resize_to_parent()");
-        const two = this.#two;
-
-        const parent = this.#domElement.parentElement;
-        if (!parent) {
-            // eslint-disable-next-line no-console
-            console.warn('Attempting to size to parent, but no parent found.');
-            return;
-        }
-        const wr = parent.getBoundingClientRect();
-
-        const width = two.width = wr.width;
-        const height = two.height = wr.height;
+        const width = two.width = size.width;
+        const height = two.height = size.height;
 
         this.#view.setSize(width, height, two.ratio);
     }
