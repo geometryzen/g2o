@@ -497,14 +497,14 @@ const svg = {
             }
 
             // _Update styles for the <g>
-            const flagMatrix = this._matrix.manual || this._flagMatrix;
+            const flagMatrix = this.matrix.manual || this._flagMatrix;
             const dom_context: DomContext = {
                 domElement: domElement,
                 elem: this.viewInfo.elem
             };
 
             if (flagMatrix) {
-                this.viewInfo.elem.setAttribute('transform', 'matrix(' + this._matrix.toString() + ')');
+                this.viewInfo.elem.setAttribute('transform', 'matrix(' + this.matrix.toString() + ')');
             }
 
             for (let i = 0; i < this.children.length; i++) {
@@ -598,10 +598,10 @@ const svg = {
                 // Collect any attribute that needs to be changed here
                 const changed: SVGAttributes = {};
 
-                const flagMatrix = this._matrix.manual || this._flagMatrix;
+                const flagMatrix = this.matrix.manual || this._flagMatrix;
 
                 if (flagMatrix) {
-                    changed.transform = 'matrix(' + this._matrix.toString() + ')';
+                    changed.transform = 'matrix(' + this.matrix.toString() + ')';
                 }
 
                 if (this._flagId) {
@@ -780,10 +780,10 @@ const svg = {
                 // Collect any attribute that needs to be changed here
                 const changed: SVGAttributes = {};
 
-                const flagMatrix = this._matrix.manual || this._flagMatrix;
+                const flagMatrix = this.matrix.manual || this._flagMatrix;
 
                 if (flagMatrix) {
-                    changed.transform = 'matrix(' + this._matrix.toString() + ')';
+                    changed.transform = 'matrix(' + this.matrix.toString() + ')';
                 }
 
                 if (this._flagId) {
@@ -873,10 +873,10 @@ const svg = {
                 // The styles that will be applied to an SVG
                 const changed: SVGAttributes = {};
 
-                const flagMatrix = this._matrix.manual || this._flagMatrix;
+                const flagMatrix = this.matrix.manual || this._flagMatrix;
 
                 if (flagMatrix) {
-                    changed.transform = 'matrix(' + this._matrix.toString() + ')';
+                    changed.transform = 'matrix(' + this.matrix.toString() + ')';
                 }
 
                 if (this._flagId) {
@@ -1267,13 +1267,13 @@ const svg = {
                                 break;
                         }
 
-                        if (this._scale instanceof Vector) {
-                            changed.width *= this._scale.x;
-                            changed.height *= this._scale.y;
+                        if (this.scale instanceof Vector) {
+                            changed.width *= this.scale.x;
+                            changed.height *= this.scale.y;
                         }
                         else {
-                            changed.width *= this._scale;
-                            changed.height *= this._scale;
+                            changed.width *= this.scale;
+                            changed.height *= this.scale;
                         }
                     }
 

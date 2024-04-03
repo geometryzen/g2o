@@ -32,8 +32,13 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     /**
      * TODO: Can I make this #private without breaking extending classes?
      */
-    _position: Vector = null;
+    #position: Vector = null;
     #position_change: Subscription | null = null;
+
+    readonly #attitude: Vector = new Vector(0, 0, 1, 0);
+    readonly #attitude_change: Subscription = this.#attitude.change$.subscribe(() => {
+        this._flagMatrix = true;
+    });
 
     /**
      * TODO: Replace with attitude and Geometric Algebra.
@@ -46,7 +51,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
      * Make the easy things easy...
      */
     _scale: Vector = new Vector(1, 1);
-    _scale_change_subscription: Subscription | null = null;
+    #scale_change: Subscription | null = null;
 
     _skewX = 0;
 
@@ -137,6 +142,10 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
 
     }
 
+    dispose(): void {
+        this.#attitude_change.unsubscribe();
+    }
+
     get renderer() {
         return this.viewInfo;
     }
@@ -191,26 +200,29 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
      * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
      */
     flagReset() {
-
         this._flagMatrix = this._flagScale = false;
-
         super.flagReset.call(this);
-
         return this;
-
     }
     get position() {
-        return this._position;
+        return this.#position;
     }
     set position(v) {
         if (this.#position_change) {
             this.#position_change.unsubscribe();
             this.#position_change = null;
         }
-        this._position = v;
-        this.#position_change = this._position.change$.subscribe(() => {
+        this.#position = v;
+        this.#position_change = this.#position.change$.subscribe(() => {
             this._flagMatrix = true;
         });
+    }
+    get attitude() {
+        return this.#attitude;
+    }
+    set attitude(attitude) {
+        // Essentially a copy but we'll force the grade one parts to be zero.
+        this.#attitude.set(0, 0, attitude.a, attitude.b);
     }
     get rotation(): number {
         return this._rotation;
@@ -230,14 +242,14 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     }
     set scale(scale: number) {
         // TODO: We need another API to support non-uniform scaling.
-        if (this._scale_change_subscription) {
-            this._scale_change_subscription.unsubscribe();
-            this._scale_change_subscription = null;
+        if (this.#scale_change) {
+            this.#scale_change.unsubscribe();
+            this.#scale_change = null;
         }
         this._scale.x = scale;
         this._scale.y = scale;
         if (this._scale instanceof Vector) {
-            this._scale_change_subscription = this._scale.change$.subscribe(() => {
+            this.#scale_change = this._scale.change$.subscribe(() => {
                 this._flagMatrix = true;
             });
         }

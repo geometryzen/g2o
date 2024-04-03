@@ -14,8 +14,8 @@ export function getComputedMatrix<P extends Parent>(object: Shape<P>, matrix: Ma
     let parent: Shape<P> | Group = object;
     const matrices: Matrix[] = [];
 
-    while (parent && parent._matrix) {
-        matrices.push(parent._matrix);
+    while (parent && parent.matrix) {
+        matrices.push(parent.matrix);
         // The parent may not be a Group, it could be a View we have reached the top level.
         // However, the test for a local matrix will exclude the view.
         parent = parent.parent as Group;
