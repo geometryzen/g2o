@@ -31,7 +31,7 @@ export interface RendererParams {
     smoothing?: boolean;
 }
 
-export interface TwoOptions {
+export interface BoardOptions {
     /**
      * @deprecated Use resizeTo: document.body instead.
      */
@@ -50,7 +50,7 @@ export interface TwoOptions {
     container?: HTMLElement;
 }
 
-export class Two {
+export class Board {
 
     readonly #view: View;
     #view_resize: Subscription | null = null;
@@ -95,7 +95,7 @@ export class Two {
     #curr_now: number | null = null;
     #prev_now: number | null = null;
 
-    constructor(options: TwoOptions = {}) {
+    constructor(options: BoardOptions = {}) {
         if (options.scene instanceof Group) {
             this.#scene = options.scene;
         }
@@ -503,12 +503,12 @@ export class Two {
  * A helper for 
  */
 class Fitter {
-    readonly #two: Two;
+    readonly #two: Board;
     readonly #view: View;
     readonly #domElement: HTMLElement | SVGElement;
     #target: Element | null = null;
     #target_resize: Subscription | null = null;
-    constructor(two: Two, view: View) {
+    constructor(two: Board, view: View) {
         this.#two = two;
         this.#view = view;
         this.#domElement = view.domElement;
@@ -579,8 +579,8 @@ class Fitter {
     }
 }
 
-function config_from_options(options: TwoOptions): TwoOptions {
-    const config: TwoOptions = {
+function config_from_options(options: BoardOptions): BoardOptions {
+    const config: BoardOptions = {
         resizeTo: compute_config_resize_to(options),
         size: compute_config_size(options),
         container: options.container
@@ -588,7 +588,7 @@ function config_from_options(options: TwoOptions): TwoOptions {
     return config;
 }
 
-function compute_config_resize_to(options: TwoOptions): Element | null {
+function compute_config_resize_to(options: BoardOptions): Element | null {
     if (options.resizeTo) {
         return options.resizeTo;
     }
@@ -601,7 +601,7 @@ function compute_config_resize_to(options: TwoOptions): Element | null {
     return null;
 }
 
-function compute_config_size(options: TwoOptions): { width: number; height: number } | null {
+function compute_config_size(options: BoardOptions): { width: number; height: number } | null {
     if (typeof options.size === 'object') {
         return options.size;
     }

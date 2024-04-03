@@ -1,14 +1,14 @@
 import { Subscription } from "./rxjs/Subscription";
-import { Two } from "./two";
+import { Board } from "./board";
 
 export class Player {
-    readonly #two: Two;
+    readonly #two: Board;
     readonly #frameCount: Subscription;
     /**
      * The handle of the last frame requested.
      */
     #handle: number | null = null;
-    constructor(two: Two, callback: (frameCount: number) => void) {
+    constructor(two: Board, callback: (frameCount: number) => void) {
         this.#two = two;
         this.#frameCount = two.frameCount$.subscribe(callback);
     }

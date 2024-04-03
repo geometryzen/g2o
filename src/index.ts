@@ -28,6 +28,6 @@ export { Rectangle, RectangleOptions } from './lib/shapes/rectangle';
 export { RoundedRectangle } from './lib/shapes/rounded-rectangle';
 export { Star } from './lib/shapes/star';
 export { Text, TextStyles } from './lib/text';
-export { Two, TwoOptions } from './lib/two';
+export { Board, BoardOptions } from './lib/board';
 export { Vector } from './lib/vector';
 
