@@ -31,19 +31,9 @@ export interface RendererParams {
 }
 
 export interface TwoOptions {
+    resizeTarget?: 'window' | 'body' | 'container' | 'fixed';
     scene?: Group;
     view?: View;
-    /**
-     * Set to `true` to automatically make the stage adapt to the width and height of the parent document.
-     * This parameter overrides `width` and `height` parameters if set to `true`.
-     * This overrides `options.fitted` as well.
-     */
-    fullscreen?: boolean;
-    /**
-     * Set to `true` to automatically make the stage adapt to the width and height of the parent element.
-     * This parameter overrides `width` and `height` parameters if set to `true`.
-     */
-    fitted?: boolean;
     /**
      * The height of the stage on construction. This can be set at a later time.
      */
@@ -119,8 +109,7 @@ export class Two {
         }
 
         const params: TwoOptions = {
-            fullscreen: !!options.fullscreen,
-            fitted: !!options.fitted,
+            resizeTarget: options.resizeTarget,
             width: typeof options.width === 'number' ? options.width : 640,
             height: typeof options.height === 'number' ? options.height : 480,
             container: options.container
@@ -133,16 +122,39 @@ export class Two {
         this.#frameCount = new BehaviorSubject(this.frameCount);
         this.frameCount$ = this.#frameCount.asObservable();
 
-        if (params.fullscreen) {
-            this.#fitter.set_target(window);
-            this.#fitter.subscribe();
-            this.#fitter.resize();
+        switch (params.resizeTarget) {
+            case 'body': {
+                // Does document.body make more sense?
+                this.#fitter.set_target(window);
+                this.#fitter.subscribe();
+                this.#fitter.resize();
+                break;
+            }
+            case 'container': {
+                if (params.container) {
+                    this.#fitter.set_target(window);
+                    this.#fitter.subscribe();
+                    this.#fitter.resize();
+                }
+                else {
+                    // We don't know the container yet so wait until appendTo is called.
+                }
+                break;
+            }
+            case 'fixed': {
+                // We are not tracking anything in this mode.
+                break;
+            }
+            case 'window': {
+                // Not yet supported, but this would be going to full screen.
+                break;
+            }
+            default: {
+                throw new Error("resizeTarget must be one of 'body', 'container', 'fixed', or 'window'.");
+            }
         }
-        else if (params.fitted) {
-            this.#view.domElement.style.display = 'block';
-            // this.fitter.fitToParent();
-        }
-        else if (params.container) {
+
+        if (params.container) {
             this.appendTo(params.container);
         }
         else {
@@ -167,13 +179,18 @@ export class Two {
     }
 
     appendTo(container: Element) {
-        container.appendChild(this.#view.domElement);
+        if (container) {
+            if (container.nodeType) {
+                console.log(`Two.appendTo ${container.nodeType}`);
+                container.appendChild(this.#view.domElement);
 
-        if (!this.#fitter.is_target_window()) {
-            this.#fitter.set_target(container);
+                if (!this.#fitter.is_target_window()) {
+                    this.#fitter.set_target(container);
+                }
+
+                this.update();
+            }
         }
-
-        this.update();
 
         return this;
     }
