@@ -1,4 +1,5 @@
 import { Anchor } from "../anchor";
+import { Subscription } from "../rxjs/Subscription";
 import { G20 } from "../vector";
 
 /**
@@ -25,6 +26,10 @@ export interface SharedInfo {
     hasStrokeEffect?: boolean;
     image?: SVGImageElement;
     opacity?: number;
+    /**
+     * DGH: How do we clean this up?
+     */
+    position_change: Subscription | undefined;
     type?: 'group' | 'linear-gradient' | 'path' | 'points' | 'radial-gradient' | 'text' | 'texture';
     // Used by Path
     anchor_vertices?: Anchor[];

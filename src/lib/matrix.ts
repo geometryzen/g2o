@@ -449,7 +449,7 @@ export class Matrix {
 /*
 export function multiply(A: Matrix, B, C) {
 
-    if (B.length <= 3) { // Multiply Vector
+    if (B.length <= 3) { // Multiply G20
 
         const e = A;
         let x, y, z;

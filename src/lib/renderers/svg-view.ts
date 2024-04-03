@@ -3,10 +3,10 @@ import { Anchor } from '../anchor';
 import { Gradient } from '../effects/gradient';
 import { LinearGradient } from '../effects/linear-gradient';
 import { RadialGradient } from '../effects/radial-gradient';
-import { Texture, is_canvas, is_img, is_video } from '../effects/texture';
+import { is_canvas, is_img, is_video, Texture } from '../effects/texture';
 import { Element as ElementBase } from '../element';
 import { Group } from '../group';
-import { Path, get_dashes_offset } from '../path';
+import { get_dashes_offset, Path } from '../path';
 import { Observable } from '../rxjs/Observable';
 import { Shape } from '../shape';
 import { Points } from '../shapes/points';
@@ -713,17 +713,22 @@ const svg = {
                     changed['stroke-dashoffset'] = `${get_dashes_offset(this.dashes) || 0}`;
                 }
 
-                // If there is no attached DOM element yet,
-                // create it with all necessary attributes.
-                if (!this.viewInfo.elem) {
+                if (this.viewInfo.elem) {
+                    // When completely reactive, this will not be needed
+                    svg.setAttributes(this.viewInfo.elem, changed);
+                }
+                else {
                     changed.id = this._id;
                     this.viewInfo.elem = svg.createElement('path', changed);
                     domElement.appendChild(this.viewInfo.elem);
-
-                    // Otherwise apply all pending attributes
-                }
-                else {
-                    svg.setAttributes(this.viewInfo.elem, changed);
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    this.position.change$.subscribe((position) => {
+                        // The position could be used to compute the transform.
+                        this._update();
+                        const change: SVGAttributes = {};
+                        change.transform = 'matrix(' + this.matrix.toString() + ')';
+                        svg.setAttributes(this.viewInfo.elem, changed);
+                    });
                 }
 
                 if (this._flagClip) {

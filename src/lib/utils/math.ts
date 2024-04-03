@@ -50,7 +50,7 @@ export function mod(v: number, l: number): number {
 
 }
 
-export const NumArray = root.Float32Array || Array<number>;
+export const NumArray = root.Float32Array || Array;
 const floor = Math.floor;
 
 /**
