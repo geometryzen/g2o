@@ -1,8 +1,13 @@
 import { Anchor } from '../anchor.js';
-import { Path } from '../path.js';
+import { Path, PathOptions } from '../path.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 import { Vector } from '../vector.js';
+
+export interface CircleOptions {
+    position?: Vector;
+    attitude?: Vector;
+}
 
 export class Circle extends Path {
 
@@ -10,7 +15,7 @@ export class Circle extends Path {
 
     _radius = 0;
 
-    constructor(position: Vector = new Vector(0, 0), r = 0, resolution = 4) {
+    constructor(r = 0, resolution = 4, options: CircleOptions = {}) {
 
         // At least 2 vertices are required for proper circle.
         const amount = resolution ? Math.max(resolution, 2) : 4;
@@ -19,13 +24,11 @@ export class Circle extends Path {
             points.push(new Anchor(0, 0, 0, 0, 0, 0));
         }
 
-        super(points, true, true, true);
+        super(points, true, true, true, path_options_from_circle_options(options));
 
         if (typeof r === 'number') {
             this.radius = r;
         }
-
-        this.usePosition(position);
 
         this._update();
     }
@@ -91,4 +94,12 @@ export class Circle extends Path {
         this._radius = v;
         this._flagRadius = true;
     }
+}
+
+function path_options_from_circle_options(circle_options: CircleOptions): PathOptions {
+    const path_options: PathOptions = {
+        attitude: circle_options.attitude,
+        position: circle_options.position
+    };
+    return path_options;
 }

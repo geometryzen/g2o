@@ -11,7 +11,7 @@ import { Observable } from './rxjs/Observable.js';
 import { Subscription } from './rxjs/Subscription.js';
 import { Shape } from './shape.js';
 import { ArcSegment } from './shapes/arc-segment.js';
-import { Circle } from './shapes/circle.js';
+import { Circle, CircleOptions } from './shapes/circle.js';
 import { Ellipse } from './shapes/ellipse.js';
 import { Line } from './shapes/line.js';
 import { Polygon } from './shapes/polygon.js';
@@ -299,7 +299,8 @@ export class Two {
      * Creates a circle and adds it to the scene.
      */
     makeCircle(x: number = 0, y: number = 0, radius: number, resolution: number = 4): Circle {
-        const circle = new Circle(new Vector(x, y), radius, resolution);
+        const options: CircleOptions = { position: new Vector(x, y) };
+        const circle = new Circle(radius, resolution, options);
         this.#scene.add(circle);
         return circle;
     }

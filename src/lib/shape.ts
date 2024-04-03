@@ -12,6 +12,11 @@ export interface Parent {
     _update?(): void;
 }
 
+export interface ShapeOptions {
+    position?: Vector;
+    attitude?: Vector;
+}
+
 export abstract class Shape<P extends Parent> extends Element<P> implements IShape<P> {
 
     _flagMatrix = true;
@@ -29,15 +34,11 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
      */
     _worldMatrix: Matrix = null;
 
-    #position = new Vector(0, 0, 0, 0);
-    #position_change: Subscription = this.#position.change$.subscribe(() => {
-        this._flagMatrix = true;
-    });
+    #position: Vector;
+    #position_change: Subscription;
 
-    readonly #attitude = new Vector(0, 0, 1, 0);
-    readonly #attitude_change: Subscription = this.#attitude.change$.subscribe(() => {
-        this._flagMatrix = true;
-    });
+    #attitude: Vector;
+    #attitude_change: Subscription;
 
     /**
      * TODO: Replace with attitude and Geometric Algebra.
@@ -83,7 +84,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     abstract noStroke(): this;
     abstract subdivide(limit: number): this;
 
-    constructor() {
+    constructor(options: ShapeOptions = {}) {
 
         super();
 
@@ -106,11 +107,23 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
          */
         this.worldMatrix = new Matrix();
 
-        /**
-         * @name Two.Shape#position
-         * @property {Two.Vector} - The x and y value for where the shape is placed relative to its parent.
-         */
-        this.position = new Vector();
+        if (options.position) {
+            this.#position = options.position;
+            this.#position_change = this.#position_change_bind();
+        }
+        else {
+            this.#position = new Vector(0, 0);
+            this.#position_change = this.#position_change_bind();
+        }
+
+        if (options.attitude) {
+            this.#attitude = options.attitude;
+            this.#attitude_change = this.#attitude_change_bind();
+        }
+        else {
+            this.#attitude = new Vector(0, 0, 1, 0);
+            this.#attitude_change = this.#attitude_change_bind();
+        }
 
         /**
          * @name Two.Shape#rotation
@@ -142,11 +155,8 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     }
 
     dispose(): void {
-        if (this.#position_change) {
-            this.#position_change.unsubscribe();
-            this.#position_change = null;
-        }
-        this.#attitude_change.unsubscribe();
+        this.#position_change_unbind();
+        this.#attitude_change_unbind();
     }
 
     get renderer() {
@@ -194,28 +204,48 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         super.flagReset();
         return this;
     }
+    useAttitude(attitude: Vector): void {
+        this.#attitude_change_unbind();
+        this.#attitude = attitude;
+        this.#attitude_change = this.#attitude_change_bind();
+    }
+    #attitude_change_bind(): Subscription {
+        return this.#attitude.change$.subscribe(() => {
+            this._flagMatrix = true;
+        });
+    }
+    #attitude_change_unbind(): void {
+        if (this.#attitude_change) {
+            this.#attitude_change.unsubscribe();
+            this.#attitude_change = null;
+        }
+    }
     usePosition(position: Vector): void {
+        this.#position_change_unbind();
+        this.#position = position;
+        this.#position_change = this.#position_change_bind();
+    }
+    #position_change_bind(): Subscription {
+        return this.#position.change$.subscribe(() => {
+            this._flagMatrix = true;
+        });
+    }
+    #position_change_unbind(): void {
         if (this.#position_change) {
             this.#position_change.unsubscribe();
             this.#position_change = null;
         }
-        this.#position = position;
-        this.#position_change = this.#position.change$.subscribe(() => {
-            this._flagMatrix = true;
-        });
     }
     get position(): Vector {
         return this.#position;
     }
     set position(position: Vector) {
-        // Essentially a copy but we'll force the grade zero and grade two parts to be zero.
         this.#position.set(position.x, position.y, 0, 0);
     }
     get attitude() {
         return this.#attitude;
     }
     set attitude(attitude) {
-        // Essentially a copy but we'll force the grade one parts to be zero.
         this.#attitude.set(0, 0, attitude.a, attitude.b);
     }
     get rotation(): number {

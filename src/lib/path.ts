@@ -34,16 +34,11 @@ const floor = Math.floor;
 
 const vector = new Vector();
 
-/**
- * @name Two.Path
- * @class
- * @extends Two.Shape
- * @param {Two.Anchor[]} [vertices] - A list of {@link Two.Anchor}s that represent the order and coordinates to construct the rendered shape.
- * @param {Boolean} [closed=false] - Describes whether the shape is closed or open.
- * @param {Boolean} [curved=false] - Describes whether the shape automatically calculates bezier handles for each vertex.
- * @param {Boolean} [manual=false] - Describes whether the developer controls how vertices are plotted or if Two.js automatically plots coordinates based on closed and curved booleans.
- * @description This is the primary primitive class for creating all drawable shapes in Two.js. Unless specified methods return their instance of `Two.Path` for the purpose of chaining.
- */
+export interface PathOptions {
+    position?: Vector;
+    attitude?: Vector;
+}
+
 export class Path extends Shape<Group> {
 
     _flagVertices = true;
@@ -183,9 +178,16 @@ export class Path extends Shape<Group> {
 
     readonly #anchor_change_subscriptions = new Map<Anchor, Subscription>();
 
-    constructor(vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean) {
+    /**
+     * @param {Two.Anchor[]} [vertices] - A list of {@link Two.Anchor}s that represent the order and coordinates to construct the rendered shape.
+     * @param {Boolean} [closed=false] - Describes whether the shape is closed or open.
+     * @param {Boolean} [curved=false] - Describes whether the shape automatically calculates bezier handles for each vertex.
+     * @param {Boolean} [manual=false] - Describes whether the developer controls how vertices are plotted or if Two.js automatically plots coordinates based on closed and curved booleans.
+     * @description This is the primary primitive class for creating all drawable shapes in Two.js. Unless specified methods return their instance of `Two.Path` for the purpose of chaining.
+     */
+    constructor(vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean, options: PathOptions = {}) {
 
-        super();
+        super(options);
 
         this.viewInfo.type = 'path';
         this.viewInfo.anchor_vertices = [];
