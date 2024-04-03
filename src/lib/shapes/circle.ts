@@ -10,7 +10,7 @@ export class Circle extends Path {
 
     _radius = 0;
 
-    constructor(position?: Vector, r = 0, resolution = 4) {
+    constructor(position: Vector = new Vector(0, 0), r = 0, resolution = 4) {
 
         // At least 2 vertices are required for proper circle.
         const amount = resolution ? Math.max(resolution, 2) : 4;
@@ -25,11 +25,9 @@ export class Circle extends Path {
             this.radius = r;
         }
 
-        this._update();
+        this.usePosition(position);
 
-        if (position) {
-            this.position.set(position.x, position.y, 0, 0);
-        }
+        this._update();
     }
 
     _update() {

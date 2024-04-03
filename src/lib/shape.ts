@@ -29,8 +29,8 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
      */
     _worldMatrix: Matrix = null;
 
-    readonly #position = new Vector(0, 0, 0, 0);
-    readonly #position_change: Subscription = this.#position.change$.subscribe(() => {
+    #position = new Vector(0, 0, 0, 0);
+    #position_change: Subscription = this.#position.change$.subscribe(() => {
         this._flagMatrix = true;
     });
 
@@ -142,7 +142,10 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     }
 
     dispose(): void {
-        this.#position_change.unsubscribe();
+        if (this.#position_change) {
+            this.#position_change.unsubscribe();
+            this.#position_change = null;
+        }
         this.#attitude_change.unsubscribe();
     }
 
@@ -191,10 +194,20 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         super.flagReset();
         return this;
     }
-    get position() {
+    usePosition(position: Vector): void {
+        if (this.#position_change) {
+            this.#position_change.unsubscribe();
+            this.#position_change = null;
+        }
+        this.#position = position;
+        this.#position_change = this.#position.change$.subscribe(() => {
+            this._flagMatrix = true;
+        });
+    }
+    get position(): Vector {
         return this.#position;
     }
-    set position(position) {
+    set position(position: Vector) {
         // Essentially a copy but we'll force the grade zero and grade two parts to be zero.
         this.#position.set(position.x, position.y, 0, 0);
     }

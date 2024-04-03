@@ -129,6 +129,10 @@ export class Vector {
         return this.set(0, 0, 0, 0);
     }
 
+    clone(): Vector {
+        return new Vector(this.x, this.y, this.a, this.b);
+    }
+
     add(rhs: Vector): this {
         const x = this.x + rhs.x;
         const y = this.y + rhs.y;
