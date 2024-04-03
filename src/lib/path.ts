@@ -1,4 +1,3 @@
-import { Subscription } from 'rxjs';
 import { Anchor } from './anchor';
 import { Collection } from './collection';
 import { Gradient } from './effects/gradient';
@@ -6,6 +5,7 @@ import { LinearGradient } from './effects/linear-gradient';
 import { RadialGradient } from './effects/radial-gradient';
 import { Texture } from './effects/texture';
 import { Group } from './group';
+import { Subscription } from './rxjs/Subscription';
 import { Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
 import { decomposeMatrix } from './utils/decompose_matrix';
@@ -411,8 +411,7 @@ export class Path extends Shape<Group> {
                 }
             }
             else {
-                border *= typeof this.scale === 'number'
-                    ? this.scale : Math.max(this.scale.x, this.scale.y);
+                border *= Math.max(this.scaleXY.x, this.scaleXY.y);
             }
         }
 
@@ -957,21 +956,21 @@ export class Path extends Shape<Group> {
         return this;
     }
 
-    flagReset(): this {
+    flagReset(dirtyFlag = false): this {
 
-        this._flagVertices = false;
-        this._flagLength = false;
-        this._flagFill = false;
-        this._flagStroke = false;
-        this._flagLinewidth = false;
-        this._flagOpacity = false;
-        this._flagVisible = false;
-        this._flagCap = false;
-        this._flagJoin = false;
-        this._flagMiter = false;
-        this._flagClip = false;
+        this._flagVertices = dirtyFlag;
+        this._flagLength = dirtyFlag;
+        this._flagFill = dirtyFlag;
+        this._flagStroke = dirtyFlag;
+        this._flagLinewidth = dirtyFlag;
+        this._flagOpacity = dirtyFlag;
+        this._flagVisible = dirtyFlag;
+        this._flagCap = dirtyFlag;
+        this._flagJoin = dirtyFlag;
+        this._flagMiter = dirtyFlag;
+        this._flagClip = dirtyFlag;
 
-        super.flagReset();
+        super.flagReset(dirtyFlag);
 
         return this;
 

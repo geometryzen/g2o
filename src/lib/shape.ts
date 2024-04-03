@@ -237,6 +237,25 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         this._flagMatrix = true;
         this._flagScale = true;
     }
+    get scaleXY(): Vector {
+        return this._scale;
+    }
+    set scaleXY(scale: Vector) {
+        // TODO: We need another API to support non-uniform scaling.
+        // TODO: Why bother to do all this? Make it readonly.
+        if (this.#scale_change) {
+            this.#scale_change.unsubscribe();
+            this.#scale_change = null;
+        }
+        this._scale.set(scale.x, scale.y, 0, 0);
+        if (this._scale instanceof Vector) {
+            this.#scale_change = this._scale.change$.subscribe(() => {
+                this._flagMatrix = true;
+            });
+        }
+        this._flagMatrix = true;
+        this._flagScale = true;
+    }
     get skewX(): number {
         return this._skewX;
     }

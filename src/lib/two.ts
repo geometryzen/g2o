@@ -22,6 +22,7 @@ import { Text } from './text.js';
 import { Commands } from './utils/path-commands.js';
 import { dateTime } from './utils/performance.js';
 import { xhr } from './utils/xhr.js';
+import { Vector } from './vector.js';
 
 export interface RendererParams {
     domElement: HTMLElement;
@@ -294,8 +295,11 @@ export class Two {
         return rect;
     }
 
-    makeCircle(x: number, y: number, radius: number, resolution: number = 4): Circle {
-        const circle = new Circle(x, y, radius, resolution);
+    /**
+     * Creates a circle and adds it to the scene.
+     */
+    makeCircle(x: number = 0, y: number = 0, radius: number, resolution: number = 4): Circle {
+        const circle = new Circle(new Vector(x, y), radius, resolution);
         this.#scene.add(circle);
         return circle;
     }

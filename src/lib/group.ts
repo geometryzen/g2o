@@ -7,10 +7,6 @@ export interface IGroup extends Parent {
     remove(...shapes: Shape<IGroup>[]): void;
 }
 
-// Constants
-
-const min = Math.min, max = Math.max;
-
 export class Group extends Shape<unknown> {
     _flagAdditions = false;
     _flagSubtractions = false;
@@ -37,7 +33,7 @@ export class Group extends Shape<unknown> {
     /**
      * @name Two.Group#beginning
      * @property {Number} - Number between zero and one to state the beginning of where the path is rendered.
-     * @description {@link Two.Group#beginning} is a percentage value that represents at what percentage into all child shapes should the renderer start drawing.
+     * a percentage value that represents at what percentage into all child shapes should the renderer start drawing.
      * @nota-bene This is great for animating in and out stroked paths in conjunction with {@link Two.Group#ending}.
      */
     _beginning = 0;
@@ -346,16 +342,16 @@ export class Group extends Shape<unknown> {
                 const [cx, cy] = matrix.multiply_vector(rect.left, rect.bottom);
                 const [dx, dy] = matrix.multiply_vector(rect.right, rect.bottom);
 
-                top = min(ay, by, cy, dy);
-                left = min(ax, bx, cx, dx);
-                right = max(ax, bx, cx, dx);
-                bottom = max(ay, by, cy, dy);
+                top = Math.min(ay, by, cy, dy);
+                left = Math.min(ax, bx, cx, dx);
+                right = Math.max(ax, bx, cx, dx);
+                bottom = Math.max(ay, by, cy, dy);
             }
             else {
-                top = min(rect.top, top);
-                left = min(rect.left, left);
-                right = max(rect.right, right);
-                bottom = max(rect.bottom, bottom);
+                top = Math.min(rect.top, top);
+                left = Math.min(rect.left, left);
+                right = Math.max(rect.right, right);
+                bottom = Math.max(rect.bottom, bottom);
             }
         }
 
