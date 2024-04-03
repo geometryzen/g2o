@@ -31,6 +31,14 @@ export interface RendererParams {
 }
 
 export interface TwoOptions {
+    /**
+     * @deprecated Use resizeTo: document.body instead.
+     */
+    fullscreen?: boolean;
+    /**
+     * @deprecated Use resizeTo: container instead.
+     */
+    fitted?: boolean;
     resizeTo?: Element;
     scene?: Group;
     size?: { width: number; height: number };
@@ -101,11 +109,7 @@ export class Two {
             this.#view = new SVGView(this.#scene);
         }
 
-        const config: TwoOptions = {
-            resizeTo: options.resizeTo,
-            size: compute_config_size(options),
-            container: options.container
-        };
+        const config = config_from_options(options);
 
         this.#fitter = new Fitter(this, this.#view);
 
@@ -572,6 +576,28 @@ class Fitter {
 
         this.#view.setSize({ width, height }, two.ratio);
     }
+}
+
+function config_from_options(options: TwoOptions): TwoOptions {
+    const config: TwoOptions = {
+        resizeTo: compute_config_resize_to(options),
+        size: compute_config_size(options),
+        container: options.container
+    };
+    return config;
+}
+
+function compute_config_resize_to(options: TwoOptions): Element | null {
+    if (options.resizeTo) {
+        return options.resizeTo;
+    }
+    if (options.fullscreen) {
+        return document.body;
+    }
+    if (options.fitted) {
+        return options.container;
+    }
+    return null;
 }
 
 function compute_config_size(options: TwoOptions): { width: number; height: number } | null {
