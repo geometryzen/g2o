@@ -585,6 +585,7 @@ const svg = {
 
         'path': {
             render: function (this: Path, domElement: DOMElement) {
+                console.log(`path.render ${this.id}`);
 
                 // Shortcut for hidden objects.
                 // Doesn't reset the flags, so changes are stored and
@@ -714,15 +715,18 @@ const svg = {
                 }
 
                 if (this.viewInfo.elem) {
+                    console.log("updating path element");
                     // When completely reactive, this will not be needed
                     svg.setAttributes(this.viewInfo.elem, changed);
                 }
                 else {
+                    console.log("creating path element");
                     changed.id = this._id;
                     this.viewInfo.elem = svg.createElement('path', changed);
                     domElement.appendChild(this.viewInfo.elem);
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    this.position.change$.subscribe((position) => {
+                    this.viewInfo.position_change = this.position.change$.subscribe((position) => {
+                        console.log("position changed", position.x, position.y);
                         // The position could be used to compute the transform.
                         this._update();
                         const change: SVGAttributes = {};
