@@ -6,6 +6,7 @@ import { Texture } from './effects/texture.js';
 import { Group } from './group.js';
 import { Path } from './path.js';
 import { View } from './renderers/View.js';
+import { SVGView } from './renderers/svg-view.js';
 import { Observable } from './rxjs/Observable.js';
 import { Subscription } from './rxjs/Subscription.js';
 import { Shape } from './shape.js';
@@ -30,29 +31,31 @@ export interface RendererParams {
 }
 
 export interface TwoOptions {
+    scene?: Group;
+    view?: View;
     /**
      * Set to `true` to automatically make the stage adapt to the width and height of the parent document.
      * This parameter overrides `width` and `height` parameters if set to `true`.
      * This overrides `options.fitted` as well.
      */
-    fullscreen: boolean;
+    fullscreen?: boolean;
     /**
      * Set to `true` to automatically make the stage adapt to the width and height of the parent element.
      * This parameter overrides `width` and `height` parameters if set to `true`.
      */
-    fitted: boolean;
+    fitted?: boolean;
     /**
      * The height of the stage on construction. This can be set at a later time.
      */
-    height: number;
+    height?: number;
     /**
      * The width of the stage on construction. This can be set at a later time.
      */
-    width: number;
+    width?: number;
     /**
      * The canvas or SVG element to draw into. This overrides the `options.type` argument.
      */
-    container: HTMLElement;
+    container?: HTMLElement;
 }
 
 export class Two {
@@ -105,19 +108,19 @@ export class Two {
     #curr_now: number | null = null;
     #prev_now: number | null = null;
 
-    constructor(scene: Group, view: View, options: Partial<TwoOptions> = {}) {
-        if (scene instanceof Group) {
-            this.#scene = scene;
+    constructor(options: TwoOptions = {}) {
+        if (options.scene instanceof Group) {
+            this.#scene = options.scene;
         }
         else {
-            throw new Error("scene must be a Group");
+            this.#scene = new Group();
         }
 
-        if (typeof view === 'object') {
-            this.#view = view;
+        if (typeof options.view === 'object') {
+            this.#view = options.view;
         }
         else {
-            throw new Error("view must be defined");
+            this.#view = new SVGView(this.#scene);
         }
 
         const params: TwoOptions = {
@@ -128,8 +131,7 @@ export class Two {
             container: options.container
         };
 
-        this.#view = view;
-        this.#fitter = new Fitter(this, view);
+        this.#fitter = new Fitter(this, this.#view);
 
 
         this.frameCount = 0;
