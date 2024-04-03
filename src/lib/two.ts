@@ -295,12 +295,9 @@ export class Two {
         return rect;
     }
 
-    /**
-     * Creates a circle and adds it to the scene.
-     */
     makeCircle(x: number = 0, y: number = 0, radius: number, resolution: number = 4): Circle {
-        const options: CircleOptions = { position: new Vector(x, y) };
-        const circle = new Circle(radius, resolution, options);
+        const options: CircleOptions = { position: new Vector(x, y), radius, resolution };
+        const circle = new Circle(options);
         this.#scene.add(circle);
         return circle;
     }

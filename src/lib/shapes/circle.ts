@@ -7,27 +7,35 @@ import { Vector } from '../vector.js';
 export interface CircleOptions {
     position?: Vector;
     attitude?: Vector;
+    radius?: number;
+    resolution?: number;
 }
 
 export class Circle extends Path {
 
     _flagRadius = false;
 
-    _radius = 0;
+    #radius: number;
 
-    constructor(r = 0, resolution = 4, options: CircleOptions = {}) {
+    constructor(options: CircleOptions = {}) {
 
         // At least 2 vertices are required for proper circle.
-        const amount = resolution ? Math.max(resolution, 2) : 4;
-        const points = [];
+        const amount = options.resolution ? Math.max(options.resolution, 2) : 4;
+        // These anchors will be placed on the circle during the update phase.
+        const points: Anchor[] = [];
         for (let i = 0; i < amount; i++) {
             points.push(new Anchor(0, 0, 0, 0, 0, 0));
         }
 
         super(points, true, true, true, path_options_from_circle_options(options));
 
-        if (typeof r === 'number') {
-            this.radius = r;
+        if (typeof options.radius === 'number') {
+            this.#radius = options.radius;
+            this._flagRadius = true;
+        }
+        else {
+            this.#radius = 0;
+            this._flagRadius = true;
         }
 
         this._update();
@@ -49,7 +57,7 @@ export class Circle extends Path {
 
             // Coefficient for approximating circular arcs with Bezier curves
             const c = (4 / 3) * Math.tan(Math.PI / (length * 2));
-            const radius = this._radius;
+            const radius = this.#radius;
             const rc = radius * c;
 
             const cos = Math.cos;
@@ -88,10 +96,10 @@ export class Circle extends Path {
     }
 
     get radius(): number {
-        return this._radius;
+        return this.#radius;
     }
     set radius(v: number) {
-        this._radius = v;
+        this.#radius = v;
         this._flagRadius = true;
     }
 }
