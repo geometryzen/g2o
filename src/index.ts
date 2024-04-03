@@ -20,6 +20,7 @@ export { Circle, CircleOptions } from './lib/shapes/circle';
 export { Ellipse } from './lib/shapes/ellipse';
 export { Line } from './lib/shapes/line';
 // export { Points } from './lib/shapes/points';
+export { Player } from './lib/player';
 export { Observable } from './lib/rxjs/Observable';
 export { Subscription } from './lib/rxjs/Subscription';
 export { Polygon } from './lib/shapes/polygon';
