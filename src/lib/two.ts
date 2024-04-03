@@ -608,6 +608,12 @@ function compute_config_size(options: TwoOptions): { width: number; height: numb
         if (options.resizeTo) {
             return null;
         }
+        else if (options.fullscreen) {
+            return null;
+        }
+        else if (options.fitted) {
+            return null;
+        }
         else {
             return { width: 640, height: 480 };
         }
