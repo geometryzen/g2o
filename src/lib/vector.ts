@@ -122,59 +122,56 @@ export class Vector {
     }
 
     set(x: number, y: number, a = 0, b = 0): this {
-        this.x = x;
-        this.y = y;
-        this.a = a;
-        this.b = b;
+        // Take special care to only fire changed event if necessary.
+        const changed = (this.x !== x || this.y !== y || this.a !== a || this.b != b);
+        this.#x = x;
+        this.#y = y;
+        this.#a = a;
+        this.#b = b;
+        if (changed) {
+            this.#change.next(this);
+        }
         return this;
     }
 
     copy(v: Vector): this {
-        this.x = v.x;
-        this.y = v.y;
-        this.a = v.a;
-        this.b = v.b;
-        return this;
+        return this.set(v.x, v.y, v.a, v.b);
     }
 
     clear(): this {
-        this.x = 0;
-        this.y = 0;
-        this.a = 0;
-        this.b = 0;
-        return this;
+        return this.set(0, 0, 0, 0);
     }
 
     add(rhs: Vector): this {
-        this.x += rhs.x;
-        this.y += rhs.y;
-        this.a += rhs.a;
-        this.b += rhs.b;
-        return this;
+        const x = this.x + rhs.x;
+        const y = this.y + rhs.y;
+        const a = this.a + rhs.a;
+        const b = this.b + rhs.b;
+        return this.set(x, y, a, b);
     }
 
     sub(rhs: Vector): this {
-        this.x -= rhs.x;
-        this.y -= rhs.y;
-        this.a -= rhs.a;
-        this.b -= rhs.b;
-        return this;
+        const x = this.x - rhs.x;
+        const y = this.y - rhs.y;
+        const a = this.a - rhs.a;
+        const b = this.b - rhs.b;
+        return this.set(x, y, a, b);
     }
 
     multiplyScalar(s: number): this {
-        this.x = this.x * s;
-        this.y = this.y * s;
-        this.a = this.a * s;
-        this.b = this.b * s;
-        return this;
+        const x = this.x * s;
+        const y = this.y * s;
+        const a = this.a * s;
+        const b = this.b * s;
+        return this.set(x, y, a, b);
     }
 
     divideScalar(s: number): this {
-        this.x = this.x / s;
-        this.y = this.y / s;
-        this.a = this.a / s;
-        this.b = this.b / s;
-        return this;
+        const x = this.x / s;
+        const y = this.y / s;
+        const a = this.a / s;
+        const b = this.b / s;
+        return this.set(x, y, a, b);
     }
 
     negate(): this {
@@ -234,12 +231,12 @@ export class Vector {
     }
 
     rotate(radians: number): this {
-        const x = this.x;
-        const y = this.y;
+        const x0 = this.x;
+        const y0 = this.y;
         const cos = Math.cos(radians);
         const sin = Math.sin(radians);
-        this.x = x * cos - y * sin;
-        this.y = x * sin + y * cos;
-        return this;
+        const x = x0 * cos - y0 * sin;
+        const y = x0 * sin + y0 * cos;
+        return this.set(x, y, this.a, this.b);
     }
 }

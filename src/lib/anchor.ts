@@ -124,7 +124,6 @@ export class Anchor {
         this.sweepFlag = v.sweepFlag;
 
         return this;
-
     }
 
     /**
