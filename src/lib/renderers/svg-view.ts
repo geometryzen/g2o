@@ -1358,14 +1358,14 @@ export class SVGView implements View {
         this.size$ = this.#size.asObservable();
     }
 
-    setSize(width: number, height: number): this {
-        this.width = width;
-        this.height = height;
+    setSize(size: { width: number, height: number }): this {
+        this.width = size.width;
+        this.height = size.height;
         svg.setAttributes(this.domElement, {
-            width: `${width}`,
-            height: `${height}`
+            width: `${size.width}`,
+            height: `${size.height}`
         });
-        this.#size.next({ width, height });
+        this.#size.next(size);
         return this;
     }
 

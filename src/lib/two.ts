@@ -31,17 +31,10 @@ export interface RendererParams {
 }
 
 export interface TwoOptions {
-    resizeTarget?: Element;
+    resizeTo?: Element;
     scene?: Group;
+    size?: { width: number; height: number };
     view?: View;
-    /**
-     * The height of the stage on construction. This can be set at a later time.
-     */
-    height?: number;
-    /**
-     * The width of the stage on construction. This can be set at a later time.
-     */
-    width?: number;
     /**
      * The canvas or SVG element to draw into. This overrides the `options.type` argument.
      */
@@ -108,10 +101,9 @@ export class Two {
             this.#view = new SVGView(this.#scene);
         }
 
-        const params: TwoOptions = {
-            resizeTarget: options.resizeTarget,
-            width: typeof options.width === 'number' ? options.width : 640,
-            height: typeof options.height === 'number' ? options.height : 480,
+        const config: TwoOptions = {
+            resizeTo: options.resizeTo,
+            size: compute_config_size(options),
             container: options.container
         };
 
@@ -122,21 +114,21 @@ export class Two {
         this.#frameCount = new BehaviorSubject(this.frameCount);
         this.frameCount$ = this.#frameCount.asObservable();
 
-        if (params.resizeTarget) {
-            this.#fitter.set_target(params.resizeTarget);
+        if (config.resizeTo) {
+            this.#fitter.set_target(config.resizeTo);
             this.#fitter.subscribe();
             this.#fitter.resize();
         }
 
-        if (params.container) {
-            this.appendTo(params.container);
-        }
-        else {
-            this.#view.setSize(params.width, params.height, this.ratio);
-            this.width = params.width;
-            this.height = params.height;
+        if (config.container) {
+            this.appendTo(config.container);
         }
 
+        if (config.size) {
+            this.#view.setSize(config.size, this.ratio);
+        }
+
+        // Why do we need to create this subscription to the view?
         this.#view_resize = this.#view.size$.subscribe(({ width, height }) => {
             this.width = width;
             this.height = height;
@@ -214,7 +206,7 @@ export class Two {
         const renderer = this.#view;
 
         if (width !== renderer.width || height !== renderer.height) {
-            renderer.setSize(width, height, this.ratio);
+            renderer.setSize({ width, height }, this.ratio);
         }
 
         this.#view.render();
@@ -578,7 +570,21 @@ class Fitter {
         const width = two.width = size.width;
         const height = two.height = size.height;
 
-        this.#view.setSize(width, height, two.ratio);
+        this.#view.setSize({ width, height }, two.ratio);
+    }
+}
+
+function compute_config_size(options: TwoOptions): { width: number; height: number } | null {
+    if (typeof options.size === 'object') {
+        return options.size;
+    }
+    else {
+        if (options.resizeTo) {
+            return null;
+        }
+        else {
+            return { width: 640, height: 480 };
+        }
     }
 }
 

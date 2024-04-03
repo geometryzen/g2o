@@ -9,5 +9,5 @@ export interface View {
     size$: Observable<{ width: number; height: number }>;
     width?: number;
     render(): void;
-    setSize(width: number, height: number, ratio: number): void;
+    setSize(size: {width: number, height: number}, ratio: number): void;
 }
