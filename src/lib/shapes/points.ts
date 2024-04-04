@@ -229,8 +229,8 @@ export class Points extends Shape<Group> {
         if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
                 const { scaleX, scaleY } = decomposeMatrix(
-                    matrix.elements[0], matrix.elements[3], matrix.elements[1],
-                    matrix.elements[4], matrix.elements[2], matrix.elements[5]
+                    matrix.a, matrix.d, matrix.b,
+                    matrix.e, matrix.c, matrix.f
                 );
                 if (typeof scaleX === 'number' && typeof scaleY === 'number') {
                     border = Math.max(scaleX, scaleY) * (this.linewidth || 0) / 2;

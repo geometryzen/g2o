@@ -397,17 +397,14 @@ export class Path extends Shape<Group> {
         // TODO: Update this to not __always__ update. Just when it needs to.
         this._update();
 
-        const matrix = shallow ? this.matrix : this.worldMatrix;
+        const M = shallow ? this.matrix : this.worldMatrix;
 
         let border = (this.linewidth || 0) / 2;
         const l = this.viewInfo.anchor_vertices.length;
 
         if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
-                const { scaleX, scaleY } = decomposeMatrix(
-                    matrix.elements[0], matrix.elements[3], matrix.elements[1],
-                    matrix.elements[4], matrix.elements[2], matrix.elements[5]
-                );
+                const { scaleX, scaleY } = decomposeMatrix(M.a, M.d, M.b, M.e, M.c, M.f);
                 if (typeof scaleX === 'number' && typeof scaleY === 'number') {
                     border = Math.max(scaleX, scaleY) * (this.linewidth || 0) / 2;
                 }
@@ -431,8 +428,8 @@ export class Path extends Shape<Group> {
             // This is important for handling cyclic paths.
             const v0 = this.viewInfo.anchor_vertices[(i + l - 1) % l];
 
-            const [v0x, v0y] = matrix.multiply_vector(v0.x, v0.y);
-            const [v1x, v1y] = matrix.multiply_vector(v1.x, v1.y);
+            const [v0x, v0y] = M.multiply_vector(v0.x, v0.y);
+            const [v1x, v1y] = M.multiply_vector(v1.x, v1.y);
 
             if (v0.controls && v1.controls) {
 
@@ -444,7 +441,7 @@ export class Path extends Shape<Group> {
                     ry += v0.y;
                 }
 
-                const [c0x, c0y] = matrix.multiply_vector(rx, ry);
+                const [c0x, c0y] = M.multiply_vector(rx, ry);
 
                 let lx = v1.controls.left.x;
                 let ly = v1.controls.left.y;
@@ -454,7 +451,7 @@ export class Path extends Shape<Group> {
                     ly += v1.y;
                 }
 
-                const [c1x, c1y] = matrix.multiply_vector(lx, ly);
+                const [c1x, c1y] = M.multiply_vector(lx, ly);
 
                 const bb = getCurveBoundingBox(
                     v0x, v0y,

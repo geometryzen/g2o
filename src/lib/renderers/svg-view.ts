@@ -726,7 +726,6 @@ const svg = {
                     this.viewInfo.matrix_change = this.matrix.change$.subscribe((matrix) => {
                         const change: SVGAttributes = {};
                         change.transform = 'matrix(' + matrix.toString() + ')';
-                        console.log("transform", change.transform);
                         svg.setAttributes(this.viewInfo.elem, change);
                     });
                 }
@@ -798,8 +797,8 @@ const svg = {
                 if (this._flagVertices || this._flagSize || this._flagSizeAttenuation) {
                     let size = this._size;
                     if (!this._sizeAttenuation) {
-                        const me = this.worldMatrix.elements;
-                        const m = decomposeMatrix(me[0], me[3], me[1], me[4], me[2], me[5]);
+                        const wm = this.worldMatrix;
+                        const m = decomposeMatrix(wm.a, wm.d, wm.b, wm.e, wm.c, wm.f);
                         size /= Math.max(m.scaleX, m.scaleY);
                     }
                     const vertices = svg.pointsToString(this.viewInfo.anchor_collection, size);

@@ -172,9 +172,9 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         try {
             matrix
                 .identity()
-                .translate(this.position.x, this.position.y)
+                .translate(this.position)
                 .scale(this.scaleXY.x, this.scaleXY.y)
-                .rotate(this.rotation)
+                .rotate(this.rotation)  // This will be based on the attitude in future.
                 .skewX(this.skewX)
                 .skewY(this.skewY);
         }

@@ -18,7 +18,7 @@ export class Matrix {
     /**
      * 1st row is [0,1,2], 2nd row is [3,4,5], 3rd row is [6,7,8]
      */
-    elements = new NumArray(9);
+    #elements = new NumArray(9);
 
     /**
      * @name Two.Matrix#manual
@@ -30,46 +30,46 @@ export class Matrix {
     #verbose = true;
 
     constructor(a = 1, b = 0, c = 0, d = 0, e = 1, f = 0, g = 0, h = 0, i = 1) {
-        this.elements[0] = a;
-        this.elements[1] = b;
-        this.elements[2] = c;
-        this.elements[3] = d;
-        this.elements[4] = e;
-        this.elements[5] = f;
-        this.elements[6] = g;
-        this.elements[7] = h;
-        this.elements[8] = i;
+        this.#elements[0] = a;
+        this.#elements[1] = b;
+        this.#elements[2] = c;
+        this.#elements[3] = d;
+        this.#elements[4] = e;
+        this.#elements[5] = f;
+        this.#elements[6] = g;
+        this.#elements[7] = h;
+        this.#elements[8] = i;
 
         this.#change = new BehaviorSubject(this);
         this.change$ = this.#change.asObservable();
     }
 
     get a() {
-        return this.elements[0];
+        return this.#elements[0];
     }
     get b() {
-        return this.elements[1];
+        return this.#elements[1];
     }
     get c() {
-        return this.elements[2];
+        return this.#elements[2];
     }
     get d() {
-        return this.elements[3];
+        return this.#elements[3];
     }
     get e() {
-        return this.elements[4];
+        return this.#elements[4];
     }
     get f() {
-        return this.elements[5];
+        return this.#elements[5];
     }
     get g() {
-        return this.elements[6];
+        return this.#elements[6];
     }
     get h() {
-        return this.elements[7];
+        return this.#elements[7];
     }
     get i() {
-        return this.elements[8];
+        return this.#elements[8];
     }
 
     //
@@ -86,30 +86,30 @@ export class Matrix {
 
     set(a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number): this {
 
-        this.elements[0] = a;
-        this.elements[1] = b;
-        this.elements[2] = c;
-        this.elements[3] = d;
-        this.elements[4] = e;
-        this.elements[5] = f;
-        this.elements[6] = g;
-        this.elements[7] = h;
-        this.elements[8] = i;
+        this.#elements[0] = a;
+        this.#elements[1] = b;
+        this.#elements[2] = c;
+        this.#elements[3] = d;
+        this.#elements[4] = e;
+        this.#elements[5] = f;
+        this.#elements[6] = g;
+        this.#elements[7] = h;
+        this.#elements[8] = i;
 
         return this.#broadcast();
     }
 
     set_from_matrix(m: Matrix): this {
 
-        this.elements[0] = m.a;
-        this.elements[1] = m.b;
-        this.elements[2] = m.c;
-        this.elements[3] = m.d;
-        this.elements[4] = m.e;
-        this.elements[5] = m.f;
-        this.elements[6] = m.g;
-        this.elements[7] = m.h;
-        this.elements[8] = m.i;
+        this.#elements[0] = m.a;
+        this.#elements[1] = m.b;
+        this.#elements[2] = m.c;
+        this.#elements[3] = m.d;
+        this.#elements[4] = m.e;
+        this.#elements[5] = m.f;
+        this.#elements[6] = m.g;
+        this.#elements[7] = m.h;
+        this.#elements[8] = m.i;
 
         return this.#broadcast();
     }
@@ -121,15 +121,15 @@ export class Matrix {
      */
     copy(m: Matrix): this {
 
-        this.elements[0] = m.elements[0];
-        this.elements[1] = m.elements[1];
-        this.elements[2] = m.elements[2];
-        this.elements[3] = m.elements[3];
-        this.elements[4] = m.elements[4];
-        this.elements[5] = m.elements[5];
-        this.elements[6] = m.elements[6];
-        this.elements[7] = m.elements[7];
-        this.elements[8] = m.elements[8];
+        this.#elements[0] = m.#elements[0];
+        this.#elements[1] = m.#elements[1];
+        this.#elements[2] = m.#elements[2];
+        this.#elements[3] = m.#elements[3];
+        this.#elements[4] = m.#elements[4];
+        this.#elements[5] = m.#elements[5];
+        this.#elements[6] = m.#elements[6];
+        this.#elements[7] = m.#elements[7];
+        this.#elements[8] = m.#elements[8];
 
         this.manual = m.manual;
 
@@ -143,30 +143,22 @@ export class Matrix {
      */
     identity() {
 
-        this.elements[0] = Matrix.Identity[0];
-        this.elements[1] = Matrix.Identity[1];
-        this.elements[2] = Matrix.Identity[2];
-        this.elements[3] = Matrix.Identity[3];
-        this.elements[4] = Matrix.Identity[4];
-        this.elements[5] = Matrix.Identity[5];
-        this.elements[6] = Matrix.Identity[6];
-        this.elements[7] = Matrix.Identity[7];
-        this.elements[8] = Matrix.Identity[8];
+        this.#elements[0] = Matrix.Identity[0];
+        this.#elements[1] = Matrix.Identity[1];
+        this.#elements[2] = Matrix.Identity[2];
+        this.#elements[3] = Matrix.Identity[3];
+        this.#elements[4] = Matrix.Identity[4];
+        this.#elements[5] = Matrix.Identity[5];
+        this.#elements[6] = Matrix.Identity[6];
+        this.#elements[7] = Matrix.Identity[7];
+        this.#elements[8] = Matrix.Identity[8];
 
         return this.#broadcast();
     }
 
-    /**
-     * @name Two.Matrix#multiply
-     * @function
-     * @param {Number} a - The scalar to be multiplied.
-     * @description Multiply all components of the matrix against a single scalar value.
-     * @overloaded
-     */
-
     multiply(a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number): this {
 
-        const A = this.elements;
+        const A = this.#elements;
         const B = [a, b, c, d, e, f, g, h, i];
 
         const A0 = A[0], A1 = A[1], A2 = A[2];
@@ -177,17 +169,17 @@ export class Matrix {
         const B3 = B[3], B4 = B[4], B5 = B[5];
         const B6 = B[6], B7 = B[7], B8 = B[8];
 
-        this.elements[0] = A0 * B0 + A1 * B3 + A2 * B6;
-        this.elements[1] = A0 * B1 + A1 * B4 + A2 * B7;
-        this.elements[2] = A0 * B2 + A1 * B5 + A2 * B8;
+        this.#elements[0] = A0 * B0 + A1 * B3 + A2 * B6;
+        this.#elements[1] = A0 * B1 + A1 * B4 + A2 * B7;
+        this.#elements[2] = A0 * B2 + A1 * B5 + A2 * B8;
 
-        this.elements[3] = A3 * B0 + A4 * B3 + A5 * B6;
-        this.elements[4] = A3 * B1 + A4 * B4 + A5 * B7;
-        this.elements[5] = A3 * B2 + A4 * B5 + A5 * B8;
+        this.#elements[3] = A3 * B0 + A4 * B3 + A5 * B6;
+        this.#elements[4] = A3 * B1 + A4 * B4 + A5 * B7;
+        this.#elements[5] = A3 * B2 + A4 * B5 + A5 * B8;
 
-        this.elements[6] = A6 * B0 + A7 * B3 + A8 * B6;
-        this.elements[7] = A6 * B1 + A7 * B4 + A8 * B7;
-        this.elements[8] = A6 * B2 + A7 * B5 + A8 * B8;
+        this.#elements[6] = A6 * B0 + A7 * B3 + A8 * B6;
+        this.#elements[7] = A6 * B1 + A7 * B4 + A8 * B7;
+        this.#elements[8] = A6 * B2 + A7 * B5 + A8 * B8;
 
         return this.#broadcast();
     }
@@ -202,15 +194,15 @@ export class Matrix {
     }
 
     multiply_by_scalar(s: number): this {
-        this.elements[0] *= s;
-        this.elements[1] *= s;
-        this.elements[2] *= s;
-        this.elements[3] *= s;
-        this.elements[4] *= s;
-        this.elements[5] *= s;
-        this.elements[6] *= s;
-        this.elements[7] *= s;
-        this.elements[8] *= s;
+        this.#elements[0] *= s;
+        this.#elements[1] *= s;
+        this.#elements[2] *= s;
+        this.#elements[3] *= s;
+        this.#elements[4] *= s;
+        this.#elements[5] *= s;
+        this.#elements[6] *= s;
+        this.#elements[7] *= s;
+        this.#elements[8] *= s;
         return this.#broadcast();
     }
 
@@ -222,7 +214,7 @@ export class Matrix {
      */
     inverse(out?: Matrix): Matrix {
 
-        const a = this.elements;
+        const a = this.#elements;
         out = out || new Matrix();
 
         const a00 = a[0], a01 = a[1], a02 = a[2];
@@ -242,70 +234,77 @@ export class Matrix {
 
         det = 1.0 / det;
 
-        out.elements[0] = b01 * det;
-        out.elements[1] = (-a22 * a01 + a02 * a21) * det;
-        out.elements[2] = (a12 * a01 - a02 * a11) * det;
-        out.elements[3] = b11 * det;
-        out.elements[4] = (a22 * a00 - a02 * a20) * det;
-        out.elements[5] = (-a12 * a00 + a02 * a10) * det;
-        out.elements[6] = b21 * det;
-        out.elements[7] = (-a21 * a00 + a01 * a20) * det;
-        out.elements[8] = (a11 * a00 - a01 * a10) * det;
+        out.#elements[0] = b01 * det;
+        out.#elements[1] = (-a22 * a01 + a02 * a21) * det;
+        out.#elements[2] = (a12 * a01 - a02 * a11) * det;
+        out.#elements[3] = b11 * det;
+        out.#elements[4] = (a22 * a00 - a02 * a20) * det;
+        out.#elements[5] = (-a12 * a00 + a02 * a10) * det;
+        out.#elements[6] = b21 * det;
+        out.#elements[7] = (-a21 * a00 + a01 * a20) * det;
+        out.#elements[8] = (a11 * a00 - a01 * a10) * det;
 
         return out;
     }
 
-    /**
-     * @name Two.Matrix#scale
-     * @function
-     * @param {Number} scale - The one dimensional scale to apply to the matrix.
-     * @description Uniformly scale the transformation matrix.
-     */
-
-    /**
-     * @name Two.Matrix#scale
-     * @function
-     * @param {Number} sx - The horizontal scale factor.
-     * @param {Number} sy - The vertical scale factor
-     * @description Scale the transformation matrix in two dimensions.
-     */
-    scale(sx: number, sy: number) {
-
-        const l = arguments.length;
-        if (l <= 1) {
-            sy = sx;
+    scale(sx: number, sy: number): this {
+        if (sx === 1 && sy === 1) {
+            return this;
         }
-
-        return this.multiply(sx, 0, 0, 0, sy, 0, 0, 0, 1);
+        else {
+            // console.lg("Matrix.scale", "sx", sx, "sy", sy);
+            return this.multiply(sx, 0, 0, 0, sy, 0, 0, 0, 1);
+        }
     }
 
-    rotate(angle: number) {
+    rotate(angle: number): this {
         const c = cos(angle);
         const s = sin(angle);
-        return this.multiply(c, -s, 0, s, c, 0, 0, 0, 1);
+        if (c === 1 && s === 0) {
+            return this;
+        }
+        else {
+            // console.lg("Matrix.rotate", "angle", angle, "cos", c, "sin", s);
+            return this.multiply(c, -s, 0, s, c, 0, 0, 0, 1);
+        }
     }
 
-    /**
-     * TODO: Replace with a vector structure {x: number;y:number}
-     */
-    translate(x: number, y: number): this {
-        return this.multiply(1, 0, x, 0, 1, y, 0, 0, 1);
+    translate(translation: { x: number, y: number }): this {
+        if (translation.x === 0 && translation.y === 0) {
+            return this;
+        }
+        else {
+            // console.lg("Matrix.translate", translation.x, translation.y);
+            return this.multiply(1, 0, translation.x, 0, 1, translation.y, 0, 0, 1);
+        }
     }
 
     /**
      * Skew the matrix by an angle in the x axis direction.
      */
     skewX(angle: number): this {
-        const a = tan(angle);
-        return this.multiply(1, a, 0, 0, 1, 0, 0, 0, 1);
+        if (angle === 0) {
+            return this;
+        }
+        else {
+            const a = tan(angle);
+            // console.lg("Matrix.skewX", "angle", angle, "a", a);
+            return this.multiply(1, a, 0, 0, 1, 0, 0, 0, 1);
+        }
     }
 
     /**
      * Skew the matrix by an angle in the y axis direction.
      */
     skewY(angle: number): this {
-        const a = tan(angle);
-        return this.multiply(1, 0, 0, a, 1, 0, 0, 0, 1);
+        if (angle === 0) {
+            return this;
+        }
+        else {
+            const a = tan(angle);
+            // console.lg("Matrix.skewY", "angle", angle, "a", a);
+            return this.multiply(1, 0, 0, a, 1, 0, 0, 0, 1);
+        }
 
     }
 
@@ -340,7 +339,7 @@ export class Matrix {
      */
     toTransformArray(fullMatrix = false, output?: number[]): number[] {
 
-        const elements = this.elements;
+        const elements = this.#elements;
         const hasOutput = !!output;
 
         const a = elements[0];
@@ -394,7 +393,7 @@ export class Matrix {
      */
     toArray(fullMatrix = false, output?: number[]): number[] {
 
-        const elements = this.elements;
+        const elements = this.#elements;
         const hasOutput = Array.isArray(output);
 
         const a = elements[0];
