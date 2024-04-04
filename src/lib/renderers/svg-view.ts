@@ -810,9 +810,8 @@ const svg = {
                 if (this._flagVertices || this._flagSize || this._flagSizeAttenuation) {
                     let size = this._size;
                     if (!this._sizeAttenuation) {
-                        const wm = this.worldMatrix;
-                        const m = decomposeMatrix(wm.a11, wm.a21, wm.a12, wm.a22, wm.a13, wm.a23);
-                        size /= Math.max(m.scaleX, m.scaleY);
+                        const { scaleX, scaleY } = decomposeMatrix(this.worldMatrix);
+                        size /= Math.max(scaleX, scaleY);
                     }
                     const vertices = svg.pointsToString(this.viewInfo.anchor_collection, size);
                     changed.d = vertices;

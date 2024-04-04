@@ -404,7 +404,7 @@ export class Path extends Shape<Group> {
 
         if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
-                const { scaleX, scaleY } = decomposeMatrix(M.a11, M.a21, M.a12, M.a22, M.a13, M.a23);
+                const { scaleX, scaleY } = decomposeMatrix(M);
                 border = Math.max(scaleX, scaleY) * (this.linewidth || 0) / 2;
             }
             else {
