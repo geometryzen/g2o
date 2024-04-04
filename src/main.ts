@@ -1,53 +1,61 @@
-import { Board, BoardOptions, Circle, G20, Rectangle } from './index';
+import { Board, BoardOptions, Circle, G20, Rectangle,Group } from './index';
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    const container = document.getElementById('container') as HTMLDivElement;
+    const container = document.getElementById('container')!;
 
-    const params: Partial<BoardOptions> = {
+    const board_options: Partial<BoardOptions> = {
         container
     };
-    const two = new Board(params).appendTo(container);
 
-    const circle_pos = new G20(-70, 0);
-    const circle = new Circle({ position: circle_pos, radius: 50 });
-    const rect_pos = new G20(70, 0);
-    const rect = new Rectangle({ position: rect_pos, width: 100, height: 100 });
-    circle.fill = '#FF8000';
-    circle.stroke = 'orangered';
-    rect.fill = 'rgba(0, 200, 255, 0.75)';
-    rect.stroke = '#1C75BC';
+    const board = new Board(board_options).appendTo(container);
 
-    const scene = two.scene;
+    const scene: Group = board.scene;
+
+    const circle = new Circle({ position: new G20(-70, 0), radius: 50 });
+    circle.fill = '#FF0000';
     scene.add(circle);
+
+    const rect = new Rectangle({ position: new G20(70, 0), width: 100, height: 100 });
+    rect.fill = 'rgba(255, 255, 0, 1.0)';
     scene.add(rect);
 
-    // And have position, rotation, scale like all shapes.
-    scene.position.set(two.width / 2, two.height / 2);
-    scene.rotation = Math.PI;
-    scene.scale = 0.75;
+    const line = board.makeLine(0, 0, 100, 100);
+    line.fill = '#FF8000';
+    line.linewidth = 10;
+    line.stroke = "rgba(255, 255, 255, 1.0)";
+    // scene.add(line)
 
-    // You can also set the same properties a shape have.
-    scene.linewidth = 4;
+    scene.position.set(board.width / 2, board.height / 2);
+    scene.scale = 0;
+    scene.noStroke();
 
-    circle_pos.y = -100;   // No effect yet.
-    // circle.position.y = -200    // Works
+    scene.scale = 1;
+    board.update();
 
-    const left = new HTMLButtonProxy('left');
-    left.addEventListener('click', () => {
-        circle.position.x += 100;
-        rect.position.x += 100;
-    });
+    const animate = function () {
+        if (scene.scale > 0.9999) {
+            scene.scale = scene.rotation = 0;
+        }
+        const t = (1 - scene.scale) * 0.125;
+        scene.scale += t;
+        scene.rotation += t * 4 * Math.PI;
+        // board.update();
+        window.requestAnimationFrame(animate);
+    };
+    window.requestAnimationFrame(animate);
 
-    const right = new HTMLButtonProxy('right');
-    right.addEventListener('click', () => {
-        circle.position.x -= 100;
-        rect.position.x -= 100;
-    });
-
-    two.update();
+    window.onunload = function () {
+        try {
+            board.dispose();
+        }
+        catch (e) {
+            // eslint-disable-next-line no-console
+            console.warn(`${e}`);
+        }
+    };
 });
-
+/*
 interface Disposable {
     dispose(): void
 }
@@ -65,4 +73,4 @@ class HTMLButtonProxy {
         return { dispose };
     }
 }
-
+*/

@@ -167,7 +167,34 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     }
 
     #update_matrix(): void {
-        const matrix = this._matrix;
+        // For performance, the matrix product has been pre-computed.
+        // M = T * S * R * skewX * skewY
+        const a = this.scaleXY.x;
+        const b = this.scaleXY.y;
+        const p = Math.tan(this.skewX);
+        const q = Math.tan(this.skewY);
+        const x = this.position.x;
+        const y = this.position.y;
+        const c = Math.cos(this.rotation);
+        const s = Math.sin(this.rotation);
+        const ac = a * c;
+        const as = a * s;
+        const asq = as * q;
+        const bc = b * c;
+        const bcp = bc * p;
+        const bcq = bc * q;
+        const bs = b * s;
+        const pq = p * q;
+        const py = p * y;
+
+        const a11 = ac - asq + bcp * pq * bs;
+        const a12 = -as + bcp;
+        const a13 = x + py;
+        const a21 = bcq + bs;
+        const a22 = bc;
+        const a23 = y;
+        this.matrix.set(a11, a12, a13, a21, a22, a23, 0, 0, 1);
+        /*
         matrix.silence();
         try {
             matrix
@@ -181,6 +208,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         finally {
             matrix.touch();
         }
+        */
     }
 
     _update(bubbles?: boolean): this {
@@ -253,11 +281,15 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     set attitude(attitude) {
         this.#attitude.set(0, 0, attitude.a, attitude.b);
     }
+    /**
+     * The rotation angle, measured in radians.
+     */
     get rotation(): number {
         return this._rotation;
     }
-    set rotation(v: number) {
-        this._rotation = v;
+    set rotation(rotation: number) {
+        this._rotation = rotation;
+        this.#update_matrix();
         this._flagMatrix = true;
     }
     get scale(): number {
@@ -282,6 +314,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
                 this._flagMatrix = true;
             });
         }
+        this.#update_matrix();
         this._flagMatrix = true;
         this._flagScale = true;
     }

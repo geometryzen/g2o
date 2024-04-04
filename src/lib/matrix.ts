@@ -257,6 +257,10 @@ export class Matrix {
         }
     }
 
+    /**
+     * @param angle The rotation angle in radians.
+     * @returns 
+     */
     rotate(angle: number): this {
         const c = cos(angle);
         const s = sin(angle);

@@ -416,7 +416,7 @@ const svg = {
         }
     },
 
-    group: {
+    'group': {
 
         appendChild: function (this: DomContext, object: Shape<Group>) {
 
@@ -498,11 +498,15 @@ const svg = {
 
             this._update();
 
-            if (!this.viewInfo.elem) {
-                this.viewInfo.elem = svg.createElement('g', {
-                    id: this.id
-                });
+            if (this.viewInfo.elem) {
+                // It's already defined.
+            }
+            else {
+                this.viewInfo.elem = svg.createElement('g', { id: this.id });
                 domElement.appendChild(this.viewInfo.elem);
+                this.viewInfo.matrix_change = this.matrix.change$.subscribe(() => {
+                    this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.matrix));
+                });
             }
 
             // _Update styles for the <g>
