@@ -25,7 +25,7 @@ export function getComputedMatrix<P extends Parent>(object: Shape<P>, matrix: Ma
 
     for (let i = 0; i < matrices.length; i++) {
         const m = matrices[i];
-        matrix.multiply(m.a, m.b, m.c, m.d, m.e, m.f, m.g, m.h, m.i);
+        matrix.multiply(m.a11, m.a12, m.a13, m.a21, m.a22, m.a23, m.a31, m.a32, m.a33);
     }
 
     return matrix;

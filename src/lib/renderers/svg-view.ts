@@ -6,6 +6,7 @@ import { RadialGradient } from '../effects/radial-gradient';
 import { is_canvas, is_img, is_video, Texture } from '../effects/texture';
 import { Element as ElementBase } from '../element';
 import { Group } from '../group';
+import { Matrix } from '../matrix';
 import { get_dashes_offset, Path } from '../path';
 import { Observable } from '../rxjs/Observable';
 import { Shape } from '../shape';
@@ -76,7 +77,10 @@ export interface SVGAttributes {
      */
     'd'?: string;
     'direction'?: 'ltr' | 'rtl';
-    'dominant-baseline'?: 'auto' | 'middle' | 'hanging';
+    /**
+     * @see https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/dominant-baseline
+     */
+    'dominant-baseline'?: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top';
     'fill'?: string;
     'fill-opacity'?: string;
     'font-family'?: string;
@@ -109,6 +113,9 @@ export interface SVGAttributes {
     'stroke-opacity'?: string;
     'stroke-width'?: string;
     'text-decoration'?: string;
+    /**
+     * https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/transform
+     */
     'transform'?: string;
     'visibility'?: 'visible' | 'hidden';
     'width'?: string;
@@ -506,7 +513,7 @@ const svg = {
             };
 
             if (flagMatrix) {
-                this.viewInfo.elem.setAttribute('transform', 'matrix(' + this.matrix.toString() + ')');
+                this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.matrix));
             }
 
             for (let i = 0; i < this.children.length; i++) {
@@ -569,7 +576,8 @@ const svg = {
 
                 if (this._flagMask) {
                     if (this.mask) {
-                        svg[this.mask.viewInfo.type].render.call(this.mask, domElement);
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        (svg as any)[this.mask.viewInfo.type].render.call(this.mask, domElement);
                         this.viewInfo.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
                     }
                     else {
@@ -602,7 +610,7 @@ const svg = {
                 const flagMatrix = this.matrix.manual || this._flagMatrix;
 
                 if (flagMatrix) {
-                    changed.transform = 'matrix(' + this.matrix.toString() + ')';
+                    changed.transform = transform_value_of_matrix(this.matrix);
                 }
 
                 if (this._flagId) {
@@ -725,7 +733,7 @@ const svg = {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     this.viewInfo.matrix_change = this.matrix.change$.subscribe((matrix) => {
                         const change: SVGAttributes = {};
-                        change.transform = 'matrix(' + matrix.toString() + ')';
+                        change.transform = transform_value_of_matrix(matrix);
                         svg.setAttributes(this.viewInfo.elem, change);
                     });
                 }
@@ -754,7 +762,8 @@ const svg = {
 
                 if (this._flagMask) {
                     if (this._mask) {
-                        svg[this._mask.viewInfo.type].render.call(this._mask, domElement);
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        (svg as any)[this._mask.viewInfo.type].render.call(this._mask, domElement);
                         this.viewInfo.elem.setAttribute('clip-path', 'url(#' + this._mask.id + ')');
                     }
                     else {
@@ -787,7 +796,7 @@ const svg = {
                 const flagMatrix = this.matrix.manual || this._flagMatrix;
 
                 if (flagMatrix) {
-                    changed.transform = 'matrix(' + this.matrix.toString() + ')';
+                    changed.transform = transform_value_of_matrix(this.matrix);
                 }
 
                 if (this._flagId) {
@@ -798,38 +807,40 @@ const svg = {
                     let size = this._size;
                     if (!this._sizeAttenuation) {
                         const wm = this.worldMatrix;
-                        const m = decomposeMatrix(wm.a, wm.d, wm.b, wm.e, wm.c, wm.f);
+                        const m = decomposeMatrix(wm.a11, wm.a21, wm.a12, wm.a22, wm.a13, wm.a23);
                         size /= Math.max(m.scaleX, m.scaleY);
                     }
                     const vertices = svg.pointsToString(this.viewInfo.anchor_collection, size);
                     changed.d = vertices;
                 }
 
-                if (this._fill && this._fill._renderer) {
+                const fill = this.fill;
+                if (fill && typeof fill === 'object' && fill.renderer) {
                     this.viewInfo.hasFillEffect = true;
-                    this._fill._update();
-                    svg[this._fill._renderer.type].render.call(this._fill, domElement, true);
+                    fill._update();
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (svg as any)[fill.renderer.type].render.call(this._fill, domElement, true);
                 }
 
                 if (this._flagFill) {
-                    changed.fill = this._fill && this._fill.id
-                        ? 'url(#' + this._fill.id + ')' : this._fill;
-                    if (this.viewInfo.hasFillEffect && typeof this._fill.id === 'undefined') {
-                        domElement.defs._flagUpdate = true;
+                    changed.fill = color_value(fill);
+                    if (this.viewInfo.hasFillEffect && typeof fill === 'string') {
+                        set_defs_flag_update(get_dom_element_defs(domElement), true);
                         delete this.viewInfo.hasFillEffect;
                     }
                 }
 
-                if (this._stroke && this._stroke._renderer) {
+                const stroke = this.stroke;
+                if (stroke && typeof stroke === 'object' && stroke.renderer) {
                     this.viewInfo.hasStrokeEffect = true;
-                    this._stroke._update();
-                    svg[this._stroke._renderer.type].render.call(this._stroke, domElement, true);
+                    stroke._update();
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (svg as any)[stroke.renderer.type].render.call(this._stroke, domElement, true);
                 }
 
                 if (this._flagStroke) {
-                    changed.stroke = this._stroke && this._stroke.id
-                        ? 'url(#' + this._stroke.id + ')' : this._stroke;
-                    if (this.viewInfo.hasStrokeEffect && typeof this._stroke.id === 'undefined') {
+                    changed.stroke = color_value(stroke);
+                    if (this.viewInfo.hasStrokeEffect && typeof stroke === 'string') {
                         set_defs_flag_update(get_dom_element_defs(domElement), true);
                         delete this.viewInfo.hasStrokeEffect;
                     }
@@ -880,7 +891,7 @@ const svg = {
                 const flagMatrix = this.matrix.manual || this._flagMatrix;
 
                 if (flagMatrix) {
-                    changed.transform = 'matrix(' + this.matrix.toString() + ')';
+                    changed.transform = transform_value_of_matrix(this.matrix);
                 }
 
                 if (this._flagId) {
@@ -914,28 +925,30 @@ const svg = {
                 if (this._flagDirection) {
                     changed['direction'] = this.direction;
                 }
-                if (this._fill && this._fill._renderer) {
+                const fill = this.fill;
+                if (fill && typeof fill === 'object' && fill.renderer) {
                     this.viewInfo.hasFillEffect = true;
-                    this._fill._update();
-                    svg[this._fill._renderer.type].render.call(this._fill, domElement, true);
+                    fill._update();
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (svg as any)[fill.renderer.type].render.call(this._fill, domElement, true);
                 }
                 if (this._flagFill) {
-                    changed.fill = this._fill && this._fill.id
-                        ? 'url(#' + this._fill.id + ')' : this._fill;
-                    if (this.viewInfo.hasFillEffect && typeof this._fill.id === 'undefined') {
+                    changed.fill = color_value(fill);
+                    if (this.viewInfo.hasFillEffect && typeof fill === 'string') {
                         set_defs_flag_update(get_dom_element_defs(domElement), true);
                         delete this.viewInfo.hasFillEffect;
                     }
                 }
-                if (this._stroke && this._stroke._renderer) {
+                const stroke = this.stroke;
+                if (stroke && typeof stroke === 'object' && stroke.renderer) {
                     this.viewInfo.hasStrokeEffect = true;
-                    this._stroke._update();
-                    svg[this._stroke._renderer.type].render.call(this._stroke, domElement, true);
+                    stroke._update();
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (svg as any)[stroke.renderer.type].render.call(this._stroke, domElement, true);
                 }
                 if (this._flagStroke) {
-                    changed.stroke = this._stroke && this._stroke.id
-                        ? 'url(#' + this._stroke.id + ')' : this._stroke;
-                    if (this.viewInfo.hasStrokeEffect && typeof this._stroke.id === 'undefined') {
+                    changed.stroke = color_value(stroke);
+                    if (this.viewInfo.hasStrokeEffect && typeof stroke === 'string') {
                         set_defs_flag_update(get_dom_element_defs(domElement), true);
                         delete this.viewInfo.hasStrokeEffect;
                     }
@@ -990,7 +1003,8 @@ const svg = {
 
                 if (this._flagMask) {
                     if (this._mask) {
-                        svg[this._mask.viewInfo.type].render.call(this._mask, domElement);
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        (svg as any)[this._mask.viewInfo.type].render.call(this._mask, domElement);
                         this.viewInfo.elem.setAttribute('clip-path', 'url(#' + this._mask.id + ')');
                     }
                     else {
@@ -1378,5 +1392,33 @@ export class SVGView implements View {
         svg.group.render.call(thisArg, this.domElement);
         svg.defs.update(this.domElement);
         return this;
+    }
+}
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/transform
+ *  
+ * [
+ *    [a c e]
+ *    [b d f]
+ *    [0 0 1]
+ * ] => "matrix(a b c d e f)""
+ */
+function transform_value_of_matrix(m: Matrix): string {
+    const a = m.a11;
+    const b = m.a21;
+    const c = m.a12;
+    const d = m.a22;
+    const e = m.a13;
+    const f = m.a23;
+    return `matrix(${[a, b, c, d, e, f].map(toFixed).join(' ')})`;
+}
+
+function color_value(thing: string | Gradient | Texture): string {
+    if (typeof thing === 'object') {
+        return 'url(#' + thing.id + ')';
+    }
+    else {
+        return thing;
     }
 }

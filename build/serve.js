@@ -20,4 +20,4 @@ const { host, port } = await ctx.serve({
 });
 
 // eslint-disable-next-line no-undef
-console.log(`Serving app at ${host}:${port}.`);
+console.log(`** Live Development Server is listening on ${host}:${port}, open your browser on http://localhost:${port}/ **`);

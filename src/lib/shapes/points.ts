@@ -221,17 +221,14 @@ export class Points extends Shape<Group> {
         // TODO: Update this to not __always__ update. Just when it needs to.
         this._update();
 
-        const matrix = shallow ? this.matrix : this.worldMatrix;
+        const M = shallow ? this.matrix : this.worldMatrix;
 
         let border = (this.linewidth || 0) / 2;
         const l = this.viewInfo.vector_vertices.length;
 
         if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
-                const { scaleX, scaleY } = decomposeMatrix(
-                    matrix.a, matrix.d, matrix.b,
-                    matrix.e, matrix.c, matrix.f
-                );
+                const { scaleX, scaleY } = decomposeMatrix(M.a11, M.a21, M.a12, M.a22, M.a13, M.a23);
                 if (typeof scaleX === 'number' && typeof scaleY === 'number') {
                     border = Math.max(scaleX, scaleY) * (this.linewidth || 0) / 2;
                 }
@@ -255,8 +252,8 @@ export class Points extends Shape<Group> {
             // This is important for handling cyclic paths.
             const v0 = this.viewInfo.vector_vertices[(i + l - 1) % l];
 
-            const [v0x, v0y] = matrix.multiply_vector(v0.x, v0.y);
-            const [v1x, v1y] = matrix.multiply_vector(v1.x, v1.y);
+            const [v0x, v0y] = M.multiply_vector(v0.x, v0.y);
+            const [v1x, v1y] = M.multiply_vector(v1.x, v1.y);
 
             if (i <= 1) {
 

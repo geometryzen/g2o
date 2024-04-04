@@ -3,5 +3,8 @@ export interface MatrixDecomposition {
     translateY: number;
     scaleX: number;
     scaleY: number;
+    /**
+     * FIXME: This angle is in degrees.
+     */
     rotation: number
 }

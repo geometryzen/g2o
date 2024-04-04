@@ -1,14 +1,13 @@
 import { BehaviorSubject } from 'rxjs';
 import { Observable } from './rxjs/Observable.js';
-import { NumArray, toFixed } from './utils/math.js';
+import { NumArray } from './utils/math.js';
 
 // Constants
 
 const cos = Math.cos, sin = Math.sin, tan = Math.tan;
-const array: number[] = [];
 
 /**
- * 1st row is [a,b,c], 2nd row is [d,e,f], 3rd row is [g,h,i]
+ * 1st row is [a11,a12,a13], 2nd row is [a21,a22,a23], 3rd row is [a31,a32,a33]
  */
 export class Matrix {
 
@@ -44,31 +43,31 @@ export class Matrix {
         this.change$ = this.#change.asObservable();
     }
 
-    get a() {
+    get a11() {
         return this.#elements[0];
     }
-    get b() {
+    get a12() {
         return this.#elements[1];
     }
-    get c() {
+    get a13() {
         return this.#elements[2];
     }
-    get d() {
+    get a21() {
         return this.#elements[3];
     }
-    get e() {
+    get a22() {
         return this.#elements[4];
     }
-    get f() {
+    get a23() {
         return this.#elements[5];
     }
-    get g() {
+    get a31() {
         return this.#elements[6];
     }
-    get h() {
+    get a32() {
         return this.#elements[7];
     }
-    get i() {
+    get a33() {
         return this.#elements[8];
     }
 
@@ -84,32 +83,32 @@ export class Matrix {
         0, 0, 1
     ];
 
-    set(a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number): this {
+    set(a11: number, a12: number, a13: number, a21: number, a22: number, a23: number, a31: number, a32: number, a33: number): this {
 
-        this.#elements[0] = a;
-        this.#elements[1] = b;
-        this.#elements[2] = c;
-        this.#elements[3] = d;
-        this.#elements[4] = e;
-        this.#elements[5] = f;
-        this.#elements[6] = g;
-        this.#elements[7] = h;
-        this.#elements[8] = i;
+        this.#elements[0] = a11;
+        this.#elements[1] = a12;
+        this.#elements[2] = a13;
+        this.#elements[3] = a21;
+        this.#elements[4] = a22;
+        this.#elements[5] = a23;
+        this.#elements[6] = a31;
+        this.#elements[7] = a32;
+        this.#elements[8] = a33;
 
         return this.#broadcast();
     }
 
     set_from_matrix(m: Matrix): this {
 
-        this.#elements[0] = m.a;
-        this.#elements[1] = m.b;
-        this.#elements[2] = m.c;
-        this.#elements[3] = m.d;
-        this.#elements[4] = m.e;
-        this.#elements[5] = m.f;
-        this.#elements[6] = m.g;
-        this.#elements[7] = m.h;
-        this.#elements[8] = m.i;
+        this.#elements[0] = m.a11;
+        this.#elements[1] = m.a12;
+        this.#elements[2] = m.a13;
+        this.#elements[3] = m.a21;
+        this.#elements[4] = m.a22;
+        this.#elements[5] = m.a23;
+        this.#elements[6] = m.a31;
+        this.#elements[7] = m.a32;
+        this.#elements[8] = m.a33;
 
         return this.#broadcast();
     }
@@ -141,7 +140,7 @@ export class Matrix {
      * @function
      * @description Turn matrix to the identity, like resetting.
      */
-    identity() {
+    identity(): this {
 
         this.#elements[0] = Matrix.Identity[0];
         this.#elements[1] = Matrix.Identity[1];
@@ -156,39 +155,40 @@ export class Matrix {
         return this.#broadcast();
     }
 
-    multiply(a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number): this {
+    multiply(b11: number, b12: number, b13: number, b21: number, b22: number, b23: number, b31: number, b32: number, b33: number): this {
 
         const A = this.#elements;
-        const B = [a, b, c, d, e, f, g, h, i];
 
-        const A0 = A[0], A1 = A[1], A2 = A[2];
-        const A3 = A[3], A4 = A[4], A5 = A[5];
-        const A6 = A[6], A7 = A[7], A8 = A[8];
+        const a11 = A[0];
+        const a12 = A[1];
+        const a13 = A[2];
+        const a21 = A[3];
+        const a22 = A[4];
+        const a23 = A[5];
+        const a31 = A[6];
+        const a32 = A[7];
+        const a33 = A[8];
 
-        const B0 = B[0], B1 = B[1], B2 = B[2];
-        const B3 = B[3], B4 = B[4], B5 = B[5];
-        const B6 = B[6], B7 = B[7], B8 = B[8];
+        this.#elements[0] = a11 * b11 + a12 * b21 + a13 * b31;  // c11
+        this.#elements[1] = a11 * b12 + a12 * b22 + a13 * b32;  // c12
+        this.#elements[2] = a11 * b13 + a12 * b23 + a13 * b33;  // c13
 
-        this.#elements[0] = A0 * B0 + A1 * B3 + A2 * B6;
-        this.#elements[1] = A0 * B1 + A1 * B4 + A2 * B7;
-        this.#elements[2] = A0 * B2 + A1 * B5 + A2 * B8;
+        this.#elements[3] = a21 * b11 + a22 * b21 + a23 * b31;  // c21
+        this.#elements[4] = a21 * b12 + a22 * b22 + a23 * b32;  // c22
+        this.#elements[5] = a21 * b13 + a22 * b23 + a23 * b33;  // c23
 
-        this.#elements[3] = A3 * B0 + A4 * B3 + A5 * B6;
-        this.#elements[4] = A3 * B1 + A4 * B4 + A5 * B7;
-        this.#elements[5] = A3 * B2 + A4 * B5 + A5 * B8;
-
-        this.#elements[6] = A6 * B0 + A7 * B3 + A8 * B6;
-        this.#elements[7] = A6 * B1 + A7 * B4 + A8 * B7;
-        this.#elements[8] = A6 * B2 + A7 * B5 + A8 * B8;
+        this.#elements[6] = a31 * b11 + a32 * b21 + a33 * b31;  // c31
+        this.#elements[7] = a31 * b12 + a32 * b22 + a33 * b32;  // c32
+        this.#elements[8] = a31 * b13 + a32 * b23 + a33 * b33;  // c33
 
         return this.#broadcast();
     }
 
     multiply_vector(x: number = 0, y: number = 0, z: number = 1): [number, number, number] {
 
-        const x1 = this.a * x + this.b * y + this.c * z;
-        const x2 = this.d * x + this.e * y + this.f * z;
-        const x3 = this.g * x + this.h * y + this.i * z;
+        const x1 = this.a11 * x + this.a12 * y + this.a13 * z;
+        const x2 = this.a21 * x + this.a22 * y + this.a23 * z;
+        const x3 = this.a31 * x + this.a32 * y + this.a33 * z;
 
         return [x1, x2, x3];
     }
@@ -281,13 +281,15 @@ export class Matrix {
 
     /**
      * Skew the matrix by an angle in the x axis direction.
+     * 
+     * @param skewX The skew angle in radians.
      */
-    skewX(angle: number): this {
-        if (angle === 0) {
+    skewX(skewX: number): this {
+        if (skewX === 0) {
             return this;
         }
         else {
-            const a = tan(angle);
+            const a = tan(skewX);
             // console.lg("Matrix.skewX", "angle", angle, "a", a);
             return this.multiply(1, a, 0, 0, 1, 0, 0, 0, 1);
         }
@@ -295,13 +297,15 @@ export class Matrix {
 
     /**
      * Skew the matrix by an angle in the y axis direction.
+     * 
+     * @param skewY The skew angle in radians.
      */
-    skewY(angle: number): this {
-        if (angle === 0) {
+    skewY(skewY: number): this {
+        if (skewY === 0) {
             return this;
         }
         else {
-            const a = tan(angle);
+            const a = tan(skewY);
             // console.lg("Matrix.skewY", "angle", angle, "a", a);
             return this.multiply(1, 0, 0, a, 1, 0, 0, 0, 1);
         }
@@ -323,123 +327,6 @@ export class Matrix {
     touch(): this {
         this.#verbose = true;
         return this.#broadcast();
-    }
-
-    /**
-     * WARNING: This is critical because it is used to buld the SVG transform matrix.
-     */
-    toString(fullMatrix = false): string {
-        array.length = 0;
-        this.toTransformArray(fullMatrix, array);
-        return array.map(toFixed).join(' ');
-    }
-
-    /**
-     * @returns the full 9 elements of the matrix or just 6 in the format for 2D transformations.
-     */
-    toTransformArray(fullMatrix = false, output?: number[]): number[] {
-
-        const elements = this.#elements;
-        const hasOutput = !!output;
-
-        const a = elements[0];
-        const b = elements[1];
-        const c = elements[2];
-        const d = elements[3];
-        const e = elements[4];
-        const f = elements[5];
-
-        if (fullMatrix) {
-
-            const g = elements[6];
-            const h = elements[7];
-            const i = elements[8];
-
-            if (hasOutput) {
-                output[0] = a;
-                output[1] = d;
-                output[2] = g;
-                output[3] = b;
-                output[4] = e;
-                output[5] = h;
-                output[6] = c;
-                output[7] = f;
-                output[8] = i;
-                return output;
-            }
-
-            return [
-                a, d, g, b, e, h, c, f, i
-            ];
-        }
-
-        if (hasOutput) {
-            output[0] = a;
-            output[1] = d;
-            output[2] = b;
-            output[3] = e;
-            output[4] = c;
-            output[5] = f;
-            return output;
-        }
-
-        return [
-            a, d, b, e, c, f  // Specific format see LN:19
-        ];
-    }
-
-    /**
-     * @returns  the full 9 elements of the matrix or just 6 for 2D transformations.
-     */
-    toArray(fullMatrix = false, output?: number[]): number[] {
-
-        const elements = this.#elements;
-        const hasOutput = Array.isArray(output);
-
-        const a = elements[0];
-        const b = elements[1];
-        const c = elements[2];
-        const d = elements[3];
-        const e = elements[4];
-        const f = elements[5];
-
-        if (fullMatrix) {
-
-            const g = elements[6];
-            const h = elements[7];
-            const i = elements[8];
-
-            if (hasOutput) {
-                output[0] = a;
-                output[1] = b;
-                output[2] = c;
-                output[3] = d;
-                output[4] = e;
-                output[5] = f;
-                output[6] = g;
-                output[7] = h;
-                output[8] = i;
-                return output;
-            }
-
-            return [
-                a, b, c, d, e, f, g, h, i
-            ];
-        }
-
-        if (hasOutput) {
-            output[0] = a;
-            output[1] = b;
-            output[2] = c;
-            output[3] = d;
-            output[4] = e;
-            output[5] = f;
-            return output;
-        }
-
-        return [
-            a, b, c, d, e, f
-        ];
     }
 }
 // TODO

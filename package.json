@@ -45,6 +45,7 @@
         "clean": "rm -rf coverage && rm -rf dist && rm -rf docs && rm -rf es2015 && rm -rf system && rm -rf types",
         "coverage": "npm run test -- --coverage",
         "dev": "rollup --config rollup.config.mts --configPlugin @rollup/plugin-typescript -w",
+        "dev-start": "node ./build/serve.js --watch",
         "docs": "npm run docs:typedoc && open-cli docs/index.html",
         "docs:typedoc": "rm -rf docs && typedoc --options typedoc.json",
         "esbuild": "node ./build/build.js",
@@ -53,7 +54,6 @@
         "pretest": "npm run build",
         "prepublishOnly": "npm run check && npm run build",
         "release": "release-it",
-        "start": "node ./build/serve.js --watch",
         "test": "jest"
     },
     "repository": {
