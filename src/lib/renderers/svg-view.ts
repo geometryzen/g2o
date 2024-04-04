@@ -723,7 +723,7 @@ const svg = {
                     this.viewInfo.elem = svg.createElement('path', changed);
                     domElement.appendChild(this.viewInfo.elem);
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    this.viewInfo.position_change = this.matrix.change$.subscribe((matrix) => {
+                    this.viewInfo.matrix_change = this.matrix.change$.subscribe((matrix) => {
                         const change: SVGAttributes = {};
                         change.transform = 'matrix(' + matrix.toString() + ')';
                         console.log("transform", change.transform);

@@ -169,14 +169,22 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     #update_matrix(): void {
         console.log("Shape.update_matrix");
         // FIXME: This is wasteful and should be optimized.
-        this._matrix
-            .identity()
-            .translate(this.position.x, this.position.y);
+        this._matrix.silence();
+        try {
+            this._matrix
+                .identity()
+                .translate(this.position.x, this.position.y)
+                .scale(this.scaleXY.x, this.scaleXY.y)
+                .rotate(this.rotation)
+                .skewX(this.skewX)
+                .skewY(this.skewY);
+        }
+        finally {
+            this._matrix.touch();
+        }
 
-        this._matrix.scale(this.scaleXY.x, this.scaleXY.y);
-        this._matrix.rotate(this.rotation);
-        this._matrix.skewX(this.skewX);
-        this._matrix.skewY(this.skewY);
+        // Brings 
+        this._matrix.touch();
     }
 
     _update(bubbles?: boolean): this {

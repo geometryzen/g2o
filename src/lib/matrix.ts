@@ -27,6 +27,8 @@ export class Matrix {
      */
     manual = false;
 
+    #verbose = true;
+
     constructor(a = 1, b = 0, c = 0, d = 0, e = 1, f = 0, g = 0, h = 0, i = 1) {
         this.elements[0] = a;
         this.elements[1] = b;
@@ -94,9 +96,7 @@ export class Matrix {
         this.elements[7] = h;
         this.elements[8] = i;
 
-        this.#change.next(this);
-
-        return this;
+        return this.#broadcast();
     }
 
     set_from_matrix(m: Matrix): this {
@@ -111,9 +111,7 @@ export class Matrix {
         this.elements[7] = m.h;
         this.elements[8] = m.i;
 
-        this.#change.next(this);
-
-        return this;
+        return this.#broadcast();
     }
 
     /**
@@ -135,8 +133,7 @@ export class Matrix {
 
         this.manual = m.manual;
 
-        this.#change.next(this);
-        return this;
+        return this.#broadcast();
     }
 
     /**
@@ -156,8 +153,7 @@ export class Matrix {
         this.elements[7] = Matrix.Identity[7];
         this.elements[8] = Matrix.Identity[8];
 
-        this.#change.next(this);
-        return this;
+        return this.#broadcast();
     }
 
     /**
@@ -193,9 +189,7 @@ export class Matrix {
         this.elements[7] = A6 * B1 + A7 * B4 + A8 * B7;
         this.elements[8] = A6 * B2 + A7 * B5 + A8 * B8;
 
-        this.#change.next(this);
-
-        return this;
+        return this.#broadcast();
     }
 
     multiply_vector(x: number = 0, y: number = 0, z: number = 1): [number, number, number] {
@@ -217,8 +211,7 @@ export class Matrix {
         this.elements[6] *= s;
         this.elements[7] *= s;
         this.elements[8] *= s;
-        this.#change.next(this);
-        return this;
+        return this.#broadcast();
     }
 
     /**
@@ -286,17 +279,9 @@ export class Matrix {
         return this.multiply(sx, 0, 0, 0, sy, 0, 0, 0, 1);
     }
 
-    /**
-     * @name Two.Matrix#rotate
-     * @function
-     * @param {Number} Number - The amount to rotate in Number.
-     * @description Rotate the matrix.
-     */
     rotate(angle: number) {
-
         const c = cos(angle);
         const s = sin(angle);
-
         return this.multiply(c, -s, 0, s, c, 0, 0, 0, 1);
     }
 
@@ -322,6 +307,23 @@ export class Matrix {
         const a = tan(angle);
         return this.multiply(1, 0, 0, a, 1, 0, 0, 0, 1);
 
+    }
+
+    silence(): this {
+        this.#verbose = false;
+        return this;
+    }
+
+    #broadcast(): this {
+        if (this.#verbose) {
+            this.#change.next(this);
+        }
+        return this;
+    }
+
+    touch(): this {
+        this.#verbose = true;
+        return this.#broadcast();
     }
 
     /**

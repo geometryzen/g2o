@@ -27,9 +27,9 @@ export interface SharedInfo {
     image?: SVGImageElement;
     opacity?: number;
     /**
-     * DGH: How do we clean this up?
+     * DGH: How do we clean this up? It was put there by the View, so naturally...
      */
-    position_change: Subscription | undefined;
+    matrix_change: Subscription | undefined;
     type?: 'group' | 'linear-gradient' | 'path' | 'points' | 'radial-gradient' | 'text' | 'texture';
     // Used by Path
     anchor_vertices?: Anchor[];
