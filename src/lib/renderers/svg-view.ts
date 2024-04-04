@@ -738,7 +738,7 @@ const svg = {
                         const change: SVGAttributes = {};
                         change.transform = 'matrix(' + this.matrix.toString() + ')';
                         console.log("transform", change.transform, "id", this._id, this.viewInfo.elem.id);
-                        svg.setAttributes(this.viewInfo.elem, changed);
+                        svg.setAttributes(this.viewInfo.elem, change);
                     });
                 }
 
