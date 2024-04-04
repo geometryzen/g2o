@@ -301,11 +301,7 @@ export class Matrix {
     }
 
     /**
-     * @name Two.Matrix#translate
-     * @function
-     * @param x The horizontal translation value to apply.
-     * @param y The vertical translation value to apply.
-     * @description Translate the matrix.
+     * TODO: Replace with a vector structure {x: number;y:number}
      */
     translate(x: number, y: number): this {
         return this.multiply(1, 0, x, 0, 1, y, 0, 0, 1);

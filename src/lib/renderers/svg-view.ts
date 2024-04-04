@@ -206,10 +206,15 @@ const svg = {
 
     // Add attributes from an svg element.
     setAttributes: function (elem: Element, attrs: SVGAttributes) {
-        // SVGAttributes doe snot have an index signature.
+        // SVGAttributes does snot have an index signature.
         const styles = attrs as { [name: string]: string };
+        console.log("styles", JSON.stringify(styles));
         const keys = Object.keys(attrs);
+        console.log("keys", JSON.stringify(keys));
         for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            const value = styles[key];
+            console.log("key", key, "value", value);
             if (/href/.test(keys[i])) {
                 elem.setAttributeNS(svg.xlink, keys[i], styles[keys[i]]);
             }
@@ -732,7 +737,7 @@ const svg = {
                         this._update();
                         const change: SVGAttributes = {};
                         change.transform = 'matrix(' + this.matrix.toString() + ')';
-                        console.log("transform", change.transform);
+                        console.log("transform", change.transform, "id", this._id, this.viewInfo.elem.id);
                         svg.setAttributes(this.viewInfo.elem, changed);
                     });
                 }

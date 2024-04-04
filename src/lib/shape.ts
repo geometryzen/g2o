@@ -173,6 +173,7 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
 
             console.log("matrix is being updated", this.position.x, this.position.y);
 
+            // FIXME: This is wasteful and should be optimized.
             this._matrix
                 .identity()
                 .translate(this.position.x, this.position.y);
