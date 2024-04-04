@@ -795,17 +795,7 @@ export class Path extends Shape<Group> {
 
     }
 
-    /**
-     * @name Two.Path#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
     _update() {
-        console.log("Path.update()");
-
         if (this._flagVertices) {
 
             if (this._automatic) {
@@ -953,9 +943,7 @@ export class Path extends Shape<Group> {
                 }
             }
         }
-
         super._update();
-
         return this;
     }
 

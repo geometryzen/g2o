@@ -208,18 +208,15 @@ const svg = {
     setAttributes: function (elem: Element, attrs: SVGAttributes) {
         // SVGAttributes does snot have an index signature.
         const styles = attrs as { [name: string]: string };
-        console.log("styles", JSON.stringify(styles));
         const keys = Object.keys(attrs);
-        console.log("keys", JSON.stringify(keys));
         for (let i = 0; i < keys.length; i++) {
-            const key = keys[i];
-            const value = styles[key];
-            console.log("key", key, "value", value);
+            const qualifiedName = keys[i];
+            const value = styles[qualifiedName];
             if (/href/.test(keys[i])) {
-                elem.setAttributeNS(svg.xlink, keys[i], styles[keys[i]]);
+                elem.setAttributeNS(svg.xlink, qualifiedName, value);
             }
             else {
-                elem.setAttribute(keys[i], styles[keys[i]]);
+                elem.setAttribute(qualifiedName, value);
             }
         }
         return this;
@@ -590,8 +587,6 @@ const svg = {
 
         'path': {
             render: function (this: Path, domElement: DOMElement) {
-                console.log(`path.render ${this.id}`);
-
                 // Shortcut for hidden objects.
                 // Doesn't reset the flags, so changes are stored and
                 // applied once the object is visible again
@@ -720,24 +715,18 @@ const svg = {
                 }
 
                 if (this.viewInfo.elem) {
-                    console.log("updating path element");
                     // When completely reactive, this will not be needed
                     svg.setAttributes(this.viewInfo.elem, changed);
                 }
                 else {
-                    console.log("creating path element");
                     changed.id = this._id;
                     this.viewInfo.elem = svg.createElement('path', changed);
                     domElement.appendChild(this.viewInfo.elem);
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     this.viewInfo.position_change = this.position.change$.subscribe((position) => {
-                        console.log("position changed", position.x, position.y);
-                        console.log("flagMatrix", this._flagMatrix);
-                        // The position could be used to compute the transform.
                         this._update();
                         const change: SVGAttributes = {};
                         change.transform = 'matrix(' + this.matrix.toString() + ')';
-                        console.log("transform", change.transform, "id", this._id, this.viewInfo.elem.id);
                         svg.setAttributes(this.viewInfo.elem, change);
                     });
                 }

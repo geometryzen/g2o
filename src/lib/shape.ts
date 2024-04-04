@@ -166,28 +166,22 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
         this.viewInfo = v;
     }
 
+    #update_matrix(): void {
+        console.log("Shape.update_matrix");
+        // FIXME: This is wasteful and should be optimized.
+        this._matrix
+            .identity()
+            .translate(this.position.x, this.position.y);
+
+        this._matrix.scale(this.scaleXY.x, this.scaleXY.y);
+        this._matrix.rotate(this.rotation);
+        this._matrix.skewX(this.skewX);
+        this._matrix.skewY(this.skewY);
+    }
+
     _update(bubbles?: boolean): this {
-        console.log("Shape.update()", "matrix.manual", this.matrix.manual, "flagMatrix", this._flagMatrix);
-
         if (!this._matrix.manual && this._flagMatrix) {
-
-            console.log("matrix is being updated", this.position.x, this.position.y);
-
-            // FIXME: This is wasteful and should be optimized.
-            this._matrix
-                .identity()
-                .translate(this.position.x, this.position.y);
-
-            if (this._scale instanceof G20) {
-                this._matrix.scale(this._scale.x, this._scale.y);
-            }
-            else {
-                this._matrix.scale(this._scale, this._scale);
-            }
-
-            this._matrix.rotate(this.rotation);
-            this._matrix.skewX(this.skewX);
-            this._matrix.skewY(this.skewY);
+            this.#update_matrix();
         }
 
         if (bubbles) {
@@ -232,6 +226,8 @@ export abstract class Shape<P extends Parent> extends Element<P> implements ISha
     }
     #position_change_bind(): Subscription {
         return this.#position.change$.subscribe(() => {
+            this.#update_matrix();
+            // We are only flagging the matrix
             this._flagMatrix = true;
         });
     }
