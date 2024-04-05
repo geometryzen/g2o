@@ -8,7 +8,7 @@ import { Group } from './group';
 import { Subscription } from './rxjs/Subscription';
 import { Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
-import { decomposeMatrix } from './utils/decompose_matrix';
+import { decompose_2d_3x3_matrix } from './utils/decompose_2d_3x3_matrix';
 import { lerp, mod } from './utils/math';
 import { Commands } from './utils/path-commands';
 import { contains, getCurveLength, getIdByLength, getSubdivisions } from './utils/shape';
@@ -404,7 +404,7 @@ export class Path extends Shape<Group> {
 
         if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
-                const { scaleX, scaleY } = decomposeMatrix(M);
+                const { scaleX, scaleY } = decompose_2d_3x3_matrix(M);
                 border = Math.max(scaleX, scaleY) * (this.linewidth || 0) / 2;
             }
             else {

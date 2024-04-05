@@ -12,7 +12,7 @@ import { Observable } from '../rxjs/Observable';
 import { Shape } from '../shape';
 import { Points } from '../shapes/points';
 import { Text } from '../text';
-import { decomposeMatrix } from '../utils/decompose_matrix';
+import { decompose_2d_3x3_matrix } from '../utils/decompose_2d_3x3_matrix';
 import { mod, toFixed } from '../utils/math';
 import { Commands } from '../utils/path-commands';
 import { G20 } from '../vector';
@@ -810,7 +810,7 @@ const svg = {
                 if (this._flagVertices || this._flagSize || this._flagSizeAttenuation) {
                     let size = this._size;
                     if (!this._sizeAttenuation) {
-                        const { scaleX, scaleY } = decomposeMatrix(this.worldMatrix);
+                        const { scaleX, scaleY } = decompose_2d_3x3_matrix(this.worldMatrix);
                         size /= Math.max(scaleX, scaleY);
                     }
                     const vertices = svg.pointsToString(this.viewInfo.anchor_collection, size);

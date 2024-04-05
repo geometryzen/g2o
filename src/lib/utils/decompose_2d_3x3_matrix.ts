@@ -5,12 +5,13 @@ import { MatrixDecomposition } from "./MatrixDecomposition";
  * Decompose a 2D 3x3 Matrix to find the skew.
  * 
  */
-export function decomposeMatrix(m: Matrix): MatrixDecomposition {
+export function decompose_2d_3x3_matrix(m: Matrix): MatrixDecomposition {
 
     const a = m.a11;
-    const b = m.a12;
+    const c = m.a12;
     const x = m.a13;
-    const c = m.a21;
+
+    const b = m.a21;
     const d = m.a22;
     const y = m.a23;
 
@@ -53,11 +54,11 @@ export function decomposeMatrix(m: Matrix): MatrixDecomposition {
     return {
         translateX: x,
         translateY: y,
-        scaleX: Math.sqrt(a * a + b * b),   // should be multiplied by sign(a)
-        scaleY: Math.sqrt(c * c + d * d),   // should be multiplied by sign(d)
+        scaleX: Math.sqrt(a * a + c * c),   // should be multiplied by sign(a)
+        scaleY: Math.sqrt(b * b + d * d),   // should be multiplied by sign(d)
         // TODO: rotation is being reported in degrees.
         // tan(φ) = -b/a = c/d
-        rotation: 180 * Math.atan2(c, a) / Math.PI
+        rotation: Math.atan2(b, a)
     };
 
 }

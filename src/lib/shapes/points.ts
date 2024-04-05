@@ -8,7 +8,7 @@ import { get_dashes_offset, set_dashes_offset } from '../path.js';
 import { Subscription } from '../rxjs/Subscription';
 import { Shape } from '../shape.js';
 import { getCurveLength as gcl, subdivide } from '../utils/curves.js';
-import { decomposeMatrix } from '../utils/decompose_matrix.js';
+import { decompose_2d_3x3_matrix } from '../utils/decompose_2d_3x3_matrix.js';
 import { getIdByLength } from '../utils/shape.js';
 import { G20 } from '../vector.js';
 
@@ -228,7 +228,7 @@ export class Points extends Shape<Group> {
 
         if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
-                const { scaleX, scaleY } = decomposeMatrix(M);
+                const { scaleX, scaleY } = decompose_2d_3x3_matrix(M);
                 border = Math.max(scaleX, scaleY) * (this.linewidth || 0) / 2;
             }
             else {
