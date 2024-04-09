@@ -1,7 +1,7 @@
 import { Anchor } from '../anchor';
 import { Path, PathOptions } from '../path';
 import { Subscription } from '../rxjs/Subscription';
-import { G20 } from '../vector';
+import { G20 } from '../math/G20';
 
 export interface RectangleOptions {
     position?: G20;

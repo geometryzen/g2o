@@ -1,5 +1,5 @@
 import { Subscription } from '../rxjs/Subscription';
-import { G20 } from '../vector.js';
+import { G20 } from '../math/G20.js';
 import { Gradient } from './gradient.js';
 import { Stop } from './stop.js';
 

@@ -10,7 +10,7 @@ import { Shape } from '../shape.js';
 import { getCurveLength as gcl, subdivide } from '../utils/curves.js';
 import { decompose_2d_3x3_matrix } from '../utils/decompose_2d_3x3_matrix.js';
 import { getIdByLength } from '../utils/shape.js';
-import { G20 } from '../vector.js';
+import { G20 } from '../math/G20.js';
 
 const min = Math.min;
 const max = Math.max;

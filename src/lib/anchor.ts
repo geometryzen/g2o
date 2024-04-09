@@ -2,7 +2,7 @@ import { BehaviorSubject } from 'rxjs';
 import { Observable } from './rxjs/Observable.js';
 import { Subscription } from './rxjs/Subscription.js';
 import { Commands } from './utils/path-commands.js';
-import { G20 } from './vector.js';
+import { G20 } from './math/G20.js';
 
 export class Anchor {
     /**

@@ -1,4 +1,4 @@
-import { Board, BoardOptions, CanvasView,SVGView, Circle, G20, Group, Rectangle } from './index';
+import { Board, BoardOptions, Circle, G20, Group, Rectangle, SVGView } from './index';
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -40,10 +40,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const animate = function () {
         if (scene.scale > 0.9999) {
-            scene.scale = scene.rotation = 0;
+            scene.scale = 0;
+            scene.rotation = 0;
+            scene.attitude;
         }
         const t = (1 - scene.scale) * 0.125;
         scene.scale += t;
+        scene.attitude;
         scene.rotation += t * 4 * Math.PI;
         board.update();
         window.requestAnimationFrame(animate);

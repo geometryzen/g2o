@@ -7,7 +7,7 @@ import { SharedInfo } from '../renderers/SharedInfo';
 import { Observable } from '../rxjs/Observable';
 import { Subscription } from '../rxjs/Subscription';
 import { root } from '../utils/root';
-import { G20 } from '../vector';
+import { G20 } from '../math/G20';
 
 export function is_canvas(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLCanvasElement {
     const tagName = (element && element.nodeName && element.nodeName.toLowerCase());

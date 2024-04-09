@@ -1,7 +1,7 @@
 import { Child } from "./children";
 import { Gradient } from "./effects/gradient";
 import { Texture } from "./effects/texture";
-import { G20 } from "./vector";
+import { G20 } from "./math/G20";
 
 /**
  * TODO: rename to Shape when the hierarchy has been flattened.

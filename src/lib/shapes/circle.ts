@@ -2,7 +2,7 @@ import { Anchor } from '../anchor.js';
 import { Path, PathOptions } from '../path.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
-import { G20 } from '../vector.js';
+import { G20 } from '../math/G20.js';
 
 export interface CircleOptions {
     position?: G20;

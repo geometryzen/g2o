@@ -2,7 +2,7 @@
 import { Anchor } from '../anchor.js';
 import { Collection } from '../collection.js';
 import { Constants } from '../constants.js';
-import { G20 } from '../vector.js';
+import { G20 } from '../math/G20.js';
 import { HALF_PI, mod } from './math.js';
 import { Commands } from './path-commands.js';
 

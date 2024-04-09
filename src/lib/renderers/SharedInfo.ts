@@ -1,6 +1,6 @@
 import { Anchor } from "../anchor";
 import { Subscription } from "../rxjs/Subscription";
-import { G20 } from "../vector";
+import { G20 } from "../math/G20";
 
 /**
  * Information that is shared between the model and the view.

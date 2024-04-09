@@ -5,6 +5,7 @@ import { LinearGradient } from '../effects/linear-gradient';
 import { RadialGradient } from '../effects/radial-gradient';
 import { is_canvas, is_img, is_video, Texture } from '../effects/texture';
 import { ElementBase } from '../element';
+import { G20 } from '../math/G20';
 import { Group } from '../group';
 import { Matrix } from '../matrix';
 import { get_dashes_offset, Path } from '../path';
@@ -15,7 +16,6 @@ import { Text } from '../text';
 import { decompose_2d_3x3_matrix } from '../utils/decompose_2d_3x3_matrix';
 import { mod, toFixed } from '../utils/math';
 import { Commands } from '../utils/path-commands';
-import { G20 } from '../vector';
 import { View } from './View';
 
 type DOMElement = HTMLElement | SVGElement;
@@ -782,7 +782,6 @@ const svg = {
         },
 
         'points': {
-
             render: function (this: Points, domElement: DOMElement) {
 
                 // Shortcut for hidden objects.
@@ -1381,7 +1380,6 @@ export class SVGView implements View {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     setSize(size: { width: number, height: number }, ratio: number): this {
-        console.log("SVGView.setSize", JSON.stringify(size), "ratio", ratio);
         this.width = size.width;
         this.height = size.height;
         svg.setAttributes(this.domElement, {

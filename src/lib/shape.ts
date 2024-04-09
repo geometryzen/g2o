@@ -7,7 +7,7 @@ import { Matrix } from './matrix';
 import { Subscription } from './rxjs/Subscription';
 import { compose_2d_3x3_transform } from './utils/compose_2d_3x3_transform';
 import { getComputedMatrix } from './utils/get_computed_matrix';
-import { G20 } from './vector';
+import { G20 } from './math/G20';
 
 export interface Parent {
     _update?(): void;

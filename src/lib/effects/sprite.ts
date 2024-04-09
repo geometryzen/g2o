@@ -2,7 +2,7 @@ import { lerp } from '../utils/math.js';
 import { dateTime } from '../utils/performance.js';
 
 import { Rectangle } from '../shapes/rectangle.js';
-import { G20 } from '../vector.js';
+import { G20 } from '../math/G20.js';
 import { Texture } from './texture.js';
 
 export interface SpriteOptions {

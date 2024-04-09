@@ -926,9 +926,7 @@ const canvas = {
 
         const clockwise = sweepFlag === 0;
 
-        renderArcEstimate(ctx, cx, cy, rx, ry, startAngle, endAngle,
-            clockwise, xAxisRotation);
-
+        renderArcEstimate(ctx, cx, cy, rx, ry, startAngle, endAngle, clockwise, xAxisRotation);
     }
 } as const;
 
@@ -1058,7 +1056,7 @@ export class CanvasView implements View {
 
 }
 
-function renderArcEstimate(ctx: CanvasRenderingContext2D, ox: number, oy: number, rx: number, ry: number, startAngle: number, endAngle: number, clockwise: boolean, xAxisRotation: number) {
+function renderArcEstimate(ctx: CanvasRenderingContext2D, ox: number, oy: number, rx: number, ry: number, startAngle: number, endAngle: number, clockwise: boolean, xAxisRotation: number): void {
 
     const delta = endAngle - startAngle;
     const epsilon = Curve.Tolerance.epsilon;

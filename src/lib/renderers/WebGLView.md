@@ -1,28 +1,27 @@
 import { BehaviorSubject, Observable } from 'rxjs';
+import { Anchor } from '../anchor.js';
 import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
 import { Texture } from '../effects/texture.js';
 import { Group } from '../group.js';
 import { Matrix } from '../matrix.js';
+import { Path } from '../path.js';
 import { Registry } from '../registry.js';
 import { getRatio } from '../utils/device-pixel-ratio.js';
-import { NumArray, TWO_PI, getPoT, mod } from '../utils/math.js';
+import { getPoT, mod, NumArray, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 import { root } from '../utils/root.js';
 import { shaders } from '../utils/shaders.js';
-import { Vector } from '../vector.js';
+import { G20 } from '../vector.js';
 import { View } from './View.js';
-import { CanvasRenderer } from './canvas.js';
 
 // Constants
 
-const multiplyMatrix = Matrix.Multiply,
-    identity = [1, 0, 0, 0, 1, 0, 0, 0, 1],
-    transformation = new NumArray(9),
-    CanvasUtils = CanvasRenderer.Utils,
-    vector = new Vector();
+const identity = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+const transformation = new NumArray(9);
+const vector = new G20();
 
-const quad = new NumArray([
+const quad = new Float32Array([
     0, 0,
     1, 0,
     0, 1,
@@ -96,14 +95,15 @@ const webgl = {
 
                 multiplyMatrix(transformation, parent._renderer.matrix, this._renderer.matrix);
 
-                if (!(this._renderer.scale instanceof Vector)) {
-                    this._renderer.scale = new Vector();
+                if (!(this._renderer.scale instanceof G20)) {
+                    this._renderer.scale = new G20();
                 }
 
-                if (this._scale instanceof Vector) {
+                if (this._scale instanceof G20) {
                     this._renderer.scale.x = this._scale.x;
                     this._renderer.scale.y = this._scale.y;
-                } else {
+                }
+                else {
                     this._renderer.scale.x = this._scale;
                     this._renderer.scale.y = this._scale;
                 }
@@ -166,8 +166,7 @@ const webgl = {
     },
 
     'path': {
-
-        updateCanvas: function (gl, elem) {
+        updateCanvas: function (this: Path, gl, elem) {
 
             let prev, a, c, ux, uy, vx, vy, ar, bl, br, cl, x, y;
             let isOffset;
@@ -178,7 +177,7 @@ const webgl = {
             const ratio = gl.renderer.ratio;
 
             // Styles
-            const scale = vector.copy(elem._renderer.scale).multiply(ratio);
+            const scale = vector.copy(elem._renderer.scale).multiplyScalar(ratio);
             const stroke = elem._stroke;
             const linewidth = elem._linewidth;
             const fill = elem._fill;
@@ -203,7 +202,8 @@ const webgl = {
             if (fill) {
                 if (typeof fill === 'string') {
                     ctx.fillStyle = fill;
-                } else {
+                }
+                else {
                     webgl[fill._renderer.type].render.call(fill, ctx, elem);
                     ctx.fillStyle = fill._renderer.effect;
                 }
@@ -211,7 +211,8 @@ const webgl = {
             if (stroke) {
                 if (typeof stroke === 'string') {
                     ctx.strokeStyle = stroke;
-                } else {
+                }
+                else {
                     webgl[stroke._renderer.type].render.call(stroke, ctx, elem);
                     ctx.strokeStyle = stroke._renderer.effect;
                 }
@@ -280,13 +281,14 @@ const webgl = {
 
                         a = commands[prev];
 
-                        ar = (a.controls && a.controls.right) || Vector.zero;
-                        bl = (b.controls && b.controls.left) || Vector.zero;
+                        ar = (a.controls && a.controls.right) || G20.zero;
+                        bl = (b.controls && b.controls.left) || G20.zero;
 
                         if (a._relative) {
                             vx = ar.x + a.x;
                             vy = ar.y + a.y;
-                        } else {
+                        }
+                        else {
                             vx = ar.x;
                             vy = ar.y;
                         }
@@ -294,7 +296,8 @@ const webgl = {
                         if (b._relative) {
                             ux = bl.x + b.x;
                             uy = bl.y + b.y;
-                        } else {
+                        }
+                        else {
                             ux = bl.x;
                             uy = bl.y;
                         }
@@ -305,13 +308,14 @@ const webgl = {
 
                             c = d;
 
-                            br = (b.controls && b.controls.right) || Vector.zero;
-                            cl = (c.controls && c.controls.left) || Vector.zero;
+                            br = (b.controls && b.controls.right) || G20.zero;
+                            cl = (c.controls && c.controls.left) || G20.zero;
 
                             if (b._relative) {
                                 vx = br.x + b.x;
                                 vy = br.y + b.y;
-                            } else {
+                            }
+                            else {
                                 vx = br.x;
                                 vy = br.y;
                             }
@@ -319,7 +323,8 @@ const webgl = {
                             if (c._relative) {
                                 ux = cl.x + c.x;
                                 uy = cl.y + c.y;
-                            } else {
+                            }
+                            else {
                                 ux = cl.x;
                                 uy = cl.y;
                             }
@@ -328,7 +333,6 @@ const webgl = {
                             y = c.y;
 
                             ctx.bezierCurveTo(vx, vy, ux, uy, x, y);
-
                         }
 
                         break;
@@ -387,16 +391,15 @@ const webgl = {
 
         // Returns the rect of a set of verts. Typically takes vertices that are
         // "centered" around 0 and returns them to be anchored upper-left.
-        getBoundingClientRect: function (vertices, border, rect) {
+        getBoundingClientRect: function (vertices: Anchor[], border, rect) {
 
             let left = Infinity, right = -Infinity,
                 top = Infinity, bottom = -Infinity,
                 width, height;
 
-            vertices.forEach(function (v) {
+            vertices.forEach(function (v: Anchor) {
 
                 const x = v.x, y = v.y, controls = v.controls;
-                let a, b, c, d, cl, cr;
 
                 top = Math.min(y, top);
                 left = Math.min(x, left);
@@ -407,17 +410,17 @@ const webgl = {
                     return;
                 }
 
-                cl = controls.left;
-                cr = controls.right;
+                const cl = controls.left;
+                const cr = controls.right;
 
                 if (!cl || !cr) {
                     return;
                 }
 
-                a = v._relative ? cl.x + x : cl.x;
-                b = v._relative ? cl.y + y : cl.y;
-                c = v._relative ? cr.x + x : cr.x;
-                d = v._relative ? cr.y + y : cr.y;
+                const a = v.relative ? cl.x + x : cl.x;
+                const b = v.relative ? cl.y + y : cl.y;
+                const c = v.relative ? cr.x + x : cr.x;
+                const d = v.relative ? cr.y + y : cr.y;
 
                 if (!a || !b || !c || !d) {
                     return;
@@ -455,7 +458,6 @@ const webgl = {
 
             rect.centroid.x = - left;
             rect.centroid.y = - top;
-
         },
 
         render: function (gl, programs, forcedParent) {
@@ -498,13 +500,14 @@ const webgl = {
 
                 multiplyMatrix(transformation, parent._renderer.matrix, this._renderer.matrix);
 
-                if (!(this._renderer.scale instanceof Vector)) {
-                    this._renderer.scale = new Vector();
+                if (!(this._renderer.scale instanceof G20)) {
+                    this._renderer.scale = new G20();
                 }
-                if (this._scale instanceof Vector) {
+                if (this._scale instanceof G20) {
                     this._renderer.scale.x = this._scale.x * parent._renderer.scale.x;
                     this._renderer.scale.y = this._scale.y * parent._renderer.scale.y;
-                } else {
+                }
+                else {
                     this._renderer.scale.x = this._scale * parent._renderer.scale.x;
                     this._renderer.scale.y = this._scale * parent._renderer.scale.y;
                 }
@@ -546,7 +549,8 @@ const webgl = {
 
                 webgl.updateTexture.call(webgl, gl, this);
 
-            } else {
+            }
+            else {
 
                 // We still need to update child Two elements on the fill and
                 // stroke properties.
@@ -648,7 +652,8 @@ const webgl = {
             if (fill) {
                 if (typeof fill === 'string') {
                     ctx.fillStyle = fill;
-                } else {
+                }
+                else {
                     webgl[fill._renderer.type].render.call(fill, ctx, elem);
                     ctx.fillStyle = fill._renderer.effect;
                 }
@@ -656,7 +661,8 @@ const webgl = {
             if (stroke) {
                 if (typeof stroke === 'string') {
                     ctx.strokeStyle = stroke;
-                } else {
+                }
+                else {
                     webgl[stroke._renderer.type].render.call(stroke, ctx, elem);
                     ctx.strokeStyle = stroke._renderer.effect;
                 }
@@ -763,13 +769,14 @@ const webgl = {
 
                 multiplyMatrix(transformation, parent._renderer.matrix, this._renderer.matrix);
 
-                if (!(this._renderer.scale instanceof Vector)) {
-                    this._renderer.scale = new Vector();
+                if (!(this._renderer.scale instanceof G20)) {
+                    this._renderer.scale = new G20();
                 }
-                if (this._scale instanceof Vector) {
+                if (this._scale instanceof G20) {
                     this._renderer.scale.x = this._scale.x * parent._renderer.scale.x;
                     this._renderer.scale.y = this._scale.y * parent._renderer.scale.y;
-                } else {
+                }
+                else {
                     this._renderer.scale.x = this._scale * parent._renderer.scale.x;
                     this._renderer.scale.y = this._scale * parent._renderer.scale.y;
                 }
@@ -802,7 +809,8 @@ const webgl = {
 
                 webgl.updateTexture.call(webgl, gl, this);
 
-            } else {
+            }
+            else {
 
                 // We still need to update child Two elements on the fill and
                 // stroke properties.
@@ -861,8 +869,7 @@ const webgl = {
 
     },
 
-    text: {
-
+    'text': {
         updateCanvas: function (gl, elem) {
 
             const canvas = this.canvas;
@@ -905,7 +912,8 @@ const webgl = {
             if (fill) {
                 if (typeof fill === 'string') {
                     ctx.fillStyle = fill;
-                } else {
+                }
+                else {
                     webgl[fill._renderer.type].render.call(fill, ctx, elem);
                     ctx.fillStyle = fill._renderer.effect;
                 }
@@ -913,7 +921,8 @@ const webgl = {
             if (stroke) {
                 if (typeof stroke === 'string') {
                     ctx.strokeStyle = stroke;
-                } else {
+                }
+                else {
                     webgl[stroke._renderer.type].render.call(stroke, ctx, elem);
                     ctx.strokeStyle = stroke._renderer.effect;
                 }
@@ -956,7 +965,8 @@ const webgl = {
                     ctx.fillText(elem.value, c, d);
                     ctx.restore();
 
-                } else {
+                }
+                else {
                     ctx.fillText(elem.value, 0, 0);
                 }
 
@@ -987,7 +997,8 @@ const webgl = {
                     ctx.strokeText(elem.value, c, d);
                     ctx.restore();
 
-                } else {
+                }
+                else {
                     ctx.strokeText(elem.value, 0, 0);
                 }
 
@@ -1025,7 +1036,6 @@ const webgl = {
             ctx.restore();
 
         },
-
         getBoundingClientRect: function (elem, rect) {
 
             const ctx = webgl.ctx;
@@ -1056,7 +1066,8 @@ const webgl = {
                     if (elem.direction === 'ltr') {
                         rect.left = 0;
                         rect.right = width;
-                    } else {
+                    }
+                    else {
                         rect.left = - width;
                         rect.right = 0;
                     }
@@ -1065,7 +1076,8 @@ const webgl = {
                     if (elem.direction === 'ltr') {
                         rect.left = - width;
                         rect.right = 0;
-                    } else {
+                    }
+                    else {
                         rect.left = 0;
                         rect.right = width;
                     }
@@ -1106,7 +1118,6 @@ const webgl = {
             rect.centroid.y = h;
 
         },
-
         render: function (gl, programs, forcedParent) {
 
             if (!this._visible || !this._opacity) {
@@ -1149,13 +1160,14 @@ const webgl = {
 
                 multiplyMatrix(transformation, parent._renderer.matrix, this._renderer.matrix);
 
-                if (!(this._renderer.scale instanceof Vector)) {
-                    this._renderer.scale = new Vector();
+                if (!(this._renderer.scale instanceof G20)) {
+                    this._renderer.scale = new G20();
                 }
-                if (this._scale instanceof Vector) {
+                if (this._scale instanceof G20) {
                     this._renderer.scale.x = this._scale.x * parent._renderer.scale.x;
                     this._renderer.scale.y = this._scale.y * parent._renderer.scale.y;
-                } else {
+                }
+                else {
                     this._renderer.scale.x = this._scale * parent._renderer.scale.x;
                     this._renderer.scale.y = this._scale * parent._renderer.scale.y;
                 }
@@ -1196,7 +1208,8 @@ const webgl = {
 
                 webgl.updateTexture.call(webgl, gl, this);
 
-            } else {
+            }
+            else {
 
                 // We still need to update child Two elements on the fill and
                 // stroke properties.
@@ -1258,12 +1271,10 @@ const webgl = {
             return this.flagReset();
 
         }
-
     },
 
     'linear-gradient': {
-
-        render: function (ctx, parent) {
+        render: function (this: LinearGradient, ctx, parent) {
 
             if (!ctx.canvas.getContext('2d') || !parent) {
                 return;
@@ -1271,7 +1282,7 @@ const webgl = {
 
             this._update();
 
-            if (!this._renderer.effect || this._flagEndPoints || this._flagStops
+            if (!this.renderer.effect || this._flagEndPoints || this._flagStops
                 || this._flagUnits) {
 
                 let rect;
@@ -1305,8 +1316,7 @@ const webgl = {
     },
 
     'radial-gradient': {
-
-        render: function (ctx, parent) {
+        render: function (this: RadialGradient, ctx, parent) {
 
             if (!ctx.canvas.getContext('2d') || !parent) {
                 return;
@@ -1318,11 +1328,11 @@ const webgl = {
                 || this._flagRadius || this._flagStops || this._flagUnits) {
 
                 let rect;
-                let cx = this.center._x;
-                let cy = this.center._y;
-                let fx = this.focal._x;
-                let fy = this.focal._y;
-                let radius = this._radius;
+                let cx = this.center.x;
+                let cy = this.center.y;
+                let fx = this.focal.x;
+                let fy = this.focal.y;
+                let radius = this.radius;
 
                 if (/objectBoundingBox/i.test(this._units)) {
                     // Convert objectBoundingBox units to userSpaceOnUse units
@@ -1350,9 +1360,8 @@ const webgl = {
 
     },
 
-    texture: {
-
-        render: function (ctx, elem) {
+    'texture': {
+        render: function (this: Texture, ctx, elem) {
 
             if (!ctx.canvas.getContext('2d')) {
                 return;
@@ -1364,14 +1373,15 @@ const webgl = {
 
             if (((this._flagLoaded || this._flagImage || this._flagVideo || this._flagRepeat) && this.loaded)) {
                 this._renderer.effect = ctx.createPattern(image, this._repeat);
-            } else if (!this._renderer.effect) {
+            }
+            else if (!this._renderer.effect) {
                 return this.flagReset();
             }
 
             if (this._flagOffset || this._flagLoaded || this._flagScale) {
 
-                if (!(this._renderer.offset instanceof Vector)) {
-                    this._renderer.offset = new Vector();
+                if (!(this._renderer.offset instanceof G20)) {
+                    this._renderer.offset = new G20();
                 }
 
                 this._renderer.offset.x = - this._offset.x;
@@ -1382,10 +1392,11 @@ const webgl = {
                     this._renderer.offset.x += image.width / 2;
                     this._renderer.offset.y += image.height / 2;
 
-                    if (this._scale instanceof Vector) {
+                    if (this._scale instanceof G20) {
                         this._renderer.offset.x *= this._scale.x;
                         this._renderer.offset.y *= this._scale.y;
-                    } else {
+                    }
+                    else {
                         this._renderer.offset.x *= this._scale;
                         this._renderer.offset.y *= this._scale;
                     }
@@ -1395,13 +1406,14 @@ const webgl = {
 
             if (this._flagScale || this._flagLoaded) {
 
-                if (!(this._renderer.scale instanceof Vector)) {
-                    this._renderer.scale = new Vector();
+                if (!(this._renderer.scale instanceof G20)) {
+                    this._renderer.scale = new G20();
                 }
 
-                if (this._scale instanceof Vector) {
+                if (this._scale instanceof G20) {
                     this._renderer.scale.copy(this._scale);
-                } else {
+                }
+                else {
                     this._renderer.scale.set(this._scale, this._scale);
                 }
 
@@ -1495,6 +1507,10 @@ const webgl = {
 
 webgl.ctx = webgl.canvas.getContext('2d');
 
+export interface WebGLViewParams {
+    domElement?: HTMLCanvasElement;
+}
+
 /**
  * @param {Object} [parameters] - This object is inherited when constructing a new instance of {@link Two}.
  * @param {Element} [parameters.domElement] - The `<canvas />` to draw to. If none given a new one will be constructed.
@@ -1503,15 +1519,16 @@ webgl.ctx = webgl.canvas.getContext('2d');
  * @description This class is used by {@link Two} when constructing with `type` of `Two.Types.webgl`. It takes Two.js' scenegraph and renders it to a `<canvas />` through the WebGL api.
  * @see {@link https://www.khronos.org/registry/webgl/specs/latest/1.0/}
  */
-export class WebGLRenderer implements View {
+export class WebGLView implements View {
 
     readonly domElement: HTMLCanvasElement;
+    readonly scene: Group;
     readonly ctx: WebGLRenderingContext;    // or maybe WebGL2...
 
     readonly #size: BehaviorSubject<{ width: number; height: number }>;
     readonly size$: Observable<{ width: number; height: number }>;
 
-    constructor(params) {
+    constructor(scene: Group, params: WebGLViewParams) {
 
         let program, vs, fs;
 
@@ -1526,11 +1543,7 @@ export class WebGLRenderer implements View {
             webgl.ctx = webgl.canvas.getContext('2d');
         }
 
-        /**
-         * @name Two.WebGLRenderer#scene
-         * @property {Two.Group} - The root group of the scenegraph.
-         */
-        this.scene = new Group();
+        this.scene = scene;
         this.scene.parent = this;
 
         this._renderer = {

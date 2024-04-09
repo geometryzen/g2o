@@ -195,10 +195,10 @@ export class ArcSegment extends Path {
                     v.controls.right.x = amp * Math.cos(theta + HALF_PI);
                     v.controls.right.y = amp * Math.sin(theta + HALF_PI);
                     if (i === 1) {
-                        v.controls.left.multiplyScalar(2);
+                        v.controls.left.mulByNumber(2);
                     }
                     if (i === last) {
-                        v.controls.right.multiplyScalar(2);
+                        v.controls.right.mulByNumber(2);
                     }
                 }
 
@@ -247,10 +247,10 @@ export class ArcSegment extends Path {
                         v.controls.right.x = amp * Math.cos(theta - HALF_PI);
                         v.controls.right.y = amp * Math.sin(theta - HALF_PI);
                         if (i === 1) {
-                            v.controls.left.multiplyScalar(2);
+                            v.controls.left.mulByNumber(2);
                         }
                         if (i === last) {
-                            v.controls.right.multiplyScalar(2);
+                            v.controls.right.mulByNumber(2);
                         }
                     }
 

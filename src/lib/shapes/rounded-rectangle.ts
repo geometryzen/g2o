@@ -2,7 +2,7 @@ import { Anchor } from '../anchor';
 import { Path } from '../path';
 import { Subscription } from '../rxjs/Subscription';
 import { Commands } from '../utils/path-commands';
-import { G20 } from '../vector';
+import { G20 } from '../math/G20';
 
 export class RoundedRectangle extends Path {
 

@@ -12,7 +12,7 @@ import { decompose_2d_3x3_matrix } from './utils/decompose_2d_3x3_matrix';
 import { lerp, mod } from './utils/math';
 import { Commands } from './utils/path-commands';
 import { contains, getCurveLength, getIdByLength, getSubdivisions } from './utils/shape';
-import { G20 } from './vector.js';
+import { G20 } from './math/G20.js';
 
 export function get_dashes_offset(dashes: number[]): number | undefined {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

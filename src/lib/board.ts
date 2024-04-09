@@ -5,7 +5,7 @@ import { Sprite } from './effects/sprite.js';
 import { Texture } from './effects/texture.js';
 import { Group } from './group.js';
 import { Path } from './path.js';
-import { SVGView } from './renderers/svg-view.js';
+import { SVGView } from './renderers/SVGView.js';
 import { View } from './renderers/View.js';
 import { Observable } from './rxjs/Observable.js';
 import { Subscription } from './rxjs/Subscription.js';
@@ -22,7 +22,7 @@ import { Text } from './text.js';
 import { Commands } from './utils/path-commands.js';
 import { dateTime } from './utils/performance.js';
 import { xhr } from './utils/xhr.js';
-import { G20 } from './vector.js';
+import { G20 } from './math/G20.js';
 
 export interface BoardOptions {
     /**
@@ -104,7 +104,6 @@ export class Board {
         }
 
         const config = config_from_options(options);
-        console.log("config", JSON.stringify(config));
 
         this.#fitter = new Fitter(this, this.#view);
 
@@ -124,7 +123,6 @@ export class Board {
         }
 
         if (config.size) {
-            console.log("setSize from Board constructor", JSON.stringify(config.size));
             this.#view.setSize(config.size, this.ratio);
         }
 
@@ -209,7 +207,6 @@ export class Board {
         const renderer = this.#view;
 
         if (width !== renderer.width || height !== renderer.height) {
-            console.log("setSize from Board.update()");
             renderer.setSize({ width, height }, this.ratio);
         }
 
@@ -567,8 +564,6 @@ class Fitter {
 
         two.width = size.width;
         two.height = size.height;
-
-        console.log("setSize from Fitter.resize()", JSON.stringify(size));
 
         this.#view.setSize(size, two.ratio);
     }
