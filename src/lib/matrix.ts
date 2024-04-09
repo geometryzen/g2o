@@ -42,7 +42,24 @@ export class Matrix {
         this.#change = new BehaviorSubject(this);
         this.change$ = this.#change.asObservable();
     }
-
+    get a() {
+        return this.#elements[0];
+    }
+    get b() {
+        return this.#elements[3];
+    }
+    get c() {
+        return this.#elements[1];
+    }
+    get d() {
+        return this.#elements[4];
+    }
+    get e() {
+        return this.#elements[2];
+    }
+    get f() {
+        return this.#elements[5];
+    }
     get a11() {
         return this.#elements[0];
     }

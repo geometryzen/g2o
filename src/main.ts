@@ -1,16 +1,21 @@
-import { Board, BoardOptions, Circle, G20, Rectangle,Group } from './index';
+import { Board, BoardOptions, CanvasView,SVGView, Circle, G20, Group, Rectangle } from './index';
 
 document.addEventListener('DOMContentLoaded', function () {
 
     const container = document.getElementById('container')!;
 
+    const scene: Group = new Group();
+
+    const view = new SVGView(scene);
+    // const view = new CanvasView(scene);
+
     const board_options: Partial<BoardOptions> = {
-        container
+        container,
+        view,
+        scene
     };
 
     const board = new Board(board_options).appendTo(container);
-
-    const scene: Group = board.scene;
 
     const circle = new Circle({ position: new G20(-70, 0), radius: 50 });
     circle.fill = '#FF0000';
@@ -40,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const t = (1 - scene.scale) * 0.125;
         scene.scale += t;
         scene.rotation += t * 4 * Math.PI;
-        // board.update();
+        board.update();
         window.requestAnimationFrame(animate);
     };
     window.requestAnimationFrame(animate);

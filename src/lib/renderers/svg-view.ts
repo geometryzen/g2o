@@ -4,7 +4,7 @@ import { Gradient } from '../effects/gradient';
 import { LinearGradient } from '../effects/linear-gradient';
 import { RadialGradient } from '../effects/radial-gradient';
 import { is_canvas, is_img, is_video, Texture } from '../effects/texture';
-import { Element as ElementBase } from '../element';
+import { ElementBase } from '../element';
 import { Group } from '../group';
 import { Matrix } from '../matrix';
 import { get_dashes_offset, Path } from '../path';
@@ -1339,7 +1339,7 @@ const svg = {
 } as const;
 
 export interface SVGViewParams {
-    svgElement?: SVGElement;
+    domElement?: SVGElement;
 }
 
 export class SVGView implements View {
@@ -1362,8 +1362,8 @@ export class SVGView implements View {
         else {
             throw new Error("scene must be a Group");
         }
-        if (params.svgElement) {
-            this.domElement = params.svgElement;
+        if (params.domElement) {
+            this.domElement = params.domElement;
         }
         else {
             this.domElement = svg.createElement('svg');
@@ -1379,7 +1379,9 @@ export class SVGView implements View {
         this.size$ = this.#size.asObservable();
     }
 
-    setSize(size: { width: number, height: number }): this {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    setSize(size: { width: number, height: number }, ratio: number): this {
+        console.log("SVGView.setSize", JSON.stringify(size), "ratio", ratio);
         this.width = size.width;
         this.height = size.height;
         svg.setAttributes(this.domElement, {

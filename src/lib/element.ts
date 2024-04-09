@@ -6,7 +6,7 @@ import { Observable } from './rxjs/Observable';
 /**
  * The foundational object for the scenegraph.
  */
-export abstract class Element<P> implements Child {
+export abstract class ElementBase<P> implements Child {
     /**
      * Gradient, Shape, Stop, and Texture all extend Element.
      */

@@ -8,6 +8,9 @@ import { G20 } from "../vector";
 export interface SharedInfo {
     appended?: boolean;
     clip?: SVGClipPathElement;
+    context?: {
+        ctx?: CanvasRenderingContext2D;
+    };
     /**
      * Used by the CanvasRenderer.
      */
@@ -25,11 +28,13 @@ export interface SharedInfo {
      */
     hasStrokeEffect?: boolean;
     image?: SVGImageElement;
+    offset?: G20;
     opacity?: number;
     /**
      * DGH: How do we clean this up? It was put there by the View, so naturally...
      */
     matrix_change?: Subscription | undefined;
+    scale?: G20;
     type?: 'group' | 'linear-gradient' | 'path' | 'points' | 'radial-gradient' | 'text' | 'texture';
     // Used by Path
     anchor_vertices?: Anchor[];

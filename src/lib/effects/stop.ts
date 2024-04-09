@@ -1,9 +1,9 @@
 import { BehaviorSubject } from 'rxjs';
-import { Element } from '../element';
+import { ElementBase } from '../element';
 import { Observable } from '../rxjs/Observable';
 import { Gradient } from './gradient';
 
-export class Stop extends Element<Gradient> {
+export class Stop extends ElementBase<Gradient> {
 
     _flagOffset = true;
     _flagOpacity = true;

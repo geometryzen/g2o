@@ -1,18 +1,22 @@
-import { BehaviorSubject, Observable } from 'rxjs';
-import { Constants } from '../constants.js';
-import { LinearGradient } from '../effects/linear-gradient.js';
-import { Texture } from '../effects/texture.js';
-import { Group } from '../group.js';
-import { Path, get_dashes_offset } from '../path.js';
-import { Points } from '../shapes/points.js';
-import { Text } from '../text.js';
-import { RendererParams } from '../two.js';
-import { Curve } from '../utils/curves.js';
-import { getRatio } from '../utils/device-pixel-ratio.js';
-import { TWO_PI, mod } from '../utils/math.js';
-import { Commands } from '../utils/path-commands.js';
-import { Vector } from '../vector.js';
-import { View } from './View.js';
+import { BehaviorSubject } from 'rxjs';
+import { Constants } from '../constants';
+import { LinearGradient } from '../effects/linear-gradient';
+import { RadialGradient } from '../effects/radial-gradient.js';
+import { Texture } from '../effects/texture';
+import { ElementBase } from '../element';
+import { Group } from '../group';
+import { Matrix } from '../matrix';
+import { get_dashes_offset, Path } from '../path';
+import { Observable } from '../rxjs/Observable';
+import { Points } from '../shapes/points';
+import { Text } from '../text';
+import { Curve } from '../utils/curves';
+import { decompose_2d_3x3_matrix } from '../utils/decompose_2d_3x3_matrix';
+import { getRatio } from '../utils/device-pixel-ratio';
+import { mod, TWO_PI } from '../utils/math';
+import { Commands } from '../utils/path-commands';
+import { G20 } from '../vector';
+import { View } from './View';
 
 // Constants
 const emptyArray: number[] = [];
@@ -46,20 +50,20 @@ const canvas = {
     shim: function (elem: any, name?: string) {
         elem.tagName = elem.nodeName = name || 'canvas';
         elem.nodeType = 1;
-        elem.getAttribute = function (prop) {
+        elem.getAttribute = function (prop: string) {
             return this[prop];
         };
-        elem.setAttribute = function (prop, val) {
+        elem.setAttribute = function (prop: string, val: string) {
             this[prop] = val;
             return this;
         };
         return elem;
     },
 
-    group: {
+    'group': {
 
-        renderChild: function (child) {
-            canvas[child._renderer.type].render.call(child, this.ctx, true, this.clip);
+        renderChild: function (child: ElementBase<unknown>) {
+            canvas[child.renderer.type].render.call(child, this.ctx, true, this.clip);
         },
 
         render: function (this: Group, ctx: CanvasRenderingContext2D) {
@@ -70,10 +74,14 @@ const canvas = {
 
             this._update();
 
-            const matrix = this._matrix.elements;
+            const matrix = this._matrix;
             const parent = this.parent;
-            this.viewInfo.opacity = this._opacity
-                * (parent && parent.viewInfo ? parent.viewInfo.opacity : 1);
+            if (parent instanceof Group) {
+                this.viewInfo.opacity = this.opacity * (parent && parent.viewInfo ? parent.viewInfo.opacity : 1);
+            }
+            else {
+                this.viewInfo.opacity = this.opacity;
+            }
 
             const mask = this._mask;
             // const clip = this._clip;
@@ -91,8 +99,7 @@ const canvas = {
             if (shouldIsolate) {
                 ctx.save();
                 if (!defaultMatrix) {
-                    ctx.transform(matrix[0], matrix[3], matrix[1],
-                        matrix[4], matrix[2], matrix[5]);
+                    ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
                 }
             }
 
@@ -100,10 +107,10 @@ const canvas = {
                 canvas[mask.viewInfo.type].render.call(mask, ctx, true);
             }
 
-            if (this._opacity > 0 && this._scale !== 0) {
+            if (this.opacity > 0 && this.scale !== 0) {
                 for (let i = 0; i < this.children.length; i++) {
-                    const child = this.children[i];
-                    canvas[child._renderer.type].render.call(child, ctx);
+                    const child = this.children.getAt(i);
+                    canvas[child.renderer.type].render.call(child, ctx);
                 }
             }
 
@@ -142,7 +149,7 @@ const canvas = {
 
             this._update();
 
-            const matrix = this._matrix.elements;
+            const matrix = this._matrix;
             const stroke = this._stroke;
             const linewidth = this._linewidth;
             const fill = this._fill;
@@ -159,7 +166,7 @@ const canvas = {
             // Transform
             if (!defaultMatrix) {
                 ctx.save();
-                ctx.transform(matrix[0], matrix[3], matrix[1], matrix[4], matrix[2], matrix[5]);
+                ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
             }
 
             // Commented two-way functionality of clips / masks with groups and
@@ -250,8 +257,8 @@ const canvas = {
 
                         a = commands[prev];
 
-                        ar = (a.controls && a.controls.right) || Vector.zero;
-                        bl = (b.controls && b.controls.left) || Vector.zero;
+                        ar = (a.controls && a.controls.right) || G20.zero;
+                        bl = (b.controls && b.controls.left) || G20.zero;
 
                         if (a.relative) {
                             vx = (ar.x + a.x);
@@ -277,8 +284,8 @@ const canvas = {
 
                             c = d;
 
-                            br = (b.controls && b.controls.right) || Vector.zero;
-                            cl = (c.controls && c.controls.left) || Vector.zero;
+                            br = (b.controls && b.controls.right) || G20.zero;
+                            cl = (c.controls && c.controls.left) || G20.zero;
 
                             if (b.relative) {
                                 vx = (br.x + b.x);
@@ -371,16 +378,13 @@ const canvas = {
     },
 
     'points': {
-
         render: function (this: Points, ctx: CanvasRenderingContext2D, forced: boolean, parentClipped: boolean) {
 
-            let me, stroke, linewidth, fill, opacity, visible, size, commands,
-                length, b, x, y, defaultMatrix, isOffset, dashes, po;
+            let fill, size, commands, length, b, x, y, defaultMatrix, isOffset, dashes;
 
-            po = (this.parent && this.parent.viewInfo)
-                ? this.parent.viewInfo.opacity : 1;
-            opacity = this._opacity * (po || 1);
-            visible = this._visible;
+            const po = (this.parent && this.parent.viewInfo) ? this.parent.viewInfo.opacity : 1;
+            const opacity = this._opacity * (po || 1);
+            const visible = this._visible;
 
             if (!forced && (!visible || opacity === 0)) {
                 return this;
@@ -388,20 +392,20 @@ const canvas = {
 
             this._update();
 
-            me = this._matrix.elements;
-            stroke = this._stroke;
-            linewidth = this._linewidth;
+            const matrix = this._matrix;
+            const stroke = this._stroke;
+            const linewidth = this._linewidth;
             fill = this._fill;
             commands = this.viewInfo.anchor_collection; // Commands
             length = commands.length;
-            defaultMatrix = isDefaultMatrix(me);
+            defaultMatrix = isDefaultMatrix(matrix);
             dashes = this.dashes;
             size = this._size;
 
             // Transform
             if (!defaultMatrix) {
                 ctx.save();
-                ctx.transform(me[0], me[3], me[1], me[4], me[2], me[5]);
+                ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
             }
 
             // Styles
@@ -431,18 +435,17 @@ const canvas = {
             }
 
             if (dashes && dashes.length > 0) {
-                ctx.lineDashOffset = dashes.offset || 0;
+                ctx.lineDashOffset = get_dashes_offset(dashes) || 0;
                 ctx.setLineDash(dashes);
             }
 
             ctx.beginPath();
 
-            let radius = size * 0.5, m;
+            let radius = size * 0.5;
 
             if (!this._sizeAttenuation) {
-                m = this.worldMatrix.elements;
-                m = decomposeMatrix(m[0], m[3], m[1], m[4], m[2], m[5]);
-                radius /= Math.max(m.scaleX, m.scaleY);
+                const decomp = decompose_2d_3x3_matrix(this.worldMatrix);
+                radius /= Math.max(decomp.scaleX, decomp.scaleY);
             }
 
             for (let i = 0; i < length; i++) {
@@ -519,7 +522,7 @@ const canvas = {
 
             this._update();
 
-            const matrix = this._matrix.elements;
+            const matrix = this._matrix;
             const stroke = this._stroke;
             const linewidth = this._linewidth;
             const fill = this._fill;
@@ -536,7 +539,7 @@ const canvas = {
             // Transform
             if (!defaultMatrix) {
                 ctx.save();
-                ctx.transform(matrix[0], matrix[3], matrix[1], matrix[4], matrix[2], matrix[5]);
+                ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
             }
 
             // Commented two-way functionality of clips / masks with groups and
@@ -765,7 +768,7 @@ const canvas = {
 
     'radial-gradient': {
 
-        render: function (ctx, parent) {
+        render: function (this: RadialGradient, ctx: CanvasRenderingContext2D, parent) {
 
             if (!parent) {
                 return;
@@ -773,15 +776,15 @@ const canvas = {
 
             this._update();
 
-            if (!this._renderer.effect || this._flagCenter || this._flagFocal
+            if (!this.renderer.effect || this._flagCenter || this._flagFocal
                 || this._flagRadius || this._flagStops || this._flagUnits) {
 
                 let rect;
-                let cx = this.center._x;
-                let cy = this.center._y;
-                let fx = this.focal._x;
-                let fy = this.focal._y;
-                let radius = this._radius;
+                let cx = this.center.x;
+                let cy = this.center.y;
+                let fx = this.focal.x;
+                let fy = this.focal.y;
+                let radius = this.radius;
 
                 if (/objectBoundingBox/i.test(this._units)) {
                     // Convert objectBoundingBox units to userSpaceOnUse units
@@ -793,12 +796,12 @@ const canvas = {
                     radius *= Math.min(rect.width, rect.height) * 0.5;
                 }
 
-                this._renderer.effect = ctx.createRadialGradient(cx, cy,
+                this.renderer.effect = ctx.createRadialGradient(cx, cy,
                     0, fx, fy, radius);
 
                 for (let i = 0; i < this.stops.length; i++) {
                     const stop = this.stops[i];
-                    this._renderer.effect.addColorStop(stop._offset, stop._color);
+                    this.renderer.effect.addColorStop(stop._offset, stop._color);
                 }
 
             }
@@ -822,8 +825,8 @@ const canvas = {
 
             if (this._flagOffset || this._flagLoaded || this._flagScale) {
 
-                if (!(this.viewInfo.offset instanceof Vector)) {
-                    this.viewInfo.offset = new Vector();
+                if (!(this.viewInfo.offset instanceof G20)) {
+                    this.viewInfo.offset = new G20();
                 }
 
                 this.viewInfo.offset.x = - this._offset.x;
@@ -834,7 +837,7 @@ const canvas = {
                     this.viewInfo.offset.x += image.width / 2;
                     this.viewInfo.offset.y += image.height / 2;
 
-                    if (this._scale instanceof Vector) {
+                    if (this._scale instanceof G20) {
                         this.viewInfo.offset.x *= this._scale.x;
                         this.viewInfo.offset.y *= this._scale.y;
                     }
@@ -848,11 +851,11 @@ const canvas = {
 
             if (this._flagScale || this._flagLoaded) {
 
-                if (!(this.viewInfo.scale instanceof Vector)) {
-                    this.viewInfo.scale = new Vector();
+                if (!(this.viewInfo.scale instanceof G20)) {
+                    this.viewInfo.scale = new G20();
                 }
 
-                if (this._scale instanceof Vector) {
+                if (this._scale instanceof G20) {
                     this.viewInfo.scale.copy(this._scale);
                 }
                 else {
@@ -867,7 +870,7 @@ const canvas = {
 
     },
 
-    renderSvgArcCommand: function (ctx: CanvasRenderingContext2D, ax, ay, rx, ry, largeArcFlag, sweepFlag: number, xAxisRotation: number, x, y) {
+    renderSvgArcCommand: function (ctx: CanvasRenderingContext2D, ax: number, ay: number, rx: number, ry: number, largeArcFlag: number, sweepFlag: number, xAxisRotation: number, x: number, y: number) {
 
         xAxisRotation = xAxisRotation * Math.PI / 180;
 
@@ -911,10 +914,8 @@ const canvas = {
         const cyp = - q * ry * x1p / rx;
 
         // Step 3: Compute (cx, cy) from (cx′, cy′)
-        const cx = cos(xAxisRotation) * cxp
-            - sin(xAxisRotation) * cyp + (ax + x) / 2;
-        const cy = sin(xAxisRotation) * cxp
-            + cos(xAxisRotation) * cyp + (ay + y) / 2;
+        const cx = cos(xAxisRotation) * cxp - sin(xAxisRotation) * cyp + (ax + x) / 2;
+        const cy = sin(xAxisRotation) * cxp + cos(xAxisRotation) * cyp + (ay + y) / 2;
 
         // Step 4: Compute θ1 and Δθ
         const startAngle = svgAngle(1, 0, (x1p - cxp) / rx, (y1p - cyp) / ry);
@@ -929,16 +930,24 @@ const canvas = {
             clockwise, xAxisRotation);
 
     }
-};
+} as const;
 
-/**
- * @param {Object} [parameters] - This object is inherited when constructing a new instance of {@link Two}.
- * @param {Element} [parameters.domElement] - The `<canvas />` to draw to. If none given a new one will be constructed.
- * @param {Boolean} [parameters.overdraw] - Determines whether the canvas should clear the background or not. Defaults to `true`.
- * @param {Boolean} [parameters.smoothing=true] - Determines whether the canvas should antialias drawing. Set it to `false` when working with pixel art. `false` can lead to better performance, since it would use a cheaper interpolation algorithm.
- * @description This class is used by {@link Two} when constructing with `type` of `Two.Types.canvas`. It takes Two.js' scenegraph and renders it to a `<canvas />`.
- */
-export class CanvasRenderer implements View {
+export interface CanvasViewParams {
+    domElement?: HTMLCanvasElement;
+    /**
+     * Determines whether the canvas should clear the background or not.
+     * Defaults to `true`.
+     */
+    overdraw?: boolean;
+    /**
+     * Determines whether the canvas should antialias drawing.
+     * Set it to `false` when working with pixel art.
+     * `false` can lead to better performance, since it would use a cheaper interpolation algorithm.
+     */
+    smoothing?: boolean;
+}
+
+export class CanvasView implements View {
 
     readonly domElement: HTMLCanvasElement;
     readonly scene: Group;
@@ -953,7 +962,14 @@ export class CanvasRenderer implements View {
 
     readonly overdraw: boolean;
 
-    constructor(params: RendererParams) {
+    constructor(scene: Group, params: CanvasViewParams = {}) {
+        if (scene instanceof Group) {
+            this.scene = scene;
+            this.scene.parent = this;
+        }
+        else {
+            throw new Error("scene must be a Group");
+        }
 
         if (params.domElement) {
             if (params.domElement instanceof HTMLCanvasElement) {
@@ -989,29 +1005,27 @@ export class CanvasRenderer implements View {
             this.ctx.imageSmoothingEnabled = smoothing;
         }
 
-        this.scene = params.scene;
+        this.scene = scene;
         this.scene.parent = this;
 
         this.#size = new BehaviorSubject({ width: this.width, height: this.height });
         this.size$ = this.#size.asObservable();
     }
 
-    setSize(width: number, height: number, ratio: number) {
-
-        this.width = width;
-        this.height = height;
-
+    setSize(size: { width: number, height: number }, ratio: number) {
+        console.log("CanvasView.setSize", JSON.stringify(size), "ratio", ratio);
+        this.width = size.width;
+        this.height = size.height;
         this.ratio = typeof ratio === 'undefined' ? getRatio(this.ctx) : ratio;
-
-        this.domElement.width = width * this.ratio;
-        this.domElement.height = height * this.ratio;
+        this.domElement.width = size.width * this.ratio;
+        this.domElement.height = size.height * this.ratio;
 
         if (this.domElement.style) {
-            this.domElement.style.width = `${width}px`;
-            this.domElement.style.height = `${height}px`;
+            this.domElement.style.width = `${size.width}px`;
+            this.domElement.style.height = `${size.height}px`;
         }
 
-        this.#size.next({ width, height });
+        this.#size.next(size);
     }
 
     /**
@@ -1109,6 +1123,6 @@ function svgAngle(ux: number, uy: number, vx: number, vy: number): number {
 }
 
 // Returns true if this is a non-transforming matrix
-function isDefaultMatrix(m: number[] | Float32Array): boolean {
-    return (m[0] == 1 && m[3] == 0 && m[1] == 0 && m[4] == 1 && m[2] == 0 && m[5] == 0);
+function isDefaultMatrix(m: Matrix): boolean {
+    return (m.a11 === 1 && m.a21 === 0 && m.a12 === 0 && m.a22 === 1 && m.a13 === 0 && m.a23 === 0);
 }

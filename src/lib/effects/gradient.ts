@@ -1,7 +1,7 @@
 import { BehaviorSubject } from 'rxjs';
 import { Children } from '../children';
 import { Constants } from '../constants';
-import { Element } from '../element';
+import { ElementBase } from '../element';
 import { Group } from '../group';
 import { Observable } from '../rxjs/Observable';
 import { Subscription } from '../rxjs/Subscription';
@@ -10,7 +10,7 @@ import { Stop } from './stop';
 /**
  *
  */
-export abstract class Gradient extends Element<Group> {
+export abstract class Gradient extends ElementBase<Group> {
 
     _flagStops = false;
     _flagSpread = false;

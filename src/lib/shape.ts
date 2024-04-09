@@ -1,7 +1,7 @@
 import { Constants } from './constants';
 import { Gradient } from './effects/gradient';
 import { Texture } from './effects/texture';
-import { Element } from './element';
+import { ElementBase } from './element';
 import { IShape } from './IShape';
 import { Matrix } from './matrix';
 import { Subscription } from './rxjs/Subscription';
@@ -18,7 +18,7 @@ export interface ShapeOptions {
     attitude?: G20;
 }
 
-export abstract class Shape<P extends Parent> extends Element<P> implements IShape<P> {
+export abstract class Shape<P extends Parent> extends ElementBase<P> implements IShape<P> {
 
     _flagMatrix = true;
     _flagScale = false;

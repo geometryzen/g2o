@@ -1,6 +1,6 @@
 import { BehaviorSubject } from 'rxjs';
 import { Constants } from '../constants';
-import { Element } from '../element';
+import { ElementBase } from '../element';
 import { Group } from '../group';
 import { Registry } from '../registry.js';
 import { SharedInfo } from '../renderers/SharedInfo';
@@ -37,7 +37,7 @@ if (root.document) {
     anchor = document.createElement('a');
 }
 
-export class Texture extends Element<Group> {
+export class Texture extends ElementBase<Group> {
 
     _flagSrc = false;
     _flagImage = false;
