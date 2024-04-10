@@ -1,15 +1,17 @@
 import { Anchor } from '../anchor';
-import { Path } from '../path';
+import { G20 } from '../math/G20';
+import { Path, PathOptions } from '../path';
 
 export class Line extends Path {
-    /**
-     * @param x1 The x position of the first vertex on the line.
-     * @param y1 The y position of the first vertex on the line.
-     * @param x2 The x position of the second vertex on the line.
-     * @param y2 The y position of the second vertex on the line.
-     */
-    constructor(x1 = 0, y1 = 0, x2 = 0, y2 = 0) {
-        super([new Anchor(x1, y1, 0, 0, 0, 0, 'M'), new Anchor(x2, y2, 0, 0, 0, 0, 'L')]);
+    constructor(begin: G20, end: G20) {
+        const path_options: PathOptions = {};
+        super([
+            new Anchor(begin, 0, 0, 0, 0, 'M'),
+            new Anchor(end, 0, 0, 0, 0, 'L')],
+            false,
+            false,
+            false,
+            path_options);
         // this.automatic = false;
     }
     get left() {

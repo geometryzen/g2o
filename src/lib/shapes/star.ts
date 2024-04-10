@@ -1,4 +1,5 @@
 import { Anchor } from '../anchor.js';
+import { G20 } from '../math/G20.js';
 import { Path } from '../path.js';
 import { TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
@@ -75,7 +76,7 @@ export class Star extends Path {
                 const y = r * sin(theta);
 
                 if (i >= length) {
-                    this.vertices.push(new Anchor(x, y));
+                    this.vertices.push(new Anchor(G20.vector(x, y)));
                 }
                 else {
                     this.vertices.getAt(i).origin.set(x, y);

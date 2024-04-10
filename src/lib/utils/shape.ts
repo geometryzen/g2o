@@ -1,4 +1,5 @@
 import { Anchor } from '../anchor.js';
+import { G20 } from '../math/G20.js';
 import { Path } from '../path.js';
 import { getCurveLength as gcl, subdivide } from './curves.js';
 
@@ -112,7 +113,7 @@ export function getSubdivisions(a: Anchor, b: Anchor, limit: number): Anchor[] {
         alx += a.x;
         aly += a.y;
     }
-    const builder = (x: number, y: number) => new Anchor(x, y);
+    const builder = (x: number, y: number) => new Anchor(G20.vector(x, y));
     // TODO: Curiously, the semantics of which anchor is first and second seems to have been reversed.
     return subdivide(builder, bx, by, brx, bry, alx, aly, ax, ay, limit);
 }

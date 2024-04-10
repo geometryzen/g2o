@@ -1,4 +1,4 @@
-import { Board, BoardOptions, Circle, G20, Group, Rectangle, SVGView } from './index';
+import { Board, BoardOptions, Circle, G20, Group, Line, Rectangle, SVGView } from './index';
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -17,42 +17,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const board = new Board(board_options).appendTo(container);
 
-    const circle = new Circle({ position: new G20(-70, 0), radius: 50 });
+    const circle = Circle.from_center_and_radius(new G20(-70, -70), 50);
     circle.fill = '#FF0000';
     scene.add(circle);
 
-    const rect = new Rectangle({ position: new G20(70, 0), width: 100, height: 100 });
+    const rect = new Rectangle({ position: new G20(70, 70), width: 100, height: 100 });
     rect.fill = 'rgba(255, 255, 0, 1.0)';
     scene.add(rect);
 
-    const line = board.makeLine(0, 0, 100, 100);
-    line.fill = '#FF8000';
-    line.linewidth = 10;
-    line.stroke = "rgba(255, 255, 255, 1.0)";
-    // scene.add(line)
+    const line = new Line(circle.position, rect.position);
+    line.fill = '#000000';
+    line.linewidth = 2;
+    line.stroke = "rgba(0, 0, 0, 1.0)";
+    scene.add(line);
 
     scene.position.set(board.width / 2, board.height / 2);
-    scene.scale = 0;
-    scene.noStroke();
+    // scene.scale = 0;
+    // scene.noStroke();
 
     scene.scale = 1;
     board.update();
-
-    const animate = function () {
-        if (scene.scale > 0.9999) {
-            scene.scale = 0;
-            // scene.rotation = 0;
-            scene.attitude.set(0, 0, 1, 0);
-        }
-        const t = (1 - scene.scale) * 0.125;
-        scene.scale += t;
-        const θ = scene.scale * 4 * Math.PI;
-        scene.attitude.rotorFromAngle(θ);
-        // scene.rotation += t * 4 * Math.PI;
-        // board.update();
-        window.requestAnimationFrame(animate);
-    };
-    window.requestAnimationFrame(animate);
 
     window.onunload = function () {
         try {

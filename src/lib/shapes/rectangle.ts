@@ -1,7 +1,7 @@
 import { Anchor } from '../anchor';
+import { G20 } from '../math/G20';
 import { Path, PathOptions } from '../path';
 import { Subscription } from '../rxjs/Subscription';
-import { G20 } from '../math/G20';
 
 export interface RectangleOptions {
     position?: G20;
@@ -24,10 +24,10 @@ export class Rectangle extends Path {
     constructor(options: RectangleOptions = {}) {
 
         const points = [
-            new Anchor(0, 0, 0, 0, 0, 0, 'M'),
-            new Anchor(0, 0, 0, 0, 0, 0, 'L'),
-            new Anchor(0, 0, 0, 0, 0, 0, 'L'),
-            new Anchor(0, 0, 0, 0, 0, 0, 'L')
+            new Anchor(G20.vector(0, 0), 0, 0, 0, 0, 'M'),
+            new Anchor(G20.vector(0, 0), 0, 0, 0, 0, 'L'),
+            new Anchor(G20.vector(0, 0), 0, 0, 0, 0, 'L'),
+            new Anchor(G20.vector(0, 0), 0, 0, 0, 0, 'L')
             // new Anchor() // TODO: Figure out how to handle this for `beginning` / `ending` animations
         ];
 
@@ -51,7 +51,7 @@ export class Rectangle extends Path {
             const yr = this._height / 2;
 
             if (!this._closed && this.vertices.length === 4) {
-                this.vertices.push(new Anchor());
+                this.vertices.push(new Anchor(G20.vector(0, 0)));
             }
 
             this.vertices.getAt(0).origin.set(-xr, -yr).sub(this._origin);

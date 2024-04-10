@@ -1,5 +1,6 @@
 import { Anchor } from '../anchor.js';
 import { Constants } from '../constants.js';
+import { G20 } from '../math/G20.js';
 import { Path } from '../path.js';
 import { HALF_PI, mod, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
@@ -73,7 +74,7 @@ export class ArcSegment extends Path {
         const amount = res || (Constants.Resolution * 3);
         const points: Anchor[] = [];
         for (let i = 0; i < amount; i++) {
-            points.push(new Anchor());
+            points.push(new Anchor(G20.vector(0, 0)));
         }
 
         super(points, true, false, true);

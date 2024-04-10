@@ -1,8 +1,8 @@
 import { Anchor } from '../anchor.js';
+import { G20 } from '../math/G20.js';
 import { Path, PathOptions } from '../path.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
-import { G20 } from '../math/G20.js';
 
 export interface CircleOptions {
     position?: G20;
@@ -24,7 +24,7 @@ export class Circle extends Path {
         // These anchors will be placed on the circle during the update phase.
         const points: Anchor[] = [];
         for (let i = 0; i < amount; i++) {
-            points.push(new Anchor(0, 0, 0, 0, 0, 0));
+            points.push(new Anchor(G20.vector(0, 0), 0, 0, 0, 0));
         }
 
         super(points, true, true, true, path_options_from_circle_options(options));
@@ -43,6 +43,10 @@ export class Circle extends Path {
 
     dispose(): void {
         super.dispose();
+    }
+
+    static from_center_and_radius(center: G20, radius: number): Circle {
+        return new Circle({ position: center, radius: radius });
     }
 
     _update() {

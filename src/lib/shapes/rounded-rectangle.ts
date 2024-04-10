@@ -1,8 +1,8 @@
 import { Anchor } from '../anchor';
+import { G20 } from '../math/G20';
 import { Path } from '../path';
 import { Subscription } from '../rxjs/Subscription';
 import { Commands } from '../utils/path-commands';
-import { G20 } from '../math/G20';
 
 export class RoundedRectangle extends Path {
 
@@ -32,7 +32,7 @@ export class RoundedRectangle extends Path {
 
         const points: Anchor[] = [];
         for (let i = 0; i < 10; i++) {
-            points.push(new Anchor(0, 0, 0, 0, 0, 0, i === 0 ? Commands.move : Commands.curve));
+            points.push(new Anchor(G20.vector(0, 0), 0, 0, 0, 0, i === 0 ? Commands.move : Commands.curve));
         }
 
         // points[points.length - 1].command = Two.Commands.close;

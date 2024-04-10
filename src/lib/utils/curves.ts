@@ -400,7 +400,7 @@ export function getAnchorsFromArcData(center: G20, xAxisRotation: number, rx: nu
         // x += center.x;
         // y += center.y;
 
-        const anchor = new Anchor(x, y);
+        const anchor = new Anchor(G20.vector(x, y));
         anchor.command = Commands.line;
 
         // TODO: Calculate control points here...

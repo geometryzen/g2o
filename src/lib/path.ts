@@ -679,7 +679,7 @@ export class Path extends Shape<Group> {
             }
 
             if (a.command === Commands.move) {
-                points.push(new Anchor(b.x, b.y));
+                points.push(new Anchor(G20.vector(b.x, b.y)));
                 if (i > 0) {
                     points[points.length - 1].command = Commands.line;
                 }
@@ -722,7 +722,7 @@ export class Path extends Shape<Group> {
 
                 }
                 else if (closed) {
-                    points.push(new Anchor(a.x, a.y));
+                    points.push(new Anchor(G20.vector(a.x, a.y)));
                 }
 
                 points[points.length - 1].command = closed
@@ -831,7 +831,7 @@ export class Path extends Shape<Group> {
 
                         if (this.viewInfo.anchor_collection.length <= i) {
                             // Expected to be `relative` anchor points.
-                            this.viewInfo.anchor_collection.push(new Anchor());
+                            this.viewInfo.anchor_collection.push(new Anchor(G20.vector(0, 0)));
                         }
 
                         if (i > high && !right) {

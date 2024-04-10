@@ -1,14 +1,14 @@
 import { BehaviorSubject } from 'rxjs';
+import { G20 } from './math/G20.js';
 import { Observable } from './rxjs/Observable.js';
 import { Subscription } from './rxjs/Subscription.js';
 import { Commands } from './utils/path-commands.js';
-import { G20 } from './math/G20.js';
 
 export class Anchor {
     /**
      * default is zero.
      */
-    readonly origin = new G20();
+    readonly origin: G20;
     #origin_change: Subscription | null = null;
     readonly controls = {
         left: new G20(),
@@ -32,17 +32,16 @@ export class Anchor {
     #t: number;
 
     /**
-     * @param x The x position of the root anchor point.
-     * @param y The y position of the root anchor point.
+     * @param origin
      * @param ax The x position of the left handle point.
      * @param ay The y position of the left handle point.
      * @param bx The x position of the right handle point.
      * @param by The y position of the right handle point.
      * @param command The command to describe how to render. Applicable commands are {@link Commands}
      */
-    constructor(x = 0, y = 0, ax = 0, ay = 0, bx = 0, by = 0, command: 'M' | 'L' | 'C' | 'A' | 'Z' = Commands.move) {
+    constructor(origin: G20, ax = 0, ay = 0, bx = 0, by = 0, command: 'M' | 'L' | 'C' | 'A' | 'Z' = Commands.move) {
 
-        this.origin.set(x, y);
+        this.origin = origin;
         this.controls.left.set(ax, ay);
         this.controls.right.set(bx, by);
 

@@ -1,4 +1,5 @@
 import { Anchor } from '../anchor.js';
+import { G20 } from '../math/G20.js';
 import { Path } from '../path.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
@@ -50,7 +51,7 @@ export class Ellipse extends Path {
         const amount = resolution ? Math.max(resolution, 2) : 4;
         const points = [];
         for (let i = 0; i < amount; i++) {
-            points.push(new Anchor());
+            points.push(new Anchor(G20.vector(0, 0)));
         }
 
         super(points, true, true, true);

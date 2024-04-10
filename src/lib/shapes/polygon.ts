@@ -1,8 +1,9 @@
+import { Anchor } from '../anchor.js';
+import { G20 } from '../math/G20.js';
+import { Path } from '../path.js';
 import { TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 
-import { Anchor } from '../anchor.js';
-import { Path } from '../path.js';
 
 const cos = Math.cos, sin = Math.sin;
 
@@ -95,7 +96,7 @@ export class Polygon extends Path {
                 const y = this._height * sin(theta) / 2;
 
                 if (i >= length) {
-                    this.vertices.push(new Anchor(x, y));
+                    this.vertices.push(new Anchor(G20.vector(x, y)));
                 }
                 else {
                     this.vertices.getAt(i).origin.set(x, y);

@@ -4,6 +4,7 @@ import { Constants } from './constants.js';
 import { Sprite } from './effects/sprite.js';
 import { Texture } from './effects/texture.js';
 import { Group } from './group.js';
+import { G20 } from './math/G20.js';
 import { Path } from './path.js';
 import { SVGView } from './renderers/SVGView.js';
 import { View } from './renderers/View.js';
@@ -22,7 +23,6 @@ import { Text } from './text.js';
 import { Commands } from './utils/path-commands.js';
 import { dateTime } from './utils/performance.js';
 import { xhr } from './utils/xhr.js';
-import { G20 } from './math/G20.js';
 
 export interface BoardOptions {
     /**
@@ -233,7 +233,7 @@ export class Board {
 
     makeLine(x1: number, y1: number, x2: number, y2: number): Line {
 
-        const line = new Line(x1, y1, x2, y2);
+        const line = new Line(G20.vector(x1, y1), G20.vector(x2, y2));
         this.#scene.add(line);
 
         return line;
@@ -248,18 +248,16 @@ export class Board {
 
         const vertices = [
 
-            new Anchor(x1, y1, undefined, undefined, undefined, undefined, Commands.move),
-            new Anchor(x2, y2, undefined, undefined, undefined, undefined, Commands.line),
+            new Anchor(G20.vector(x1, y1), undefined, undefined, undefined, undefined, Commands.move),
+            new Anchor(G20.vector(x2, y2), undefined, undefined, undefined, undefined, Commands.line),
             new Anchor(
-                x2 - headlen * Math.cos(angle - Math.PI / 4),
-                y2 - headlen * Math.sin(angle - Math.PI / 4),
+                G20.vector(x2 - headlen * Math.cos(angle - Math.PI / 4), y2 - headlen * Math.sin(angle - Math.PI / 4)),
                 undefined, undefined, undefined, undefined, Commands.line
             ),
 
-            new Anchor(x2, y2, undefined, undefined, undefined, undefined, Commands.move),
+            new Anchor(G20.vector(x2, y2), undefined, undefined, undefined, undefined, Commands.move),
             new Anchor(
-                x2 - headlen * Math.cos(angle + Math.PI / 4),
-                y2 - headlen * Math.sin(angle + Math.PI / 4),
+                G20.vector(x2 - headlen * Math.cos(angle + Math.PI / 4), y2 - headlen * Math.sin(angle + Math.PI / 4)),
                 undefined, undefined, undefined, undefined, Commands.line
             )
 
