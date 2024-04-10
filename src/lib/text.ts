@@ -159,15 +159,12 @@ export class Text extends Shape<Group> {
     _visible = true;
 
     /**
-     * @name Two.Text#mask
-     * @property {Two.Shape} - The shape whose alpha property becomes a clipping area for the text.
+     * The shape whose alpha property becomes a clipping area for the text.
      * @nota-bene This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
      */
     _mask: Shape<Group> | null = null;
 
     /**
-     * @name Two.Text#clip
-     * @property {Two.Shape} - Object to define clipping area.
      * @nota-bene This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
      */
     _clip = false;

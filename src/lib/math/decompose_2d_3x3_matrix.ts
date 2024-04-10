@@ -52,6 +52,7 @@ export function decompose_2d_3x3_matrix(m: Matrix): MatrixDecomposition {
     // https://www.stemcstudio.com/gists/5c0bc63b847e3df02e57f0548ecce7a3
 
     return {
+        position: { x, y },
         translateX: x,
         translateY: y,
         scaleX: Math.sqrt(a * a + c * c),   // should be multiplied by sign(a)

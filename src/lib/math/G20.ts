@@ -308,8 +308,23 @@ export class G20 {
         }
     }
 
+    conj(): G20 {
+        if (this.isLocked()) {
+            return lock(this.clone().conj());
+        }
+        else {
+            return this.set(-this.x, -this.y, this.a, -this.b);
+        }
+    }
+
     copy(v: G20): this {
         return this.set(v.x, v.y, v.a, v.b);
+    }
+
+    copySpinor(spinor: Spinor): this {
+        const a = spinor.a;
+        const b = spinor.b;
+        return this.set(0, 0, a, b);
     }
 
     clear(): this {
@@ -647,17 +662,14 @@ export class G20 {
     }
     */
     /**
-     * Sets this multivector to a rotor that rotates through angle θ in the oriented plane defined by B.
+     * Sets this multivector to a rotor that rotates through angle θ in the oriented plane defined by I.
      *
-     * @param B The (unit) bivector generating the rotation.
      * @param θ The rotation angle in radians when the rotor is applied on both sides as R * M * ~R
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    /*
-    rotorFromGeneratorAngle(B: Bivector, θ: number): G20 {
-        throw new Error(notImplemented('rotorFromGeneratorAngle').message);
+    rotorFromAngle(θ: number): this {
+        const φ = θ / 2;
+        return this.set(0, 0, Math.cos(φ), -Math.sin(φ));
     }
-    */
     /**
      * R = sqrt(|b|/|a|) * (|b||a| + b * a) / sqrt(2 * |b||a|(|b||a| + b << a))
      *

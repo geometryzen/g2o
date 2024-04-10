@@ -41,14 +41,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const animate = function () {
         if (scene.scale > 0.9999) {
             scene.scale = 0;
-            scene.rotation = 0;
-            scene.attitude;
+            // scene.rotation = 0;
+            scene.attitude.set(0, 0, 1, 0);
         }
         const t = (1 - scene.scale) * 0.125;
         scene.scale += t;
-        scene.attitude;
-        scene.rotation += t * 4 * Math.PI;
-        board.update();
+        const θ = scene.scale * 4 * Math.PI;
+        scene.attitude.rotorFromAngle(θ);
+        // scene.rotation += t * 4 * Math.PI;
+        // board.update();
         window.requestAnimationFrame(animate);
     };
     window.requestAnimationFrame(animate);

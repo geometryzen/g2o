@@ -19,12 +19,12 @@ export function decompose_2d_3x3_matrix_wang(matrix: Matrix) {
     const Δ = a * d - c * b;
 
     const result: {
-        translation: [x: number, y: number],
+        position: { x: number, y: number },
         rotation: number,
         scale: [scaleX: number, scaleY: number],
         skew: [skewX: number, skewY: number]
     } = {
-        translation: [x, y],
+        position: { x, y },
         rotation: 0,
         scale: [0, 0],
         skew: [0, 0],

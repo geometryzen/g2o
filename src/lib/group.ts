@@ -53,8 +53,7 @@ export class Group extends Shape<unknown> {
     _length = 0;
 
     /**
-     * @name Two.Group#mask
-     * @property {Two.Shape} - The Two.js object to clip from a group's rendering.
+     * The shape to clip from a group's rendering.
      */
     _mask: Shape<Group> = null;
 
@@ -202,7 +201,7 @@ export class Group extends Shape<unknown> {
      * @name Two.Group#getById
      * @function
      * @description Recursively search for id. Returns the first element found.
-     * @returns {Two.Shape} - Or `null` if nothing is found.
+     * @returns A shape or `null` if nothing is found.
      */
     getById(id: string): IShape<unknown> {
         let found = null;

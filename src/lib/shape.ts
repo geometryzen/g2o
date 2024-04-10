@@ -3,11 +3,11 @@ import { Gradient } from './effects/gradient';
 import { Texture } from './effects/texture';
 import { ElementBase } from './element';
 import { IShape } from './IShape';
+import { compose_2d_3x3_transform } from './math/compose_2d_3x3_transform';
+import { G20 } from './math/G20';
 import { Matrix } from './matrix';
 import { Subscription } from './rxjs/Subscription';
-import { compose_2d_3x3_transform } from './utils/compose_2d_3x3_transform';
-import { getComputedMatrix } from './utils/get_computed_matrix';
-import { G20 } from './math/G20';
+import { computed_world_matrix } from './utils/compute_world_matrix';
 
 export interface Parent {
     _update?(): void;
@@ -40,11 +40,6 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
 
     #attitude: G20;
     #attitude_change: Subscription;
-
-    /**
-     * TODO: Replace with attitude and Geometric Algebra.
-     */
-    _rotation: number = 0;
 
     /**
      * The scale supports non-uniform scaling.
@@ -91,11 +86,6 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
 
         this.isShape = true;
 
-        /**
-         * @name Two.Shape#id
-         * @property {String} - Session specific unique identifier.
-         * @nota-bene In the {@link Two.SVGRenderer} change this to change the underlying SVG element's id too.
-         */
         this.id = Constants.Identifier + Constants.uniqueId();
 
         /**
@@ -110,49 +100,36 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
 
         if (options.position) {
             this.#position = options.position;
-            this.#position_change = this.#position_change_bind();
         }
         else {
             this.#position = new G20(0, 0);
-            this.#position_change = this.#position_change_bind();
         }
 
         if (options.attitude) {
             this.#attitude = options.attitude;
-            this.#attitude_change = this.#attitude_change_bind();
         }
         else {
             this.#attitude = new G20(0, 0, 1, 0);
-            this.#attitude_change = this.#attitude_change_bind();
         }
 
         /**
-         * @name Two.Shape#rotation
-         * @property {Number} - The value in Number for how much the shape is rotated relative to its parent.
-         */
-        this.rotation = 0;
-
-        /**
-         * @name Two.Shape#scale
-         * @property {Number} - The value for how much the shape is scaled relative to its parent.
-         * @nota-bene This value can be replaced with a {@link G20} to do non-uniform scaling. e.g: `shape.scale = new G20(2, 1);`
+         * The value for how much the shape is scaled relative to its parent.
          */
         this.scale = 1;
 
         /**
-         * @name Two.Shape#skewX
-         * @property {Number} - The value in Number for how much the shape is skewed relative to its parent.
-         * @description Skew the shape by an angle in the x axis direction.
+         * Skew the shape by an angle in the x axis direction.
          */
         this.skewX = 0;
 
         /**
-         * @name Two.Shape#skewY
-         * @property {Number} - The value in Number for how much the shape is skewed relative to its parent.
-         * @description Skew the shape by an angle in the y axis direction.
+         * Skew the shape by an angle in the y axis direction.
          */
         this.skewY = 0;
 
+        // Wait to bind change detection until all properties have been established.
+        this.#position_change = this.#position_change_bind();
+        this.#attitude_change = this.#attitude_change_bind();
     }
 
     dispose(): void {
@@ -170,7 +147,8 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     #update_matrix(): void {
         // For performance, the matrix product has been pre-computed.
         // M = T * S * R * skewX * skewY
-        compose_2d_3x3_transform(this.position, this.scaleXY, this.rotation, this.skewX, this.skewY, this.matrix);
+        // compose_2d_3x3_transform(this.position, this.scaleXY, this.rotation, this.skewX, this.skewY, this.matrix);
+        compose_2d_3x3_transform(this.position, this.scaleXY, this.attitude, this.skewX, this.skewY, this.matrix);
     }
 
     _update(bubbles?: boolean): this {
@@ -243,17 +221,6 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     set attitude(attitude) {
         this.#attitude.set(0, 0, attitude.a, attitude.b);
     }
-    /**
-     * The rotation angle, measured in radians.
-     */
-    get rotation(): number {
-        return this._rotation;
-    }
-    set rotation(rotation: number) {
-        this._rotation = rotation;
-        this.#update_matrix();
-        this._flagMatrix = true;
-    }
     get scale(): number {
         if (this._scale.x === this._scale.y) {
             return this._scale.x;
@@ -322,7 +289,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     }
     get worldMatrix() {
         // TODO: Make DRY
-        getComputedMatrix(this, this._worldMatrix);
+        computed_world_matrix(this, this._worldMatrix);
         return this._worldMatrix;
     }
     set worldMatrix(v: Matrix) {

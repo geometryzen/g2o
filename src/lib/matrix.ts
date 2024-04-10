@@ -20,9 +20,7 @@ export class Matrix {
     #elements = new NumArray(9);
 
     /**
-     * @name Two.Matrix#manual
-     * @property {Boolean} - Determines whether Two.js automatically calculates the values for the matrix or if the developer intends to manage the matrix.
-     * @nota-bene - Setting to `true` nullifies {@link Shape#position}, {@link Two.Shape#rotation}, and {@link Two.Shape#scale}.
+     * Determines whether we automatically calculate the values for the matrix or if the developer intends to manage the matrix.
      */
     manual = false;
 

@@ -4,13 +4,13 @@ import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
 import { Texture } from '../effects/texture.js';
 import { Group } from '../group.js';
+import { decompose_2d_3x3_matrix } from '../math/decompose_2d_3x3_matrix.js';
+import { G20 } from '../math/G20.js';
 import { get_dashes_offset, set_dashes_offset } from '../path.js';
 import { Subscription } from '../rxjs/Subscription';
 import { Shape } from '../shape.js';
 import { getCurveLength as gcl, subdivide } from '../utils/curves.js';
-import { decompose_2d_3x3_matrix } from '../utils/decompose_2d_3x3_matrix.js';
 import { getIdByLength } from '../utils/shape.js';
-import { G20 } from '../math/G20.js';
 
 const min = Math.min;
 const max = Math.max;
