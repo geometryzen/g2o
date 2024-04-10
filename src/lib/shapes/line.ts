@@ -14,6 +14,9 @@ export class Line extends Path {
             path_options);
         // this.automatic = false;
     }
+    static from_point_to_point(begin: G20, end: G20): Line {
+        return new Line(begin, end);
+    }
     get left() {
         return this.vertices.getAt(0);
     }

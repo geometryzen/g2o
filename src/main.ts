@@ -25,10 +25,10 @@ document.addEventListener('DOMContentLoaded', function () {
     rect.fill = 'rgba(255, 255, 0, 1.0)';
     scene.add(rect);
 
-    const line = new Line(circle.position, rect.position);
+    const line = Line.from_point_to_point(circle.position, rect.position);
     line.fill = '#000000';
-    line.linewidth = 2;
-    line.stroke = "rgba(0, 0, 0, 1.0)";
+    line.linewidth = 10;
+    line.stroke = 'rgba(255, 255, 0, 1.0)';
     scene.add(line);
 
     scene.position.set(board.width / 2, board.height / 2);
