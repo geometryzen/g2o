@@ -1,6 +1,6 @@
 #!/bin/sh
-npm install
-npm update
+npm install --force
+npm update --force
 npm run build
 # npm run lint
 git status
