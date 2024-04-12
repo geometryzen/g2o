@@ -9,12 +9,13 @@ export function contains(path: Path, t: number): boolean {
         return true;
     }
 
-    const length = path._length;
+    const length = path.length;
     const target = length * t;
     let elapsed = 0;
 
-    for (let i = 0; i < path._lengths.length; i++) {
-        const dist = path._lengths[i];
+    const lengths = path.lengths;
+    for (let i = 0; i < lengths.length; i++) {
+        const dist = lengths[i];
         if (elapsed >= target) {
             return target - elapsed >= 0;
         }
@@ -29,11 +30,11 @@ export interface IPathOrPoints {
     /**
      * The total length of the path.
      */
-    _length: number;
+    length: number;
     /**
      * The lengths of each segment of the path.
      */
-    _lengths: number[];
+    lengths: number[];
 }
 
 /**
@@ -42,20 +43,20 @@ export interface IPathOrPoints {
  */
 export function getIdByLength(path: IPathOrPoints, target: number): number {
 
-    const total = path._length;
+    const total = path.length;
 
     if (target <= 0) {
         return 0;
     }
     else if (target >= total) {
-        return path._lengths.length - 1;
+        return path.lengths.length - 1;
     }
-    for (let i = 0, sum = 0; i < path._lengths.length; i++) {
-        if (sum + path._lengths[i] >= target) {
+    for (let i = 0, sum = 0; i < path.lengths.length; i++) {
+        if (sum + path.lengths[i] >= target) {
             target -= sum;
-            return Math.max(i - 1, 0) + target / path._lengths[i];
+            return Math.max(i - 1, 0) + target / path.lengths[i];
         }
-        sum += path._lengths[i];
+        sum += path.lengths[i];
     }
     return -1;
 }

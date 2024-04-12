@@ -1,5 +1,4 @@
 import { Collection } from '../collection.js';
-import { Gradient } from '../effects/gradient.js';
 import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
 import { Texture } from '../effects/texture.js';
@@ -25,11 +24,11 @@ const floor = Math.floor;
  */
 export class Points extends Shape<Group> {
     automatic: boolean;
-    cap: string;
+    cap: 'butt' | 'round' | 'square';
     clip: boolean;
     closed: boolean;
     curved: boolean;
-    join: string;
+    join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round';
     miter: number;
 
     _flagVertices = true;
@@ -45,10 +44,10 @@ export class Points extends Shape<Group> {
     _length = 0;
     readonly _lengths: number[] = [];
 
-    _fill: string | Gradient | Texture = '#fff';
+    #fill: string | LinearGradient | RadialGradient | Texture = '#fff';
     #fill_change_subscription: Subscription | null = null;
 
-    _stroke: string | Gradient | Texture = '#000';
+    #stroke: string | LinearGradient | RadialGradient | Texture = '#000';
     #stroke_change_subscription: Subscription | null = null;
 
     _linewidth = 1;
@@ -56,7 +55,7 @@ export class Points extends Shape<Group> {
     _visible = true;
     _size = 1;
     _sizeAttenuation = false;
-    _beginning = 0;
+    #beginning = 0;
     _ending = 1.0;
     _dashes: number[] | null = null;
 
@@ -219,7 +218,7 @@ export class Points extends Shape<Group> {
             top = Infinity, bottom = -Infinity;
 
         // TODO: Update this to not __always__ update. Just when it needs to.
-        this._update();
+        this.update();
 
         const M = shallow ? this.matrix : this.worldMatrix;
 
@@ -290,7 +289,7 @@ export class Points extends Shape<Group> {
      */
     subdivide(limit: number) {
         // TODO: DRYness (function below)
-        this._update();
+        this.update();
         let points: G20[] = [];
         for (let i = 0; i < this.vertices.length; i++) {
 
@@ -324,12 +323,12 @@ export class Points extends Shape<Group> {
     _updateLength(limit?: number, silent = false): this {
         // TODO: DRYness (function above)
         if (!silent) {
-            this._update();
+            this.update();
         }
 
         const length = this.vertices.length;
         const last = length - 1;
-        const closed = false;//this._closed || this.vertices[last]._command === Commands.close;
+        const closed = false;//this.closed || this.vertices[last]._command === Commands.close;
 
         let b = this.vertices.getAt(last);
         let sum = 0;
@@ -364,15 +363,15 @@ export class Points extends Shape<Group> {
         return this;
     }
 
-    _update() {
+    update() {
         if (this._flagVertices) {
 
             if (this._flagLength) {
                 this._updateLength(undefined, true);
             }
 
-            const beginning = Math.min(this._beginning, this._ending);
-            const ending = Math.max(this._beginning, this._ending);
+            const beginning = Math.min(this.beginning, this._ending);
+            const ending = Math.max(this.beginning, this._ending);
 
             const bid = getIdByLength(this, beginning * this._length);
             const eid = getIdByLength(this, ending * this._length);
@@ -398,7 +397,7 @@ export class Points extends Shape<Group> {
                 }
             }
         }
-        super._update();
+        super.update();
         return this;
     }
 
@@ -409,11 +408,11 @@ export class Points extends Shape<Group> {
         super.flagReset.call(this);
         return this;
     }
-    get beginning() {
-        return this._beginning;
+    get beginning(): number {
+        return this.#beginning;
     }
-    set beginning(v) {
-        this._beginning = v;
+    set beginning(beginning: number) {
+        this.#beginning = beginning;
         this._flagVertices = true;
     }
     get dashes(): number[] {
@@ -432,39 +431,42 @@ export class Points extends Shape<Group> {
         this._ending = v;
         this._flagVertices = true;
     }
-    get fill(): string | Gradient | Texture {
-        return this._fill;
+    get fill(): string | LinearGradient | RadialGradient | Texture {
+        return this.#fill;
     }
-    set fill(f: string | Gradient | Texture) {
+    set fill(fill: string | LinearGradient | RadialGradient | Texture) {
         if (this.#fill_change_subscription) {
             this.#fill_change_subscription.unsubscribe();
             this.#fill_change_subscription = null;
         }
 
-        this._fill = f;
+        this.#fill = fill;
         this._flagFill = true;
 
-        if (this._fill instanceof LinearGradient) {
-            this.#fill_change_subscription = this._fill.change$.subscribe(() => {
+        if (fill instanceof LinearGradient) {
+            this.#fill_change_subscription = fill.change$.subscribe(() => {
                 this._flagFill = true;
             });
         }
-        else if (this._fill instanceof RadialGradient) {
-            this.#fill_change_subscription = this._fill.change$.subscribe(() => {
+        else if (fill instanceof RadialGradient) {
+            this.#fill_change_subscription = fill.change$.subscribe(() => {
                 this._flagFill = true;
             });
         }
-        else if (this._fill instanceof Texture) {
-            this.#fill_change_subscription = this._fill.change$.subscribe(() => {
+        else if (fill instanceof Texture) {
+            this.#fill_change_subscription = fill.change$.subscribe(() => {
                 this._flagFill = true;
             });
         }
     }
-    get length() {
+    get length(): number {
         if (this._flagLength) {
             this._updateLength();
         }
         return this._length;
+    }
+    get lengths(): number[] {
+        return this._lengths;
     }
     get linewidth() {
         return this._linewidth;
@@ -494,30 +496,30 @@ export class Points extends Shape<Group> {
         this._sizeAttenuation = v;
         this._flagSizeAttenuation = true;
     }
-    get stroke(): string | Gradient | Texture {
-        return this._stroke;
+    get stroke(): string | LinearGradient | RadialGradient | Texture {
+        return this.#stroke;
     }
-    set stroke(stroke: string | Gradient | Texture) {
+    set stroke(stroke: string | LinearGradient | RadialGradient | Texture) {
         if (this.#stroke_change_subscription) {
             this.#stroke_change_subscription.unsubscribe();
             this.#stroke_change_subscription = null;
         }
 
-        this._stroke = stroke;
+        this.#stroke = stroke;
         this._flagStroke = true;
 
-        if (this._stroke instanceof LinearGradient) {
-            this.#stroke_change_subscription = this._stroke.change$.subscribe(() => {
+        if (stroke instanceof LinearGradient) {
+            this.#stroke_change_subscription = stroke.change$.subscribe(() => {
                 this._flagStroke = true;
             });
         }
-        else if (this._stroke instanceof RadialGradient) {
-            this.#stroke_change_subscription = this._stroke.change$.subscribe(() => {
+        else if (stroke instanceof RadialGradient) {
+            this.#stroke_change_subscription = stroke.change$.subscribe(() => {
                 this._flagStroke = true;
             });
         }
-        else if (this._stroke instanceof Texture) {
-            this.#stroke_change_subscription = this._stroke.change$.subscribe(() => {
+        else if (stroke instanceof Texture) {
+            this.#stroke_change_subscription = stroke.change$.subscribe(() => {
                 this._flagStroke = true;
             });
         }

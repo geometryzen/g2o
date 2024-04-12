@@ -1,7 +1,9 @@
 import { Constants } from './constants';
-import { Gradient } from './effects/gradient';
+import { LinearGradient } from './effects/linear-gradient';
+import { RadialGradient } from './effects/radial-gradient';
 import { Texture } from './effects/texture';
 import { ElementBase } from './element';
+import { Flag } from './Flag';
 import { IShape } from './IShape';
 import { compose_2d_3x3_transform } from './math/compose_2d_3x3_transform';
 import { G20 } from './math/G20';
@@ -10,7 +12,7 @@ import { Subscription } from './rxjs/Subscription';
 import { computed_world_matrix } from './utils/compute_world_matrix';
 
 export interface Parent {
-    _update?(): void;
+    update?(): void;
 }
 
 export interface ShapeOptions {
@@ -20,20 +22,15 @@ export interface ShapeOptions {
 
 export abstract class Shape<P extends Parent> extends ElementBase<P> implements IShape<P> {
 
-    _flagMatrix = true;
-    _flagScale = false;
-
-    // Underlying Properties
-
     /**
      * The matrix value of the shape's position, rotation, and scale.
      */
-    _matrix: Matrix = null;
+    #matrix: Matrix = null;
 
     /**
      * The matrix value of the shape's position, rotation, and scale in the scene.
      */
-    _worldMatrix: Matrix = null;
+    #worldMatrix: Matrix = null;
 
     #position: G20;
     #position_change: Subscription;
@@ -46,12 +43,12 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
      * The API provides more convenient access for uniform scaling.
      * Make the easy things easy...
      */
-    _scale: G20 = new G20(1, 1);
+    #scale: G20 = new G20(1, 1);
     #scale_change: Subscription | null = null;
 
-    _skewX = 0;
+    #skewX = 0;
 
-    _skewY = 0;
+    #skewY = 0;
 
     /**
      * DGH: This is plonked on here by the interpretation of SVG.
@@ -59,20 +56,19 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
      */
     dataset?: DOMStringMap;
 
-    abstract _flagVisible: boolean;
     abstract automatic: boolean;
     abstract beginning: number;
-    abstract cap: string;
+    abstract cap: 'butt' | 'round' | 'square';
     abstract clip: boolean;
     abstract closed: boolean;
     abstract curved: boolean;
     abstract ending: number;
-    abstract fill: string | Gradient | Texture;
-    abstract join: string;
+    abstract fill: string | LinearGradient | RadialGradient | Texture;
+    abstract join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round';
     abstract length: number;
     abstract linewidth: number;
     abstract miter: number;
-    abstract stroke: string | Gradient | Texture;
+    abstract stroke: string | LinearGradient | RadialGradient | Texture;
     abstract visible: boolean;
     abstract getBoundingClientRect(shallow?: boolean): { width?: number; height?: number; top?: number; left?: number; right?: number; bottom?: number };
     abstract hasBoundingClientRect(): boolean;
@@ -83,6 +79,8 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     constructor(options: ShapeOptions = {}) {
 
         super();
+
+        this.flagReset(true);
 
         this.isShape = true;
 
@@ -151,28 +149,28 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         compose_2d_3x3_transform(this.position, this.scaleXY, this.attitude, this.skewX, this.skewY, this.matrix);
     }
 
-    _update(bubbles?: boolean): this {
-        if (!this._matrix.manual && this._flagMatrix) {
+    update(bubbles?: boolean): this {
+        if (!this.matrix.manual && this.flags[Flag.Matrix]) {
             this.#update_matrix();
         }
 
         if (bubbles) {
             // Ultimately we get to the top of the hierarchy of components.
             // The current design allows a Group to be parented by a View.
-            // The view will not support the _update() method.
+            // The view will not support the update() method.
             const parent = this.parent;
-            if (typeof parent._update === 'function') {
-                parent._update();
+            if (typeof parent.update === 'function') {
+                parent.update();
             }
         }
         // There's no update on the super type.
         return this;
     }
 
-    flagReset(dirtyFlag = false) {
-        this._flagMatrix = dirtyFlag;
-        this._flagScale = dirtyFlag;
-        super.flagReset();
+    flagReset(dirtyFlag = false): this {
+        this.flags[Flag.Matrix] = dirtyFlag;
+        this.flags[Flag.Scale] = dirtyFlag;
+        super.flagReset(dirtyFlag);
         return this;
     }
     useAttitude(attitude: G20): void {
@@ -182,7 +180,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     }
     #attitude_change_bind(): Subscription {
         return this.#attitude.change$.subscribe(() => {
-            this._flagMatrix = true;
+            this.flags[Flag.Matrix] = true;
         });
     }
     #attitude_change_unbind(): void {
@@ -200,7 +198,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         return this.#position.change$.subscribe(() => {
             this.#update_matrix();
             // We are only flagging the matrix
-            this._flagMatrix = true;
+            this.flags[Flag.Matrix] = true;
         });
     }
     #position_change_unbind(): void {
@@ -222,8 +220,8 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         this.#attitude.set(0, 0, attitude.a, attitude.b);
     }
     get scale(): number {
-        if (this._scale.x === this._scale.y) {
-            return this._scale.x;
+        if (this.#scale.x === this.#scale.y) {
+            return this.#scale.x;
         }
         else {
             // Some message to indicate non-uniform scaling is in effect.
@@ -236,19 +234,19 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
             this.#scale_change.unsubscribe();
             this.#scale_change = null;
         }
-        this._scale.x = scale;
-        this._scale.y = scale;
-        if (this._scale instanceof G20) {
-            this.#scale_change = this._scale.change$.subscribe(() => {
-                this._flagMatrix = true;
+        this.#scale.x = scale;
+        this.#scale.y = scale;
+        if (this.#scale instanceof G20) {
+            this.#scale_change = this.#scale.change$.subscribe(() => {
+                this.flags[Flag.Matrix] = true;
             });
         }
         this.#update_matrix();
-        this._flagMatrix = true;
-        this._flagScale = true;
+        this.flags[Flag.Matrix] = true;
+        this.flags[Flag.Scale] = true;
     }
     get scaleXY(): G20 {
-        return this._scale;
+        return this.#scale;
     }
     set scaleXY(scale: G20) {
         // TODO: We need another API to support non-uniform scaling.
@@ -257,42 +255,42 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
             this.#scale_change.unsubscribe();
             this.#scale_change = null;
         }
-        this._scale.set(scale.x, scale.y, 0, 0);
-        if (this._scale instanceof G20) {
-            this.#scale_change = this._scale.change$.subscribe(() => {
-                this._flagMatrix = true;
+        this.#scale.set(scale.x, scale.y, 0, 0);
+        if (this.#scale instanceof G20) {
+            this.#scale_change = this.#scale.change$.subscribe(() => {
+                this.flags[Flag.Matrix] = true;
             });
         }
-        this._flagMatrix = true;
-        this._flagScale = true;
+        this.flags[Flag.Matrix] = true;
+        this.flags[Flag.Scale] = true;
     }
     get skewX(): number {
-        return this._skewX;
+        return this.#skewX;
     }
     set skewX(v: number) {
-        this._skewX = v;
-        this._flagMatrix = true;
+        this.#skewX = v;
+        this.flags[Flag.Matrix] = true;
     }
     get skewY(): number {
-        return this._skewY;
+        return this.#skewY;
     }
     set skewY(v: number) {
-        this._skewY = v;
-        this._flagMatrix = true;
+        this.#skewY = v;
+        this.flags[Flag.Matrix] = true;
     }
     get matrix(): Matrix {
-        return this._matrix;
+        return this.#matrix;
     }
-    set matrix(v: Matrix) {
-        this._matrix = v;
-        this._flagMatrix = true;
+    set matrix(matrix: Matrix) {
+        this.#matrix = matrix;
+        this.flags[Flag.Matrix] = true;
     }
     get worldMatrix() {
         // TODO: Make DRY
-        computed_world_matrix(this, this._worldMatrix);
-        return this._worldMatrix;
+        computed_world_matrix(this, this.#worldMatrix);
+        return this.#worldMatrix;
     }
-    set worldMatrix(v: Matrix) {
-        this._worldMatrix = v;
+    set worldMatrix(worldMatrix: Matrix) {
+        this.#worldMatrix = worldMatrix;
     }
 }

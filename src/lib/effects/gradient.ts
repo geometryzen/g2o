@@ -107,39 +107,14 @@ export abstract class Gradient extends ElementBase<Group> {
         }
     }
 
-    /**
-     * @name Two.Gradient.Stop
-     * @see {@link Two.Stop}
-     */
-    static Stop = Stop;
-
-    /**
-     * A list of properties that are on every Gradient.
-     */
-    static Properties = ['spread', 'stops', 'renderer', 'units'];
-
-    /**
-     * @name Two.Gradient#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _update(bubbles = false): this {
+    update(bubbles = false): this {
         if (this._flagSpread || this._flagStops) {
             this._change.next(this);
         }
         return this;
     }
 
-    /**
-     * @name Two.Gradient#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
     flagReset() {
         this._flagSpread = this._flagUnits = this._flagStops = false;
         super.flagReset.call(this);

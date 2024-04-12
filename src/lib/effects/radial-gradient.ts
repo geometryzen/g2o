@@ -46,7 +46,7 @@ export class RadialGradient extends Gradient {
     static Stop = Stop;
     static Properties = ['center', 'radius', 'focal'];
 
-    _update() {
+    update() {
         if (this._flagRadius || this._flagCenter || this._flagFocal || this._flagSpread || this._flagStops) {
             this._change.next(this);
         }

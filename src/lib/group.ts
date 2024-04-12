@@ -1,5 +1,9 @@
-import { IShape } from './IShape.js';
 import { Children } from './children.js';
+import { LinearGradient } from './effects/linear-gradient.js';
+import { RadialGradient } from './effects/radial-gradient.js';
+import { Texture } from './effects/texture.js';
+import { Flag } from './Flag.js';
+import { IShape } from './IShape.js';
 import { Subscription } from './rxjs/Subscription';
 import { Parent, Shape } from './shape.js';
 
@@ -18,44 +22,43 @@ export class Group extends Shape<unknown> {
     _flagMask = false;
     _flagVisible = false;
 
-    _fill = '#fff';
-    _stroke = '#000';
-    _linewidth = 1.0;
-    _opacity = 1.0;
-    _visible = true;
-    _cap = 'round';
-    _join = 'round';
-    _miter = 4;
-    _closed = true;
-    _curved = false;
-    _automatic = true;
+    #fill: string | LinearGradient | RadialGradient | Texture = '#fff';
+    #stroke: string | LinearGradient | RadialGradient | Texture = '#000';
+    #linewidth = 1.0;
+    #opacity = 1.0;
+    #visible = true;
+    #cap: 'butt' | 'round' | 'square' = 'round';
+    #join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' = 'round';
+    #miter = 4;
+    #closed = true;
+    #curved = false;
+    /**
+     * Determines whether Path plots coordinates base don "closed" and "curved" flags.
+     * The presence in Group seems unnecessary.
+     */
+    #automatic = true;
 
     /**
-     * @name Two.Group#beginning
-     * @property {Number} - Number between zero and one to state the beginning of where the path is rendered.
+     * Number between zero and one to state the beginning of where the path is rendered.
      * a percentage value that represents at what percentage into all child shapes should the renderer start drawing.
-     * @nota-bene This is great for animating in and out stroked paths in conjunction with {@link Two.Group#ending}.
+     * @nota-bene This is great for animating in and out stroked paths in conjunction with {@link Group#ending}.
      */
-    _beginning = 0;
+    #beginning = 0.0;
 
     /**
      * @name Two.Group#ending
-     * @property {Number} - Number between zero and one to state the ending of where the path is rendered.
-     * @description {@link Two.Group#ending} is a percentage value that represents at what percentage into all child shapes should the renderer start drawing.
-     * @nota-bene This is great for animating in and out stroked paths in conjunction with {@link Two.Group#beginning}.
+     * Number between zero and one to state the ending of where the path is rendered.
+     * a percentage value that represents at what percentage into all child shapes should the renderer start drawing.
+     * @nota-bene This is great for animating in and out stroked paths in conjunction with {@link Group#beginning}.
      */
-    _ending = 1.0;
+    #ending = 1.0;
 
-    /**
-     * @name Two.Group#length
-     * @property {Number} - The sum of distances between all child lengths.
-     */
-    _length = 0;
+    #length = 0;
 
     /**
      * The shape to clip from a group's rendering.
      */
-    _mask: Shape<Group> = null;
+    #mask: Shape<Group> = null;
 
     #shapes: Children<Shape<Group>>;
     #shapes_insert: Subscription | null = null;
@@ -76,6 +79,9 @@ export class Group extends Shape<unknown> {
     constructor(shapes: Shape<Group>[] = []) {
 
         super();
+
+        this.flags[Flag.Visible] = false;
+
 
         this.#shapes = new Children(shapes);
 
@@ -197,12 +203,6 @@ export class Group extends Shape<unknown> {
 
     }
 
-    /**
-     * @name Two.Group#getById
-     * @function
-     * @description Recursively search for id. Returns the first element found.
-     * @returns A shape or `null` if nothing is found.
-     */
     getById(id: string): IShape<unknown> {
         let found = null;
         function search(node: IShape<unknown>): IShape<unknown> {
@@ -308,7 +308,7 @@ export class Group extends Shape<unknown> {
 
     getBoundingClientRect(shallow = false): { top: number; left: number; right: number; bottom: number; width?: number; height?: number } {
 
-        this._update();
+        this.update();
 
         // Variables need to be defined here, because of nested nature of groups.
         let left = Infinity, right = -Infinity,
@@ -394,12 +394,12 @@ export class Group extends Shape<unknown> {
         return this;
     }
 
-    _update() {
+    update() {
 
         if (this._flagBeginning || this._flagEnding) {
 
-            const beginning = Math.min(this._beginning, this._ending);
-            const ending = Math.max(this._beginning, this._ending);
+            const beginning = Math.min(this.beginning, this.ending);
+            const ending = Math.max(this.beginning, this.ending);
             const length = this.length;
             let sum = 0;
 
@@ -434,7 +434,7 @@ export class Group extends Shape<unknown> {
             }
         }
 
-        return super._update();
+        return super.update();
     }
 
     /**
@@ -464,30 +464,30 @@ export class Group extends Shape<unknown> {
 
     }
     get automatic(): boolean {
-        return this._automatic;
+        return this.#automatic;
     }
-    set automatic(v: boolean) {
-        this._automatic = v;
+    set automatic(automatic: boolean) {
+        this.#automatic = automatic;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
-            child.automatic = v;
+            child.automatic = automatic;
         }
     }
     get beginning(): number {
-        return this._beginning;
+        return this.#beginning;
     }
-    set beginning(v: number) {
-        this._flagBeginning = this._beginning !== v || this._flagBeginning;
-        this._beginning = v;
+    set beginning(beginning: number) {
+        this._flagBeginning = this.beginning !== beginning || this._flagBeginning;
+        this.#beginning = beginning;
     }
-    get cap(): string {
-        return this._cap;
+    get cap(): 'butt' | 'round' | 'square' {
+        return this.#cap;
     }
-    set cap(v: string) {
-        this._cap = v;
+    set cap(cap: 'butt' | 'round' | 'square') {
+        this.#cap = cap;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
-            child.cap = v;
+            child.cap = cap;
         }
     }
     /**
@@ -513,118 +513,118 @@ export class Group extends Shape<unknown> {
         }
     }
     get closed(): boolean {
-        return this._closed;
+        return this.#closed;
     }
     set closed(v: boolean) {
-        this._closed = v;
+        this.#closed = v;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             child.closed = v;
         }
     }
     get curved(): boolean {
-        return this._curved;
+        return this.#curved;
     }
     set curved(v: boolean) {
-        this._curved = v;
+        this.#curved = v;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             child.curved = v;
         }
     }
     get ending(): number {
-        return this._ending;
+        return this.#ending;
     }
-    set ending(v: number) {
-        this._flagEnding = this._ending !== v || this._flagEnding;
-        this._ending = v;
+    set ending(ending: number) {
+        this._flagEnding = this.ending !== ending || this._flagEnding;
+        this.#ending = ending;
     }
-    get fill() {
-        return this._fill;
+    get fill(): string | LinearGradient | RadialGradient | Texture {
+        return this.#fill;
     }
-    set fill(v) {
-        this._fill = v;
+    set fill(fill: string | LinearGradient | RadialGradient | Texture) {
+        this.#fill = fill;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
-            child.fill = v;
+            child.fill = fill;
         }
     }
-    get join(): string {
-        return this._join;
+    get join(): 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' {
+        return this.#join;
     }
-    set join(v: string) {
-        this._join = v;
+    set join(v: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round') {
+        this.#join = v;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             child.join = v;
         }
     }
     get length(): number {
-        if (this._flagLength || this._length <= 0) {
-            this._length = 0;
+        if (this._flagLength || this.#length <= 0) {
+            this.#length = 0;
             if (!this.children) {
-                return this._length;
+                return this.#length;
             }
             for (let i = 0; i < this.children.length; i++) {
                 const child = this.children.getAt(i);
-                this._length += child.length;
+                this.#length += child.length;
             }
         }
-        return this._length;
+        return this.#length;
     }
     get linewidth(): number {
-        return this._linewidth;
+        return this.#linewidth;
     }
-    set linewidth(v: number) {
-        this._linewidth = v;
+    set linewidth(linewidth: number) {
+        this.#linewidth = linewidth;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
-            child.linewidth = v;
+            child.linewidth = linewidth;
         }
     }
     get mask(): Shape<Group> {
-        return this._mask;
+        return this.#mask;
     }
     set mask(mask: Shape<Group>) {
-        this._mask = mask;
+        this.#mask = mask;
         this._flagMask = true;
         if (!mask.clip) {
             mask.clip = true;
         }
     }
     get miter(): number {
-        return this._miter;
+        return this.#miter;
     }
     set miter(v: number) {
-        this._miter = v;
+        this.#miter = v;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             child.miter = v;
         }
     }
     get opacity(): number {
-        return this._opacity;
+        return this.#opacity;
     }
-    set opacity(v: number) {
-        this._flagOpacity = this._opacity !== v || this._flagOpacity;
-        this._opacity = v;
+    set opacity(opacity: number) {
+        this._flagOpacity = this.opacity !== opacity || this._flagOpacity;
+        this.#opacity = opacity;
     }
-    get stroke(): string {
-        return this._stroke;
+    get stroke(): string | LinearGradient | RadialGradient | Texture {
+        return this.#stroke;
     }
-    set stroke(stroke: string) {
-        this._stroke = stroke;
+    set stroke(stroke: string | LinearGradient | RadialGradient | Texture) {
+        this.#stroke = stroke;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             child.stroke = stroke;
         }
     }
     get visible(): boolean {
-        return this._visible;
+        return this.#visible;
     }
     set visible(visible: boolean) {
-        this._flagVisible = this._visible !== visible || this._flagVisible;
-        this._visible = visible;
+        this.flags[Flag.Visible] = this.#visible !== visible || this.flags[Flag.Visible];
+        this.#visible = visible;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             child.visible = visible;

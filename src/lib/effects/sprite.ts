@@ -1,9 +1,10 @@
+import { Flag } from '../Flag.js';
+import { G20 } from '../math/G20.js';
+import { Rectangle } from '../shapes/rectangle.js';
 import { lerp } from '../utils/math.js';
 import { dateTime } from '../utils/performance.js';
-
-import { Rectangle } from '../shapes/rectangle.js';
-import { G20 } from '../math/G20.js';
 import { Texture } from './texture.js';
+
 
 export interface SpriteOptions {
     position?: G20;
@@ -33,7 +34,6 @@ export class Sprite extends Rectangle {
     _rows = 1;
     _frameRate = 0;
     _index = 0;
-    _origin: G20 = null;
 
     _onLastFrame: () => void;
 
@@ -64,9 +64,7 @@ export class Sprite extends Rectangle {
             this.texture = new Texture(path);
         }
 
-        this.origin = new G20();
-
-        this._update();
+        this.update();
 
         /**
          * @name Two.Sprite#columns
@@ -111,9 +109,9 @@ export class Sprite extends Rectangle {
     /**
      * @name Two.Sprite#play
      * @function
-     * @param {Number} [firstFrame=0] - The index of the frame to start the animation with.
-     * @param {Number} [lastFrame] - The index of the frame to end the animation with. Defaults to the last item in the {@link Two.Sprite#textures}.
-     * @param {Function} [onLastFrame] - Optional callback function to be triggered after playing the last frame. This fires multiple times when the sprite is looped.
+     * @param firstFrame The index of the frame to start the animation with.
+     * @param lastFrame The index of the frame to end the animation with. Defaults to the last item in the {@link Two.Sprite#textures}.
+     * @param onLastFrame Optional callback function to be triggered after playing the last frame. This fires multiple times when the sprite is looped.
      * @description Initiate animation playback of a {@link Two.Sprite}.
      */
     play(firstFrame = 0, lastFrame?: number, onLastFrame?: () => void): this {
@@ -161,24 +159,13 @@ export class Sprite extends Rectangle {
      * @function
      * @description Halt animation playback of a {@link Two.Sprite} and set the current frame back to the first frame.
      */
-    stop() {
-
+    stop(): this {
         this._playing = false;
         this._index = 0;
-
         return this;
-
     }
 
-    /**
-     * @name Two.Sprite#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
-    _update() {
+    update(): this {
 
         const effect = this._texture;
         const cols = this._columns;
@@ -265,25 +252,18 @@ export class Sprite extends Rectangle {
 
         }
 
-        super._update.call(this);
+        super.update.call(this);
 
         return this;
 
     }
 
-    /**
-     * @name Two.Sprite#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
-    flagReset() {
-
-        this._flagTexture = this._flagColumns = this._flagRows
-            = this._flagFrameRate = false;
-
-        super.flagReset.call(this);
-
+    flagReset(dirtyFlag = false) {
+        this.flags[Flag.Texture] = dirtyFlag;
+        this.flags[Flag.Columns] = dirtyFlag;
+        this.flags[Flag.Rows] = dirtyFlag;
+        this.flags[Flag.FrameRate] = dirtyFlag;
+        super.flagReset(dirtyFlag);
         return this;
     }
     get texture() {

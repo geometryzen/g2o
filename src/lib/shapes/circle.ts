@@ -1,4 +1,5 @@
 import { Anchor } from '../anchor.js';
+import { Flag } from '../Flag.js';
 import { G20 } from '../math/G20.js';
 import { Path, PathOptions } from '../path.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
@@ -12,8 +13,6 @@ export interface CircleOptions {
 }
 
 export class Circle extends Path {
-
-    _flagRadius = false;
 
     #radius: number;
 
@@ -31,14 +30,14 @@ export class Circle extends Path {
 
         if (typeof options.radius === 'number') {
             this.#radius = options.radius;
-            this._flagRadius = true;
         }
         else {
             this.#radius = 0;
-            this._flagRadius = true;
         }
 
-        this._update();
+        this.flagReset(true);
+
+        this.update();
     }
 
     dispose(): void {
@@ -49,13 +48,12 @@ export class Circle extends Path {
         return new Circle({ position: center, radius: radius });
     }
 
-    _update() {
-
-        if (this._flagVertices || this._flagRadius) {
+    update(): this {
+        if (this.flags[Flag.Vertices] || this.flags[Flag.Radius]) {
 
             let length = this.vertices.length;
 
-            if (!this._closed && length > 2) {
+            if (!this.closed && length > 2) {
                 length -= 1;
             }
 
@@ -89,12 +87,12 @@ export class Circle extends Path {
             }
         }
 
-        super._update.call(this);
+        super.update();
         return this;
     }
 
     flagReset(dirtyFlag = false): this {
-        this._flagRadius = dirtyFlag;
+        this.flags[Flag.Radius] = dirtyFlag;
         super.flagReset(dirtyFlag);
         return this;
     }
@@ -104,7 +102,7 @@ export class Circle extends Path {
     }
     set radius(v: number) {
         this.#radius = v;
-        this._flagRadius = true;
+        this.flags[Flag.Radius] = true;
     }
 }
 

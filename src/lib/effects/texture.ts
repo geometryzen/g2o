@@ -121,7 +121,7 @@ export class Texture extends ElementBase<Group> {
         this.#change = new BehaviorSubject(this);
         this.change$ = this.#change.asObservable();
 
-        this._update();
+        this.update();
     }
 
     static Properties = [
@@ -335,7 +335,7 @@ export class Texture extends ElementBase<Group> {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _update(bubbles = false): this {
+    update(bubbles = false): this {
 
         if (this._flagSrc || this._flagImage) {
 

@@ -1,4 +1,5 @@
 import { Anchor } from '../anchor.js';
+import { Flag } from '../Flag.js';
 import { G20 } from '../math/G20.js';
 import { Path } from '../path.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
@@ -72,7 +73,7 @@ export class Ellipse extends Path {
             this.height = ry * 2;
         }
 
-        this._update();
+        this.update();
 
         if (typeof x === 'number') {
             this.position.x = x;
@@ -83,27 +84,14 @@ export class Ellipse extends Path {
 
     }
 
-    /**
-     * @name Two.Ellipse.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.Ellipse}.
-     */
     static Properties = ['width', 'height'];
 
-    /**
-     * @name Two.Ellipse#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
-    _update() {
-
-        if (this._flagVertices || this._flagWidth || this._flagHeight) {
+    update(): this {
+        if (this.flags[Flag.Vertices] || this._flagWidth || this._flagHeight) {
 
             let length = this.vertices.length;
 
-            if (!this._closed && length > 2) {
+            if (!this.closed && length > 2) {
                 length -= 1;
             }
 
@@ -134,7 +122,7 @@ export class Ellipse extends Path {
             }
         }
 
-        super._update.call(this);
+        super.update.call(this);
         return this;
 
     }

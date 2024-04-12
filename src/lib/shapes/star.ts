@@ -1,4 +1,5 @@
 import { Anchor } from '../anchor.js';
+import { Flag } from '../Flag.js';
 import { G20 } from '../math/G20.js';
 import { Path } from '../path.js';
 import { TWO_PI } from '../utils/math.js';
@@ -45,7 +46,7 @@ export class Star extends Path {
 
         this.sides = sides;
 
-        this._update();
+        this.update();
 
         this.position.x = x;
         this.position.y = y;
@@ -54,9 +55,9 @@ export class Star extends Path {
     static Properties = ['innerRadius', 'outerRadius', 'sides'];
 
 
-    _update() {
+    update() {
 
-        if (this._flagVertices || this._flagInnerRadius || this._flagOuterRadius || this._flagSides) {
+        if (this.flags[Flag.Vertices] || this._flagInnerRadius || this._flagOuterRadius || this._flagSides) {
 
             const sides = this._sides * 2;
             const amount = sides + 1;
@@ -86,7 +87,7 @@ export class Star extends Path {
             }
         }
 
-        super._update.call(this);
+        super.update.call(this);
 
         return this;
     }

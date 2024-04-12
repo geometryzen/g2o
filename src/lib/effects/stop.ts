@@ -13,8 +13,8 @@ export class Stop extends ElementBase<Gradient> {
     _opacity = 1;
     _color = '#fff';
 
-    readonly #change: BehaviorSubject<this>;
-    readonly change$: Observable<this>;
+    readonly #change: BehaviorSubject<this> = new BehaviorSubject(this);
+    readonly change$: Observable<this> = this.#change.asObservable();
 
     /**
      * @param offset The offset percentage of the stop represented as a zero-to-one value. Default value flip flops from zero-to-one as new stops are created.
@@ -29,8 +29,7 @@ export class Stop extends ElementBase<Gradient> {
          * @name Two.Stop#offset
          * @property {Number} - The offset percentage of the stop represented as a zero-to-one value.
          */
-        this.offset = typeof offset === 'number' ? offset
-            : Stop.Index <= 0 ? 0 : 1;
+        this.offset = typeof offset === 'number' ? offset : Stop.Index <= 0 ? 0 : 1;
 
         /**
          * @name Two.Stop#opacity
@@ -43,13 +42,9 @@ export class Stop extends ElementBase<Gradient> {
          * @name Two.Stop#color
          * @property {String} - The color of the stop.
          */
-        this.color = (typeof color === 'string') ? color
-            : Stop.Index <= 0 ? '#fff' : '#000';
+        this.color = (typeof color === 'string') ? color : Stop.Index <= 0 ? '#fff' : '#000';
 
         Stop.Index = (Stop.Index + 1) % 2;
-
-        this.#change = new BehaviorSubject(this);
-        this.change$ = this.#change.asObservable();
     }
 
     /**

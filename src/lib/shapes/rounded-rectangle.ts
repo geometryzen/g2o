@@ -1,4 +1,5 @@
 import { Anchor } from '../anchor';
+import { Flag } from '../Flag';
 import { G20 } from '../math/G20';
 import { Path } from '../path';
 import { Subscription } from '../rxjs/Subscription';
@@ -66,7 +67,7 @@ export class RoundedRectangle extends Path {
             this.radius = radius;
         }
 
-        this._update();
+        this.update();
 
         if (typeof x === 'number') {
             this.position.x = x;
@@ -79,9 +80,9 @@ export class RoundedRectangle extends Path {
 
     static Properties = ['width', 'height', 'radius'];
 
-    _update() {
+    update() {
 
-        if (this._flagVertices || this._flagWidth || this._flagHeight || this._flagRadius) {
+        if (this.flags[Flag.Vertices] || this._flagWidth || this._flagHeight || this._flagRadius) {
 
             const width = this._width;
             const height = this._height;
@@ -169,7 +170,7 @@ export class RoundedRectangle extends Path {
             v.copy(this.vertices.getAt(8));
         }
 
-        super._update.call(this);
+        super.update.call(this);
 
         return this;
 

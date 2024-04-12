@@ -1,5 +1,6 @@
 import { Anchor } from '../anchor.js';
 import { Constants } from '../constants.js';
+import { Flag } from '../Flag.js';
 import { G20 } from '../math/G20.js';
 import { Path } from '../path.js';
 import { HALF_PI, mod, TWO_PI } from '../utils/math.js';
@@ -111,7 +112,7 @@ export class ArcSegment extends Path {
             this.endAngle = ea;
         }
 
-        this._update();
+        this.update();
 
         if (typeof x === 'number') {
             this.position.x = x;
@@ -122,23 +123,11 @@ export class ArcSegment extends Path {
 
     }
 
-    /**
-     * @name Two.ArcSegment.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.ArcSegment}.
-     */
     static Properties = ['startAngle', 'endAngle', 'innerRadius', 'outerRadius'];
 
-    /**
-     * @name Two.ArcSegment#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
-    _update() {
+    update() {
 
-        if (this._flagVertices || this._flagStartAngle || this._flagEndAngle
+        if (this.flags[Flag.Vertices] || this._flagStartAngle || this._flagEndAngle
             || this._flagInnerRadius || this._flagOuterRadius) {
 
             const sa = this._startAngle;
@@ -279,7 +268,7 @@ export class ArcSegment extends Path {
 
         }
 
-        super._update.call(this);
+        super.update.call(this);
 
         return this;
 

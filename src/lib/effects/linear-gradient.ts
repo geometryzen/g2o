@@ -35,15 +35,7 @@ export class LinearGradient extends Gradient {
      */
     static Stop = Stop;
 
-    /**
-     * @name Two.LinearGradient#_update
-     * @function
-     * @private
-     * @param {Boolean} [bubbles=false] - Force the parent to `_update` as well.
-     * @description This is called before rendering happens by the renderer. This applies all changes necessary so that rendering is up-to-date but not updated more than it needs to be.
-     * @nota-bene Try not to call this method more than once a frame.
-     */
-    _update() {
+    update() {
         if (this._flagEndPoints || this._flagSpread || this._flagStops) {
             this._change.next(this);
         }

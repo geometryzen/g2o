@@ -6,7 +6,7 @@
         ".": {
             "import": "./dist/esm/index.min.js",
             "require": "./dist/commonjs/index.js",
-            "system": "./dist/system/index.js",
+            "system": "./dist/system/index.min.js",
             "types": "./dist/index.d.ts"
         }
     },
@@ -88,8 +88,8 @@
         "gh-pages": "^6.1.1",
         "jest": "^29.7.0",
         "open-cli": "^8.0.0",
-        "release-it": "^17.1.1",
-        "rollup": "^4.14.1",
+        "release-it": "^17.2.0",
+        "rollup": "^4.14.2",
         "rollup-plugin-dts": "^6.1.0",
         "rollup-plugin-peer-deps-external": "^2.2.4",
         "ts-jest": "^29.1.2",

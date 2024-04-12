@@ -1,5 +1,6 @@
 import { Subject } from 'rxjs';
 import { Child } from './children';
+import { Flag } from './Flag';
 import { SharedInfo } from './renderers/SharedInfo';
 import { Observable } from './rxjs/Observable';
 
@@ -16,8 +17,7 @@ export abstract class ElementBase<P> implements Child {
      */
     parent: P;
 
-    _flagId = false;
-    _flagClassName = false;
+    readonly flags: { [flag: number]: boolean } = {};
 
     /**
      * TODO: Since every element has an identifier, it should be possible to store this information that is shared
@@ -25,21 +25,24 @@ export abstract class ElementBase<P> implements Child {
      */
     viewInfo: SharedInfo = {};
 
-    _id: string | null = null;
-    readonly #id: Subject<{ id: string, previous_id: string | null }>;
+    #id: string | null = null;
+    readonly #id_and_previous: Subject<{ id: string, previous_id: string | null }>;
     readonly id$: Observable<{ id: string, previous_id: string | null }>;
 
-    _className = '';
+    #className = '';
 
     classList: string[] = [];
 
     constructor() {
-        this.#id = new Subject();
-        this.id$ = this.#id.asObservable();
+        this.#id_and_previous = new Subject();
+        this.id$ = this.#id_and_previous.asObservable();
+        this.flagReset(false);
     }
 
-    flagReset() {
-        this._flagId = this._flagClassName = false;
+    flagReset(dirtyFlag = false): this {
+        this.flags[Flag.Id] = dirtyFlag;
+        this.flags[Flag.ClassName] = dirtyFlag;
+        return this;
     }
     get renderer(): SharedInfo {
         return this.viewInfo;
@@ -48,25 +51,25 @@ export abstract class ElementBase<P> implements Child {
         this.viewInfo = renderer;
     }
     get id(): string {
-        return this._id;
+        return this.#id;
     }
     set id(id: string) {
         const previous_id = this.id;
         if (id === previous_id) {
             return;
         }
-        this._id = id;
-        this._flagId = true;
-        this.#id.next({ id, previous_id });
+        this.#id = id;
+        this.flags[Flag.Id] = true;
+        this.#id_and_previous.next({ id, previous_id });
     }
     get className(): string {
-        return this._className;
+        return this.#className;
     }
-    set className(v: string) {
-        if (this._className !== v) {
-            this._flagClassName = true;
-            this.classList = v.split(/\s+?/);
-            this._className = v;
+    set className(className: string) {
+        if (this.className !== className) {
+            this.flags[Flag.ClassName] = true;
+            this.classList = className.split(/\s+?/);
+            this.#className = className;
         }
     }
 }

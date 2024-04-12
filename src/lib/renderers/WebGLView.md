@@ -78,7 +78,7 @@ const webgl = {
                 return;
             }
 
-            this._update();
+            this.update();
 
             const parent = this.parent;
             const flagParentMatrix = (parent._matrix && parent._matrix.manual) || parent._flagMatrix;
@@ -185,7 +185,7 @@ const webgl = {
             const cap = elem._cap;
             const join = elem._join;
             const miter = elem._miter;
-            const closed = elem._closed;
+            const closed = elem.closed;
             const dashes = elem.dashes;
             const length = commands.length;
             const last = length - 1;
@@ -466,7 +466,7 @@ const webgl = {
                 return this;
             }
 
-            this._update();
+            this.update();
 
             // Calculate what changed
 
@@ -554,16 +554,16 @@ const webgl = {
 
                 // We still need to update child Two elements on the fill and
                 // stroke properties.
-                if (this._fill && this._fill._update) {
-                    this._fill._update();
+                if (this._fill && this._fill.update) {
+                    this._fill.update();
                 }
-                if (this._stroke && this._stroke._update) {
-                    this._stroke._update();
+                if (this._stroke && this._stroke.update) {
+                    this._stroke.update();
                 }
 
             }
 
-            if (this._clip && !forcedParent || !this._renderer.texture) {
+            if (this.clip && !forcedParent || !this._renderer.texture) {
                 return this;
             }
 
@@ -729,7 +729,7 @@ const webgl = {
                 return this;
             }
 
-            this._update();
+            this.update();
 
             // Calculate what changed
 
@@ -814,16 +814,16 @@ const webgl = {
 
                 // We still need to update child Two elements on the fill and
                 // stroke properties.
-                if (this._fill && this._fill._update) {
-                    this._fill._update();
+                if (this._fill && this._fill.update) {
+                    this._fill.update();
                 }
-                if (this._stroke && this._stroke._update) {
-                    this._stroke._update();
+                if (this._stroke && this._stroke.update) {
+                    this._stroke.update();
                 }
 
             }
 
-            if (this._clip && !forcedParent || !this._renderer.texture) {
+            if (this.clip && !forcedParent || !this._renderer.texture) {
                 return this;
             }
 
@@ -1124,7 +1124,7 @@ const webgl = {
                 return this;
             }
 
-            this._update();
+            this.update();
 
             // Calculate what changed
 
@@ -1213,16 +1213,16 @@ const webgl = {
 
                 // We still need to update child Two elements on the fill and
                 // stroke properties.
-                if (this._fill && this._fill._update) {
-                    this._fill._update();
+                if (this._fill && this._fill.update) {
+                    this._fill.update();
                 }
-                if (this._stroke && this._stroke._update) {
-                    this._stroke._update();
+                if (this._stroke && this._stroke.update) {
+                    this._stroke.update();
                 }
 
             }
 
-            if (this._clip && !forcedParent || !this._renderer.texture) {
+            if (this.clip && !forcedParent || !this._renderer.texture) {
                 return this;
             }
 
@@ -1280,7 +1280,7 @@ const webgl = {
                 return;
             }
 
-            this._update();
+            this.update();
 
             if (!this.renderer.effect || this._flagEndPoints || this._flagStops
                 || this._flagUnits) {
@@ -1322,7 +1322,7 @@ const webgl = {
                 return;
             }
 
-            this._update();
+            this.update();
 
             if (!this._renderer.effect || this._flagCenter || this._flagFocal
                 || this._flagRadius || this._flagStops || this._flagUnits) {
@@ -1367,7 +1367,7 @@ const webgl = {
                 return;
             }
 
-            this._update();
+            this.update();
 
             const image = this.image;
 

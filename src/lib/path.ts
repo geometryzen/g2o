@@ -1,9 +1,9 @@
 import { Anchor } from './anchor';
 import { Collection } from './collection';
-import { Gradient } from './effects/gradient';
 import { LinearGradient } from './effects/linear-gradient';
 import { RadialGradient } from './effects/radial-gradient';
 import { Texture } from './effects/texture';
+import { Flag } from './Flag';
 import { Group } from './group';
 import { decompose_2d_3x3_matrix } from './math/decompose_2d_3x3_matrix';
 import { G20 } from './math/G20.js';
@@ -41,138 +41,53 @@ export interface PathOptions {
 
 export class Path extends Shape<Group> {
 
-    _flagVertices = true;
-    _flagLength = true;
-    _flagFill = true;
-    _flagStroke = true;
-    _flagLinewidth = true;
-    _flagOpacity = true;
-    _flagVisible = true;
-    _flagCap = true;
-    _flagJoin = true;
-    _flagMiter = true;
-    _flagMask = false;
-    _flagClip = false;
+    #length = 0;
 
-    /**
-     * @name Two.Path#_length
-     * @private
-     * @see {@link Two.Path#length}
-     */
-    _length = 0;
+    readonly #lengths: number[] = [];
 
-    readonly _lengths: number[] = [];
-
-    /**
-     * @name Two.Path#_fill
-     * @private
-     * @see {@link Two.Path#fill}
-     */
-    _fill: string | Gradient | Texture = '#fff';
+    #fill: string | LinearGradient | RadialGradient | Texture = '#fff';
     #fill_change_subscription: Subscription | null = null;
 
-    /**
-     * @name Two.Path#_stroke
-     * @private
-     * @see {@link Two.Path#stroke}
-     */
-    _stroke: string | Gradient | Texture = '#000';
+    #stroke: string | LinearGradient | RadialGradient | Texture = '#000';
     #stroke_change_subscription: Subscription | null = null;
 
-    /**
-     * @name Two.Path#_linewidth
-     * @private
-     * @see {@link Two.Path#linewidth}
-     */
-    _linewidth = 1;
+    #linewidth = 1;
 
     /**
-     * @name Two.Path#_opacity
-     * @private
-     * @see {@link Two.Path#opacity}
+     * Used for both fill opacity and stroke opacity.
      */
-    _opacity = 1.0;
+    #opacity = 1.0;
+
+    #visible = true;
 
     /**
-     * @name Two.Path#_visible
-     * @private
-     * @see {@link Two.Path#visible}
+     * stroke-linecap
      */
-    _visible = true;
+    #cap: 'butt' | 'round' | 'square' = 'round';
 
     /**
-     * @name Two.Path#_cap
-     * @private
-     * @see {@link Two.Path#cap}
+     * stroke-linejoin
      */
-    _cap = 'round';
+    #join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' = 'round';
 
     /**
-     * @name Two.Path#_join
-     * @private
-     * @see {@link Two.Path#join}
+     * stroke-miterlimit
      */
-    _join = 'round';
+    #miter = 4;
 
-    /**
-     * @name Two.Path#_miter
-     * @private
-     * @see {@link Two.Path#miter}
-     */
-    _miter = 4;
+    #closed = true;
+    #curved = false;
+    #automatic = true;
+    #beginning = 0.0;
+    #ending = 1.0;
 
-    /**
-     * @name Two.Path#_closed
-     * @private
-     * @see {@link Two.Path#closed}
-     */
-    _closed = true;
+    #mask: Shape<Group> | null = null;
 
-    /**
-     * @name Two.Path#_curved
-     * @private
-     * @see {@link Two.Path#curved}
-     */
-    _curved = false;
+    #clip = false;
 
-    /**
-     * @name Two.Path#_automatic
-     * @private
-     * @see {@link Two.Path#automatic}
-     */
-    _automatic = true;
+    #dashes: number[] = null;
 
-    /**
-     * @name Two.Path#_beginning
-     * @private
-     * @see {@link Two.Path#beginning}
-     */
-    _beginning = 0;
-
-    /**
-     * @name Two.Path#_ending
-     * @private
-     * @see {@link Two.Path#ending}
-     */
-    _ending = 1.0;
-
-    _mask: Shape<Group> | null = null;
-
-    /**
-     * @name Two.Path#_clip
-     * @private
-     * @see {@link Two.Path#clip}
-     */
-    _clip = false;
-
-    /**
-     * @name Two.Path#_dashes
-     * @private
-     * @see {@link Two.Path#dashes}
-     */
-    _dashes: number[] = null;
-
-    _collection: Collection<Anchor>;
+    #collection: Collection<Anchor>;
     #collection_insert_subscription: Subscription | null = null;
     #collection_remove_subscription: Subscription | null = null;
 
@@ -188,6 +103,10 @@ export class Path extends Shape<Group> {
     constructor(vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean, options: PathOptions = {}) {
 
         super(options);
+
+        this.flagReset(true);
+        this.flags[Flag.Mask] = false;
+        this.flags[Flag.Clip] = false;
 
         this.viewInfo.type = 'path';
         this.viewInfo.anchor_vertices = [];
@@ -395,7 +314,7 @@ export class Path extends Shape<Group> {
             top = Infinity, bottom = -Infinity;
 
         // TODO: Update this to not __always__ update. Just when it needs to.
-        this._update();
+        this.update();
 
         const M = shallow ? this.matrix : this.worldMatrix;
 
@@ -519,11 +438,11 @@ export class Path extends Shape<Group> {
         let a = null;
         let b = null;
 
-        for (let i = 0, l = this._lengths.length, sum = 0; i < l; i++) {
+        for (let i = 0, l = this.#lengths.length, sum = 0; i < l; i++) {
 
-            if (sum + this._lengths[i] >= target) {
+            if (sum + this.#lengths[i] >= target) {
 
-                if (this._closed) {
+                if (this.closed) {
                     ia = mod(i, length);
                     ib = mod(i - 1, length);
                     if (i === 0) {
@@ -539,8 +458,8 @@ export class Path extends Shape<Group> {
                 a = this.vertices.getAt(ia);
                 b = this.vertices.getAt(ib);
                 target -= sum;
-                if (this._lengths[i] !== 0) {
-                    t = target / this._lengths[i];
+                if (this.#lengths[i] !== 0) {
+                    t = target / this.#lengths[i];
                 }
                 else {
                     t = 0;
@@ -550,8 +469,7 @@ export class Path extends Shape<Group> {
 
             }
 
-            sum += this._lengths[i];
-
+            sum += this.#lengths[i];
         }
 
         if (a === null || b === null) {
@@ -636,38 +554,30 @@ export class Path extends Shape<Group> {
     }
 
     /**
-     * @name Two.Path#plot
-     * @function
      * @description Based on closed / curved and sorting of vertices plot where all points should be and where the respective handles should be too.
-     * @nota-bene While this method is public it is internally called by {@link Two.Path#_update} when `automatic = true`.
+     * @nota-bene While this method is public it is internally called by {@link Path#update} when `automatic = true`.
      */
-    plot() {
-
+    plot(): this {
         if (this.curved) {
-            getCurveFromPoints(this._collection, this.closed);
+            getCurveFromPoints(this.#collection, this.closed);
             return this;
         }
-
-        for (let i = 0; i < this._collection.length; i++) {
-            this._collection.getAt(i).command = i === 0 ? Commands.move : Commands.line;
+        for (let i = 0; i < this.#collection.length; i++) {
+            this.#collection.getAt(i).command = i === 0 ? Commands.move : Commands.line;
         }
-
         return this;
-
     }
 
     /**
-     * @name Two.Path#subdivide
-     * @function
-     * @param {Number} limit - How many times to recurse subdivisions.
-     * @description Insert a {@link Two.Anchor} at the midpoint between every item in {@link Two.Path#vertices}.
+     * Insert an anchor at the midpoint between every vertex.
+     * @param limit - How many times to recurse subdivisions.
      */
-    subdivide(limit: number) {
+    subdivide(limit: number): this {
         // TODO: DRYness (function below)
-        this._update();
+        this.update();
 
         const last = this.vertices.length - 1;
-        const closed = this._closed || this.vertices.getAt(last).command === Commands.close;
+        const closed = this.closed || this.vertices.getAt(last).command === Commands.close;
         let b = this.vertices.getAt(last);
         let points: Anchor[] = [], verts;
 
@@ -703,7 +613,7 @@ export class Path extends Shape<Group> {
             if (i >= last) {
 
                 // TODO: Add check if the two vectors in question are the same values.
-                if (this._closed && this._automatic) {
+                if (this.closed && this.automatic) {
 
                     b = a;
 
@@ -734,27 +644,22 @@ export class Path extends Shape<Group> {
 
         });
 
-        this._automatic = false;
-        this._curved = false;
+        this.automatic = false;
+        this.curved = false;
         this.vertices = new Collection(points);
 
         return this;
     }
 
-    /**
-     * @param {Number} [limit] -
-     * @param {Boolean} [silent=false] - If set to `true` then the path isn't updated before calculation. Useful for internal use.
-     * @description Recalculate the {@link Two.Path#length} value.
-     */
-    _updateLength(limit?: number, silent = false): this {
+    #updateLength(limit?: number, silent = false): this {
         // TODO: DRYness (function above)
         if (!silent) {
-            this._update();
+            this.update();
         }
 
         const length = this.vertices.length;
         const last = length - 1;
-        const closed = false;//this._closed || this.vertices[last]._command === Commands.close;
+        const closed = false;//this.closed || this.vertices[last]._command === Commands.close;
 
         let b = this.vertices.getAt(last);
         let sum = 0;
@@ -763,19 +668,19 @@ export class Path extends Shape<Group> {
 
             if ((i <= 0 && !closed) || a.command === Commands.move) {
                 b = a;
-                this._lengths[i] = 0;
+                this.#lengths[i] = 0;
                 return;
             }
 
-            this._lengths[i] = getCurveLength(a, b, limit);
-            sum += this._lengths[i];
+            this.#lengths[i] = getCurveLength(a, b, limit);
+            sum += this.#lengths[i];
 
             if (i >= last && closed) {
 
                 b = this.vertices.getAt((i + 1) % length);
 
-                this._lengths[i + 1] = getCurveLength(a, b, limit);
-                sum += this._lengths[i + 1];
+                this.#lengths[i + 1] = getCurveLength(a, b, limit);
+                sum += this.#lengths[i + 1];
 
             }
 
@@ -783,32 +688,32 @@ export class Path extends Shape<Group> {
 
         });
 
-        this._length = sum;
-        this._flagLength = false;
+        this.#length = sum;
+        this.flags[Flag.Length] = false;
 
         return this;
 
     }
 
-    _update() {
-        if (this._flagVertices) {
+    update() {
+        if (this.flags[Flag.Vertices]) {
 
-            if (this._automatic) {
+            if (this.automatic) {
                 this.plot();
             }
 
-            if (this._flagLength) {
-                this._updateLength(undefined, true);
+            if (this.flags[Flag.Length]) {
+                this.#updateLength(undefined, true);
             }
 
-            const l = this._collection.length;
-            const closed = this._closed;
+            const l = this.#collection.length;
+            const closed = this.closed;
 
-            const beginning = Math.min(this._beginning, this._ending);
-            const ending = Math.max(this._beginning, this._ending);
+            const beginning = Math.min(this.beginning, this.ending);
+            const ending = Math.max(this.beginning, this.ending);
 
-            const bid = getIdByLength(this, beginning * this._length);
-            const eid = getIdByLength(this, ending * this._length);
+            const bid = getIdByLength(this, beginning * this.length);
+            const eid = getIdByLength(this, ending * this.length);
 
             const low = ceil(bid);
             const high = floor(eid);
@@ -836,13 +741,13 @@ export class Path extends Shape<Group> {
 
                         if (i > high && !right) {
 
-                            const v = this.viewInfo.anchor_collection[i].copy(this._collection.getAt(i));
+                            const v = this.viewInfo.anchor_collection[i].copy(this.#collection.getAt(i));
                             this.getPointAt(ending, v);
                             v.command = this.viewInfo.anchor_collection[i].command;
                             this.viewInfo.anchor_vertices.push(v);
 
                             right = v;
-                            prev = this._collection.getAt(i - 1);
+                            prev = this.#collection.getAt(i - 1);
 
                             // Project control over the percentage `t`
                             // of the in-between point
@@ -871,7 +776,7 @@ export class Path extends Shape<Group> {
                         }
                         else if (i >= low && i <= high) {
 
-                            const v = this.viewInfo.anchor_collection[i].copy(this._collection.getAt(i));
+                            const v = this.viewInfo.anchor_collection[i].copy(this.#collection.getAt(i));
                             this.viewInfo.anchor_vertices.push(v);
 
                             if (i === high && contains(this, ending)) {
@@ -908,12 +813,12 @@ export class Path extends Shape<Group> {
 
                     const i = low - 1;
 
-                    const v = this.viewInfo.anchor_collection[i].copy(this._collection.getAt(i));
+                    const v = this.viewInfo.anchor_collection[i].copy(this.#collection.getAt(i));
                     this.getPointAt(beginning, v);
                     v.command = Commands.move;
                     this.viewInfo.anchor_vertices.unshift(v);
 
-                    next = this._collection.getAt(i + 1);
+                    next = this.#collection.getAt(i + 1);
 
                     // Project control over the percentage `t`
                     // of the in-between point
@@ -938,23 +843,24 @@ export class Path extends Shape<Group> {
                 }
             }
         }
-        super._update();
+        super.update();
         return this;
     }
 
     flagReset(dirtyFlag = false): this {
 
-        this._flagVertices = dirtyFlag;
-        this._flagLength = dirtyFlag;
-        this._flagFill = dirtyFlag;
-        this._flagStroke = dirtyFlag;
-        this._flagLinewidth = dirtyFlag;
-        this._flagOpacity = dirtyFlag;
-        this._flagVisible = dirtyFlag;
-        this._flagCap = dirtyFlag;
-        this._flagJoin = dirtyFlag;
-        this._flagMiter = dirtyFlag;
-        this._flagClip = dirtyFlag;
+        this.flags[Flag.Cap] = dirtyFlag;
+        this.flags[Flag.Clip] = dirtyFlag;
+        this.flags[Flag.Fill] = dirtyFlag;
+        this.flags[Flag.Join] = dirtyFlag;
+        this.flags[Flag.Length] = dirtyFlag;
+        this.flags[Flag.Linewidth] = dirtyFlag;
+        this.flags[Flag.Mask] = dirtyFlag;
+        this.flags[Flag.Miter] = dirtyFlag;
+        this.flags[Flag.Opacity] = dirtyFlag;
+        this.flags[Flag.Stroke] = dirtyFlag;
+        this.flags[Flag.Vertices] = dirtyFlag;
+        this.flags[Flag.Visible] = dirtyFlag;
 
         super.flagReset(dirtyFlag);
 
@@ -962,13 +868,13 @@ export class Path extends Shape<Group> {
 
     }
     get automatic(): boolean {
-        return this._automatic;
+        return this.#automatic;
     }
     set automatic(automatic: boolean) {
-        if (automatic === this._automatic) {
+        if (automatic === this.automatic) {
             return;
         }
-        this._automatic = !!automatic;
+        this.#automatic = !!automatic;
         this.vertices.forEach(function (v: Anchor) {
             if (automatic) {
                 v.ignore();
@@ -979,158 +885,171 @@ export class Path extends Shape<Group> {
         });
     }
     get beginning(): number {
-        return this._beginning;
+        return this.#beginning;
     }
-    set beginning(v: number) {
-        this._beginning = v;
-        this._flagVertices = true;
+    set beginning(beginning: number) {
+        this.#beginning = beginning;
+        this.flags[Flag.Vertices] = true;
     }
-    get cap(): string {
-        return this._cap;
+    /**
+     * Defines the shape to be used at the end of open subpaths when they are stroked.
+     * @see https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-linecap
+     */
+    get cap(): 'butt' | 'round' | 'square' {
+        return this.#cap;
     }
-    set cap(v: string) {
-        this._cap = v;
-        this._flagCap = true;
+    set cap(cap: 'butt' | 'round' | 'square') {
+        this.#cap = cap;
+        this.flags[Flag.Cap] = true;
     }
     get clip(): boolean {
-        return this._clip;
+        return this.#clip;
     }
     set clip(v: boolean) {
-        this._clip = v;
-        this._flagClip = true;
+        this.#clip = v;
+        this.flags[Flag.Clip] = true;
     }
     get closed(): boolean {
-        return this._closed;
+        return this.#closed;
     }
-    set closed(v: boolean) {
-        this._closed = !!v;
-        this._flagVertices = true;
+    set closed(closed: boolean) {
+        this.#closed = !!closed;
+        this.flags[Flag.Vertices] = true;
     }
     get curved(): boolean {
-        return this._curved;
+        return this.#curved;
     }
-    set curved(v: boolean) {
-        this._curved = !!v;
-        this._flagVertices = true;
+    set curved(curved: boolean) {
+        this.#curved = !!curved;
+        this.flags[Flag.Vertices] = true;
     }
     get dashes(): number[] {
-        return this._dashes;
+        return this.#dashes;
     }
-    set dashes(v: number[]) {
-        if (typeof get_dashes_offset(v) !== 'number') {
-            set_dashes_offset(v, (this.dashes && get_dashes_offset(this._dashes)) || 0);
+    set dashes(dashes: number[]) {
+        if (typeof get_dashes_offset(dashes) !== 'number') {
+            set_dashes_offset(dashes, (this.dashes && get_dashes_offset(this.dashes)) || 0);
         }
-        this._dashes = v;
+        this.#dashes = dashes;
     }
     get ending(): number {
-        return this._ending;
+        return this.#ending;
     }
-    set ending(v: number) {
-        this._ending = v;
-        this._flagVertices = true;
+    set ending(ending: number) {
+        this.#ending = ending;
+        this.flags[Flag.Vertices] = true;
     }
-    get fill(): string | Gradient | Texture {
-        return this._fill;
+    get fill(): string | LinearGradient | RadialGradient | Texture {
+        return this.#fill;
     }
-    set fill(f: string | Gradient | Texture) {
+    set fill(fill: string | LinearGradient | RadialGradient | Texture) {
         if (this.#fill_change_subscription) {
             this.#fill_change_subscription.unsubscribe();
             this.#fill_change_subscription = null;
         }
 
-        this._fill = f;
-        this._flagFill = true;
+        this.#fill = fill;
+        this.flags[Flag.Fill] = true;
 
-        if (this._fill instanceof LinearGradient) {
-            this.#fill_change_subscription = this._fill.change$.subscribe(() => {
-                this._flagFill = true;
+        if (fill instanceof LinearGradient) {
+            this.#fill_change_subscription = fill.change$.subscribe(() => {
+                this.flags[Flag.Fill] = true;
             });
         }
-        else if (this._fill instanceof RadialGradient) {
-            this.#fill_change_subscription = this._fill.change$.subscribe(() => {
-                this._flagFill = true;
+        else if (fill instanceof RadialGradient) {
+            this.#fill_change_subscription = fill.change$.subscribe(() => {
+                this.flags[Flag.Fill] = true;
             });
         }
-        else if (this._fill instanceof Texture) {
-            this.#fill_change_subscription = this._fill.change$.subscribe(() => {
-                this._flagFill = true;
+        else if (fill instanceof Texture) {
+            this.#fill_change_subscription = fill.change$.subscribe(() => {
+                this.flags[Flag.Fill] = true;
             });
+        }
+        else if (typeof fill === 'string') {
+
+        }
+        else {
+            fill
         }
     }
-    get join(): string {
-        return this._join;
+    get join(): 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' {
+        return this.#join;
     }
-    set join(v: string) {
-        this._join = v;
-        this._flagJoin = true;
+    set join(join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round') {
+        this.#join = join;
+        this.flags[Flag.Join] = true;
     }
     get length(): number {
-        if (this._flagLength) {
-            this._updateLength();
+        if (this.flags[Flag.Length]) {
+            this.#updateLength();
         }
-        return this._length;
+        return this.#length;
+    }
+    get lengths(): number[] {
+        return this.#lengths;
     }
     get linewidth(): number {
-        return this._linewidth;
+        return this.#linewidth;
     }
-    set linewidth(v: number) {
-        this._linewidth = v;
-        this._flagLinewidth = true;
+    set linewidth(linewidth: number) {
+        this.#linewidth = linewidth;
+        this.flags[Flag.Linewidth] = true;
     }
     get mask(): Shape<Group> | null {
-        return this._mask;
+        return this.#mask;
     }
     set mask(mask: Shape<Group> | null) {
-        this._mask = mask;
-        this._flagMask = true;
+        this.#mask = mask;
+        this.flags[Flag.Mask] = true;
         if (mask instanceof Shape && !mask.clip) {
             mask.clip = true;
         }
     }
     get miter(): number {
-        return this._miter;
+        return this.#miter;
     }
-    set miter(v: number) {
-        this._miter = v;
-        this._flagMiter = true;
+    set miter(miter: number) {
+        this.#miter = miter;
+        this.flags[Flag.Miter] = true;
     }
     get opacity(): number {
-        return this._opacity;
+        return this.#opacity;
     }
-    set opacity(v) {
-        this._opacity = v;
-        this._flagOpacity = true;
+    set opacity(opacity: number) {
+        this.#opacity = opacity;
+        this.flags[Flag.Opacity] = true;
     }
-    get stroke(): string | Gradient | Texture {
-        return this._stroke;
+    get stroke(): string | LinearGradient | RadialGradient | Texture {
+        return this.#stroke;
     }
-    set stroke(stroke: string | Gradient | Texture) {
+    set stroke(stroke: string | LinearGradient | RadialGradient | Texture) {
         if (this.#stroke_change_subscription) {
             this.#stroke_change_subscription.unsubscribe();
             this.#stroke_change_subscription = null;
         }
 
-        this._stroke = stroke;
-        this._flagStroke = true;
+        this.#stroke = stroke;
+        this.flags[Flag.Stroke] = true;
 
-        if (this._stroke instanceof LinearGradient) {
-            this.#stroke_change_subscription = this._stroke.change$.subscribe(() => {
-                this._flagStroke = true;
+        if (stroke instanceof LinearGradient) {
+            this.#stroke_change_subscription = stroke.change$.subscribe(() => {
+                this.flags[Flag.Stroke] = true;
             });
         }
-        else if (this._stroke instanceof RadialGradient) {
-            this.#stroke_change_subscription = this._stroke.change$.subscribe(() => {
-                this._flagStroke = true;
+        else if (stroke instanceof RadialGradient) {
+            this.#stroke_change_subscription = stroke.change$.subscribe(() => {
+                this.flags[Flag.Stroke] = true;
             });
         }
-        else if (this._stroke instanceof Texture) {
-            this.#stroke_change_subscription = this._stroke.change$.subscribe(() => {
-                this._flagStroke = true;
+        else if (stroke instanceof Texture) {
+            this.#stroke_change_subscription = stroke.change$.subscribe(() => {
+                this.flags[Flag.Stroke] = true;
             });
         }
     }
     get vertices() {
-        return this._collection;
+        return this.#collection;
     }
     set vertices(vertices) {
 
@@ -1146,28 +1065,28 @@ export class Path extends Shape<Group> {
 
         // Create new Collection with copy of vertices
         if (vertices instanceof Collection) {
-            this._collection = vertices;
+            this.#collection = vertices;
         }
         else {
-            this._collection = new Collection(vertices || []);
+            this.#collection = new Collection(vertices || []);
         }
 
 
         // Listen for Collection changes and bind / unbind
-        this.#collection_insert_subscription = this._collection.insert$.subscribe((inserts: Anchor[]) => {
+        this.#collection_insert_subscription = this.#collection.insert$.subscribe((inserts: Anchor[]) => {
             let i = inserts.length;
             while (i--) {
                 const anchor = inserts[i];
                 const subscription = anchor.change$.subscribe(() => {
-                    this._flagVertices = true;
+                    this.flags[Flag.Vertices] = true;
                 });
                 // TODO: Check that we are not already mapped?
                 this.#anchor_change_subscriptions.set(anchor, subscription);
             }
-            this._flagVertices = true;
+            this.flags[Flag.Vertices] = true;
         });
 
-        this.#collection_remove_subscription = this._collection.remove$.subscribe((removes: Anchor[]) => {
+        this.#collection_remove_subscription = this.#collection.remove$.subscribe((removes: Anchor[]) => {
             let i = removes.length;
             while (i--) {
                 const anchor = removes[i];
@@ -1175,38 +1094,30 @@ export class Path extends Shape<Group> {
                 subscription.unsubscribe();
                 this.#anchor_change_subscriptions.delete(anchor);
             }
-            this._flagVertices = true;
+            this.flags[Flag.Vertices] = true;
         });
 
         // Bind Initial Vertices
-        this._collection.forEach((anchor: Anchor) => {
+        this.#collection.forEach((anchor: Anchor) => {
             const subscription = anchor.change$.subscribe(() => {
-                this._flagVertices = true;
+                this.flags[Flag.Vertices] = true;
             });
             this.#anchor_change_subscriptions.set(anchor, subscription);
         });
     }
     get visible(): boolean {
-        return this._visible;
+        return this.#visible;
     }
-    set visible(v: boolean) {
-        this._visible = v;
-        this._flagVisible = true;
+    set visible(visible: boolean) {
+        this.#visible = visible;
+        this.flags[Flag.Visible] = true;
     }
 }
 
 export function FlagVertices(this: Path) {
-    this._flagVertices = true;
-    this._flagLength = true;
+    this.flags[Flag.Vertices] = true;
+    this.flags[Flag.Length] = true;
     if (this.parent) {
         this.parent._flagLength = true;
     }
-}
-
-export function FlagFill(this: Path) {
-    this._flagFill = true;
-}
-
-export function FlagStroke(this: Path) {
-    this._flagStroke = true;
 }

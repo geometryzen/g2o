@@ -72,7 +72,7 @@ const canvas = {
                 return this;
             }
 
-            this._update();
+            this.update();
 
             const matrix = this._matrix;
             const parent = this.parent;
@@ -84,7 +84,7 @@ const canvas = {
             }
 
             const mask = this._mask;
-            // const clip = this._clip;
+            // const clip = this.clip;
 
             const defaultMatrix = isDefaultMatrix(matrix);
             const shouldIsolate = !defaultMatrix || !!mask;
@@ -139,7 +139,7 @@ const canvas = {
 
             const po = (this.parent && this.parent.viewInfo) ? this.parent.viewInfo.opacity : 1;
             const mask = this._mask;
-            const clip = this._clip;
+            const clip = this.clip;
             const opacity = this._opacity * (po || 1);
             const visible = this._visible;
 
@@ -147,7 +147,7 @@ const canvas = {
                 return this;
             }
 
-            this._update();
+            this.update();
 
             const matrix = this._matrix;
             const stroke = this._stroke;
@@ -156,7 +156,7 @@ const canvas = {
             const cap = this._cap;
             const join = this._join;
             const miter = this._miter;
-            const closed = this._closed;
+            const closed = this.closed;
             const commands = this.viewInfo.anchor_vertices; // Commands?
             const length = commands.length;
             const last = length - 1;
@@ -390,7 +390,7 @@ const canvas = {
                 return this;
             }
 
-            this._update();
+            this.update();
 
             const matrix = this._matrix;
             const stroke = this._stroke;
@@ -514,13 +514,13 @@ const canvas = {
             const opacity = this._opacity * po;
             const visible = this._visible;
             const mask = this._mask;
-            const clip = this._clip;
+            const clip = this.clip;
 
             if (!forced && (!visible || clip || opacity === 0)) {
                 return this;
             }
 
-            this._update();
+            this.update();
 
             const matrix = this._matrix;
             const stroke = this._stroke;
@@ -734,7 +734,7 @@ const canvas = {
                 return;
             }
 
-            this._update();
+            this.update();
 
             if (!this.viewInfo.effect || this._flagEndPoints || this._flagStops
                 || this._flagUnits) {
@@ -774,7 +774,7 @@ const canvas = {
                 return;
             }
 
-            this._update();
+            this.update();
 
             if (!this.renderer.effect || this._flagCenter || this._flagFocal
                 || this._flagRadius || this._flagStops || this._flagUnits) {
@@ -815,7 +815,7 @@ const canvas = {
     'texture': {
         render: function (this: Texture, ctx: CanvasRenderingContext2D) {
 
-            this._update();
+            this.update();
 
             const image = this.image;
 

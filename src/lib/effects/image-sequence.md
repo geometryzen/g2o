@@ -124,7 +124,7 @@ export class ImageSequence extends Rectangle {
 
         this.origin = new G20();
 
-        this._update();
+        this.update();
 
         /**
          * @name Two.ImageSequence#frameRate
@@ -202,7 +202,7 @@ export class ImageSequence extends Rectangle {
 
     }
 
-    _update() {
+    update() {
 
         const effect = this._textures;
         let width, height, elapsed, amount, duration, texture;
@@ -291,7 +291,7 @@ export class ImageSequence extends Rectangle {
 
         }
 
-        super._update.call(this);
+        super.update.call(this);
 
         return this;
 

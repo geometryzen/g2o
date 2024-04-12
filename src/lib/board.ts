@@ -376,12 +376,12 @@ export class Board {
     }
     */
     /*
-    makeRadialGradient(x1: number, y1: number, radius: number, ...stops: Stop[]): RadialGradient {
-        const gradient = new RadialGradient(x1, y1, radius, stops);
-        this.add(gradient);
-        return gradient;
-    }
-    */
+     makeRadialGradient(x1: number, y1: number, radius: number, ...stops: Stop[]): RadialGradient {
+         const gradient = new RadialGradient(x1, y1, radius, stops);
+         this.add(gradient);
+         return gradient;
+     }
+     */
 
     makeSprite(pathOrTexture: (string | Texture), x: number, y: number, columns: number, rows: number, frameRate: number, autostart: boolean): Sprite {
         const sprite = new Sprite(pathOrTexture, x, y, columns, rows, frameRate);

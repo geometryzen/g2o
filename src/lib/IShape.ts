@@ -1,5 +1,6 @@
 import { Child } from "./children";
-import { Gradient } from "./effects/gradient";
+import { LinearGradient } from "./effects/linear-gradient";
+import { RadialGradient } from "./effects/radial-gradient";
 import { Texture } from "./effects/texture";
 import { G20 } from "./math/G20";
 
@@ -11,19 +12,19 @@ export interface IShape<P> extends Child {
     isShape: boolean;
     automatic: boolean;
     beginning: number;
-    cap: string;
+    cap: 'butt' | 'round' | 'square';
     classList: string[];
     closed: boolean;
     curved: boolean;
     ending: number;
-    fill: string | Gradient | Texture;
-    join: string;
+    fill: string | LinearGradient | RadialGradient | Texture;
+    join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round';
     length: number;
     linewidth: number;
     miter: number;
     parent: P;
     position: G20;
-    stroke: string | Gradient | Texture;
+    stroke: string | LinearGradient | RadialGradient | Texture;
     visible: boolean;
     getBoundingClientRect(shallow?: boolean): { width?: number; height?: number; top?: number; left?: number; right?: number; bottom?: number };
     // const regex = /texture|gradient/i;

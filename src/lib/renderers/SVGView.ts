@@ -1,10 +1,10 @@
 import { BehaviorSubject } from 'rxjs';
 import { Anchor } from '../anchor';
-import { Gradient } from '../effects/gradient';
 import { LinearGradient } from '../effects/linear-gradient';
 import { RadialGradient } from '../effects/radial-gradient';
 import { is_canvas, is_img, is_video, Texture } from '../effects/texture';
 import { ElementBase } from '../element';
+import { Flag } from '../Flag';
 import { Group } from '../group';
 import { decompose_2d_3x3_matrix } from '../math/decompose_2d_3x3_matrix';
 import { G20 } from '../math/G20';
@@ -43,11 +43,11 @@ function get_defs_flag_update(defs: SVGDefsElement): boolean {
     return (defs as any)._flagUpdate as boolean;
 }
 
-function is_gradient_or_texture(x: string | Gradient | Texture): x is Gradient | Texture {
-    return x instanceof Gradient || x instanceof Texture;
+function is_gradient_or_texture(x: string | LinearGradient | RadialGradient | Texture): x is LinearGradient | RadialGradient | Texture {
+    return x instanceof LinearGradient || x instanceof RadialGradient || x instanceof Texture;
 }
 
-function serialize_color(x: string | Gradient | Texture): string {
+function serialize_color(x: string | LinearGradient | RadialGradient | Texture): string {
     if (is_gradient_or_texture(x)) {
         // TODO: This assumes that Gradient or Texture have a meaningful toString. That's bad.
         return 'url(#' + x + ')';
@@ -107,8 +107,8 @@ export interface SVGAttributes {
     'stroke'?: string;
     'stroke-dasharray'?: string;
     'stroke-dashoffset'?: string;
-    'stroke-linecap'?: string;
-    'stroke-linejoin'?: string;
+    'stroke-linecap'?: 'butt' | 'round' | 'square';
+    'stroke-linejoin'?: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round';
     'stroke-miterlimit'?: string;
     'stroke-opacity'?: string;
     'stroke-width'?: string;
@@ -492,11 +492,11 @@ const svg = {
             // Shortcut for hidden objects.
             // Doesn't reset the flags, so changes are stored and
             // applied once the object is visible again
-            if ((!this._visible && !this._flagVisible) || (this._opacity === 0 && !this._flagOpacity)) {
+            if ((!this.visible && !this._flagVisible) || (this.opacity === 0 && !this._flagOpacity)) {
                 return;
             }
 
-            this._update();
+            this.update();
 
             if (this.viewInfo.elem) {
                 // It's already defined.
@@ -510,7 +510,7 @@ const svg = {
             }
 
             // _Update styles for the <g>
-            const flagMatrix = this.matrix.manual || this._flagMatrix;
+            const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
             const dom_context: DomContext = {
                 domElement: domElement,
                 elem: this.viewInfo.elem
@@ -528,8 +528,8 @@ const svg = {
                 svg.group.renderChild.call(dom_context.domElement, child);
             }
 
-            if (this._flagId) {
-                this.viewInfo.elem.setAttribute('id', this._id);
+            if (this.flags[Flag.Id]) {
+                this.viewInfo.elem.setAttribute('id', this.id);
             }
 
             if (this._flagOpacity) {
@@ -537,10 +537,10 @@ const svg = {
             }
 
             if (this._flagVisible) {
-                this.viewInfo.elem.setAttribute('display', this._visible ? 'inline' : 'none');
+                this.viewInfo.elem.setAttribute('display', this.visible ? 'inline' : 'none');
             }
 
-            if (this._flagClassName) {
+            if (this.flags[Flag.ClassName]) {
                 this.viewInfo.elem.setAttribute('class', this.classList.join(' '));
             }
 
@@ -565,7 +565,7 @@ const svg = {
             //   clip = svg.getClip(this, domElement);
             //   elem = this._renderer.elem;
 
-            //   if (this._clip) {
+            //   if (this.clip) {
             //     elem.removeAttribute('id');
             //     clip.setAttribute('id', this.id);
             //     clip.appendChild(elem);
@@ -602,45 +602,45 @@ const svg = {
                 // Shortcut for hidden objects.
                 // Doesn't reset the flags, so changes are stored and
                 // applied once the object is visible again
-                if (this._opacity === 0 && !this._flagOpacity) {
+                if (this.opacity === 0 && !this.flags[Flag.Opacity]) {
                     return this;
                 }
 
-                this._update();
+                this.update();
 
                 // Collect any attribute that needs to be changed here
                 const changed: SVGAttributes = {};
 
-                const flagMatrix = this.matrix.manual || this._flagMatrix;
+                const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
 
                 if (flagMatrix) {
                     changed.transform = transform_value_of_matrix(this.matrix);
                 }
 
-                if (this._flagId) {
-                    changed.id = this._id;
+                if (this.flags[Flag.Id]) {
+                    changed.id = this.id;
                 }
 
-                if (this._flagVertices) {
-                    const vertices = svg.toString(this.viewInfo.anchor_vertices, this._closed);
+                if (this.flags[Flag.Vertices]) {
+                    const vertices = svg.toString(this.viewInfo.anchor_vertices, this.closed);
                     changed.d = vertices;
                 }
 
-                if (this._fill && is_gradient_or_texture(this._fill)) {
+                if (this.fill && is_gradient_or_texture(this.fill)) {
                     this.viewInfo.hasFillEffect = true;
-                    this._fill._update();
-                    const type = this._fill.viewInfo.type as 'linear-gradient' | 'radial-gradient' | 'texture';
+                    this.fill.update();
+                    const type = this.fill.viewInfo.type as 'linear-gradient' | 'radial-gradient' | 'texture';
                     switch (type) {
                         case 'linear-gradient': {
-                            svg.group['linear-gradient'].render.call(this._fill as unknown as LinearGradient, domElement, true);
+                            svg.group['linear-gradient'].render.call(this.fill as unknown as LinearGradient, domElement, true);
                             break;
                         }
                         case 'radial-gradient': {
-                            svg.group['radial-gradient'].render.call(this._fill as unknown as RadialGradient, domElement, true);
+                            svg.group['radial-gradient'].render.call(this.fill as unknown as RadialGradient, domElement, true);
                             break;
                         }
                         case 'texture': {
-                            svg.group['texture'].render.call(this._fill as unknown as Texture, domElement, true);
+                            svg.group['texture'].render.call(this.fill as unknown as Texture, domElement, true);
                             break;
                         }
                         default: {
@@ -649,31 +649,31 @@ const svg = {
                     }
                 }
 
-                if (this._flagFill) {
-                    if (this._fill) {
-                        changed.fill = serialize_color(this._fill);
+                if (this.flags[Flag.Fill]) {
+                    if (this.fill) {
+                        changed.fill = serialize_color(this.fill);
                     }
-                    if (this.viewInfo.hasFillEffect && typeof this._fill === 'string') {
+                    if (this.viewInfo.hasFillEffect && typeof this.fill === 'string') {
                         set_defs_flag_update(get_dom_element_defs(domElement), true);
                         delete this.viewInfo.hasFillEffect;
                     }
                 }
 
-                if (this._stroke && is_gradient_or_texture(this._stroke)) {
+                if (this.stroke && is_gradient_or_texture(this.stroke)) {
                     this.viewInfo.hasStrokeEffect = true;
-                    this._stroke._update();
-                    const type = this._stroke.viewInfo.type as 'linear-gradient' | 'radial-gradient' | 'texture';
+                    this.stroke.update();
+                    const type = this.stroke.viewInfo.type as 'linear-gradient' | 'radial-gradient' | 'texture';
                     switch (type) {
                         case 'linear-gradient': {
-                            svg.group['linear-gradient'].render.call(this._fill as unknown as LinearGradient, domElement, true);
+                            svg.group['linear-gradient'].render.call(this.fill as unknown as LinearGradient, domElement, true);
                             break;
                         }
                         case 'radial-gradient': {
-                            svg.group['radial-gradient'].render.call(this._fill as unknown as RadialGradient, domElement, true);
+                            svg.group['radial-gradient'].render.call(this.fill as unknown as RadialGradient, domElement, true);
                             break;
                         }
                         case 'texture': {
-                            svg.group['texture'].render.call(this._fill as unknown as Texture, domElement, true);
+                            svg.group['texture'].render.call(this.fill as unknown as Texture, domElement, true);
                             break;
                         }
                         default: {
@@ -682,43 +682,43 @@ const svg = {
                     }
                 }
 
-                if (this._flagStroke) {
-                    if (this._stroke) {
-                        changed.stroke = serialize_color(this._stroke);
+                if (this.flags[Flag.Stroke]) {
+                    if (this.stroke) {
+                        changed.stroke = serialize_color(this.stroke);
                     }
-                    if (this.viewInfo.hasStrokeEffect && typeof this._stroke === 'string') {
+                    if (this.viewInfo.hasStrokeEffect && typeof this.stroke === 'string') {
                         set_defs_flag_update(get_dom_element_defs(domElement), true);
                         delete this.viewInfo.hasStrokeEffect;
                     }
                 }
 
-                if (this._flagLinewidth) {
-                    changed['stroke-width'] = `${this._linewidth}`;
+                if (this.flags[Flag.Linewidth]) {
+                    changed['stroke-width'] = `${this.linewidth}`;
                 }
 
-                if (this._flagOpacity) {
-                    changed['stroke-opacity'] = `${this._opacity}`;
-                    changed['fill-opacity'] = `${this._opacity}`;
+                if (this.flags[Flag.Opacity]) {
+                    changed['stroke-opacity'] = `${this.opacity}`;
+                    changed['fill-opacity'] = `${this.opacity}`;
                 }
 
-                if (this._flagClassName) {
+                if (this.flags[Flag.ClassName]) {
                     changed['class'] = this.classList.join(' ');
                 }
 
-                if (this._flagVisible) {
-                    changed.visibility = this._visible ? 'visible' : 'hidden';
+                if (this.flags[Flag.Visible]) {
+                    changed.visibility = this.visible ? 'visible' : 'hidden';
                 }
 
-                if (this._flagCap) {
+                if (this.flags[Flag.Cap]) {
                     changed['stroke-linecap'] = this.cap;
                 }
 
-                if (this._flagJoin) {
-                    changed['stroke-linejoin'] = this._join;
+                if (this.flags[Flag.Join]) {
+                    changed['stroke-linejoin'] = this.join;
                 }
 
-                if (this._flagMiter) {
-                    changed['stroke-miterlimit'] = `${this._miter}`;
+                if (this.flags[Flag.Miter]) {
+                    changed['stroke-miterlimit'] = `${this.miter}`;
                 }
 
                 if (this.dashes && this.dashes.length > 0) {
@@ -731,7 +731,7 @@ const svg = {
                     svg.setAttributes(this.viewInfo.elem, changed);
                 }
                 else {
-                    changed.id = this._id;
+                    changed.id = this.id;
                     this.viewInfo.elem = svg.createElement('path', changed);
                     domElement.appendChild(this.viewInfo.elem);
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -742,12 +742,12 @@ const svg = {
                     });
                 }
 
-                if (this._flagClip) {
+                if (this.flags[Flag.Clip]) {
 
                     const clip = svg.getClip(this, domElement);
                     const elem = this.viewInfo.elem;
 
-                    if (this._clip) {
+                    if (this.clip) {
                         elem.removeAttribute('id');
                         clip.setAttribute('id', this.id);
                         clip.appendChild(elem);
@@ -764,11 +764,11 @@ const svg = {
                 // polygons. Uncomment when this bug is fixed:
                 // https://code.google.com/p/chromium/issues/detail?id=370951
 
-                if (this._flagMask) {
-                    if (this._mask) {
+                if (this.flags[Flag.Mask]) {
+                    if (this.mask) {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (svg as any)[this._mask.viewInfo.type].render.call(this._mask, domElement);
-                        this.viewInfo.elem.setAttribute('clip-path', 'url(#' + this._mask.id + ')');
+                        (svg as any)[this.mask.viewInfo.type].render.call(this.mask, domElement);
+                        this.viewInfo.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
                     }
                     else {
                         this.viewInfo.elem.removeAttribute('clip-path');
@@ -791,19 +791,19 @@ const svg = {
                     return this;
                 }
 
-                this._update();
+                this.update();
 
                 // Collect any attribute that needs to be changed here
                 const changed: SVGAttributes = {};
 
-                const flagMatrix = this.matrix.manual || this._flagMatrix;
+                const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
 
                 if (flagMatrix) {
                     changed.transform = transform_value_of_matrix(this.matrix);
                 }
 
-                if (this._flagId) {
-                    changed.id = this._id;
+                if (this.flags[Flag.Id]) {
+                    changed.id = this.id;
                 }
 
                 if (this._flagVertices || this._flagSize || this._flagSizeAttenuation) {
@@ -819,9 +819,9 @@ const svg = {
                 const fill = this.fill;
                 if (fill && typeof fill === 'object' && fill.renderer) {
                     this.viewInfo.hasFillEffect = true;
-                    fill._update();
+                    fill.update();
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (svg as any)[fill.renderer.type].render.call(this._fill, domElement, true);
+                    (svg as any)[fill.renderer.type].render.call(this.fill, domElement, true);
                 }
 
                 if (this._flagFill) {
@@ -835,9 +835,9 @@ const svg = {
                 const stroke = this.stroke;
                 if (stroke && typeof stroke === 'object' && stroke.renderer) {
                     this.viewInfo.hasStrokeEffect = true;
-                    stroke._update();
+                    stroke.update();
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (svg as any)[stroke.renderer.type].render.call(this._stroke, domElement, true);
+                    (svg as any)[stroke.renderer.type].render.call(this.stroke, domElement, true);
                 }
 
                 if (this._flagStroke) {
@@ -857,7 +857,7 @@ const svg = {
                     changed['fill-opacity'] = `${this.opacity}`;
                 }
 
-                if (this._flagClassName) {
+                if (this.flags[Flag.ClassName]) {
                     changed['class'] = this.classList.join(' ');
                 }
 
@@ -871,7 +871,7 @@ const svg = {
                 }
 
                 if (!this.viewInfo.elem) {
-                    changed.id = this._id;
+                    changed.id = this.id;
                     this.viewInfo.elem = svg.createElement('path', changed);
                     domElement.appendChild(this.viewInfo.elem);
                 }
@@ -885,19 +885,19 @@ const svg = {
         'text': {
             render: function (this: Text, domElement: DOMElement) {
 
-                this._update();
+                this.update();
 
                 // The styles that will be applied to an SVG
                 const changed: SVGAttributes = {};
 
-                const flagMatrix = this.matrix.manual || this._flagMatrix;
+                const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
 
                 if (flagMatrix) {
                     changed.transform = transform_value_of_matrix(this.matrix);
                 }
 
-                if (this._flagId) {
-                    changed.id = this._id;
+                if (this.flags[Flag.Id]) {
+                    changed.id = this.id;
                 }
 
                 if (this._flagFamily) {
@@ -930,9 +930,9 @@ const svg = {
                 const fill = this.fill;
                 if (fill && typeof fill === 'object' && fill.renderer) {
                     this.viewInfo.hasFillEffect = true;
-                    fill._update();
+                    fill.update();
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (svg as any)[fill.renderer.type].render.call(this._fill, domElement, true);
+                    (svg as any)[fill.renderer.type].render.call(this.fill, domElement, true);
                 }
                 if (this._flagFill) {
                     changed.fill = color_value(fill);
@@ -944,9 +944,9 @@ const svg = {
                 const stroke = this.stroke;
                 if (stroke && typeof stroke === 'object' && stroke.renderer) {
                     this.viewInfo.hasStrokeEffect = true;
-                    stroke._update();
+                    stroke.update();
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (svg as any)[stroke.renderer.type].render.call(this._stroke, domElement, true);
+                    (svg as any)[stroke.renderer.type].render.call(this.stroke, domElement, true);
                 }
                 if (this._flagStroke) {
                     changed.stroke = color_value(stroke);
@@ -961,7 +961,7 @@ const svg = {
                 if (this._flagOpacity) {
                     changed.opacity = `${this._opacity}`;
                 }
-                if (this._flagClassName) {
+                if (this.flags[Flag.ClassName]) {
                     changed['class'] = this.classList.join(' ');
                 }
                 if (this._flagVisible) {
@@ -976,17 +976,16 @@ const svg = {
                     svg.setAttributes(this.viewInfo.elem, changed);
                 }
                 else {
-                    changed.id = this._id;
+                    changed.id = this.id;
                     this.viewInfo.elem = svg.createElement('text', changed);
                     domElement.appendChild(this.viewInfo.elem);
                 }
 
                 if (this._flagClip) {
-
                     const clip = svg.getClip(this, domElement);
                     const elem = this.viewInfo.elem;
 
-                    if (this._clip) {
+                    if (this.clip) {
                         elem.removeAttribute('id');
                         clip.setAttribute('id', this.id);
                         clip.appendChild(elem);
@@ -996,7 +995,6 @@ const svg = {
                         elem.setAttribute('id', this.id);
                         this.parent.viewInfo.elem.appendChild(elem); // TODO: should be insertBefore
                     }
-
                 }
 
                 // Commented two-way functionality of clips / masks with groups and
@@ -1028,13 +1026,13 @@ const svg = {
             render: function (this: LinearGradient, domElement: DOMElement, silent = false) {
 
                 if (!silent) {
-                    this._update();
+                    this.update();
                 }
 
                 const changed: SVGAttributes = {};
 
-                if (this._flagId) {
-                    changed.id = this._id;
+                if (this.flags[Flag.Id]) {
+                    changed.id = this.id;
                 }
 
                 if (this._flagEndPoints) {
@@ -1056,7 +1054,7 @@ const svg = {
                 // create it with all necessary attributes.
                 if (!this.viewInfo.elem) {
 
-                    changed.id = this._id;
+                    changed.id = this.id;
                     this.viewInfo.elem = svg.createElement('linearGradient', changed);
 
                     // Otherwise apply all pending attributes
@@ -1118,13 +1116,13 @@ const svg = {
             render: function (this: RadialGradient, domElement: DOMElement, silent = false) {
 
                 if (!silent) {
-                    this._update();
+                    this.update();
                 }
 
                 const changed: SVGAttributes = {};
 
-                if (this._flagId) {
-                    changed.id = this._id;
+                if (this.flags[Flag.Id]) {
+                    changed.id = this.id;
                 }
                 if (this._flagCenter) {
                     changed.cx = `${this.center.x}`;
@@ -1149,7 +1147,7 @@ const svg = {
                     svg.setAttributes(this.viewInfo.elem, changed);
                 }
                 else {
-                    changed.id = this._id;
+                    changed.id = this.id;
                     this.viewInfo.elem = svg.createElement('radialGradient', changed);
                 }
 
@@ -1208,7 +1206,7 @@ const svg = {
             render: function (this: Texture, domElement: DOMElement, silent = false) {
 
                 if (!silent) {
-                    this._update();
+                    this.update();
                 }
 
                 // TODO: Texture rendering will need testing of the conversion to SVGAttributes...
@@ -1218,8 +1216,8 @@ const svg = {
 
                 const image = this.image;
 
-                if (this._flagId) {
-                    changed.id = this._id;
+                if (this.flags[Flag.Id]) {
+                    changed.id = this.id;
                 }
 
                 if (this._flagLoaded && this.loaded) {
@@ -1310,7 +1308,7 @@ const svg = {
 
                 if (!this.viewInfo.elem) {
 
-                    changed.id = this._id;
+                    changed.id = this.id;
                     changed.patternUnits = 'userSpaceOnUse';
                     this.viewInfo.elem = svg.createElement('pattern', serialize_svg_props(changed));
 
@@ -1417,7 +1415,7 @@ function transform_value_of_matrix(m: Matrix): string {
     return `matrix(${[a, b, c, d, e, f].map(toFixed).join(' ')})`;
 }
 
-function color_value(thing: string | Gradient | Texture): string {
+function color_value(thing: string | LinearGradient | RadialGradient | Texture): string {
     if (typeof thing === 'object') {
         return 'url(#' + thing.id + ')';
     }

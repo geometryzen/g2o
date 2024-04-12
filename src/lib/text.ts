@@ -1,5 +1,8 @@
 import { Gradient } from './effects/gradient';
+import { LinearGradient } from './effects/linear-gradient';
+import { RadialGradient } from './effects/radial-gradient';
 import { Texture } from './effects/texture';
+import { Flag } from './Flag';
 import { Group } from './group';
 import { get_dashes_offset, set_dashes_offset } from './path';
 import { Subscription } from './rxjs/Subscription';
@@ -34,11 +37,11 @@ export interface TextStyles {
 export class Text extends Shape<Group> {
     automatic: boolean;
     beginning: number;
-    cap: string;
+    cap: 'butt' | 'round' | 'square';
     closed: boolean;
     curved: boolean;
     ending: number;
-    join: string;
+    join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round';
     length: number;
     miter: number;
 
@@ -123,19 +126,15 @@ export class Text extends Shape<Group> {
     _direction: 'ltr' | 'rtl' = 'ltr';
 
     /**
-     * @name Two.Text#fill
-     * @property {(String|Two.Gradient|Two.Texture)} - The value of what the text object should be filled in with.
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
-    _fill: string | Gradient | Texture = '#000';
+    #fill: string | LinearGradient | RadialGradient | Texture = '#000';
     #fill_change_subscription: Subscription | null = null;
 
     /**
-     * @name Two.Text#stroke
-     * @property {(String|Two.Gradient|Two.Texture)} - The value of what the text object should be filled in with.
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
-    _stroke: string | Gradient | Texture = 'none';
+    _stroke: string | LinearGradient | RadialGradient | Texture = 'none';
     #stroke_change_subscription: Subscription | null = null;
 
     /**
@@ -167,7 +166,7 @@ export class Text extends Shape<Group> {
     /**
      * @nota-bene This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
      */
-    _clip = false;
+    #clip = false;
 
     /**
      * @name Two.Text#_dashes
@@ -353,7 +352,7 @@ export class Text extends Shape<Group> {
         let bottom: number;
 
         // TODO: Update this to not __always__ update. Just when it needs to.
-        this._update(true);
+        this.update(true);
 
         const matrix = shallow ? this.matrix : this.worldMatrix;
 
@@ -419,7 +418,7 @@ export class Text extends Shape<Group> {
             this._flagLeading = this._flagAlignment = this._flagFill =
             this._flagStroke = this._flagLinewidth = this._flagOpacity =
             this._flagVisible = this._flagClip = this._flagDecoration =
-            this._flagClassName = this._flagBaseline = this._flagWeight =
+            this.flags[Flag.ClassName] = this._flagBaseline = this._flagWeight =
             this._flagStyle = this._flagDirection = false;
         return this;
     }
@@ -437,11 +436,11 @@ export class Text extends Shape<Group> {
         this._baseline = v;
         this._flagBaseline = true;
     }
-    get clip() {
-        return this._clip;
+    get clip(): boolean {
+        return this.#clip;
     }
-    set clip(v) {
-        this._clip = v;
+    set clip(clip: boolean) {
+        this.#clip = clip;
         this._flagClip = true;
     }
     get dashes() {
@@ -475,14 +474,14 @@ export class Text extends Shape<Group> {
         this._flagFamily = true;
     }
     get fill() {
-        return this._fill;
+        return this.#fill;
     }
     set fill(f) {
         if (this.#fill_change_subscription) {
             this.#fill_change_subscription.unsubscribe();
             this.#fill_change_subscription = null;
         }
-        this._fill = f;
+        this.#fill = f;
         this._flagFill = true;
         if (this.fill instanceof Gradient) {
             this.#fill_change_subscription = this.fill.change$.subscribe(() => {

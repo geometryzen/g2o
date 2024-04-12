@@ -1,4 +1,5 @@
 import { Anchor } from '../anchor.js';
+import { Flag } from '../Flag.js';
 import { G20 } from '../math/G20.js';
 import { Path } from '../path.js';
 import { TWO_PI } from '../utils/math.js';
@@ -62,7 +63,7 @@ export class Polygon extends Path {
             this.sides = sides;
         }
 
-        this._update();
+        this.update();
 
         if (typeof x === 'number') {
             this.position.x = x;
@@ -75,9 +76,9 @@ export class Polygon extends Path {
 
     static Properties = ['width', 'height', 'sides'];
 
-    _update() {
+    update(): this {
 
-        if (this._flagVertices || this._flagWidth || this._flagHeight || this._flagSides) {
+        if (this.flags[Flag.Vertices] || this._flagWidth || this._flagHeight || this._flagSides) {
 
             const sides = this._sides;
             const amount = sides + 1;
@@ -106,7 +107,7 @@ export class Polygon extends Path {
             }
         }
 
-        super._update.call(this);
+        super.update.call(this);
         return this;
     }
 

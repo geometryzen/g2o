@@ -1,4 +1,5 @@
 import { Anchor } from '../anchor';
+import { Flag } from '../Flag';
 import { G20 } from '../math/G20';
 import { Path, PathOptions } from '../path';
 import { Subscription } from '../rxjs/Subscription';
@@ -12,12 +13,10 @@ export interface RectangleOptions {
 
 export class Rectangle extends Path {
 
-    _flagWidth: boolean;
-    _flagHeight: boolean;
-    _width = 0;
-    _height = 0;
+    #width = 0;
+    #height = 0;
 
-    _origin: G20 = null;
+    _origin: G20;
     // DGH: How does origin differ from position?
     #origin_change_subscription: Subscription | null = null;
 
@@ -33,24 +32,22 @@ export class Rectangle extends Path {
 
         super(points, true, false, true, path_options_from_rectangle_options(options));
 
-        this._width = typeof options.width === 'number' ? options.width : 1;
-        this._flagWidth = true;
+        this.#width = typeof options.width === 'number' ? options.width : 1;
+        this.#height = typeof options.height === 'number' ? options.height : 1;
 
-        this._height = typeof options.height === 'number' ? options.height : 1;
-        this._flagHeight = true;
+        this.origin = G20.zero.clone();
 
-        this.origin = new G20();
-
-        this._update();
+        this.flagReset(true);
+        this.update();
     }
 
-    _update(): this {
-        if (this._flagVertices || this._flagWidth || this._flagHeight) {
+    update(): this {
+        if (this.flags[Flag.Vertices] || this.flags[Flag.Width] || this.flags[Flag.Height]) {
 
-            const xr = this._width / 2;
-            const yr = this._height / 2;
+            const xr = this.width / 2;
+            const yr = this.height / 2;
 
-            if (!this._closed && this.vertices.length === 4) {
+            if (!this.closed && this.vertices.length === 4) {
                 this.vertices.push(new Anchor(G20.vector(0, 0)));
             }
 
@@ -67,23 +64,23 @@ export class Rectangle extends Path {
 
         }
 
-        super._update.call(this);
+        super.update.call(this);
 
         return this;
     }
 
-    flagReset(dirtyFlag = false) {
-        this._flagWidth = dirtyFlag;
-        this._flagHeight = dirtyFlag;
+    flagReset(dirtyFlag = false): this {
+        this.flags[Flag.Width] = dirtyFlag;
+        this.flags[Flag.Height] = dirtyFlag;
         super.flagReset(dirtyFlag);
         return this;
     }
     get height(): number {
-        return this._height;
+        return this.#height;
     }
-    set height(v: number) {
-        this._height = v;
-        this._flagHeight = true;
+    set height(height: number) {
+        this.#height = height;
+        this.flags[Flag.Height] = true;
     }
     get origin(): G20 {
         return this._origin;
@@ -95,16 +92,16 @@ export class Rectangle extends Path {
         }
         this._origin = v;
         this.#origin_change_subscription = this._origin.change$.subscribe(() => {
-            this._flagVertices = true;
+            this.flags[Flag.Vertices] = true;
         });
-        this._flagVertices = true;
+        this.flags[Flag.Vertices] = true;
     }
     get width(): number {
-        return this._width;
+        return this.#width;
     }
-    set width(v: number) {
-        this._width = v;
-        this._flagWidth = true;
+    set width(width: number) {
+        this.#width = width;
+        this.flags[Flag.Width] = true;
     }
 }
 
