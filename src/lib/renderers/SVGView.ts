@@ -49,8 +49,7 @@ function is_gradient_or_texture(x: string | LinearGradient | RadialGradient | Te
 
 function serialize_color(x: string | LinearGradient | RadialGradient | Texture): string {
     if (is_gradient_or_texture(x)) {
-        // TODO: This assumes that Gradient or Texture have a meaningful toString. That's bad.
-        return 'url(#' + x + ')';
+        return `url(#${x.id})`;
     }
     else {
         return x;
