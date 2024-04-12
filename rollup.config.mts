@@ -62,7 +62,7 @@ const options: RollupOptions[] = [
             {
                 file: non_minified_file(pkg.browser),
                 format: 'umd',
-                name: 'MYLIB',
+                name: 'G2O',
                 sourcemap: true
             }
         ],

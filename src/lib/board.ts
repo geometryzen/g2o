@@ -1,7 +1,10 @@
 import { BehaviorSubject, debounceTime, fromEvent } from 'rxjs';
 import { Anchor } from './anchor.js';
 import { Constants } from './constants.js';
+import { LinearGradient } from './effects/linear-gradient.js';
+import { RadialGradient } from './effects/radial-gradient.js';
 import { Sprite } from './effects/sprite.js';
+import { Stop } from './effects/stop.js';
 import { Texture } from './effects/texture.js';
 import { Group } from './group.js';
 import { G20 } from './math/G20.js';
@@ -368,20 +371,17 @@ export class Board {
         this.add(text);
         return text;
     }
-    /*
+
     makeLinearGradient(x1: number, y1: number, x2: number, y2: number, ...stops: Stop[]): LinearGradient {
         const gradient = new LinearGradient(x1, y1, x2, y2, stops);
-        this.add(gradient);
+        // this.add(gradient);
         return gradient;
     }
-    */
-    /*
-     makeRadialGradient(x1: number, y1: number, radius: number, ...stops: Stop[]): RadialGradient {
-         const gradient = new RadialGradient(x1, y1, radius, stops);
-         this.add(gradient);
-         return gradient;
-     }
-     */
+    makeRadialGradient(x1: number, y1: number, radius: number, ...stops: Stop[]): RadialGradient {
+        const gradient = new RadialGradient(x1, y1, radius, stops);
+        // this.add(gradient);
+        return gradient;
+    }
 
     makeSprite(pathOrTexture: (string | Texture), x: number, y: number, columns: number, rows: number, frameRate: number, autostart: boolean): Sprite {
         const sprite = new Sprite(pathOrTexture, x, y, columns, rows, frameRate);
