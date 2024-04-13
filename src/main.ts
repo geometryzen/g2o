@@ -1,75 +1,33 @@
-import { Board, BoardOptions, Circle, G20, Group, Rectangle } from './index';
+import { Board, BoardOptions, G20, Text, TextStyles } from './index';
 
 document.addEventListener('DOMContentLoaded', function () {
-    const container = document.getElementById('container')!;
 
-    const board_options: Partial<BoardOptions> = {
+    const container = document.getElementById("container")!
+    const params: Partial<BoardOptions> = {
         container
-    };
+    }
 
-    const board = new Board(board_options);
+    const styles: Partial<TextStyles> = {
+        alignment: "left",
+        size: 36
+    }
 
-    const scene: Group = board.scene;
+    const board = new Board(params)
 
-    const circle = new Circle({ position: new G20(-70, 0), radius: 50 });
-    circle.fill = '#FF0000';
-    scene.add(circle);
+    const text = new Text("Foo", 0, 0, styles);
 
-    const rect = new Rectangle({ position: new G20(70, 0), width: 100, height: 100 });
-    rect.fill = 'rgba(255, 255, 0, 1.0)';
-    scene.add(rect);
+    text.usePosition(G20.vector(100, 100));
+    text.useAttitude(G20.one.clone().rotorFromAngle(-Math.PI / 4));
 
-    const line = board.makeLine(0, 0, 100, 100);
-    line.fill = '#FF8000';
-    line.linewidth = 10;
-    line.stroke = "rgba(0, 255, 0, 1.0)";
-    scene.add(line);
+    board.scene.add(text);
 
-    scene.position.set(board.width / 2, board.height / 2);
-    scene.scale = 0;
-    // scene.noStroke();
+    board.update()
 
-    scene.scale = 1;
-    board.update();
+    text.family = 'Lato'
+    text.value = "Hello"
+    text.opacity = 0.25
+    text.visible = true
+    text.size = 36
 
-    const animate = function () {
-        if (scene.scale > 0.9999) {
-            scene.scale = 0;
-            scene.attitude.rotorFromAngle(0);
-        }
-        const t = (1 - scene.scale) * 0.125;
-        scene.scale += t;
-        scene.attitude.rotorFromAngle(scene.scale * 2 * Math.PI);
-        window.requestAnimationFrame(animate);
-    };
-    window.requestAnimationFrame(animate);
-
-    window.onunload = function () {
-        try {
-            board.dispose();
-        }
-        catch (e) {
-            console.warn(`${e}`);
-        }
-    };
-
+    //board.update()
 });
-/*
-interface Disposable {
-    dispose(): void
-}
-
-class HTMLButtonProxy {
-    #button: HTMLButtonElement;
-    constructor(id: string) {
-        this.#button = document.getElementById(id) as HTMLButtonElement;
-    }
-    addEventListener(type: 'click', listener: (this: HTMLButtonElement, ev: MouseEvent) => void): Disposable {
-        this.#button.addEventListener(type, listener);
-        const dispose = () => {
-            this.#button.removeEventListener(type, listener);
-        };
-        return { dispose };
-    }
-}
-*/

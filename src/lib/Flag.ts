@@ -5,6 +5,7 @@ export enum Flag {
     Clip,
     Columns,
     EndAngle,
+    Family,
     Fill,
     FrameRate,
     Height,
@@ -21,10 +22,12 @@ export enum Flag {
     Rows,
     Scale,
     Sides,
+    Size,
     StartAngle,
     Stroke,
     Texture,
     Vertices,
+    Value,
     Visible,
     Width
 }

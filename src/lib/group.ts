@@ -87,8 +87,6 @@ export class Group extends Shape<unknown> {
 
         this.#subscribe_to_shapes();
 
-        //
-
         this.viewInfo.type = 'group';
     }
 
@@ -156,8 +154,7 @@ export class Group extends Shape<unknown> {
     /**
      * Orient the children of the group to the upper left-hand corner of that group.
      */
-    corner() {
-
+    corner(): this {
         const rect = this.getBoundingClientRect(true);
 
         for (let i = 0; i < this.children.length; i++) {
@@ -172,15 +169,12 @@ export class Group extends Shape<unknown> {
         }
 
         return this;
-
     }
 
     /**
-     * @name Two.Group#center
-     * @function
-     * @description Orient the children of the group to the center of that group.
+     * Orient the children of the group to the center of that group.
      */
-    center() {
+    center(): this {
 
         const rect = this.getBoundingClientRect(true);
         const cx = rect.left + rect.width / 2 - this.position.x;

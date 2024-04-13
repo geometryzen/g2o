@@ -1,3 +1,4 @@
+import { BehaviorSubject } from 'rxjs';
 import { Gradient } from './effects/gradient';
 import { LinearGradient } from './effects/linear-gradient';
 import { RadialGradient } from './effects/radial-gradient';
@@ -5,6 +6,7 @@ import { Texture } from './effects/texture';
 import { Flag } from './Flag';
 import { Group } from './group';
 import { get_dashes_offset, set_dashes_offset } from './path';
+import { Observable } from './rxjs/Observable';
 import { Subscription } from './rxjs/Subscription';
 import { Shape } from './shape';
 import { root } from './utils/root';
@@ -45,9 +47,6 @@ export class Text extends Shape<Group> {
     length: number;
     miter: number;
 
-    _flagValue = true;
-    _flagFamily = true;
-    _flagSize = true;
     _flagLeading = true;
     _flagAlignment = true;
     _flagBaseline = true;
@@ -57,31 +56,18 @@ export class Text extends Shape<Group> {
     _flagFill = true;
     _flagStroke = true;
     _flagLinewidth = true;
-    _flagOpacity = true;
-    _flagVisible = true;
     _flagMask = false;
     _flagClip = false;
     _flagDirection = false;
 
-    // Underlying Properties
+    readonly #value: BehaviorSubject<string> = new BehaviorSubject('');
+    readonly value$: Observable<string> = this.#value.asObservable();
 
-    /**
-     * The characters to be rendered to the the screen.
-     * Referred to in the documentation sometimes as the `message`.
-     */
-    _value = '';
+    readonly #family: BehaviorSubject<string> = new BehaviorSubject('sans-serif');
+    readonly family$: Observable<string> = this.#family.asObservable();
 
-    /**
-     * The font family Two.js should attempt to register for rendering.
-     * The default value is `'sans-serif'`.
-     * Comma separated font names can be supplied as a "stack", similar to the CSS implementation of `font-family`.
-     */
-    _family = 'sans-serif';
-
-    /**
-     * The font size in Two.js point space. Defaults to `13`.
-     */
-    _size = 13;
+    readonly #size: BehaviorSubject<number> = new BehaviorSubject(13);
+    readonly size$: Observable<number> = this.#size.asObservable();
 
     /**
      * The height between lines measured from base to base in Two.js point space. Defaults to `17`.
@@ -143,19 +129,11 @@ export class Text extends Shape<Group> {
      */
     _linewidth = 1;
 
-    /**
-     * @name Two.Text#opacity
-     * @property {Number} - The opaqueness of the text object.
-     * @nota-bene Can be used in conjunction with CSS Colors that have an alpha value.
-     */
-    _opacity = 1;
+    readonly #opacity: BehaviorSubject<number> = new BehaviorSubject(1);
+    readonly opacity$: Observable<number> = this.#opacity.asObservable();
 
-    /**
-     * @name Two.Text#visible
-     * @property {Boolean} - Display the text object or not.
-     * @nota-bene For {@link Two.CanvasRenderer} and {@link Two.WebGLRenderer} when set to false all updating is disabled improving performance dramatically with many objects in the scene.
-     */
-    _visible = true;
+    readonly #visible: BehaviorSubject<boolean> = new BehaviorSubject(true) as BehaviorSubject<boolean>;
+    readonly visible$: Observable<boolean> = this.#visible.asObservable();
 
     /**
      * The shape whose alpha property becomes a clipping area for the text.
@@ -276,6 +254,8 @@ export class Text extends Shape<Group> {
                 }
             }
         }
+
+        this.flagReset(true);
     }
 
     /**
@@ -292,8 +272,8 @@ export class Text extends Shape<Group> {
     static Measure(text: Text): { width: number; height: number } {
         if (canvas) {
             const ctx = canvas.getContext('2d');
-            ctx.font = [text._style, text._weight, `${text._size}px/${text._leading}px`,
-            text._family].join(' ');
+            ctx.font = [text._style, text._weight, `${text.size}px/${text._leading}px`,
+            text.family].join(' ');
             const metrics = ctx.measureText(text.value);
             const height = metrics.actualBoundingBoxDescent + metrics.actualBoundingBoxAscent;
             return {
@@ -412,14 +392,26 @@ export class Text extends Shape<Group> {
         throw new Error('Method not implemented.');
     }
 
-    flagReset() {
-        super.flagReset.call(this);
-        this._flagValue = this._flagFamily = this._flagSize =
-            this._flagLeading = this._flagAlignment = this._flagFill =
-            this._flagStroke = this._flagLinewidth = this._flagOpacity =
-            this._flagVisible = this._flagClip = this._flagDecoration =
-            this.flags[Flag.ClassName] = this._flagBaseline = this._flagWeight =
-            this._flagStyle = this._flagDirection = false;
+    flagReset(dirtyFlag = false) {
+        super.flagReset(dirtyFlag);
+
+        this.flags[Flag.Value] = dirtyFlag;
+        this.flags[Flag.Family] = dirtyFlag;
+        this.flags[Flag.Size] = dirtyFlag;
+        this._flagLeading = dirtyFlag;
+        this._flagAlignment = dirtyFlag;
+        this._flagFill = dirtyFlag;
+        this._flagStroke = dirtyFlag;
+        this._flagLinewidth = dirtyFlag;
+        this.flags[Flag.Opacity] = dirtyFlag;
+        this.flags[Flag.Visible] = dirtyFlag;
+        this._flagClip = dirtyFlag;
+        this._flagDecoration = dirtyFlag;
+        this.flags[Flag.ClassName] = dirtyFlag;
+        this._flagBaseline = dirtyFlag;
+        this._flagWeight = dirtyFlag;
+        this._flagStyle = dirtyFlag;
+        this._flagDirection = dirtyFlag;
         return this;
     }
     get alignment(): 'center' | 'left' | 'right' {
@@ -466,12 +458,16 @@ export class Text extends Shape<Group> {
         this._direction = v;
         this._flagDirection = true;
     }
-    get family() {
-        return this._family;
+    get family(): string {
+        return this.#family.value;
     }
-    set family(v) {
-        this._family = v;
-        this._flagFamily = true;
+    set family(family: string) {
+        if (typeof family === 'string') {
+            if (this.family !== family) {
+                this.#family.next(family);
+                this.flags[Flag.Family] = true;
+            }
+        }
     }
     get fill() {
         return this.#fill;
@@ -518,19 +514,27 @@ export class Text extends Shape<Group> {
             mask.clip = true;
         }
     }
-    get opacity() {
-        return this._opacity;
+    get opacity(): number {
+        return this.#opacity.value;
     }
-    set opacity(v) {
-        this._opacity = v;
-        this._flagOpacity = true;
+    set opacity(opacity: number) {
+        if (typeof opacity === 'number') {
+            if (this.opacity !== opacity) {
+                this.#opacity.next(opacity);
+                this.flags[Flag.Opacity] = true;
+            }
+        }
     }
-    get size() {
-        return this._size;
+    get size(): number {
+        return this.#size.value;
     }
-    set size(v) {
-        this._size = v;
-        this._flagSize = true;
+    set size(size: number) {
+        if (typeof size === 'number') {
+            if (this.size !== size) {
+                this.#size.next(size);
+                this.flags[Flag.Size] = true;
+            }
+        }
     }
     get stroke() {
         return this._stroke;
@@ -561,18 +565,24 @@ export class Text extends Shape<Group> {
         this._flagStyle = true;
     }
     get value(): string {
-        return this._value;
+        return this.#value.value;
     }
-    set value(v: string) {
-        this._value = v;
-        this._flagValue = true;
+    set value(value: string) {
+        if (typeof value === 'string') {
+            if (this.value !== value) {
+                this.#value.next(value);
+                this.flags[Flag.Value] = true;
+            }
+        }
     }
-    get visible() {
-        return this._visible;
+    get visible(): boolean {
+        return this.#visible.value;
     }
-    set visible(v) {
-        this._visible = v;
-        this._flagVisible = true;
+    set visible(visible: boolean) {
+        if (this.visible !== visible) {
+            this.#visible.next(visible);
+            this.flags[Flag.Visible] = true;
+        }
     }
     get weight() {
         return this._weight;

@@ -38,7 +38,7 @@ export const Constants = {
      * @name Two.Identifier
      * @property {String} - String prefix for all Two.js object's ids. This trickles down to SVG ids.
      */
-    Identifier: 'two-',
+    Identifier: 'g2o-',
 
     /**
      * Default amount of vertices to be used for interpreting Arcs and ArcSegments.

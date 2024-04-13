@@ -478,6 +478,10 @@ const svg = {
                     svg.group.path.render.call(child as Path, this);
                     break;
                 }
+                case 'text': {
+                    svg.group.text.render.call(child as Text, this);
+                    break;
+                }
                 default: {
                     // DGH: This doesn't make sense, but then I think it was dead code.
                     // svg[child._renderer.type].render.call(child, this);
@@ -899,10 +903,10 @@ const svg = {
                     changed.id = this.id;
                 }
 
-                if (this._flagFamily) {
+                if (this.flags[Flag.Family]) {
                     changed['font-family'] = this.family;
                 }
-                if (this._flagSize) {
+                if (this.flags[Flag.Size]) {
                     changed['font-size'] = `${this.size}`;
                 }
                 if (this._flagLeading) {
@@ -957,14 +961,14 @@ const svg = {
                 if (this._flagLinewidth) {
                     changed['stroke-width'] = `${this.linewidth}`;
                 }
-                if (this._flagOpacity) {
-                    changed.opacity = `${this._opacity}`;
+                if (this.flags[Flag.Opacity]) {
+                    changed.opacity = `${this.opacity}`;
                 }
                 if (this.flags[Flag.ClassName]) {
                     changed['class'] = this.classList.join(' ');
                 }
-                if (this._flagVisible) {
-                    changed.visibility = this._visible ? 'visible' : 'hidden';
+                if (this.flags[Flag.Visible]) {
+                    changed.visibility = this.visible ? 'visible' : 'hidden';
                 }
                 if (this.dashes && this.dashes.length > 0) {
                     changed['stroke-dasharray'] = this.dashes.join(' ');
@@ -978,6 +982,22 @@ const svg = {
                     changed.id = this.id;
                     this.viewInfo.elem = svg.createElement('text', changed);
                     domElement.appendChild(this.viewInfo.elem);
+
+                    this.family$.subscribe((family) => {
+                        svg.setAttributes(this.viewInfo.elem, { 'font-family': family });
+                    })
+                    this.opacity$.subscribe((opacity) => {
+                        svg.setAttributes(this.viewInfo.elem, { opacity: `${opacity}` });
+                    })
+                    this.size$.subscribe((size) => {
+                        svg.setAttributes(this.viewInfo.elem, { 'font-size': `${size}` });
+                    })
+                    this.value$.subscribe((value) => {
+                        this.viewInfo.elem.textContent = value;
+                    })
+                    this.visible$.subscribe((visible) => {
+                        svg.setAttributes(this.viewInfo.elem, { visibility: visible ? 'visible' : 'hidden' });
+                    })
                 }
 
                 if (this._flagClip) {
@@ -1011,14 +1031,12 @@ const svg = {
                     }
                 }
 
-                if (this._flagValue) {
-                    this.viewInfo.elem.textContent = this._value;
+                if (this.flags[Flag.Value]) {
+                    this.viewInfo.elem.textContent = this.value;
                 }
 
                 return this.flagReset();
-
             }
-
         },
 
         'linear-gradient': {
@@ -1389,6 +1407,8 @@ export class SVGView implements View {
 
     render(): this {
         const thisArg = this.scene;
+        // The problem with this approach is that this view does not get to maintain state.
+
         svg.group.render.call(thisArg, this.domElement);
         svg.defs.update(this.domElement);
         return this;
