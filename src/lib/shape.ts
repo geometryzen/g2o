@@ -135,13 +135,6 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         this.#attitude_change_unbind();
     }
 
-    get renderer() {
-        return this.viewInfo;
-    }
-    set renderer(v) {
-        this.viewInfo = v;
-    }
-
     #update_matrix(): void {
         // For performance, the matrix product has been pre-computed.
         // M = T * S * R * skewX * skewY

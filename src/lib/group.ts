@@ -356,7 +356,6 @@ export class Group extends Shape<unknown> {
     }
 
     update(): this {
-        console.log(`Group[${this.id}].update()`)
         if (this._flagBeginning || this._flagEnding) {
 
             const beginning = Math.min(this.beginning, this.ending);

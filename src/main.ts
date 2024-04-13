@@ -1,122 +1,168 @@
-import { Anchor, Board, Circle, G20, Group, Path, Rectangle, Shape } from './index';
+import { Board, BoardOptions, Circle, G20, Group, RadialGradient, Shape, Stop, Text, TextStyles } from './index';
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    const container = document.getElementById('container')!
-
-    const board = new Board({
+    const container = document.getElementById("container")!
+    const params: Partial<BoardOptions> = {
         container,
         resizeTo: container
+    }
+
+    const elementNames = [
+        "",
+        "Hydrogen",
+        "Helium",
+        "Lithium",
+        "Beryllium",
+        "Boron",
+        "Carbon",
+        "Nitrogen",
+        "Oxygen",
+        "Fluorine",
+        "Neon"
+    ]
+
+    const styles: Partial<TextStyles> = {
+        alignment: "center",
+        size: 36,
+        family: "Lato"
+    }
+
+    const nucleusCount = 10
+    const nucleusArray = Array<Circle>()
+
+    // var electronCount = 10
+    const electronArray = Array<Circle>()
+
+    function intRange(min: number, max: number): number {
+        return Math.random() * (max - min) + min
+    }
+
+    const board = new Board(params).appendTo(container)
+    const scene = board.scene
+    scene.id="scene"
+    const centerX = board.width / 2
+    const centerY = board.height / 2
+
+    const protonColor = new RadialGradient(
+        0,
+        0,
+        15,
+        [new Stop(0, "red", 1), new Stop(1, "black", 1)]
+    )
+
+    const neutronColor = new RadialGradient(
+        0,
+        0,
+        15,
+        [new Stop(0, "gray", 1), new Stop(1, "black", 1)]
+    )
+
+    for (let i = 0; i < nucleusCount; i++) {
+        nucleusArray.push(new Circle({ position: G20.vector(intRange(-10, 10), intRange(-10, 10)), radius: 8 }))
+    }
+
+    nucleusArray.forEach(function (nucleus, index) {
+        if (index % 2 === 0) {
+            nucleus.fill = protonColor
+        }
+        if (index % 2 === 1) {
+            nucleus.fill = neutronColor
+        }
+        nucleus.noStroke()
     })
 
-    const scene = board.scene
-    scene.id = "scene"
+    for (let i = 0; i < 10; i++) {
+        if (i < 2) {
+            const shellRadius = 50
+            const angle = i * Math.PI
+            electronArray.push(
+                new Circle({ position: G20.vector(Math.cos(angle) * shellRadius, Math.sin(angle) * shellRadius), radius: 5 })
+            )
+        }
+        if (i >= 2 && i < 10) {
+            const shellRadius = 80
+            const angle = (i - 2) * Math.PI / 4
+            electronArray.push(
+                new Circle({ position: G20.vector(Math.cos(angle) * shellRadius, Math.sin(angle) * shellRadius), radius: 5 })
+            )
+        }
+    }
 
-    const width = 44
-    const height = 64
-    const half_width = width / 2
-    const quart_width = half_width / 2
+    const orbitA = new Circle({ position: G20.vector(centerX, centerY), radius: 50 })
+    orbitA.fill = "transparent"
+    orbitA.linewidth = 2
+    orbitA.stroke = "rgba(0, 0, 0, 0.1)"
+    scene.add(orbitA)
 
-    const t = makeT(255, 64, 64)
-    t.scale = 1
-    t.position.x = - width * 1.33
+    const orbitB = new Circle({ position: G20.vector(centerX, centerY), radius: 80 })
+    orbitB.fill = "transparent"
+    orbitB.linewidth = 2
+    orbitB.stroke = "rgba(0, 0, 0, 0.1)"
+    scene.add(orbitB)
 
-    const w = makeW(255, 128, 0)
-    w.scale = 1
-    w.position.x = 0
+    const groupElectronA = new Group(electronArray.slice(0, 2))
+    groupElectronA.position.set(centerX, centerY)
+    groupElectronA.fill = "blue"
+    groupElectronA.linewidth = 1
+    scene.add(groupElectronA as Shape<Group>)
 
-    const o = makeO(0, 191, 168)
-    o.scale = 1
-    o.position.x = width * 1.33
+    const groupElectronB = new Group(electronArray.slice(2, 10))
+    groupElectronB.position.set(centerX, centerY)
+    groupElectronB.fill = "blue"
+    groupElectronB.linewidth = 1
+    scene.add(groupElectronB as Shape<Group>)
 
-    scene.add(t, w, o)
-    scene.scale = 3 * (285 / 486)
-    scene.position.set(board.width / 2, board.height / 2)
+    const groupNucleus = new Group(nucleusArray)
+    groupNucleus.id = "nucleus"
+    groupNucleus.position.set(centerX, centerY)
+    scene.add(groupNucleus as Shape<Group>)
 
-    board.update()
+    const text = new Text("", centerX, 100, styles)
+    scene.add(text)
 
-    // Group extends Shape but there is currently (0.9.41) some inconsistency so we have to cast away the issue.
-    // const group = board.makeGroup(t as unknown as Shape<Group>, w as unknown as Shape<Group>)
-    // group.scale = 3 * (285 / 486)
-    // group.position.set(board.width/2, board.height / 2)
-
-    // t.scale = w.scale = o.scale = 0
+    let angleA = 0
+    let angleB = 0
+    let angleN = 0
 
     function animate() {
-        /*
-        const tScale = t.scale
-
-        const s = (tScale + (1.0 - tScale) * 0.125) % 0.999
-        t.scale = s
-        w.scale = s
-        o.scale = s
-        */
-        //board.update()
-        //window.requestAnimationFrame(animate)
+        angleA += 0.025 * Math.PI
+        angleB += 0.005 * Math.PI
+        angleN -= 0.05
+        groupElectronA.attitude.rotorFromAngle(angleA)
+        groupElectronB.attitude.rotorFromAngle(angleB)
+        groupNucleus.attitude.rotorFromAngle(angleN)
+        // groupNucleus.rotation -= 0.05
+        board.update()
+        window.requestAnimationFrame(animate)
     }
 
-    // window.requestAnimationFrame(animate)
+    window.requestAnimationFrame(animate)
 
-    function makeT(r: number, g: number, b: number): Shape<Group> {
+    nucleusArray.forEach(function (nucleus, _index) {
+        nucleus.opacity = 0
+    })
 
-        const a: Rectangle = new Rectangle({ width, height: quart_width })
-        a.id = "t1"
-        // Why does adding the shape to the board make it "right"?
-        // board.add(a)
-        const c = new Rectangle({ width: quart_width, height: width })
-        c.id = "t2"
-        const rgb = r + ',' + g + ',' + b
+    electronArray.forEach(function (electron, _index) {
+        electron.opacity = 0
+    })
 
-        a.fill = c.fill = 'rgba(' + rgb + ',' + 0.33 + ')'
-        a.stroke = c.stroke = 'rgb(' + rgb + ')'
-        a.linewidth = c.linewidth = 1
+    let visible = 0
 
-        const group = new Group([a, c]) as Shape<Group>
-        group.id = "t"
-        return group
-    }
-
-    function makeW(r: number, g: number, b: number): Shape<Group> {
-        const x1 = 0
-        const y1 = height * 0.3125
-        const x2 = half_width
-        const y2 = - y1
-        const x3 = - x2
-        const y3 = y2
-
-        const a: Path = new Path([new Anchor(G20.vector(x1, y1)), new Anchor(G20.vector(x2, y2)), new Anchor(G20.vector(x3, y3))], true)
-        const c: Path = new Path([new Anchor(G20.vector(x1, y1)), new Anchor(G20.vector(x2, y2)), new Anchor(G20.vector(x3, y3))], true)
-        // board.add(a)
-        // board.add(c)
-
-        a.position.x = - width * 0.25
-        c.position.set(a.position.x + half_width, a.position.y)
-
-        const rgb = Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b)
-
-        a.fill = c.fill = 'rgba(' + rgb + ',' + 0.33 + ')'
-        a.stroke = c.stroke = 'rgb(' + rgb + ')'
-        a.linewidth = c.linewidth = 1
-
-        const group = new Group([a, c]) as Shape<Group>
-        group.id = "w"
-        return group;
-    }
-
-    function makeO(r: number, g: number, b: number): Shape<Group> {
-
-        const a: Circle = new Circle({ radius: half_width })
-        a.id = "c1"
-        const c: Circle = new Circle({ radius: width * 0.125 })
-        c.id = "c2"
-        const rgb = Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b)
-
-        a.fill = c.fill = 'rgba(' + rgb + ',' + 0.33 + ')'
-        a.stroke = c.stroke = 'rgb(' + rgb + ')'
-        a.linewidth = c.linewidth = 1
-
-        const group = new Group([a, c]) as Shape<Group>
-        group.id = "o"
-        return group;
-    }
+    document.addEventListener("click", function () {
+        if (visible < nucleusArray.length) {
+            nucleusArray[visible].opacity = 1
+            electronArray[visible].opacity = 1
+            visible++
+            text.value = elementNames[visible]
+            text.stroke="#000"
+        }
+        else {
+            nucleusArray.forEach(el => el.opacity = 0)
+            electronArray.forEach(el => el.opacity = 0)
+            visible = 0
+            text.value = elementNames[0]
+        }
+        board.update()
+    })
 });

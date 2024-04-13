@@ -19,14 +19,14 @@ import { View } from './View';
 
 type DOMElement = HTMLElement | SVGElement;
 
-function set_dom_element_defs(domElement: DOMElement, defs: SVGDefsElement): void {
+function set_dom_element_defs(svgElement: SVGElement, defs: SVGDefsElement): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (domElement as any).defs = defs;
+    (svgElement as any).defs = defs;
 }
 
-function get_dom_element_defs(domElement: DOMElement): SVGDefsElement {
+function get_dom_element_defs(svgElement: SVGElement): SVGDefsElement {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (domElement as any).defs;
+    return (svgElement as any).defs;
 }
 
 /**
@@ -382,7 +382,7 @@ const svg = {
         return string;
     },
 
-    getClip: function (shape: Shape<Group>, domElement: DOMElement) {
+    getClip: function (shape: Shape<Group>, svgElement: SVGElement) {
         let clip = shape.viewInfo.clip;
         if (!clip) {
             clip = shape.viewInfo.clip = svg.createElement('clipPath', {
@@ -390,24 +390,27 @@ const svg = {
             }) as SVGClipPathElement;
         }
         if (clip.parentNode === null) {
-            const defs = get_dom_element_defs(domElement);
+            const defs = get_dom_element_defs(svgElement);
             if (defs) {
                 defs.appendChild(clip);
+            }
+            else {
+                console.warn("No defs found for element");
             }
         }
         return clip;
     },
 
     defs: {
-        update: function (domElement: HTMLElement | SVGElement) {
-            const defs = get_dom_element_defs(domElement);
+        update: function (svgElement: SVGElement) {
+            const defs = get_dom_element_defs(svgElement);
             if (get_defs_flag_update(defs)) {
                 const children = Array.prototype.slice.call(defs.children, 0);
                 for (let i = 0; i < children.length; i++) {
                     const child = children[i];
                     const id = child.id;
                     const selector = `[fill="url(#${id})"],[stroke="url(#${id})"],[clip-path="url(#${id})"]`;
-                    const exists = domElement.querySelector(selector);
+                    const exists = svgElement.querySelector(selector);
                     if (!exists) {
                         defs.removeChild(child);
                     }
@@ -463,7 +466,7 @@ const svg = {
             this.elem.appendChild(object.viewInfo.elem);
         },
 
-        render: function (this: Group, domElement: DOMElement): void {
+        render: function (this: Group, domElement: DOMElement, svgElement: SVGElement): void {
 
             // Shortcut for hidden objects.
             // Doesn't reset the flags, so changes are stored and
@@ -502,11 +505,15 @@ const svg = {
                 const elem = this.viewInfo.elem;
                 switch (type) {
                     case 'group': {
-                        svg.group.render.call(child as Group, elem);
+                        svg.group.render.call(child as Group, elem, svgElement);
                         break;
                     }
                     case 'path': {
-                        svg.path.render.call(child as Path, elem);
+                        svg.path.render.call(child as Path, elem, svgElement);
+                        break;
+                    }
+                    case 'text': {
+                        svg.text.render.call(child as Text, elem, svgElement);
                         break;
                     }
                     default: {
@@ -586,7 +593,7 @@ const svg = {
         },
     },
     'path': {
-        render: function (this: Path, domElement: DOMElement) {
+        render: function (this: Path, domElement: DOMElement, svgElement: SVGElement) {
             // Shortcut for hidden objects.
             // Doesn't reset the flags, so changes are stored and
             // applied once the object is visible again
@@ -620,15 +627,15 @@ const svg = {
                 const type = this.fill.viewInfo.type as 'linear-gradient' | 'radial-gradient' | 'texture';
                 switch (type) {
                     case 'linear-gradient': {
-                        svg['linear-gradient'].render.call(this.fill as unknown as LinearGradient, domElement, true);
+                        svg['linear-gradient'].render.call(this.fill as unknown as LinearGradient, domElement, true, svgElement);
                         break;
                     }
                     case 'radial-gradient': {
-                        svg['radial-gradient'].render.call(this.fill as unknown as RadialGradient, domElement, true);
+                        svg['radial-gradient'].render.call(this.fill as unknown as RadialGradient, domElement, true, svgElement);
                         break;
                     }
                     case 'texture': {
-                        svg['texture'].render.call(this.fill as unknown as Texture, domElement, true);
+                        svg['texture'].render.call(this.fill as unknown as Texture, domElement, true, svgElement);
                         break;
                     }
                     default: {
@@ -642,7 +649,7 @@ const svg = {
                     changed.fill = serialize_color(this.fill);
                 }
                 if (this.viewInfo.hasFillEffect && typeof this.fill === 'string') {
-                    set_defs_flag_update(get_dom_element_defs(domElement), true);
+                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
                     delete this.viewInfo.hasFillEffect;
                 }
             }
@@ -653,15 +660,15 @@ const svg = {
                 const type = this.stroke.viewInfo.type as 'linear-gradient' | 'radial-gradient' | 'texture';
                 switch (type) {
                     case 'linear-gradient': {
-                        svg['linear-gradient'].render.call(this.fill as unknown as LinearGradient, domElement, true);
+                        svg['linear-gradient'].render.call(this.fill as unknown as LinearGradient, domElement, true, svgElement);
                         break;
                     }
                     case 'radial-gradient': {
-                        svg['radial-gradient'].render.call(this.fill as unknown as RadialGradient, domElement, true);
+                        svg['radial-gradient'].render.call(this.fill as unknown as RadialGradient, domElement, true, svgElement);
                         break;
                     }
                     case 'texture': {
-                        svg['texture'].render.call(this.fill as unknown as Texture, domElement, true);
+                        svg['texture'].render.call(this.fill as unknown as Texture, domElement, true, svgElement);
                         break;
                     }
                     default: {
@@ -675,7 +682,7 @@ const svg = {
                     changed.stroke = serialize_color(this.stroke);
                 }
                 if (this.viewInfo.hasStrokeEffect && typeof this.stroke === 'string') {
-                    set_defs_flag_update(get_dom_element_defs(domElement), true);
+                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
                     delete this.viewInfo.hasStrokeEffect;
                 }
             }
@@ -732,7 +739,7 @@ const svg = {
 
             if (this.flags[Flag.Clip]) {
 
-                const clip = svg.getClip(this, domElement);
+                const clip = svg.getClip(this, svgElement);
                 const elem = this.viewInfo.elem;
 
                 if (this.clip) {
@@ -772,7 +779,7 @@ const svg = {
     },
 
     'points': {
-        render: function (this: Points, domElement: DOMElement) {
+        render: function (this: Points, domElement: DOMElement, svgElement: SVGElement) {
 
             // Shortcut for hidden objects.
             // Doesn't reset the flags, so changes are stored and
@@ -807,33 +814,33 @@ const svg = {
             }
 
             const fill = this.fill;
-            if (fill && typeof fill === 'object' && fill.renderer) {
+            if (fill && typeof fill === 'object' && fill.viewInfo) {
                 this.viewInfo.hasFillEffect = true;
                 fill.update();
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (svg as any)[fill.renderer.type].render.call(this.fill, domElement, true);
+                (svg as any)[fill.viewInfo.type].render.call(this.fill, domElement, true);
             }
 
             if (this._flagFill) {
                 changed.fill = color_value(fill);
                 if (this.viewInfo.hasFillEffect && typeof fill === 'string') {
-                    set_defs_flag_update(get_dom_element_defs(domElement), true);
+                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
                     delete this.viewInfo.hasFillEffect;
                 }
             }
 
             const stroke = this.stroke;
-            if (stroke && typeof stroke === 'object' && stroke.renderer) {
+            if (stroke && typeof stroke === 'object' && stroke.viewInfo) {
                 this.viewInfo.hasStrokeEffect = true;
                 stroke.update();
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (svg as any)[stroke.renderer.type].render.call(this.stroke, domElement, true);
+                (svg as any)[stroke.viewInfo.type].render.call(this.stroke, domElement, true);
             }
 
             if (this._flagStroke) {
                 changed.stroke = color_value(stroke);
                 if (this.viewInfo.hasStrokeEffect && typeof stroke === 'string') {
-                    set_defs_flag_update(get_dom_element_defs(domElement), true);
+                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
                     delete this.viewInfo.hasStrokeEffect;
                 }
             }
@@ -873,7 +880,7 @@ const svg = {
     },
 
     'text': {
-        render: function (this: Text, domElement: DOMElement) {
+        render: function (this: Text, domElement: DOMElement, svgElement: SVGElement) {
 
             this.update();
 
@@ -918,30 +925,30 @@ const svg = {
                 changed['direction'] = this.direction;
             }
             const fill = this.fill;
-            if (fill && typeof fill === 'object' && fill.renderer) {
+            if (fill && typeof fill === 'object' && fill.viewInfo) {
                 this.viewInfo.hasFillEffect = true;
                 fill.update();
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (svg as any)[fill.renderer.type].render.call(this.fill, domElement, true);
+                (svg as any)[fill.viewInfo.type].render.call(this.fill, domElement, true);
             }
             if (this._flagFill) {
                 changed.fill = color_value(fill);
                 if (this.viewInfo.hasFillEffect && typeof fill === 'string') {
-                    set_defs_flag_update(get_dom_element_defs(domElement), true);
+                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
                     delete this.viewInfo.hasFillEffect;
                 }
             }
             const stroke = this.stroke;
-            if (stroke && typeof stroke === 'object' && stroke.renderer) {
+            if (stroke && typeof stroke === 'object' && stroke.viewInfo) {
                 this.viewInfo.hasStrokeEffect = true;
                 stroke.update();
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (svg as any)[stroke.renderer.type].render.call(this.stroke, domElement, true);
+                (svg as any)[stroke.viewInfo.type].render.call(this.stroke, domElement, true);
             }
             if (this._flagStroke) {
                 changed.stroke = color_value(stroke);
                 if (this.viewInfo.hasStrokeEffect && typeof stroke === 'string') {
-                    set_defs_flag_update(get_dom_element_defs(domElement), true);
+                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
                     delete this.viewInfo.hasStrokeEffect;
                 }
             }
@@ -988,7 +995,7 @@ const svg = {
             }
 
             if (this._flagClip) {
-                const clip = svg.getClip(this, domElement);
+                const clip = svg.getClip(this, svgElement);
                 const elem = this.viewInfo.elem;
 
                 if (this.clip) {
@@ -1027,7 +1034,7 @@ const svg = {
     },
 
     'linear-gradient': {
-        render: function (this: LinearGradient, domElement: DOMElement, silent = false) {
+        render: function (this: LinearGradient, domElement: DOMElement, silent = false, svgElement: SVGElement) {
 
             if (!silent) {
                 this.update();
@@ -1070,7 +1077,7 @@ const svg = {
             }
 
             if (this.viewInfo.elem.parentNode === null) {
-                get_dom_element_defs(domElement).appendChild(this.viewInfo.elem);
+                get_dom_element_defs(svgElement).appendChild(this.viewInfo.elem);
             }
 
             if (this._flagStops) {
@@ -1117,7 +1124,7 @@ const svg = {
     },
 
     'radial-gradient': {
-        render: function (this: RadialGradient, domElement: DOMElement, silent = false) {
+        render: function (this: RadialGradient, domElement: DOMElement, silent = false, svgElement: SVGElement) {
 
             if (!silent) {
                 this.update();
@@ -1156,7 +1163,7 @@ const svg = {
             }
 
             if (this.viewInfo.elem.parentNode === null) {
-                get_dom_element_defs(domElement).appendChild(this.viewInfo.elem);
+                get_dom_element_defs(svgElement).appendChild(this.viewInfo.elem);
             }
 
             if (this._flagStops) {
@@ -1207,7 +1214,7 @@ const svg = {
     },
 
     'texture': {
-        render: function (this: Texture, domElement: DOMElement, silent = false) {
+        render: function (this: Texture, domElement: DOMElement, silent = false, svgElement: SVGElement) {
 
             if (!silent) {
                 this.update();
@@ -1324,7 +1331,7 @@ const svg = {
             }
 
             if (this.viewInfo.elem.parentNode === null) {
-                get_dom_element_defs(domElement).appendChild(this.viewInfo.elem);
+                get_dom_element_defs(svgElement).appendChild(this.viewInfo.elem);
             }
 
             if (this.viewInfo.elem && this.viewInfo.image && !this.viewInfo.appended) {
@@ -1391,12 +1398,11 @@ export class SVGView implements View {
     }
 
     render(): this {
-        console.log("SVGView.render()")
         const thisArg = this.scene;
+        const svgElement = this.domElement;
         // The problem with this approach is that this view does not get to maintain state.
-
-        svg.group.render.call(thisArg, this.domElement);
-        svg.defs.update(this.domElement);
+        svg.group.render.call(thisArg, this.domElement, svgElement);
+        svg.defs.update(svgElement);
         return this;
     }
 }

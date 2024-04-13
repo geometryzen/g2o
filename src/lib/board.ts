@@ -150,7 +150,6 @@ export class Board {
     }
 
     appendTo(container: Element) {
-        console.log("Board.appendTo")
         if (container && typeof container.nodeType === 'number') {
             if (container.nodeType === Node.ELEMENT_NODE) {
                 container.appendChild(this.#view.domElement);
@@ -198,7 +197,6 @@ export class Board {
      * Update positions and calculations in one pass before rendering.
      */
     update() {
-        console.log("Board.update()")
         this.#prev_now = this.#curr_now;
         this.#curr_now = dateTime.now();
 

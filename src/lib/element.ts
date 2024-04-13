@@ -44,12 +44,6 @@ export abstract class ElementBase<P> implements Child {
         this.flags[Flag.ClassName] = dirtyFlag;
         return this;
     }
-    get renderer(): SharedInfo {
-        return this.viewInfo;
-    }
-    set renderer(renderer: SharedInfo) {
-        this.viewInfo = renderer;
-    }
     get id(): string {
         return this.#id;
     }

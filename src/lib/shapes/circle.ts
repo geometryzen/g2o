@@ -49,9 +49,7 @@ export class Circle extends Path {
     }
 
     update(): this {
-        console.log(`Circle[${this.id}].update()`)
         if (this.flags[Flag.Vertices] || this.flags[Flag.Radius]) {
-
 
             let length = this.vertices.length;
 
