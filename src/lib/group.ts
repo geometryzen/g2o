@@ -82,7 +82,6 @@ export class Group extends Shape<unknown> {
 
         this.flags[Flag.Visible] = false;
 
-
         this.#shapes = new Children(shapes);
 
         this.#subscribe_to_shapes();
@@ -132,25 +131,6 @@ export class Group extends Shape<unknown> {
         }
     }
 
-    static Children = Children;
-
-    /**
-     * @name Two.Group.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.Group}.
-     */
-    static Properties = [
-        'fill',
-        'stroke',
-        'linewidth',
-        'cap',
-        'join',
-        'miter',
-
-        'closed',
-        'curved',
-        'automatic'
-    ];
-
     /**
      * Orient the children of the group to the upper left-hand corner of that group.
      */
@@ -175,11 +155,9 @@ export class Group extends Shape<unknown> {
      * Orient the children of the group to the center of that group.
      */
     center(): this {
-
         const rect = this.getBoundingClientRect(true);
         const cx = rect.left + rect.width / 2 - this.position.x;
         const cy = rect.top + rect.height / 2 - this.position.y;
-
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             if (child.isShape) {
@@ -187,14 +165,11 @@ export class Group extends Shape<unknown> {
                 child.position.y -= cy;
             }
         }
-
         if (this.mask) {
             this.mask.position.x -= cx;
             this.mask.position.y -= cy;
         }
-
         return this;
-
     }
 
     getById(id: string): IShape<unknown> {
@@ -252,7 +227,6 @@ export class Group extends Shape<unknown> {
     }
 
     add(...shapes: Shape<Group>[]) {
-
         for (let i = 0; i < shapes.length; i++) {
             const child = shapes[i];
             if (!(child && child.id)) {
@@ -264,16 +238,12 @@ export class Group extends Shape<unknown> {
             }
             this.children.push(child);
         }
-
         return this;
-
     }
 
     remove(...shapes: Shape<Group>[]) {
-
         const l = arguments.length;
         const grandparent = this.parent;
-
         // TODO: I don't like this double-meaning. It's in Shape too.
         // Allow to call remove without arguments
         // This will detach the object from its own parent.
@@ -283,7 +253,6 @@ export class Group extends Shape<unknown> {
             }
             return this;
         }
-
         // Remove the objects
         for (let i = 0; i < shapes.length; i++) {
             const object = shapes[i];
@@ -295,9 +264,7 @@ export class Group extends Shape<unknown> {
                 this.children.splice(index, 1);
             }
         }
-
         return this;
-
     }
 
     getBoundingClientRect(shallow = false): { top: number; left: number; right: number; bottom: number; width?: number; height?: number } {
@@ -388,8 +355,8 @@ export class Group extends Shape<unknown> {
         return this;
     }
 
-    update() {
-
+    update(): this {
+        console.log(`Group[${this.id}].update()`)
         if (this._flagBeginning || this._flagEnding) {
 
             const beginning = Math.min(this.beginning, this.ending);
@@ -427,16 +394,9 @@ export class Group extends Shape<unknown> {
                 sum += l;
             }
         }
-
         return super.update();
     }
 
-    /**
-     * @name Two.Group#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
     flagReset() {
 
         if (this._flagAdditions) {

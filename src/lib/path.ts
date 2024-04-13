@@ -253,12 +253,18 @@ export class Path extends Shape<Group> {
         getCurveLength
     };
 
-    noFill() {
+    /**
+     * A convenience method for setting the `fill` attribute to "none".
+     */
+    noFill(): this {
         this.fill = 'none';
         return this;
     }
 
-    noStroke() {
+    /**
+     * A convenience method for setting the `stroke` attribute to "none".
+     */
+    noStroke(): this {
         this.stroke = 'none';
         return this;
     }

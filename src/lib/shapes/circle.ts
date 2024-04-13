@@ -49,7 +49,7 @@ export class Circle extends Path {
     }
 
     update(): this {
-        console.log("Circle.update()", "Flag.Radius", this.flags[Flag.Radius], "radius", this.radius)
+        console.log(`Circle[${this.id}].update()`)
         if (this.flags[Flag.Vertices] || this.flags[Flag.Radius]) {
 
 
@@ -58,8 +58,6 @@ export class Circle extends Path {
             if (!this.closed && length > 2) {
                 length -= 1;
             }
-
-            console.log("length", length)
 
             // Coefficient for approximating circular arcs with Bezier curves
             const c = (4 / 3) * Math.tan(Math.PI / (length * 2));

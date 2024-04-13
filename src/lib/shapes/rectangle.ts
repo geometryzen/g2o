@@ -42,6 +42,7 @@ export class Rectangle extends Path {
     }
 
     update(): this {
+        console.log(`Rectangle[${this.id}].update()`)
         if (this.flags[Flag.Vertices] || this.flags[Flag.Width] || this.flags[Flag.Height]) {
 
             const xr = this.width / 2;
