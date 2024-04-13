@@ -471,7 +471,7 @@ const svg = {
             // Shortcut for hidden objects.
             // Doesn't reset the flags, so changes are stored and
             // applied once the object is visible again
-            if ((!this.visible && !this._flagVisible) || (this.opacity === 0 && !this._flagOpacity)) {
+            if ((!this.visible && !this.flags[Flag.Visible]) || (this.opacity === 0 && !this.flags[Flag.Opacity])) {
                 return;
             }
 
@@ -527,11 +527,11 @@ const svg = {
                 this.viewInfo.elem.setAttribute('id', this.id);
             }
 
-            if (this._flagOpacity) {
+            if (this.flags[Flag.Opacity]) {
                 this.viewInfo.elem.setAttribute('opacity', `${this.opacity}`);
             }
 
-            if (this._flagVisible) {
+            if (this.flags[Flag.Visible]) {
                 this.viewInfo.elem.setAttribute('display', this.visible ? 'inline' : 'none');
             }
 
@@ -539,15 +539,15 @@ const svg = {
                 this.viewInfo.elem.setAttribute('class', this.classList.join(' '));
             }
 
-            if (this._flagAdditions) {
+            if (this.flags[Flag.Additions]) {
                 this.additions.forEach(svg.group.appendChild, dom_context);
             }
 
-            if (this._flagSubtractions) {
+            if (this.flags[Flag.Subtractions]) {
                 this.subtractions.forEach(svg.group.removeChild, dom_context);
             }
 
-            if (this._flagOrder) {
+            if (this.flags[Flag.Order]) {
                 this.children.forEach(svg.group.orderChild, dom_context);
             }
 
@@ -573,7 +573,7 @@ const svg = {
 
                 // }
 
-                if (this._flagMask) {
+                if (this.flags[Flag.Mask]) {
                     if (this.mask) {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (svg as any)[this.mask.viewInfo.type].render.call(this.mask, domElement);
@@ -1363,7 +1363,7 @@ export class SVGView implements View {
     constructor(scene: Group, params: SVGViewParams = {}) {
         if (scene instanceof Group) {
             this.scene = scene;
-            this.scene.parent = this;
+            this.scene.parent = null;//this;
         }
         else {
             throw new Error("scene must be a Group");

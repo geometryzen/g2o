@@ -11,16 +11,7 @@ export interface IGroup extends Parent {
     remove(...shapes: Shape<IGroup>[]): void;
 }
 
-export class Group extends Shape<unknown> {
-    _flagAdditions = false;
-    _flagSubtractions = false;
-    _flagOrder = false;
-    _flagOpacity = true;
-    _flagBeginning = false;
-    _flagEnding = false;
-    _flagLength = false;
-    _flagMask = false;
-    _flagVisible = false;
+export class Group extends Shape<Group> {
 
     #fill: string | LinearGradient | RadialGradient | Texture = '#fff';
     #stroke: string | LinearGradient | RadialGradient | Texture = '#000';
@@ -80,6 +71,14 @@ export class Group extends Shape<unknown> {
 
         super();
 
+        this.flagReset(true);
+        this.flags[Flag.Additions] = false;
+        this.flags[Flag.Subtractions] = false;
+        this.flags[Flag.Beginning] = false;
+        this.flags[Flag.Ending] = false;
+        this.flags[Flag.Length] = false;
+        this.flags[Flag.Order] = false;
+        this.flags[Flag.Mask] = false;
         this.flags[Flag.Visible] = false;
 
         this.#shapes = new Children(shapes);
@@ -112,7 +111,7 @@ export class Group extends Shape<unknown> {
         });
 
         this.#shapes_order = this.#shapes.order$.subscribe(() => {
-            this._flagOrder = true;
+            this.flags[Flag.Order] = true;
         });
     }
 
@@ -356,7 +355,7 @@ export class Group extends Shape<unknown> {
     }
 
     update(): this {
-        if (this._flagBeginning || this._flagEnding) {
+        if (this.flags[Flag.Beginning] || this.flags[Flag.Ending]) {
 
             const beginning = Math.min(this.beginning, this.ending);
             const ending = Math.max(this.beginning, this.ending);
@@ -396,20 +395,23 @@ export class Group extends Shape<unknown> {
         return super.update();
     }
 
-    flagReset() {
-
-        if (this._flagAdditions) {
+    flagReset(dirtyFlag = false) {
+        if (this.flags[Flag.Additions]) {
             this.additions.length = 0;
-            this._flagAdditions = false;
+            this.flags[Flag.Additions] = dirtyFlag;
         }
 
-        if (this._flagSubtractions) {
+        if (this.flags[Flag.Subtractions]) {
             this.subtractions.length = 0;
-            this._flagSubtractions = false;
+            this.flags[Flag.Subtractions] = false;
         }
 
-        this._flagOrder = this._flagMask = this._flagOpacity =
-            this._flagBeginning = this._flagEnding = false;
+        this.flags[Flag.Order] = dirtyFlag;
+        this.flags[Flag.Mask] = dirtyFlag;
+        this.flags[Flag.Opacity] = dirtyFlag;
+
+        this.flags[Flag.Beginning] = dirtyFlag;
+        this.flags[Flag.Ending] = dirtyFlag;
 
         super.flagReset.call(this);
 
@@ -430,8 +432,12 @@ export class Group extends Shape<unknown> {
         return this.#beginning;
     }
     set beginning(beginning: number) {
-        this._flagBeginning = this.beginning !== beginning || this._flagBeginning;
-        this.#beginning = beginning;
+        if (typeof beginning === 'number') {
+            if (this.beginning !== beginning) {
+                this.#beginning = beginning;
+                this.flags[Flag.Beginning] = true;
+            }
+        }
     }
     get cap(): 'butt' | 'round' | 'square' {
         return this.#cap;
@@ -489,8 +495,12 @@ export class Group extends Shape<unknown> {
         return this.#ending;
     }
     set ending(ending: number) {
-        this._flagEnding = this.ending !== ending || this._flagEnding;
-        this.#ending = ending;
+        if (typeof ending === 'number') {
+            if (this.ending !== ending) {
+                this.#ending = ending;
+                this.flags[Flag.Ending] = true;
+            }
+        }
     }
     get fill(): string | LinearGradient | RadialGradient | Texture {
         return this.#fill;
@@ -513,7 +523,7 @@ export class Group extends Shape<unknown> {
         }
     }
     get length(): number {
-        if (this._flagLength || this.#length <= 0) {
+        if (this.flags[Flag.Length] || this.#length <= 0) {
             this.#length = 0;
             if (!this.children) {
                 return this.#length;
@@ -540,7 +550,7 @@ export class Group extends Shape<unknown> {
     }
     set mask(mask: Shape<Group>) {
         this.#mask = mask;
-        this._flagMask = true;
+        this.flags[Flag.Mask] = true;
         if (!mask.clip) {
             mask.clip = true;
         }
@@ -559,8 +569,12 @@ export class Group extends Shape<unknown> {
         return this.#opacity;
     }
     set opacity(opacity: number) {
-        this._flagOpacity = this.opacity !== opacity || this._flagOpacity;
-        this.#opacity = opacity;
+        if (typeof opacity === 'number') {
+            if (this.opacity !== opacity) {
+                this.#opacity = opacity;
+                this.flags[Flag.Opacity] = true;
+            }
+        }
     }
     get stroke(): string | LinearGradient | RadialGradient | Texture {
         return this.#stroke;
@@ -596,7 +610,6 @@ export class Group extends Shape<unknown> {
 export function update_shape_group(child: Shape<Group>, parent?: Group) {
 
     const previous_parent = child.parent;
-    let index;
 
     if (previous_parent === parent) {
         add();
@@ -604,12 +617,9 @@ export function update_shape_group(child: Shape<Group>, parent?: Group) {
     }
 
     if (previous_parent && previous_parent.children.ids[child.id]) {
-
-        index = Array.prototype.indexOf.call(previous_parent.children, child);
+        const index = Array.prototype.indexOf.call(previous_parent.children, child);
         previous_parent.children.splice(index, 1);
-
         splice();
-
     }
 
     if (parent) {
@@ -619,11 +629,11 @@ export function update_shape_group(child: Shape<Group>, parent?: Group) {
 
     splice();
 
-    if (previous_parent._flagAdditions && previous_parent.additions.length === 0) {
-        previous_parent._flagAdditions = false;
+    if (previous_parent.flags[Flag.Additions] && previous_parent.additions.length === 0) {
+        previous_parent.flags[Flag.Additions] = false;
     }
-    if (previous_parent._flagSubtractions && previous_parent.subtractions.length === 0) {
-        previous_parent._flagSubtractions = false;
+    if (previous_parent.flags[Flag.Subtractions] && previous_parent.subtractions.length === 0) {
+        previous_parent.flags[Flag.Subtractions] = false;
     }
 
     delete child.parent;
@@ -631,16 +641,14 @@ export function update_shape_group(child: Shape<Group>, parent?: Group) {
     function add() {
 
         if (parent.subtractions.length > 0) {
-            index = Array.prototype.indexOf.call(parent.subtractions, child);
-
+            const index = Array.prototype.indexOf.call(parent.subtractions, child);
             if (index >= 0) {
                 parent.subtractions.splice(index, 1);
             }
         }
 
         if (parent.additions.length > 0) {
-            index = Array.prototype.indexOf.call(parent.additions, child);
-
+            const index = Array.prototype.indexOf.call(parent.additions, child);
             if (index >= 0) {
                 parent.additions.splice(index, 1);
             }
@@ -648,22 +656,20 @@ export function update_shape_group(child: Shape<Group>, parent?: Group) {
 
         child.parent = parent;
         parent.additions.push(child);
-        parent._flagAdditions = true;
+        parent.flags[Flag.Additions] = true;
     }
 
     function splice() {
 
-        index = Array.prototype.indexOf.call(previous_parent.additions, child);
-
-        if (index >= 0) {
-            previous_parent.additions.splice(index, 1);
+        const indexAdd = previous_parent.additions.indexOf(child);
+        if (indexAdd >= 0) {
+            previous_parent.additions.splice(indexAdd, 1);
         }
 
-        index = Array.prototype.indexOf.call(previous_parent.subtractions, child);
-
-        if (index < 0) {
+        const indexSub = previous_parent.subtractions.indexOf(child);
+        if (indexSub < 0) {
             previous_parent.subtractions.push(child);
-            previous_parent._flagSubtractions = true;
+            previous_parent.flags[Flag.Subtractions] = true;
         }
     }
 }

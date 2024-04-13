@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const board = new Board(params).appendTo(container)
     const scene = board.scene
-    scene.id="scene"
+    scene.id = "scene"
     const centerX = board.width / 2
     const centerY = board.height / 2
 
@@ -132,7 +132,6 @@ document.addEventListener('DOMContentLoaded', function () {
         groupElectronA.attitude.rotorFromAngle(angleA)
         groupElectronB.attitude.rotorFromAngle(angleB)
         groupNucleus.attitude.rotorFromAngle(angleN)
-        // groupNucleus.rotation -= 0.05
         board.update()
         window.requestAnimationFrame(animate)
     }
@@ -155,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
             electronArray[visible].opacity = 1
             visible++
             text.value = elementNames[visible]
-            text.stroke="#000"
+            text.stroke = "#000"
         }
         else {
             nucleusArray.forEach(el => el.opacity = 0)

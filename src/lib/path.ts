@@ -1124,6 +1124,6 @@ export function FlagVertices(this: Path) {
     this.flags[Flag.Vertices] = true;
     this.flags[Flag.Length] = true;
     if (this.parent) {
-        this.parent._flagLength = true;
+        this.parent.flags[Flag.Length] = true;
     }
 }
