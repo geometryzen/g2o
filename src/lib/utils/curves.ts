@@ -60,7 +60,7 @@ export const Curve = {
         [0.1894506104550684962853967, 0.1826034150449235888667637, 0.1691565193950025381893121, 0.1495959888165767320815017, 0.1246289712555338720524763, 0.0951585116824927848099251, 0.0622535239386478928628438, 0.0271524594117540948517806]
     ]
 
-};
+} as const;
 
 /**
  * @name Two.Utils.getComponentOnCubicBezier
@@ -158,7 +158,6 @@ export function getCurveLength(x1: number, y1: number, x2: number, y2: number, x
     return integrate(
         integrand, 0, 1, limit || Curve.RecursionLimit
     );
-
 }
 
 /**

@@ -1,33 +1,28 @@
-import { Board, BoardOptions, G20, Text, TextStyles } from './index';
+import { Board, BoardOptions, Circle, G20 } from './index';
 
 document.addEventListener('DOMContentLoaded', function () {
 
     const container = document.getElementById("container")!
-    const params: Partial<BoardOptions> = {
-        container
-    }
 
-    const styles: Partial<TextStyles> = {
-        alignment: "left",
-        size: 36
+    const params: Partial<BoardOptions> = {
+        container,
+        resizeTo: container
     }
 
     const board = new Board(params)
 
-    const text = new Text("Foo", 0, 0, styles);
+    const scene = board.scene
 
-    text.usePosition(G20.vector(100, 100));
-    text.useAttitude(G20.one.clone().rotorFromAngle(-Math.PI / 4));
+    const circle: Circle = new Circle()
+    circle.radius = 50
+    circle.position = G20.vector(0, 0)
+    circle.fill = '#FF8000'
+    circle.noStroke()
+    scene.add(circle)
 
-    board.scene.add(text);
+    console.log("width", board.width, "height", board.height)
+
+    scene.position.set(board.width / 2, board.height / 2);
 
     board.update()
-
-    text.family = 'Lato'
-    text.value = "Hello"
-    text.opacity = 0.25
-    text.visible = true
-    text.size = 36
-
-    //board.update()
 });

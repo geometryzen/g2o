@@ -49,13 +49,17 @@ export class Circle extends Path {
     }
 
     update(): this {
+        console.log("Circle.update()", "Flag.Radius", this.flags[Flag.Radius], "radius", this.radius)
         if (this.flags[Flag.Vertices] || this.flags[Flag.Radius]) {
+
 
             let length = this.vertices.length;
 
             if (!this.closed && length > 2) {
                 length -= 1;
             }
+
+            console.log("length", length)
 
             // Coefficient for approximating circular arcs with Bezier curves
             const c = (4 / 3) * Math.tan(Math.PI / (length * 2));
@@ -100,9 +104,17 @@ export class Circle extends Path {
     get radius(): number {
         return this.#radius;
     }
-    set radius(v: number) {
-        this.#radius = v;
-        this.flags[Flag.Radius] = true;
+    set radius(radius: number) {
+        if (typeof radius === 'number') {
+            if (this.radius !== radius) {
+                this.#radius = radius;
+                this.flags[Flag.Radius] = true;
+                // This is critical, but does it violate encapsulation?
+                // By extending Path, it seems I have to know something of the implementation details.
+                this.flags[Flag.Length] = true;
+                this.update()
+            }
+        }
     }
 }
 
