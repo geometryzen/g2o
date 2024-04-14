@@ -3,6 +3,7 @@ import { LinearGradient } from '../effects/linear-gradient.js';
 import { RadialGradient } from '../effects/radial-gradient.js';
 import { Texture } from '../effects/texture.js';
 import { Group } from '../group.js';
+import { IBoard } from '../IBoard.js';
 import { decompose_2d_3x3_matrix } from '../math/decompose_2d_3x3_matrix.js';
 import { G20 } from '../math/G20.js';
 import { get_dashes_offset, set_dashes_offset } from '../path.js';
@@ -65,9 +66,9 @@ export class Points extends Shape<Group> {
 
     readonly #vector_change_subscriptions = new Map<G20, Subscription>();
 
-    constructor(vertices: G20[]) {
+    constructor(board: IBoard, vertices: G20[]) {
 
-        super();
+        super(board);
 
         this.viewInfo.type = 'points';
         this.viewInfo.vector_vertices = null;

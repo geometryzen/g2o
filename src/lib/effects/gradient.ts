@@ -115,9 +115,11 @@ export abstract class Gradient extends ElementBase<Group> {
         return this;
     }
 
-    flagReset() {
-        this._flagSpread = this._flagUnits = this._flagStops = false;
-        super.flagReset.call(this);
+    flagReset(dirtyFlag = false): this {
+        this._flagSpread = dirtyFlag;
+        this._flagUnits = dirtyFlag;
+        this._flagStops = dirtyFlag;
+        super.flagReset(dirtyFlag);
         return this;
     }
     get spread(): 'pad' | 'reflect' | 'repeat' | null {

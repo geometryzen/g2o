@@ -1,87 +1,57 @@
 import { Anchor } from '../anchor.js';
 import { Flag } from '../Flag.js';
+import { IBoard } from '../IBoard.js';
 import { G20 } from '../math/G20.js';
-import { Path } from '../path.js';
+import { Path, PathOptions } from '../path.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 
 const cos = Math.cos, sin = Math.sin;
 
+export interface EllipseOptions {
+    position?: G20;
+    attitude?: G20;
+    rx?: number;
+    ry?: number;
+    resolution?: number;
+}
+
 export class Ellipse extends Path {
 
-    /**
-     * @name Two.Ellipse#_flagWidth
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Ellipse#width} needs updating.
-     */
     _flagWidth = false;
-    /**
-     * @name Two.Ellipse#_flagHeight
-     * @private
-     * @property {Boolean} - Determines whether the {@link Two.Ellipse#height} needs updating.
-     */
     _flagHeight = false;
 
-    /**
-     * @name Two.Ellipse#_width
-     * @private
-     * @see {@link Two.Ellipse#width}
-     */
     _width = 0;
-    /**
-     * @name Two.Ellipse#_height
-     * @private
-     * @see {@link Two.Ellipse#height}
-     */
     _height = 0;
 
-    /**
-     * @param {Number} [x=0] - The x position of the ellipse.
-     * @param {Number} [y=0] - The y position of the ellipse.
-     * @param {Number} [rx=0] - The radius value of the ellipse in the x direction.
-     * @param {Number} [ry=0] - The radius value of the ellipse in the y direction.
-     * @param {Number} [resolution=4] - The number of vertices used to construct the ellipse.
-     */
-    constructor(x: number = 0, y: number = 0, rx: number = 0, ry: number = 0, resolution: number = 4) {
-
-        if (typeof ry !== 'number' && typeof rx === 'number') {
-            ry = rx;
-        }
+    constructor(board: IBoard, options: EllipseOptions = {}) {
 
         // At least 2 vertices are required for proper circlage
-        const amount = resolution ? Math.max(resolution, 2) : 4;
+        const amount = options.resolution ? Math.max(options.resolution, 2) : 4;
         const points = [];
         for (let i = 0; i < amount; i++) {
             points.push(new Anchor(G20.vector(0, 0)));
         }
 
-        super(points, true, true, true);
+        super(board, points, true, true, true, path_options_from_ellipse_options(options));
 
-        /**
-         * @name Two.Ellipse#width
-         * @property {Number} - The width of the ellipse.
-         */
-        if (typeof rx === 'number') {
-            this.width = rx * 2;
+        if (typeof options.rx === 'number') {
+            this.width = options.rx * 2;
+        }
+        else {
+            this.width = 1;
         }
 
-        /**
-         * @name Two.Ellipse#height
-         * @property {Number} - The height of the ellipse.
-         */
-        if (typeof ry === 'number') {
-            this.height = ry * 2;
+        if (typeof options.ry === 'number') {
+            this.height = options.ry * 2;
         }
+        else {
+            this.height = 1;
+        }
+
+        this.flagReset(true)
 
         this.update();
-
-        if (typeof x === 'number') {
-            this.position.x = x;
-        }
-        if (typeof y === 'number') {
-            this.position.y = y;
-        }
-
     }
 
     static Properties = ['width', 'height'];
@@ -127,15 +97,10 @@ export class Ellipse extends Path {
 
     }
 
-    /**
-     * @name Two.Ellipse#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
-    flagReset() {
-        this._flagWidth = this._flagHeight = false;
-        super.flagReset.call(this);
+    flagReset(dirtyFlag = false): this {
+        this._flagWidth = dirtyFlag;
+        this._flagHeight = dirtyFlag;
+        super.flagReset(dirtyFlag);
         return this;
     }
     get height() {
@@ -152,4 +117,12 @@ export class Ellipse extends Path {
         this._width = v;
         this._flagWidth = true;
     }
+}
+
+function path_options_from_ellipse_options(circle_options: EllipseOptions): PathOptions {
+    const path_options: PathOptions = {
+        attitude: circle_options.attitude,
+        position: circle_options.position
+    };
+    return path_options;
 }

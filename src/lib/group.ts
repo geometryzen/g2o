@@ -3,6 +3,7 @@ import { LinearGradient } from './effects/linear-gradient.js';
 import { RadialGradient } from './effects/radial-gradient.js';
 import { Texture } from './effects/texture.js';
 import { Flag } from './Flag.js';
+import { IBoard } from './IBoard.js';
 import { IShape } from './IShape.js';
 import { Subscription } from './rxjs/Subscription';
 import { Parent, Shape } from './shape.js';
@@ -67,9 +68,9 @@ export class Group extends Shape<Group> {
      */
     readonly subtractions: Shape<Group>[] = [];
 
-    constructor(shapes: Shape<Group>[] = []) {
+    constructor(board: IBoard, shapes: Shape<Group>[] = []) {
 
-        super();
+        super(board);
 
         this.flagReset(true);
         this.flags[Flag.Additions] = false;

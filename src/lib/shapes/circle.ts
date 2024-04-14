@@ -1,5 +1,6 @@
 import { Anchor } from '../anchor.js';
 import { Flag } from '../Flag.js';
+import { IBoard } from '../IBoard.js';
 import { G20 } from '../math/G20.js';
 import { Path, PathOptions } from '../path.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
@@ -16,7 +17,7 @@ export class Circle extends Path {
 
     #radius: number;
 
-    constructor(options: CircleOptions = {}) {
+    constructor(board: IBoard, options: CircleOptions = {}) {
 
         // At least 2 vertices are required for proper circle.
         const amount = options.resolution ? Math.max(options.resolution, 2) : 4;
@@ -26,7 +27,7 @@ export class Circle extends Path {
             points.push(new Anchor(G20.vector(0, 0), 0, 0, 0, 0));
         }
 
-        super(points, true, true, true, path_options_from_circle_options(options));
+        super(board, points, true, true, true, path_options_from_circle_options(options));
 
         if (typeof options.radius === 'number') {
             this.#radius = options.radius;
@@ -35,6 +36,8 @@ export class Circle extends Path {
             this.#radius = 0;
         }
 
+        this.linewidth = 2
+
         this.flagReset(true);
 
         this.update();
@@ -42,10 +45,6 @@ export class Circle extends Path {
 
     dispose(): void {
         super.dispose();
-    }
-
-    static from_center_and_radius(center: G20, radius: number): Circle {
-        return new Circle({ position: center, radius: radius });
     }
 
     update(): this {

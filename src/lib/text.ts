@@ -5,6 +5,7 @@ import { RadialGradient } from './effects/radial-gradient';
 import { Texture } from './effects/texture';
 import { Flag } from './Flag';
 import { Group } from './group';
+import { IBoard } from './IBoard';
 import { get_dashes_offset, set_dashes_offset } from './path';
 import { Observable } from './rxjs/Observable';
 import { Subscription } from './rxjs/Subscription';
@@ -159,9 +160,9 @@ export class Text extends Shape<Group> {
      * @param y The position in the y direction for the object.
      * @param styles An object where styles are applied. Attribute must exist in Two.Text.Properties.
      */
-    constructor(message: string, x: number = 0, y: number = 0, styles: Partial<TextStyles> = {}) {
+    constructor(board: IBoard, message: string, x: number = 0, y: number = 0, styles: Partial<TextStyles> = {}) {
 
-        super();
+        super(board);
 
         this.viewInfo.type = 'text';
 

@@ -5,6 +5,7 @@ import { RadialGradient } from './effects/radial-gradient';
 import { Texture } from './effects/texture';
 import { Flag } from './Flag';
 import { Group } from './group';
+import { IBoard } from './IBoard';
 import { decompose_2d_3x3_matrix } from './math/decompose_2d_3x3_matrix';
 import { G20 } from './math/G20.js';
 import { Subscription } from './rxjs/Subscription';
@@ -100,9 +101,9 @@ export class Path extends Shape<Group> {
      * @param {Boolean} [manual=false] - Describes whether the developer controls how vertices are plotted or if Two.js automatically plots coordinates based on closed and curved booleans.
      * @description This is the primary primitive class for creating all drawable shapes in Two.js. Unless specified methods return their instance of `Two.Path` for the purpose of chaining.
      */
-    constructor(vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean, options: PathOptions = {}) {
+    constructor(board: IBoard, vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean, options: PathOptions = {}) {
 
-        super(options);
+        super(board, options);
 
         this.flagReset(true);
         this.flags[Flag.Mask] = false;

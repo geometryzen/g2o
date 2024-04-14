@@ -4,6 +4,7 @@ import { RadialGradient } from './effects/radial-gradient';
 import { Texture } from './effects/texture';
 import { ElementBase } from './element';
 import { Flag } from './Flag';
+import { IBoard } from './IBoard';
 import { IShape } from './IShape';
 import { compose_2d_3x3_transform } from './math/compose_2d_3x3_transform';
 import { G20 } from './math/G20';
@@ -76,7 +77,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     abstract noStroke(): this;
     abstract subdivide(limit: number): this;
 
-    constructor(options: ShapeOptions = {}) {
+    constructor(readonly board: IBoard, options: ShapeOptions = {}) {
 
         super();
 
@@ -161,6 +162,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     }
 
     flagReset(dirtyFlag = false): this {
+        this.flags[Flag.Vertices] = dirtyFlag;
         this.flags[Flag.Matrix] = dirtyFlag;
         this.flags[Flag.Scale] = dirtyFlag;
         super.flagReset(dirtyFlag);
@@ -191,6 +193,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         return this.#position.change$.subscribe(() => {
             this.#update_matrix();
             // We are only flagging the matrix
+            this.flags[Flag.Vertices] = true;
             this.flags[Flag.Matrix] = true;
         });
     }

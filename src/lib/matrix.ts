@@ -26,16 +26,16 @@ export class Matrix {
 
     #verbose = true;
 
-    constructor(a = 1, b = 0, c = 0, d = 0, e = 1, f = 0, g = 0, h = 0, i = 1) {
-        this.#elements[0] = a;
-        this.#elements[1] = b;
-        this.#elements[2] = c;
-        this.#elements[3] = d;
-        this.#elements[4] = e;
-        this.#elements[5] = f;
-        this.#elements[6] = g;
-        this.#elements[7] = h;
-        this.#elements[8] = i;
+    constructor(a11 = 1, a12 = 0, a13 = 0, a21 = 0, a22 = 1, a23 = 0, a31 = 0, a32 = 0, a33 = 1) {
+        this.#elements[0] = a11;
+        this.#elements[1] = a12;
+        this.#elements[2] = a13;
+        this.#elements[3] = a21;
+        this.#elements[4] = a22;
+        this.#elements[5] = a23;
+        this.#elements[6] = a31;
+        this.#elements[7] = a32;
+        this.#elements[8] = a33;
 
         this.#change = new BehaviorSubject(this);
         this.change$ = this.#change.asObservable();

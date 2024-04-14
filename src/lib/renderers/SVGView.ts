@@ -5,6 +5,7 @@ import { RadialGradient } from '../effects/radial-gradient';
 import { is_canvas, is_img, is_video, Texture } from '../effects/texture';
 import { Flag } from '../Flag';
 import { Group } from '../group';
+import { IBoard } from '../IBoard';
 import { decompose_2d_3x3_matrix } from '../math/decompose_2d_3x3_matrix';
 import { G20 } from '../math/G20';
 import { Matrix } from '../matrix';
@@ -235,32 +236,36 @@ const svg = {
         return this;
     },
 
-    // Turn a set of vertices into a string for the d property of a path
-    // element. It is imperative that the string collation is as fast as
-    // possible, because this call will be happening multiple times a
-    // second.
-    toString: function (points: Anchor[], closed: boolean): string {
+    anchorsToPathDefinition: function (board: IBoard, position: G20, anchors: Anchor[], closed: boolean): string {
 
-        const l = points.length;
+        // The anchors are user coordinates and don't include the position and attitude of the body. 
+        const [x1, y1, x2, y2] = board.getBoundingBox();
+        const sx = board.width / (x2 - x1);
+        const sy = board.height / (y2 - y1);
+        const cx = board.width / 2;
+        const cy = board.width / 2;
+        const screenX = (x: number): number => (position.x + x) * sx + cx;
+        const screenY = (y: number): number => (position.y + y) * sy + cy;
+
+        const l = anchors.length;
         const last = l - 1;
-        let d; // The elusive last Commands.move point
+        let d: Anchor; // The elusive last Commands.move point
         let string = '';
 
         for (let i = 0; i < l; i++) {
 
-            const b = points[i];
+            const b = anchors[i];
 
             const prev = closed ? mod(i - 1, l) : Math.max(i - 1, 0);
-            const a = points[prev];
+            const a = anchors[prev];
 
-            let command, c;
+            let command: string;
+            let c; Anchor;
             let vx, vy, ux, uy, ar, bl, br, cl;
             let rx, ry, xAxisRotation, largeArcFlag, sweepFlag;
 
-            // Access x and y directly,
-            // bypassing the getter
-            let x = toFixed(b.x);
-            let y = toFixed(b.y);
+            let x = toFixed(screenX(b.x));
+            let y = toFixed(screenY(b.y));
 
             switch (b.command) {
 
@@ -287,35 +292,35 @@ const svg = {
                     bl = (b.controls && b.controls.left) || G20.zero;
 
                     if (a.relative) {
-                        vx = toFixed((ar.x + a.x));
-                        vy = toFixed((ar.y + a.y));
+                        vx = toFixed(screenX(ar.x + a.x));
+                        vy = toFixed(screenY(ar.y + a.y));
                     }
                     else {
-                        vx = toFixed(ar.x);
-                        vy = toFixed(ar.y);
+                        vx = toFixed(screenX(ar.x));
+                        vy = toFixed(screenY(ar.y));
                     }
 
                     if (b.relative) {
-                        ux = toFixed((bl.x + b.x));
-                        uy = toFixed((bl.y + b.y));
+                        ux = toFixed(screenX(bl.x + b.x));
+                        uy = toFixed(screenY(bl.y + b.y));
                     }
                     else {
-                        ux = toFixed(bl.x);
-                        uy = toFixed(bl.y);
+                        ux = toFixed(screenX(bl.x));
+                        uy = toFixed(screenY(bl.y));
                     }
 
                     command = ((i === 0) ? Commands.move : Commands.curve) +
                         ' ' + vx + ' ' + vy + ' ' + ux + ' ' + uy + ' ' + x + ' ' + y;
                     break;
 
-                case Commands.move:
+                case Commands.move: {
                     d = b;
                     command = Commands.move + ' ' + x + ' ' + y;
                     break;
-
-                default:
+                }
+                default: {
                     command = b.command + ' ' + x + ' ' + y;
-
+                }
             }
 
             // Add a final point and close it off
@@ -331,46 +336,42 @@ const svg = {
                     cl = (c.controls && c.controls.left) || c;
 
                     if (b.relative) {
-                        vx = toFixed((br.x + b.x));
-                        vy = toFixed((br.y + b.y));
+                        vx = toFixed(screenX(br.x + b.x));
+                        vy = toFixed(screenY(br.y + b.y));
                     }
                     else {
-                        vx = toFixed(br.x);
-                        vy = toFixed(br.y);
+                        vx = toFixed(screenX(br.x));
+                        vy = toFixed(screenY(br.y));
                     }
 
                     if (c.relative) {
-                        ux = toFixed((cl.x + c.x));
-                        uy = toFixed((cl.y + c.y));
+                        ux = toFixed(screenX(cl.x + c.x));
+                        uy = toFixed(screenY(cl.y + c.y));
                     }
                     else {
-                        ux = toFixed(cl.x);
-                        uy = toFixed(cl.y);
+                        ux = toFixed(screenX(cl.x));
+                        uy = toFixed(screenY(cl.y));
                     }
 
-                    x = toFixed(c.x);
-                    y = toFixed(c.y);
+                    x = toFixed(screenX(c.x));
+                    y = toFixed(screenY(c.y));
 
-                    command +=
-                        ' C ' + vx + ' ' + vy + ' ' + ux + ' ' + uy + ' ' + x + ' ' + y;
+                    command += ' C ' + vx + ' ' + vy + ' ' + ux + ' ' + uy + ' ' + x + ' ' + y;
 
                 }
 
                 if (b.command !== Commands.close) {
                     command += ' Z';
                 }
-
             }
-
             string += command + ' ';
-
         }
 
         return string;
 
     },
 
-    pointsToString: function (points: { x: number; y: number }[], size: number) {
+    pointsToPathDefinition: function (points: { x: number; y: number }[], size: number): string {
         let string = '';
         const r = size * 0.5;
         for (let i = 0; i < points.length; i++) {
@@ -617,8 +618,7 @@ const svg = {
             }
 
             if (this.flags[Flag.Vertices]) {
-                const vertices = svg.toString(this.viewInfo.anchor_vertices, this.closed);
-                changed.d = vertices;
+                changed.d = svg.anchorsToPathDefinition(this.board, this.position, this.viewInfo.anchor_vertices, this.closed);
             }
 
             if (this.fill && is_gradient_or_texture(this.fill)) {
@@ -809,7 +809,7 @@ const svg = {
                     const { scaleX, scaleY } = decompose_2d_3x3_matrix(this.worldMatrix);
                     size /= Math.max(scaleX, scaleY);
                 }
-                const vertices = svg.pointsToString(this.viewInfo.anchor_collection, size);
+                const vertices = svg.pointsToPathDefinition(this.viewInfo.anchor_collection, size);
                 changed.d = vertices;
             }
 
@@ -1389,10 +1389,7 @@ export class SVGView implements View {
     setSize(size: { width: number, height: number }, ratio: number): this {
         this.width = size.width;
         this.height = size.height;
-        svg.setAttributes(this.domElement, {
-            width: `${size.width}`,
-            height: `${size.height}`
-        });
+        svg.setAttributes(this.domElement, { width: `${size.width}`, height: `${size.height}` });
         this.#size.next(size);
         return this;
     }
@@ -1421,8 +1418,8 @@ function transform_value_of_matrix(m: Matrix): string {
     const b = m.a21;
     const c = m.a12;
     const d = m.a22;
-    const e = m.a13;
-    const f = m.a23;
+    const e = 0;//m.a13;
+    const f = 0;//m.a23;
     return `matrix(${[a, b, c, d, e, f].map(toFixed).join(' ')})`;
 }
 

@@ -7,6 +7,7 @@ import { Sprite } from './effects/sprite.js';
 import { Stop } from './effects/stop.js';
 import { Texture } from './effects/texture.js';
 import { Group } from './group.js';
+import { IBoard } from './IBoard.js';
 import { G20 } from './math/G20.js';
 import { Path } from './path.js';
 import { SVGView } from './renderers/SVGView.js';
@@ -16,7 +17,7 @@ import { Subscription } from './rxjs/Subscription.js';
 import { Shape } from './shape.js';
 import { ArcSegment } from './shapes/arc-segment.js';
 import { Circle, CircleOptions } from './shapes/circle.js';
-import { Ellipse } from './shapes/ellipse.js';
+import { Ellipse, EllipseOptions } from './shapes/ellipse.js';
 import { Line } from './shapes/line.js';
 import { Polygon } from './shapes/polygon.js';
 import { Rectangle } from './shapes/rectangle.js';
@@ -28,25 +29,14 @@ import { dateTime } from './utils/performance.js';
 import { xhr } from './utils/xhr.js';
 
 export interface BoardOptions {
-    /**
-     * @deprecated Use resizeTo: document.body instead.
-     */
-    fullscreen?: boolean;
-    /**
-     * @deprecated Use resizeTo: container instead.
-     */
-    fitted?: boolean;
+    boundingBox?: [x1: number, y1: number, x2: number, y2: number];
     resizeTo?: Element;
     scene?: Group;
     size?: { width: number; height: number };
     view?: View;
-    /**
-     * The canvas or SVG element to draw into. This overrides the `options.type` argument.
-     */
-    container?: HTMLElement;
 }
 
-export class Board {
+export class Board implements IBoard {
 
     readonly #view: View;
     #view_resize: Subscription | null = null;
@@ -91,12 +81,24 @@ export class Board {
     #curr_now: number | null = null;
     #prev_now: number | null = null;
 
-    constructor(options: BoardOptions = {}) {
+    readonly #boundingBox: [x1: number, y1: number, x2: number, y2: number] = [-5, 5, 5, -5];
+
+    constructor(elementOrId: string | HTMLElement, options: BoardOptions = {}) {
+
+        const container = get_container(elementOrId);
+
+        if (Array.isArray(options.boundingBox)) {
+            this.#boundingBox[0] = options.boundingBox[0];
+            this.#boundingBox[1] = options.boundingBox[1];
+            this.#boundingBox[2] = options.boundingBox[2];
+            this.#boundingBox[3] = options.boundingBox[3];
+        }
+
         if (options.scene instanceof Group) {
             this.#scene = options.scene;
         }
         else {
-            this.#scene = new Group();
+            this.#scene = new Group(this);
         }
 
         if (typeof options.view === 'object') {
@@ -106,7 +108,7 @@ export class Board {
             this.#view = new SVGView(this.#scene);
         }
 
-        const config = config_from_options(options);
+        const config: BoardConfig = config_from_options(container, options);
 
         this.#fitter = new Fitter(this, this.#view);
 
@@ -115,14 +117,14 @@ export class Board {
         this.#frameCount = new BehaviorSubject(this.frameCount);
         this.frameCount$ = this.#frameCount.asObservable();
 
-        if (config.resizeTo) {
-            this.#fitter.set_target(config.resizeTo);
+        if (container instanceof HTMLElement) {
+            this.#fitter.set_target(container as HTMLElement);
             this.#fitter.subscribe();
             this.#fitter.resize();
         }
 
-        if (config.container) {
-            this.appendTo(config.container);
+        if (container instanceof HTMLElement) {
+            this.appendTo(container);
         }
 
         if (config.size) {
@@ -163,6 +165,10 @@ export class Board {
         }
 
         return this;
+    }
+
+    getBoundingBox(): readonly [x1: number, y1: number, x2: number, y2: number] {
+        return this.#boundingBox;
     }
 
     play(): this {
@@ -220,11 +226,13 @@ export class Board {
 
     add(...shapes: Shape<Group>[]): this {
         this.#scene.add(...shapes);
+        this.update();
         return this;
     }
 
     remove(...shapes: Shape<Group>[]): this {
         this.#scene.remove(...shapes);
+        this.update();
         return this;
     }
 
@@ -235,13 +243,34 @@ export class Board {
     }
     */
 
-    makeLine(x1: number, y1: number, x2: number, y2: number): Line {
+    createEllipse(options: EllipseOptions = {}): Ellipse {
+        const ellipse = new Ellipse(this, options);
+        this.#scene.add(ellipse);
+        return ellipse;
+    }
 
-        const line = new Line(G20.vector(x1, y1), G20.vector(x2, y2));
+    createPoint(position: G20): Shape<Group> {
+        const [x1, x2, y1, y2] = this.getBoundingBox();
+        const sx = this.width / (x2 - x1);
+        const sy = this.height / (y2 - y1);
+        const rx = 4 / sx;
+        const ry = 4 / sy;
+        const options: EllipseOptions = { position, rx, ry }
+        const ellipse = new Ellipse(this, options);
+        ellipse.stroke = "#ff0000"
+        ellipse.fill = "#ff0000"
+        // ellipse.noFill();
+        ellipse.linewidth = 2
+        this.add(ellipse);
+        return ellipse;
+    }
+
+    createLine(begin: G20, end: G20): Line {
+        const line = new Line(this, begin, end);
+        line.linewidth = 2;
+        line.stroke="#999999"
         this.#scene.add(line);
-
         return line;
-
     }
 
     makeArrow(x1: number, y1: number, x2: number, y2: number, size?: number): Path {
@@ -267,7 +296,7 @@ export class Board {
 
         ];
 
-        const path = new Path(vertices, false, false, true);
+        const path = new Path(this, vertices, false, false, true);
         path.noFill();
         path.cap = 'round';
         path.join = 'round';
@@ -291,15 +320,9 @@ export class Board {
 
     makeCircle(x: number = 0, y: number = 0, radius: number, resolution: number = 4): Circle {
         const options: CircleOptions = { position: new G20(x, y), radius, resolution };
-        const circle = new Circle(options);
+        const circle = new Circle(this, options);
         this.#scene.add(circle);
         return circle;
-    }
-
-    makeEllipse(x: number, y: number, rx: number, ry: number, resolution: number = 4): Ellipse {
-        const ellipse = new Ellipse(x, y, rx, ry, resolution);
-        this.#scene.add(ellipse);
-        return ellipse;
     }
 
     makeStar(x: number, y: number, outerRadius: number, innerRadius: number, sides: number): Star {
@@ -310,7 +333,7 @@ export class Board {
 
     makeCurve(closed: boolean, ...anchors: Anchor[]): Path {
         const curved = true;
-        const curve = new Path(anchors, closed, curved);
+        const curve = new Path(this, anchors, closed, curved);
         const rect = curve.getBoundingClientRect();
         curve.center().position.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
         this.#scene.add(curve);
@@ -357,7 +380,7 @@ export class Board {
     */
 
     makePath(closed: boolean, ...points: Anchor[]): Path {
-        const path = new Path(points, closed);
+        const path = new Path(this, points, closed);
         const rect = path.getBoundingClientRect();
         if (typeof rect.top === 'number' && typeof rect.left === 'number' &&
             typeof rect.right === 'number' && typeof rect.bottom === 'number') {
@@ -368,7 +391,7 @@ export class Board {
     }
 
     makeText(message: string, x: number, y: number, styles?: object): Text {
-        const text = new Text(message, x, y, styles);
+        const text = new Text(this, message, x, y, styles);
         this.add(text);
         return text;
     }
@@ -410,7 +433,7 @@ export class Board {
     }
 
     makeGroup(...shapes: Shape<Group>[]): Group {
-        const group = new Group(shapes);
+        const group = new Group(this, shapes);
         this.#scene.add(group as Shape<Group>);
         return group;
     }
@@ -449,7 +472,7 @@ export class Board {
      */
     load(url: string): Promise<Group> {
         return new Promise<Group>((resolve, reject) => {
-            const group = new Group();
+            const group = new Group(this);
             // let elem, i, child;
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -568,45 +591,46 @@ class Fitter {
     }
 }
 
-function config_from_options(options: BoardOptions): BoardOptions {
-    const config: BoardOptions = {
-        resizeTo: compute_config_resize_to(options),
-        size: compute_config_size(options),
-        container: options.container
+interface BoardConfig {
+    resizeTo?: Element;
+    size?: { width: number; height: number };
+}
+
+function config_from_options(container: HTMLElement, options: BoardOptions): BoardConfig {
+    const config: BoardConfig = {
+        resizeTo: compute_config_resize_to(container, options),
+        size: compute_config_size(container, options)
     };
     return config;
 }
 
-function compute_config_resize_to(options: BoardOptions): Element | null {
+function compute_config_resize_to(container: HTMLElement, options: BoardOptions): Element | null {
     if (options.resizeTo) {
         return options.resizeTo;
     }
-    if (options.fullscreen) {
-        return document.body;
-    }
-    if (options.fitted) {
-        return options.container;
-    }
-    return null;
+    return container;
 }
 
-function compute_config_size(options: BoardOptions): { width: number; height: number } | null {
+function compute_config_size(container: HTMLElement, options: BoardOptions): { width: number; height: number } | null {
     if (typeof options.size === 'object') {
         return options.size;
     }
     else {
-        if (options.resizeTo) {
-            return null;
-        }
-        else if (options.fullscreen) {
-            return null;
-        }
-        else if (options.fitted) {
+        if (container) {
             return null;
         }
         else {
             return { width: 640, height: 480 };
         }
+    }
+}
+
+function get_container(elementOrId: string | HTMLElement): HTMLElement {
+    if (typeof elementOrId === 'string') {
+        return document.getElementById(elementOrId);
+    }
+    else {
+        return elementOrId;
     }
 }
 

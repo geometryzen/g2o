@@ -1,11 +1,12 @@
 import { Anchor } from '../anchor';
+import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
 import { Path, PathOptions } from '../path';
 
 export class Line extends Path {
-    constructor(begin: G20, end: G20) {
+    constructor(board: IBoard, begin: G20, end: G20) {
         const path_options: PathOptions = {};
-        super([
+        super(board, [
             new Anchor(begin, 0, 0, 0, 0, 'M'),
             new Anchor(end, 0, 0, 0, 0, 'L')],
             false,
@@ -13,9 +14,6 @@ export class Line extends Path {
             false,
             path_options);
         // this.automatic = false;
-    }
-    static from_point_to_point(begin: G20, end: G20): Line {
-        return new Line(begin, end);
     }
     get left() {
         return this.vertices.getAt(0);
