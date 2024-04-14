@@ -1,5 +1,6 @@
 import { Anchor } from '../anchor';
 import { Flag } from '../Flag';
+import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
 import { Path } from '../path';
 import { Subscription } from '../rxjs/Subscription';
@@ -24,7 +25,7 @@ export class RoundedRectangle extends Path {
      * @param height The width value of the rounded rectangle.
      * @param radius The radius value of the rounded rectangle.
      */
-    constructor(x = 0, y = 0, width = 0, height = 0, radius = 12) {
+    constructor(board: IBoard, x = 0, y = 0, width = 0, height = 0, radius = 12) {
 
         if (typeof radius === 'undefined' &&
             typeof width === 'number' && typeof height === 'number') {
@@ -38,7 +39,7 @@ export class RoundedRectangle extends Path {
 
         // points[points.length - 1].command = Two.Commands.close;
 
-        super(points);
+        super(board, points);
 
         this.closed = true;
         this.automatic = false;

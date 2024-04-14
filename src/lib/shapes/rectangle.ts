@@ -1,5 +1,6 @@
 import { Anchor } from '../anchor';
 import { Flag } from '../Flag';
+import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
 import { Path, PathOptions } from '../path';
 import { Subscription } from '../rxjs/Subscription';
@@ -20,7 +21,7 @@ export class Rectangle extends Path {
     // DGH: How does origin differ from position?
     #origin_change_subscription: Subscription | null = null;
 
-    constructor(options: RectangleOptions = {}) {
+    constructor(board: IBoard, options: RectangleOptions = {}) {
 
         const points = [
             new Anchor(G20.vector(0, 0), 0, 0, 0, 0, 'M'),
@@ -30,7 +31,7 @@ export class Rectangle extends Path {
             // new Anchor() // TODO: Figure out how to handle this for `beginning` / `ending` animations
         ];
 
-        super(points, true, false, true, path_options_from_rectangle_options(options));
+        super(board, points, true, false, true, path_options_from_rectangle_options(options));
 
         this.#width = typeof options.width === 'number' ? options.width : 1;
         this.#height = typeof options.height === 'number' ? options.height : 1;

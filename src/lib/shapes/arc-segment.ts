@@ -1,6 +1,7 @@
 import { Anchor } from '../anchor.js';
 import { Constants } from '../constants.js';
 import { Flag } from '../Flag.js';
+import { IBoard } from '../IBoard.js';
 import { G20 } from '../math/G20.js';
 import { Path } from '../path.js';
 import { HALF_PI, mod, TWO_PI } from '../utils/math.js';
@@ -70,7 +71,7 @@ export class ArcSegment extends Path {
      */
     _outerRadius = 0;
 
-    constructor(x = 0, y = 0, ir = 0, or = 0, sa = 0, ea = 2 * Math.PI, res = 24) {
+    constructor(board: IBoard, x = 0, y = 0, ir = 0, or = 0, sa = 0, ea = 2 * Math.PI, res = 24) {
 
         const amount = res || (Constants.Resolution * 3);
         const points: Anchor[] = [];
@@ -78,7 +79,7 @@ export class ArcSegment extends Path {
             points.push(new Anchor(G20.vector(0, 0)));
         }
 
-        super(points, true, false, true);
+        super(board, points, true, false, true);
 
         /**
          * @name Two.ArcSegment#innerRadius

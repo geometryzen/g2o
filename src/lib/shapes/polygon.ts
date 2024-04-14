@@ -1,5 +1,6 @@
 import { Anchor } from '../anchor.js';
 import { Flag } from '../Flag.js';
+import { IBoard } from '../IBoard.js';
 import { G20 } from '../math/G20.js';
 import { Path } from '../path.js';
 import { TWO_PI } from '../utils/math.js';
@@ -25,11 +26,11 @@ export class Polygon extends Path {
      * @param radius The radius value of the polygon.
      * @param sides The number of vertices used to construct the polygon.
      */
-    constructor(x = 0, y = 0, radius = 0, sides = 12) {
+    constructor(board: IBoard, x = 0, y = 0, radius = 0, sides = 12) {
 
         sides = Math.max(sides || 0, 3);
 
-        super();
+        super(board);
 
         this.closed = true;
         this.automatic = false;

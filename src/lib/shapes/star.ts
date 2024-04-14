@@ -1,5 +1,6 @@
 import { Anchor } from '../anchor.js';
 import { Flag } from '../Flag.js';
+import { IBoard } from '../IBoard.js';
 import { G20 } from '../math/G20.js';
 import { Path } from '../path.js';
 import { TWO_PI } from '../utils/math.js';
@@ -24,7 +25,7 @@ export class Star extends Path {
      * @param outerRadius The outer radius value of the star.
      * @param sides The number of sides used to construct the star.
      */
-    constructor(x = 0, y = 0, innerRadius = 0, outerRadius = 0, sides = 5) {
+    constructor(board: IBoard, x = 0, y = 0, innerRadius = 0, outerRadius = 0, sides = 5) {
 
         if (arguments.length <= 3) {
             outerRadius = innerRadius;
@@ -35,7 +36,7 @@ export class Star extends Path {
             sides = 5;
         }
 
-        super();
+        super(board);
 
         this.closed = true;
         this.automatic = false;

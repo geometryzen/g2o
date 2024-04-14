@@ -268,7 +268,7 @@ export class Board implements IBoard {
     createLine(begin: G20, end: G20): Line {
         const line = new Line(this, begin, end);
         line.linewidth = 2;
-        line.stroke="#999999"
+        line.stroke = "#999999"
         this.#scene.add(line);
         return line;
     }
@@ -307,13 +307,13 @@ export class Board implements IBoard {
     }
 
     makeRectangle(x: number, y: number, width: number, height: number): Rectangle {
-        const rect = new Rectangle({ position: new G20(x, y), width, height });
+        const rect = new Rectangle(this, { position: new G20(x, y), width, height });
         this.#scene.add(rect);
         return rect;
     }
 
     makeRoundedRectangle(x: number, y: number, width: number, height: number, sides: number): RoundedRectangle {
-        const rect = new RoundedRectangle(x, y, width, height, sides);
+        const rect = new RoundedRectangle(this, x, y, width, height, sides);
         this.#scene.add(rect);
         return rect;
     }
@@ -326,7 +326,7 @@ export class Board implements IBoard {
     }
 
     makeStar(x: number, y: number, outerRadius: number, innerRadius: number, sides: number): Star {
-        const star = new Star(x, y, outerRadius, innerRadius, sides);
+        const star = new Star(this, x, y, outerRadius, innerRadius, sides);
         this.#scene.add(star);
         return star;
     }
@@ -341,13 +341,13 @@ export class Board implements IBoard {
     }
 
     makePolygon(x: number, y: number, radius: number, sides: number): Polygon {
-        const poly = new Polygon(x, y, radius, sides);
+        const poly = new Polygon(this, x, y, radius, sides);
         this.#scene.add(poly);
         return poly;
     }
 
     makeArcSegment(x: number, y: number, innerRadius: number, outerRadius: number, startAngle: number, endAngle: number, resolution: number = Constants.Resolution): ArcSegment {
-        const arcSegment = new ArcSegment(x, y, innerRadius, outerRadius, startAngle, endAngle, resolution);
+        const arcSegment = new ArcSegment(this, x, y, innerRadius, outerRadius, startAngle, endAngle, resolution);
         this.#scene.add(arcSegment);
         return arcSegment;
     }
@@ -408,7 +408,7 @@ export class Board implements IBoard {
     }
 
     makeSprite(pathOrTexture: (string | Texture), x: number, y: number, columns: number, rows: number, frameRate: number, autostart: boolean): Sprite {
-        const sprite = new Sprite(pathOrTexture, x, y, columns, rows, frameRate);
+        const sprite = new Sprite(this, pathOrTexture, x, y, columns, rows, frameRate);
         if (autostart) {
             sprite.play();
         }
