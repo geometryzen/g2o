@@ -236,7 +236,7 @@ const svg = {
         return this;
     },
 
-    anchorsToPathDefinition: function (board: IBoard, position: G20, anchors: Anchor[], closed: boolean): string {
+    path_from_anchors: function (board: IBoard, position: G20, attitude: G20, anchors: Anchor[], closed: boolean): string {
 
         // The anchors are user coordinates and don't include the position and attitude of the body. 
         const [x1, y1, x2, y2] = board.getBoundingBox();
@@ -244,8 +244,12 @@ const svg = {
         const sy = board.height / (y2 - y1);
         const cx = board.width / 2;
         const cy = board.width / 2;
-        const screenX = (x: number): number => (position.x + x) * sx + cx;
-        const screenY = (y: number): number => (position.y + y) * sy + cy;
+        const a = attitude.a;
+        const b = attitude.b;
+        const alpha = a * a - b * b;
+        const beta = 2 * a * b;
+        const screenX = (x: number, y: number): number => (position.x + (alpha * x + beta * y)) * sx + cx;
+        const screenY = (x: number, y: number): number => (position.y + (alpha * y - beta * x)) * sy + cy;
 
         const l = anchors.length;
         const last = l - 1;
@@ -264,8 +268,8 @@ const svg = {
             let vx, vy, ux, uy, ar, bl, br, cl;
             let rx, ry, xAxisRotation, largeArcFlag, sweepFlag;
 
-            let x = toFixed(screenX(b.x));
-            let y = toFixed(screenY(b.y));
+            let x = toFixed(screenX(b.x, b.y));
+            let y = toFixed(screenY(b.x, b.y));
 
             switch (b.command) {
 
@@ -292,21 +296,21 @@ const svg = {
                     bl = (b.controls && b.controls.left) || G20.zero;
 
                     if (a.relative) {
-                        vx = toFixed(screenX(ar.x + a.x));
-                        vy = toFixed(screenY(ar.y + a.y));
+                        vx = toFixed(screenX(ar.x + a.x, ar.y + a.y));
+                        vy = toFixed(screenY(ar.x + a.x, ar.y + a.y));
                     }
                     else {
-                        vx = toFixed(screenX(ar.x));
-                        vy = toFixed(screenY(ar.y));
+                        vx = toFixed(screenX(ar.x, ar.y));
+                        vy = toFixed(screenY(ar.x, ar.y));
                     }
 
                     if (b.relative) {
-                        ux = toFixed(screenX(bl.x + b.x));
-                        uy = toFixed(screenY(bl.y + b.y));
+                        ux = toFixed(screenX(bl.x + b.x, bl.y + b.y));
+                        uy = toFixed(screenY(bl.x + b.x, bl.y + b.y));
                     }
                     else {
-                        ux = toFixed(screenX(bl.x));
-                        uy = toFixed(screenY(bl.y));
+                        ux = toFixed(screenX(bl.x, bl.y));
+                        uy = toFixed(screenY(bl.x, bl.y));
                     }
 
                     command = ((i === 0) ? Commands.move : Commands.curve) +
@@ -336,25 +340,25 @@ const svg = {
                     cl = (c.controls && c.controls.left) || c;
 
                     if (b.relative) {
-                        vx = toFixed(screenX(br.x + b.x));
-                        vy = toFixed(screenY(br.y + b.y));
+                        vx = toFixed(screenX(br.x + b.x, br.y + b.y));
+                        vy = toFixed(screenY(br.x + b.x, br.y + b.y));
                     }
                     else {
-                        vx = toFixed(screenX(br.x));
-                        vy = toFixed(screenY(br.y));
+                        vx = toFixed(screenX(br.x, br.y));
+                        vy = toFixed(screenY(br.x, br.y));
                     }
 
                     if (c.relative) {
-                        ux = toFixed(screenX(cl.x + c.x));
-                        uy = toFixed(screenY(cl.y + c.y));
+                        ux = toFixed(screenX(cl.x + c.x, cl.y + c.y));
+                        uy = toFixed(screenY(cl.x + c.x, cl.y + c.y));
                     }
                     else {
-                        ux = toFixed(screenX(cl.x));
-                        uy = toFixed(screenY(cl.y));
+                        ux = toFixed(screenX(cl.x, cl.y));
+                        uy = toFixed(screenY(cl.x, cl.y));
                     }
 
-                    x = toFixed(screenX(c.x));
-                    y = toFixed(screenY(c.y));
+                    x = toFixed(screenX(c.x, c.y));
+                    y = toFixed(screenY(c.x, c.y));
 
                     command += ' C ' + vx + ' ' + vy + ' ' + ux + ' ' + uy + ' ' + x + ' ' + y;
 
@@ -618,7 +622,7 @@ const svg = {
             }
 
             if (this.flags[Flag.Vertices]) {
-                changed.d = svg.anchorsToPathDefinition(this.board, this.position, this.viewInfo.anchor_vertices, this.closed);
+                changed.d = svg.path_from_anchors(this.board, this.position, this.attitude, this.viewInfo.anchor_vertices, this.closed);
             }
 
             if (this.fill && is_gradient_or_texture(this.fill)) {
@@ -1414,10 +1418,10 @@ export class SVGView implements View {
  * ] => "matrix(a b c d e f)""
  */
 function transform_value_of_matrix(m: Matrix): string {
-    const a = m.a11;
-    const b = m.a21;
-    const c = m.a12;
-    const d = m.a22;
+    const a = 1;//m.a11;
+    const b = 0;//m.a21;
+    const c = 0;//m.a12;
+    const d = 1;//m.a22;
     const e = 0;//m.a13;
     const f = 0;//m.a23;
     return `matrix(${[a, b, c, d, e, f].map(toFixed).join(' ')})`;

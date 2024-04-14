@@ -309,6 +309,8 @@ export class Board implements IBoard {
     makeRectangle(x: number, y: number, width: number, height: number): Rectangle {
         const rect = new Rectangle(this, { position: new G20(x, y), width, height });
         this.#scene.add(rect);
+        rect.linewidth = 2;
+        rect.stroke = "#999999"
         return rect;
     }
 
