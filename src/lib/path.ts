@@ -59,6 +59,8 @@ export class Path extends Shape<Group> {
      */
     #opacity = 1.0;
 
+    #vectorEffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position' = 'non-scaling-stroke';
+
     #visible = true;
 
     /**
@@ -866,6 +868,7 @@ export class Path extends Shape<Group> {
         this.flags[Flag.Miter] = dirtyFlag;
         this.flags[Flag.Opacity] = dirtyFlag;
         this.flags[Flag.Stroke] = dirtyFlag;
+        this.flags[Flag.VectorEffect] = dirtyFlag;
         this.flags[Flag.Vertices] = dirtyFlag;
         this.flags[Flag.Visible] = dirtyFlag;
 
@@ -1111,6 +1114,13 @@ export class Path extends Shape<Group> {
             });
             this.#anchor_change_subscriptions.set(anchor, subscription);
         });
+    }
+    get vectorEffect(): 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position' {
+        return this.#vectorEffect;
+    }
+    set vectorEffect(vectorEffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position') {
+        this.#vectorEffect = vectorEffect;
+        this.flags[Flag.VectorEffect] = true;
     }
     get visible(): boolean {
         return this.#visible;

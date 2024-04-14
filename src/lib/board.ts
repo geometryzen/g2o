@@ -41,6 +41,13 @@ export class Board implements IBoard {
     readonly #view: View;
     #view_resize: Subscription | null = null;
 
+    /**
+     * A wrapper group that is used to transform the scene from user coordinates to pixels.
+     */
+    readonly #scope: Group = new Group(this);
+    /**
+     * 
+     */
     readonly #scene: Group;
 
     /**
@@ -100,12 +107,14 @@ export class Board implements IBoard {
         else {
             this.#scene = new Group(this);
         }
+        this.#scope.add(this.#scene);
 
         if (typeof options.view === 'object') {
             this.#view = options.view;
         }
         else {
-            this.#view = new SVGView(this.#scene);
+            // The group used by the scene is actually a wrapper around the scene.
+            this.#view = new SVGView(this.#scope);
         }
 
         const config: BoardConfig = config_from_options(container, options);
@@ -137,6 +146,13 @@ export class Board implements IBoard {
             this.height = height;
             this.#size.next({ width, height });
         });
+
+        const [x1, y1, x2, y2] = this.getBoundingBox();
+        const sx = this.width / (x2 - x1);
+        const sy = this.height / (y2 - y1);
+        // This should depend upon the bounding box...
+        this.#scope.position.set(this.width / 2, this.height / 2);
+        this.#scope.scaleXY.set(sx, sy);
     }
 
     dispose(): void {

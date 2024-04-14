@@ -116,6 +116,7 @@ export interface SVGAttributes {
      * https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/transform
      */
     'transform'?: string;
+    'vector-effect'?: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position';
     'visibility'?: 'visible' | 'hidden';
     'width'?: string;
     'x'?: string;
@@ -238,7 +239,8 @@ const svg = {
 
     path_from_anchors: function (board: IBoard, position: G20, attitude: G20, anchors: Anchor[], closed: boolean): string {
 
-        // The anchors are user coordinates and don't include the position and attitude of the body. 
+        // The anchors are user coordinates and don't include the position and attitude of the body.
+        /* 
         const [x1, y1, x2, y2] = board.getBoundingBox();
         const sx = board.width / (x2 - x1);
         const sy = board.height / (y2 - y1);
@@ -250,6 +252,9 @@ const svg = {
         const beta = 2 * a * b;
         const screenX = (x: number, y: number): number => (position.x + (alpha * x + beta * y)) * sx + cx;
         const screenY = (x: number, y: number): number => (position.y + (alpha * y - beta * x)) * sy + cy;
+        */
+        const screenX = (x: number, y: number): number => x;
+        const screenY = (x: number, y: number): number => y;
 
         const l = anchors.length;
         const last = l - 1;
@@ -702,6 +707,10 @@ const svg = {
 
             if (this.flags[Flag.ClassName]) {
                 changed['class'] = this.classList.join(' ');
+            }
+
+            if (this.flags[Flag.VectorEffect]) {
+                changed['vector-effect'] = this.vectorEffect;
             }
 
             if (this.flags[Flag.Visible]) {
@@ -1418,12 +1427,18 @@ export class SVGView implements View {
  * ] => "matrix(a b c d e f)""
  */
 function transform_value_of_matrix(m: Matrix): string {
-    const a = 1;//m.a11;
-    const b = 0;//m.a21;
-    const c = 0;//m.a12;
-    const d = 1;//m.a22;
-    const e = 0;//m.a13;
-    const f = 0;//m.a23;
+//    const a = 1;//m.a11;
+//    const b = 0;//m.a21;
+//    const c = 0;//m.a12;
+//    const d = 1;//m.a22;
+//    const e = 0;//m.a13;
+//    const f = 0;//m.a23;
+    const a = m.a11;
+    const b = m.a21;
+    const c = m.a12;
+    const d = m.a22;
+    const e = m.a13;
+    const f = m.a23;
     return `matrix(${[a, b, c, d, e, f].map(toFixed).join(' ')})`;
 }
 
