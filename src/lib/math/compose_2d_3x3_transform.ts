@@ -1,19 +1,16 @@
 import { Matrix } from "../matrix";
-import { G20 } from "./G20";
 
-export function compose_2d_3x3_transform(position: G20, scale: { x: number, y: number }, attitude: G20, skewX: number, skewY: number, matrix: Matrix): void {
-    // φ is 1/2 the rotation angle and a minus sign comes from the rotor definition.
-    const cos_φ = +attitude.a;
-    const sin_φ = -attitude.b;
+export function compose_2d_3x3_transform(x: number, y: number, sx: number, sy: number, cos_φ:number, sin_φ: number, skewX: number, skewY: number, matrix: Matrix): void {
+    // φ is 1/2 the rotation angle.
+    // SVG and CSS consider positive angles to be active clockwise movement.
+    // But in mathematics, a positive angle is associated with counter-clockwise movement.
     // Use double-angle formulae to compute the cosine and sine of the full angle, which is what we need for the matrix.
     const cos_θ = cos_φ * cos_φ - sin_φ * sin_φ;
     const sin_θ = 2 * cos_φ * sin_φ;
-    const a = scale.x;
-    const b = scale.y;
+    const a = sx;
+    const b = sy;
     const p = Math.tan(skewX);
     const q = Math.tan(skewY);
-    const x = position.x;
-    const y = position.y;
     const c = cos_θ;
     const s = sin_θ;
     const ac = a * c;

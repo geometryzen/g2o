@@ -89,16 +89,25 @@ export class Board implements IBoard {
     #prev_now: number | null = null;
 
     readonly #boundingBox: [x1: number, y1: number, x2: number, y2: number] = [-5, 5, 5, -5];
+    readonly goofy: boolean;
 
     constructor(elementOrId: string | HTMLElement, options: BoardOptions = {}) {
 
         const container = get_container(elementOrId);
 
         if (Array.isArray(options.boundingBox)) {
-            this.#boundingBox[0] = options.boundingBox[0];
-            this.#boundingBox[1] = options.boundingBox[1];
-            this.#boundingBox[2] = options.boundingBox[2];
-            this.#boundingBox[3] = options.boundingBox[3];
+            const x1 = options.boundingBox[0];
+            const y1 = options.boundingBox[1];
+            const x2 = options.boundingBox[2];
+            const y2 = options.boundingBox[3];
+            this.#boundingBox[0] = x1;
+            this.#boundingBox[1] = y1;
+            this.#boundingBox[2] = x2;
+            this.#boundingBox[3] = y2;
+            this.goofy = y2 > y1;
+        }
+        else {
+            this.goofy = false;
         }
 
         if (options.scene instanceof Group) {
@@ -149,6 +158,10 @@ export class Board implements IBoard {
         });
     }
 
+    /**
+     * Here we are actually doing a job that is equvalent to the role of the SVG viewBox except that we are also
+     * introducing a 90 degree rotation if the coordinate system is right-handed (a.k.a regular or not goofy).
+     */
     #update_view_box(): void {
         const [x1, y1, x2, y2] = this.getBoundingBox();
         const Δx = this.width;
@@ -158,8 +171,8 @@ export class Board implements IBoard {
         const x = (x1 * Δx) / (x1 - x2);
         const y = (y2 * Δy) / (y2 - y1);
         this.#scope.position.set(x, y);
-        if (y2 < y1) {
-            this.#scope.attitude.rotorFromAngle(-Math.PI / 2);
+        if (!this.goofy) {
+            this.#scope.attitude.rotorFromAngle(Math.PI / 2);
         }
         this.#scope.scaleXY.set(sx, sy);
     }

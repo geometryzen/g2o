@@ -2,9 +2,9 @@ import { BehaviorSubject } from 'rxjs';
 import { Observable } from './rxjs/Observable.js';
 import { NumArray } from './utils/math.js';
 
-// Constants
-
-const cos = Math.cos, sin = Math.sin, tan = Math.tan;
+const cos = Math.cos;
+const sin = Math.sin;
+const tan = Math.tan;
 
 /**
  * 1st row is [a11,a12,a13], 2nd row is [a21,a22,a23], 3rd row is [a31,a32,a33]

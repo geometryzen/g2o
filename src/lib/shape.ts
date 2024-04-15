@@ -139,8 +139,21 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     #update_matrix(): void {
         // For performance, the matrix product has been pre-computed.
         // M = T * S * R * skewX * skewY
-        // compose_2d_3x3_transform(this.position, this.scaleXY, this.rotation, this.skewX, this.skewY, this.matrix);
-        compose_2d_3x3_transform(this.position, this.scaleXY, this.attitude, this.skewX, this.skewY, this.matrix);
+        const position = this.position;
+        const x = position.x;
+        const y = position.y;
+        const attitude = this.attitude;
+        const cos_φ = attitude.a;
+        const sin_φ = attitude.b;
+        const scale = this.scaleXY;
+        const sx = scale.x;
+        const sy = scale.y;
+        if (this.board.goofy) {
+            compose_2d_3x3_transform(x, y, sx, sy, cos_φ, sin_φ, this.skewX, this.skewY, this.matrix);
+        }
+        else {
+            compose_2d_3x3_transform(y, x, sy, sx, cos_φ, sin_φ, this.skewY, this.skewX, this.matrix);
+        }
     }
 
     update(bubbles?: boolean): this {
@@ -175,6 +188,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     }
     #attitude_change_bind(): Subscription {
         return this.#attitude.change$.subscribe(() => {
+            this.#update_matrix();
             this.flags[Flag.Matrix] = true;
         });
     }
@@ -192,8 +206,6 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     #position_change_bind(): Subscription {
         return this.#position.change$.subscribe(() => {
             this.#update_matrix();
-            // We are only flagging the matrix
-            this.flags[Flag.Vertices] = true;
             this.flags[Flag.Matrix] = true;
         });
     }

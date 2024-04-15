@@ -6,6 +6,7 @@ import { is_canvas, is_img, is_video, Texture } from '../effects/texture';
 import { Flag } from '../Flag';
 import { Group } from '../group';
 import { IBoard } from '../IBoard';
+import { compose_2d_3x3_transform } from '../math/compose_2d_3x3_transform';
 import { decompose_2d_3x3_matrix } from '../math/decompose_2d_3x3_matrix';
 import { G20 } from '../math/G20';
 import { Matrix } from '../matrix';
@@ -17,6 +18,8 @@ import { Text } from '../text';
 import { mod, toFixed } from '../utils/math';
 import { Commands } from '../utils/path-commands';
 import { View } from './View';
+
+const SQRT2 = Math.SQRT2;
 
 type DOMElement = HTMLElement | SVGElement;
 
@@ -904,6 +907,33 @@ const svg = {
             const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
 
             if (flagMatrix) {
+                // Text and Images, unlike Path(s), are not compensated (yet) for the 90 degree rotation that makes the  
+                const goofy = this.board.goofy;
+                const position = this.position;
+                const x = position.x;
+                const y = position.y;
+                const attitude = this.attitude;
+                const scale = this.scaleXY;
+                const sx = scale.x;
+                const sy = scale.y;
+                if (goofy) {
+                    const cos_φ = attitude.a;
+                    const sin_φ = attitude.b;
+                    compose_2d_3x3_transform(x, y, sx, sy, cos_φ, sin_φ, this.skewX, this.skewY, this.matrix);
+                }
+                else {
+                    // Text needs an additional rotation of -π/2 (i.e. clockwise 90 degrees) to compensate for 
+                    // the use of a right-handed coordinate frame. The rotor for this is cos(π/4)+sin(π/4)*I.
+                    // Here we compute the effective rotator (which is obtained by multiplying the two rotors),
+                    // and use that to compose the transformation matrix.
+                    const a = attitude.a;
+                    const b = attitude.b;
+                    const cos_φ = (a - b) / SQRT2;
+                    const sin_φ = (a + b) / SQRT2;
+                    compose_2d_3x3_transform(y, x, sy, sx, cos_φ, sin_φ, this.skewY, this.skewX, this.matrix);
+                }
+
+                // compose_2d_3x3_transform()
                 changed.transform = transform_value_of_matrix(this.board, this.matrix);
             }
 
@@ -1428,19 +1458,12 @@ export class SVGView implements View {
  * ] => "matrix(a b c d e f)""
  */
 function transform_value_of_matrix(board: IBoard, m: Matrix): string {
-    const [screenX, screenY] = screen_functions(board);
-    //    const a = 1;//m.a11;
-    //    const b = 0;//m.a21;
-    //    const c = 0;//m.a12;
-    //    const d = 1;//m.a22;
-    //    const e = 0;//m.a13;
-    //    const f = 0;//m.a23;
     const a = m.a;
     const b = m.b;
     const c = m.c;
     const d = m.d;
-    const e = screenX(m.e, m.f);
-    const f = screenY(m.e, m.f);
+    const e = m.e;
+    const f = m.f;
     return `matrix(${[a, b, c, d, e, f].map(toFixed).join(' ')})`;
 }
 
@@ -1458,8 +1481,7 @@ function color_value(thing: string | LinearGradient | RadialGradient | Texture):
  * exchange the x and y coordinates because we will be applying a 90 degree rotation.
  */
 function screen_functions(board: IBoard) {
-    const [, y1, , y2] = board.getBoundingBox();
-    if (y2 > y1) {
+    if (board.goofy) {
         return [(x: number, y: number): number => x, (x: number, y: number): number => y];
     }
     else {

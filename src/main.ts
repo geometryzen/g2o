@@ -6,14 +6,20 @@ document.addEventListener('DOMContentLoaded', function () {
         boundingBox: [-50, 50, 50, -50]
     })
 
-    const one = board.makeRectangle(0, 0, 20, 10)
-    one.position.x = 0
-    one.position.y = 30
-    const two = board.makeRectangle(0, 0, 20, 10)
-    two.attitude.rotorFromAngle(Math.PI / 2);
+    const blu = board.makeRectangle(0, 0, 20, 10)
+    blu.position.x = 0
+    blu.position.y = 20
+    blu.fill = "#0000ff"
+    blu.noStroke();
+    blu.scaleXY.set(2,1);
 
-    const text = board.makeText("Hello", 20, 0)
-    text.attitude.rotorFromAngle(Math.PI / 2)
+    const red = board.makeRectangle(0, 0, 20, 10)
+    red.attitude.rotorFromAngle(Math.PI / 8);
+    red.fill = "#ff0000"
+    red.noStroke();
+
+    const text = board.makeText("Hello", 0, 10)
+    text.scaleXY.set(1,1);
     /*
     const A = board.createPoint(G20.vector(0, 0))
     const B = board.createPoint(G20.vector(4, 0))
