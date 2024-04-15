@@ -145,13 +145,17 @@ export class Board implements IBoard {
             this.width = width;
             this.height = height;
             this.#size.next({ width, height });
+            console.log("sized!")
         });
 
         const [x1, y1, x2, y2] = this.getBoundingBox();
-        const sx = this.width / (x2 - x1);
-        const sy = this.height / (y2 - y1);
-        // This should depend upon the bounding box...
-        this.#scope.position.set(this.width / 2, this.height / 2);
+        const Δx = this.width;
+        const Δy = this.height;
+        const sx = Δx / (x2 - x1);
+        const sy = Δy / (y1 - y2);
+        const x = (x1 * Δx) / (x1 - x2);
+        const y = (y1 * Δy) / (y1 - y2);
+        this.#scope.position.set(x, y);
         this.#scope.scaleXY.set(sx, sy);
     }
 
