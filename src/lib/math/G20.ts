@@ -791,7 +791,7 @@ export class G20 {
     }
 
     toString(): string {
-        return this.x + ', ' + this.y;
+        return JSON.stringify({ x: this.x, y: this.y, a: this.a, b: this.b });
     }
     /**
      * reverse has a ++-- structure on the grades.

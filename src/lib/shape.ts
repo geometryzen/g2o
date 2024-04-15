@@ -13,7 +13,7 @@ import { Matrix } from './matrix';
 import { Subscription } from './rxjs/Subscription';
 import { computed_world_matrix } from './utils/compute_world_matrix';
 
-export type PositionLike = Anchor | G20 | Shape<unknown>;
+export type PositionLike = Anchor | G20 | Shape<unknown> | [x: number, y: number];
 
 export function position_from_like(like: PositionLike): G20 | null {
     if (like instanceof Shape) {
@@ -24,6 +24,9 @@ export function position_from_like(like: PositionLike): G20 | null {
     }
     else if (like instanceof Anchor) {
         return like.origin;
+    }
+    else if (Array.isArray(like)) {
+        return G20.vector(like[0], like[1]);
     }
     else {
         return null;

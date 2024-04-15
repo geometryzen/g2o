@@ -293,7 +293,7 @@ export class Board implements IBoard {
         return ellipse;
     }
 
-    createPoint(position: G20): Shape<Group> {
+    createPoint(position: PositionLike): Shape<Group> {
         const [x1, x2, y1, y2] = this.getBoundingBox();
         const sx = this.width / (x2 - x1);
         const sy = this.height / (y2 - y1);

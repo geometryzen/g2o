@@ -8,6 +8,7 @@ export { Sprite, SpriteOptions } from './lib/effects/sprite';
 export { Stop } from './lib/effects/stop';
 export { Texture } from './lib/effects/texture';
 export { ElementBase } from './lib/element';
+export { circle_intersection } from './lib/euclid/euclid';
 export { Group } from './lib/group';
 export { G20 } from './lib/math/G20';
 export { Matrix } from './lib/matrix';

@@ -1,29 +1,34 @@
-import { Board, Circle, G20 } from './index';
+import { Board } from './index';
+import { circle_intersection } from './lib/euclid/euclid';
 
 document.addEventListener('DOMContentLoaded', function () {
 
     const board = new Board("my-board", {
-        boundingBox: [-5, 5, 5, -5]
+        boundingBox: [-4, 4, 4, -4]
     })
 
-    const O = board.createPoint(G20.vector(0, 0))
-    const B = board.createPoint(G20.vector(4, 0))
-    const C = board.createPoint(G20.vector(0, 4))
-    const D = board.createPoint(G20.vector(1, 1))
+    const A = board.createPoint([-1, 0])
+    const B = board.createPoint([1, 0])
 
-    board.createLine(O, B);
-    const L2 = board.createLine(O, C);
-    const L3 = board.createLine(O, D);
+    const AB = board.createLine(A, B);
 
-    O.visible = true
-    D.visible = true
+    const BCD = board.createCircle({ position: A, radius: AB.length })
+    BCD.stroke = "#0000ff"
+    BCD.noFill()
 
-    board.createLine(L3.point2, L2.point2);
+    const ACE = board.createCircle({ position: B, radius: AB.length })
+    ACE.stroke = "#0000ff"
+    ACE.noFill()
 
-    const circle: Circle = board.createCircle({ position: O })
-    circle.stroke = "#0000ff"
-    circle.noFill()
-    // circle.radius = 4
+    const points = circle_intersection(BCD, ACE)
+    if (points.length > 0) {
+        const C = board.createPoint(points[0])
+        const CA = board.createLine(C, A);
+        const CB = board.createLine(C, B);
+        console.log("AB", AB.length);
+        console.log("CA", CA.length);
+        console.log("CB", CB.length);
+    }
 
     board.update();
 
@@ -33,8 +38,4 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     window.requestAnimationFrame(animate)
-
-    document.addEventListener("click", function () {
-        board.update()
-    })
 });

@@ -1,8 +1,10 @@
+import { BehaviorSubject } from 'rxjs';
 import { Anchor } from '../anchor';
 import { Flag } from '../Flag';
 import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
 import { Path, PathOptions } from '../path';
+import { Observable } from '../rxjs/Observable';
 import { PositionLike } from '../shape';
 import { HALF_PI, TWO_PI } from '../utils/math';
 import { Commands } from '../utils/path-commands';
@@ -16,7 +18,8 @@ export interface CircleOptions {
 
 export class Circle extends Path {
 
-    #radius: number;
+    readonly #radius: BehaviorSubject<number> = new BehaviorSubject(1);
+    readonly radius$: Observable<number> = this.#radius.asObservable();
 
     constructor(board: IBoard, options: CircleOptions = {}) {
 
@@ -31,10 +34,7 @@ export class Circle extends Path {
         super(board, points, true, true, true, path_options_from_circle_options(options));
 
         if (typeof options.radius === 'number') {
-            this.#radius = options.radius;
-        }
-        else {
-            this.#radius = 1;
+            this.#radius.next(options.radius);
         }
 
         this.linewidth = 2
@@ -59,7 +59,7 @@ export class Circle extends Path {
 
             // Coefficient for approximating circular arcs with Bezier curves
             const c = (4 / 3) * Math.tan(Math.PI / (length * 2));
-            const radius = this.#radius;
+            const radius = this.radius;
             const rc = radius * c;
 
             const cos = Math.cos;
@@ -98,12 +98,12 @@ export class Circle extends Path {
     }
 
     get radius(): number {
-        return this.#radius;
+        return this.#radius.value;
     }
     set radius(radius: number) {
         if (typeof radius === 'number') {
             if (this.radius !== radius) {
-                this.#radius = radius;
+                this.#radius.next(radius);
                 this.flags[Flag.Radius] = true;
                 // This is critical, but does it violate encapsulation?
                 // By extending Path, it seems I have to know something of the implementation details.
