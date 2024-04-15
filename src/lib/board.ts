@@ -154,8 +154,13 @@ export class Board implements IBoard {
         const sx = Δx / (x2 - x1);
         const sy = Δy / (y1 - y2);
         const x = (x1 * Δx) / (x1 - x2);
-        const y = (y1 * Δy) / (y1 - y2);
+        const y = (y2 * Δy) / (y2 - y1);
+        console.log("sx", sx);
+        console.log("sy", sy);
         this.#scope.position.set(x, y);
+        if (y2 < y1) {
+            this.#scope.attitude.rotorFromAngle(-Math.PI / 2);
+        }
         this.#scope.scaleXY.set(sx, sy);
     }
 

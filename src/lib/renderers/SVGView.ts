@@ -253,8 +253,9 @@ const svg = {
         const screenX = (x: number, y: number): number => (position.x + (alpha * x + beta * y)) * sx + cx;
         const screenY = (x: number, y: number): number => (position.y + (alpha * y - beta * x)) * sy + cy;
         */
-        const screenX = (x: number, y: number): number => x;
-        const screenY = (x: number, y: number): number => y;
+        // EXPERIMENTAL: By switching x amd y here we handle a 90 degree coordinate rotation?
+        // We are not completely done because Text and Images are rotated.
+        const [screenX, screenY] = screen_functions(board);
 
         const l = anchors.length;
         const last = l - 1;
@@ -1427,12 +1428,12 @@ export class SVGView implements View {
  * ] => "matrix(a b c d e f)""
  */
 function transform_value_of_matrix(m: Matrix): string {
-//    const a = 1;//m.a11;
-//    const b = 0;//m.a21;
-//    const c = 0;//m.a12;
-//    const d = 1;//m.a22;
-//    const e = 0;//m.a13;
-//    const f = 0;//m.a23;
+    //    const a = 1;//m.a11;
+    //    const b = 0;//m.a21;
+    //    const c = 0;//m.a12;
+    //    const d = 1;//m.a22;
+    //    const e = 0;//m.a13;
+    //    const f = 0;//m.a23;
     const a = m.a11;
     const b = m.a21;
     const c = m.a12;
@@ -1448,5 +1449,19 @@ function color_value(thing: string | LinearGradient | RadialGradient | Texture):
     }
     else {
         return thing;
+    }
+}
+
+/**
+ * If the bounding box is oriented such that y increases in the upwards direction,
+ * exchange the x and y coordinates because we will be applying a 90 degree rotation.
+ */
+function screen_functions(board: IBoard) {
+    const [, y1, , y2] = board.getBoundingBox();
+    if (y2 > y1) {
+        return [(x: number, y: number): number => x, (x: number, y: number): number => y];
+    }
+    else {
+        return [(x: number, y: number): number => y, (x: number, y: number): number => x];
     }
 }

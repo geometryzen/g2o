@@ -3,12 +3,17 @@ import { Board } from './index';
 document.addEventListener('DOMContentLoaded', function () {
 
     const board = new Board("my-board", {
-        boundingBox: [-5, 5, 5, -5]
+        boundingBox: [-50, 50, 50, -50]
     })
 
-    board.makeRectangle(0, 0, 2, 1)
-    const rect = board.makeRectangle(0, 0, 2, 1)
+    const one = board.makeRectangle(0, 0, 20, 10)
+    one.position.x = 10
+    one.position.y = 30
+    const rect = board.makeRectangle(0, 0, 20, 10)
     rect.attitude.rotorFromAngle(Math.PI / 2);
+
+    const text = board.makeText("Hello", 0, 0)
+    text.attitude.rotorFromAngle(Math.PI / 2)
     /*
     const A = board.createPoint(G20.vector(0, 0))
     const B = board.createPoint(G20.vector(4, 0))
