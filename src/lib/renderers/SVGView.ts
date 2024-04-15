@@ -495,7 +495,7 @@ const svg = {
                 this.viewInfo.elem = svg.createElement('g', { id: this.id });
                 domElement.appendChild(this.viewInfo.elem);
                 this.viewInfo.matrix_change = this.matrix.change$.subscribe(() => {
-                    this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.matrix));
+                    this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.board, this.matrix));
                 });
             }
 
@@ -507,7 +507,7 @@ const svg = {
             };
 
             if (flagMatrix) {
-                this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.matrix));
+                this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.board, this.matrix));
             }
 
             for (let i = 0; i < this.children.length; i++) {
@@ -620,7 +620,7 @@ const svg = {
             const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
 
             if (flagMatrix) {
-                changed.transform = transform_value_of_matrix(this.matrix);
+                changed.transform = transform_value_of_matrix(this.board, this.matrix);
             }
 
             if (this.flags[Flag.Id]) {
@@ -746,7 +746,7 @@ const svg = {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 this.viewInfo.matrix_change = this.matrix.change$.subscribe((matrix) => {
                     const change: SVGAttributes = {};
-                    change.transform = transform_value_of_matrix(matrix);
+                    change.transform = transform_value_of_matrix(this.board, matrix);
                     svg.setAttributes(this.viewInfo.elem, change);
                 });
             }
@@ -810,7 +810,7 @@ const svg = {
             const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
 
             if (flagMatrix) {
-                changed.transform = transform_value_of_matrix(this.matrix);
+                changed.transform = transform_value_of_matrix(this.board, this.matrix);
             }
 
             if (this.flags[Flag.Id]) {
@@ -904,7 +904,7 @@ const svg = {
             const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
 
             if (flagMatrix) {
-                changed.transform = transform_value_of_matrix(this.matrix);
+                changed.transform = transform_value_of_matrix(this.board, this.matrix);
             }
 
             if (this.flags[Flag.Id]) {
@@ -1403,7 +1403,7 @@ export class SVGView implements View {
     setSize(size: { width: number, height: number }, ratio: number): this {
         this.width = size.width;
         this.height = size.height;
-        svg.setAttributes(this.domElement, { width: `${size.width}`, height: `${size.height}` });
+        svg.setAttributes(this.domElement, { width: `${size.width}px`, height: `${size.height}px` });
         this.#size.next(size);
         return this;
     }
@@ -1427,19 +1427,20 @@ export class SVGView implements View {
  *    [0 0 1]
  * ] => "matrix(a b c d e f)""
  */
-function transform_value_of_matrix(m: Matrix): string {
+function transform_value_of_matrix(board: IBoard, m: Matrix): string {
+    const [screenX, screenY] = screen_functions(board);
     //    const a = 1;//m.a11;
     //    const b = 0;//m.a21;
     //    const c = 0;//m.a12;
     //    const d = 1;//m.a22;
     //    const e = 0;//m.a13;
     //    const f = 0;//m.a23;
-    const a = m.a11;
-    const b = m.a21;
-    const c = m.a12;
-    const d = m.a22;
-    const e = m.a13;
-    const f = m.a23;
+    const a = m.a;
+    const b = m.b;
+    const c = m.c;
+    const d = m.d;
+    const e = screenX(m.e, m.f);
+    const f = screenY(m.e, m.f);
     return `matrix(${[a, b, c, d, e, f].map(toFixed).join(' ')})`;
 }
 

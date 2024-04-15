@@ -40,63 +40,51 @@ export class Matrix {
         this.#change = new BehaviorSubject(this);
         this.change$ = this.#change.asObservable();
     }
-    get a() {
+    get a(): number {
         return this.#elements[0];
     }
-    get b() {
+    get b(): number {
         return this.#elements[3];
     }
-    get c() {
+    get c(): number {
         return this.#elements[1];
     }
-    get d() {
+    get d(): number {
         return this.#elements[4];
     }
-    get e() {
+    get e(): number {
         return this.#elements[2];
     }
-    get f() {
+    get f(): number {
         return this.#elements[5];
     }
-    get a11() {
+    get a11(): number {
         return this.#elements[0];
     }
-    get a12() {
+    get a12(): number {
         return this.#elements[1];
     }
-    get a13() {
+    get a13(): number {
         return this.#elements[2];
     }
-    get a21() {
+    get a21(): number {
         return this.#elements[3];
     }
-    get a22() {
+    get a22(): number {
         return this.#elements[4];
     }
-    get a23() {
+    get a23(): number {
         return this.#elements[5];
     }
-    get a31() {
+    get a31(): number {
         return this.#elements[6];
     }
-    get a32() {
+    get a32(): number {
         return this.#elements[7];
     }
-    get a33() {
+    get a33(): number {
         return this.#elements[8];
     }
-
-    //
-
-    /**
-     * @name Two.Matrix.Identity
-     * @property {Number[]} - A stored reference to the default value of a 3 x 3 matrix.
-     */
-    static Identity = [
-        1, 0, 0,
-        0, 1, 0,
-        0, 0, 1
-    ];
 
     set(a11: number, a12: number, a13: number, a21: number, a22: number, a23: number, a31: number, a32: number, a33: number): this {
 
@@ -151,21 +139,19 @@ export class Matrix {
     }
 
     /**
-     * @name Two.Matrix#identity
-     * @function
-     * @description Turn matrix to the identity, like resetting.
+     * Sets matrix to the identity, like resetting.
      */
     identity(): this {
 
-        this.#elements[0] = Matrix.Identity[0];
-        this.#elements[1] = Matrix.Identity[1];
-        this.#elements[2] = Matrix.Identity[2];
-        this.#elements[3] = Matrix.Identity[3];
-        this.#elements[4] = Matrix.Identity[4];
-        this.#elements[5] = Matrix.Identity[5];
-        this.#elements[6] = Matrix.Identity[6];
-        this.#elements[7] = Matrix.Identity[7];
-        this.#elements[8] = Matrix.Identity[8];
+        this.#elements[0] = 1;
+        this.#elements[1] = 0;
+        this.#elements[2] = 0;
+        this.#elements[3] = 0;
+        this.#elements[4] = 1;
+        this.#elements[5] = 0;
+        this.#elements[6] = 0;
+        this.#elements[7] = 0;
+        this.#elements[8] = 1;
 
         return this.#broadcast();
     }

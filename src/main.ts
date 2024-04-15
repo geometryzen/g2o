@@ -7,12 +7,12 @@ document.addEventListener('DOMContentLoaded', function () {
     })
 
     const one = board.makeRectangle(0, 0, 20, 10)
-    one.position.x = 10
+    one.position.x = 0
     one.position.y = 30
-    const rect = board.makeRectangle(0, 0, 20, 10)
-    rect.attitude.rotorFromAngle(Math.PI / 2);
+    const two = board.makeRectangle(0, 0, 20, 10)
+    two.attitude.rotorFromAngle(Math.PI / 2);
 
-    const text = board.makeText("Hello", 0, 0)
+    const text = board.makeText("Hello", 20, 0)
     text.attitude.rotorFromAngle(Math.PI / 2)
     /*
     const A = board.createPoint(G20.vector(0, 0))

@@ -144,10 +144,12 @@ export class Board implements IBoard {
         this.#view_resize = this.#view.size$.subscribe(({ width, height }) => {
             this.width = width;
             this.height = height;
+            this.#update_view_box();
             this.#size.next({ width, height });
-            console.log("sized!")
         });
+    }
 
+    #update_view_box(): void {
         const [x1, y1, x2, y2] = this.getBoundingBox();
         const Δx = this.width;
         const Δy = this.height;
@@ -155,8 +157,6 @@ export class Board implements IBoard {
         const sy = Δy / (y1 - y2);
         const x = (x1 * Δx) / (x1 - x2);
         const y = (y2 * Δy) / (y2 - y1);
-        console.log("sx", sx);
-        console.log("sy", sy);
         this.#scope.position.set(x, y);
         if (y2 < y1) {
             this.#scope.attitude.rotorFromAngle(-Math.PI / 2);
