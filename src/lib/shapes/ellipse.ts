@@ -3,13 +3,14 @@ import { Flag } from '../Flag.js';
 import { IBoard } from '../IBoard.js';
 import { G20 } from '../math/G20.js';
 import { Path, PathOptions } from '../path.js';
+import { PositionLike } from '../shape.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 
 const cos = Math.cos, sin = Math.sin;
 
 export interface EllipseOptions {
-    position?: G20;
+    position?: PositionLike;
     attitude?: G20;
     rx?: number;
     ry?: number;

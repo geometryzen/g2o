@@ -18,7 +18,7 @@ export { SVGView, SVGViewParams } from './lib/renderers/SVGView';
 export { View } from './lib/renderers/View';
 export { Observable } from './lib/rxjs/Observable';
 export { Subscription } from './lib/rxjs/Subscription';
-export { Shape } from './lib/shape';
+export { PositionLike, position_from_like, Shape, ShapeOptions } from './lib/shape';
 export { ArcSegment } from './lib/shapes/arc-segment';
 export { Circle, CircleOptions } from './lib/shapes/circle';
 export { Ellipse } from './lib/shapes/ellipse';

@@ -1,3 +1,4 @@
+import { Anchor } from './anchor';
 import { Constants } from './constants';
 import { LinearGradient } from './effects/linear-gradient';
 import { RadialGradient } from './effects/radial-gradient';
@@ -12,12 +13,29 @@ import { Matrix } from './matrix';
 import { Subscription } from './rxjs/Subscription';
 import { computed_world_matrix } from './utils/compute_world_matrix';
 
+export type PositionLike = Anchor | G20 | Shape<unknown>;
+
+export function position_from_like(like: PositionLike): G20 | null {
+    if (like instanceof Shape) {
+        return like.position;
+    }
+    if (like instanceof G20) {
+        return like;
+    }
+    else if (like instanceof Anchor) {
+        return like.origin;
+    }
+    else {
+        return null;
+    }
+}
+
 export interface Parent {
     update?(): void;
 }
 
 export interface ShapeOptions {
-    position?: G20;
+    position?: PositionLike;
     attitude?: G20;
 }
 
@@ -98,7 +116,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         this.worldMatrix = new Matrix();
 
         if (options.position) {
-            this.#position = options.position;
+            this.#position = position_from_like(options.position);
         }
         else {
             this.#position = new G20(0, 0);

@@ -1,13 +1,14 @@
-import { Anchor } from '../anchor.js';
-import { Flag } from '../Flag.js';
-import { IBoard } from '../IBoard.js';
-import { G20 } from '../math/G20.js';
-import { Path, PathOptions } from '../path.js';
-import { HALF_PI, TWO_PI } from '../utils/math.js';
-import { Commands } from '../utils/path-commands.js';
+import { Anchor } from '../anchor';
+import { Flag } from '../Flag';
+import { IBoard } from '../IBoard';
+import { G20 } from '../math/G20';
+import { Path, PathOptions } from '../path';
+import { PositionLike } from '../shape';
+import { HALF_PI, TWO_PI } from '../utils/math';
+import { Commands } from '../utils/path-commands';
 
 export interface CircleOptions {
-    position?: G20;
+    position?: PositionLike;
     attitude?: G20;
     radius?: number;
     resolution?: number;
@@ -33,7 +34,7 @@ export class Circle extends Path {
             this.#radius = options.radius;
         }
         else {
-            this.#radius = 0;
+            this.#radius = 1;
         }
 
         this.linewidth = 2

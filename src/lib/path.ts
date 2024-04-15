@@ -9,7 +9,7 @@ import { IBoard } from './IBoard';
 import { decompose_2d_3x3_matrix } from './math/decompose_2d_3x3_matrix';
 import { G20 } from './math/G20.js';
 import { Subscription } from './rxjs/Subscription';
-import { Shape } from './shape';
+import { PositionLike, Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
 import { lerp, mod } from './utils/math';
 import { Commands } from './utils/path-commands';
@@ -36,7 +36,7 @@ const floor = Math.floor;
 const vector = new G20();
 
 export interface PathOptions {
-    position?: G20;
+    position?: PositionLike;
     attitude?: G20;
 }
 

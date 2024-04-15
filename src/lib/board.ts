@@ -14,7 +14,7 @@ import { SVGView } from './renderers/SVGView.js';
 import { View } from './renderers/View.js';
 import { Observable } from './rxjs/Observable.js';
 import { Subscription } from './rxjs/Subscription.js';
-import { Shape } from './shape.js';
+import { PositionLike, Shape } from './shape.js';
 import { ArcSegment } from './shapes/arc-segment.js';
 import { Circle, CircleOptions } from './shapes/circle.js';
 import { Ellipse, EllipseOptions } from './shapes/ellipse.js';
@@ -281,6 +281,12 @@ export class Board implements IBoard {
     }
     */
 
+    createCircle(options: CircleOptions = {}): Circle {
+        const circle = new Circle(this, options);
+        this.add(circle);
+        return circle;
+    }
+
     createEllipse(options: EllipseOptions = {}): Ellipse {
         const ellipse = new Ellipse(this, options);
         this.#scene.add(ellipse);
@@ -303,8 +309,8 @@ export class Board implements IBoard {
         return ellipse;
     }
 
-    createLine(begin: G20, end: G20): Line {
-        const line = new Line(this, begin, end);
+    createLine(point1: PositionLike, point2: PositionLike): Line {
+        const line = new Line(this, point1, point2);
         line.linewidth = 2;
         line.stroke = "#999999"
         this.#scene.add(line);
@@ -356,13 +362,6 @@ export class Board implements IBoard {
         const rect = new RoundedRectangle(this, x, y, width, height, sides);
         this.#scene.add(rect);
         return rect;
-    }
-
-    makeCircle(x: number = 0, y: number = 0, radius: number, resolution: number = 4): Circle {
-        const options: CircleOptions = { position: new G20(x, y), radius, resolution };
-        const circle = new Circle(this, options);
-        this.#scene.add(circle);
-        return circle;
     }
 
     makeStar(x: number, y: number, outerRadius: number, innerRadius: number, sides: number): Star {
