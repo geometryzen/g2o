@@ -26,7 +26,7 @@ function is_zero_multivector(m: Geometric): boolean {
 /**
  * Sentinel value to indicate that the Geometric is not locked.
  * UNLOCKED is in the range -1 to 0.
- * @hidden
+ * 
  */
 const UNLOCKED = -1 * Math.random();
 
@@ -34,7 +34,7 @@ const UNLOCKED = -1 * Math.random();
  * Sets the lock on the multivector argument and returns the same argument.
  * This is a convenience function for the dunder (double underscore) methods.
  * All dunder methods should return locked values.
- * @hidden
+ * 
  */
 function lock(m: G20): G20 {
     m.lock();
@@ -42,7 +42,7 @@ function lock(m: G20): G20 {
 }
 
 /**
- * @hidden
+ * 
  */
 function isScalar(m: G20): boolean {
     return m.x === 0 && m.y === 0 && m.b === 0;
@@ -256,7 +256,7 @@ export class G20 {
         return dx * dx + dy * dy;
     }
     /**
-     * @hidden
+     * 
      */
     add2(a: G20, b: G20): G20 {
         if (is_zero_multivector(a)) {
@@ -475,7 +475,7 @@ export class G20 {
     }
 
     /**
-     * @hidden
+     * 
      */
     #mul2(lhs: G20, rhs: G20): this {
         const La = lhs.a;
@@ -543,7 +543,11 @@ export class G20 {
     }
 
     quaditude(): number {
-        return this.x * this.x + this.y * this.y;
+        const a = this.a;
+        const x = this.x;
+        const y = this.y;
+        const b = this.b;
+        return a * a + x * x + y * y - b * b;
     }
 
     normalize(): this {
@@ -720,7 +724,7 @@ export class G20 {
     }
 
     /**
-     * @hidden
+     * 
      */
     scp2(lhs: G20, rhs: G20): this {
         const La = lhs.a;
@@ -856,7 +860,7 @@ export class G20 {
     }
 
     /**
-     * @hidden
+     * 
      */
     __div__(rhs: G20 | number): G20 {
         if (rhs instanceof G20) {
@@ -869,8 +873,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __rdiv__(lhs: number | G20): G20 {
         if (lhs instanceof G20) {
@@ -883,8 +888,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __vbar__(rhs: number | G20): G20 {
         if (rhs instanceof G20) {
@@ -897,8 +903,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __rvbar__(lhs: number | G20): G20 {
         if (lhs instanceof G20) {
@@ -911,8 +918,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __wedge__(rhs: number | G20): G20 {
         if (rhs instanceof G20) {
@@ -926,8 +934,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __rwedge__(lhs: number | G20): G20 {
         if (lhs instanceof G20) {
@@ -941,8 +950,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __lshift__(rhs: number | G20): G20 {
         if (rhs instanceof G20) {
@@ -955,8 +965,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __rlshift__(lhs: number | G20): G20 {
         if (lhs instanceof G20) {
@@ -969,8 +980,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __rshift__(rhs: number | G20): G20 {
         if (rhs instanceof G20) {
@@ -983,8 +995,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __rrshift__(lhs: number | G20): G20 {
         if (lhs instanceof G20) {
@@ -997,14 +1010,16 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __bang__(): G20 {
         return lock(G20.copy(this).inv());
     }
+
     /**
-     * @hidden
+     * 
      */
     __eq__(rhs: G20 | number): boolean {
         if (rhs instanceof G20) {
@@ -1017,8 +1032,9 @@ export class G20 {
             return false;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __ne__(rhs: G20 | number): boolean {
         if (rhs instanceof G20) {
@@ -1031,14 +1047,16 @@ export class G20 {
             return true;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __tilde__(): G20 {
         return lock(G20.copy(this).rev());
     }
+
     /**
-     * @hidden
+     * 
      */
     __add__(rhs: G20 | number): G20 {
         if (rhs instanceof G20) {
@@ -1051,8 +1069,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __radd__(lhs: G20 | number): G20 {
         if (lhs instanceof G20) {
@@ -1065,8 +1084,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __sub__(rhs: G20 | number): G20 {
         if (rhs instanceof G20) {
@@ -1080,8 +1100,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __rsub__(lhs: G20 | number): G20 {
         if (lhs instanceof G20) {
@@ -1094,20 +1115,23 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __pos__(): G20 {
         return lock(G20.copy(this));
     }
+
     /**
-     * @hidden
+     * 
      */
     __neg__(): G20 {
         return lock(G20.copy(this).neg());
     }
+
     /**
-     * @hidden
+     * 
      */
     __mul__(rhs: G20 | number): G20 {
         if (rhs instanceof G20) {
@@ -1120,8 +1144,9 @@ export class G20 {
             return void 0;
         }
     }
+
     /**
-     * @hidden
+     * 
      */
     __rmul__(lhs: G20 | number): G20 {
         if (lhs instanceof G20) {

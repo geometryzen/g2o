@@ -24,7 +24,7 @@ import { Rectangle, RectangleOptions } from './shapes/rectangle.js';
 import { RegularPolygon } from './shapes/RegularPolygon.js';
 import { RoundedRectangle } from './shapes/rounded-rectangle.js';
 import { Star } from './shapes/star.js';
-import { Text } from './text.js';
+import { Text, TextStyles } from './text.js';
 import { Commands } from './utils/path-commands.js';
 import { dateTime } from './utils/performance.js';
 import { xhr } from './utils/xhr.js';
@@ -45,7 +45,7 @@ export class Board implements IBoard {
     /**
      * A wrapper group that is used to transform the scene from user coordinates to pixels.
      */
-    readonly #scope: Group = new Group(this);
+    readonly #viewBox: Group = new Group(this);
     /**
      * 
      */
@@ -117,14 +117,14 @@ export class Board implements IBoard {
         else {
             this.#scene = new Group(this);
         }
-        this.#scope.add(this.#scene);
+        this.#viewBox.add(this.#scene);
 
         if (typeof options.view === 'object') {
             this.#view = options.view;
         }
         else {
             // The group used by the scene is actually a wrapper around the scene.
-            this.#view = new SVGView(this.#scope);
+            this.#view = new SVGView(this.#viewBox);
         }
 
         const config: BoardConfig = config_from_options(container, options);
@@ -159,6 +159,14 @@ export class Board implements IBoard {
         });
     }
 
+    dispose(): void {
+        if (this.#view_resize) {
+            this.#view_resize.unsubscribe();
+            this.#view_resize = null;
+        }
+        this.#fitter.unsubscribe();
+    }
+
     /**
      * Here we are actually doing a job that is equvalent to the role of the SVG viewBox except that we are also
      * introducing a 90 degree rotation if the coordinate system is right-handed (a.k.a regular or not goofy).
@@ -171,19 +179,16 @@ export class Board implements IBoard {
         const sy = Δy / (y1 - y2);
         const x = (x1 * Δx) / (x1 - x2);
         const y = (y2 * Δy) / (y2 - y1);
-        this.#scope.position.set(x, y);
+        this.#viewBox.position.set(x, y);
         if (!this.goofy) {
-            this.#scope.attitude.rotorFromAngle(Math.PI / 2);
+            this.#viewBox.attitude.rotorFromAngle(Math.PI / 2);
         }
-        this.#scope.scaleXY.set(sx, sy);
+        console.log("sx", sx, "sy", sy)
+        this.#viewBox.scaleXY.set(sx, sy);
     }
 
-    dispose(): void {
-        if (this.#view_resize) {
-            this.#view_resize.unsubscribe();
-            this.#view_resize = null;
-        }
-        this.#fitter.unsubscribe();
+    get scaleXY(): G20 {
+        return this.#viewBox.scaleXY.clone();
     }
 
     get scene(): Group {
@@ -436,7 +441,7 @@ export class Board implements IBoard {
     }
     */
 
-    makeText(message: string, x: number, y: number, styles?: object): Text {
+    makeText(message: string, x: number, y: number, styles?: Partial<TextStyles>): Text {
         const text = new Text(this, message, x, y, styles);
         this.add(text);
         return text;

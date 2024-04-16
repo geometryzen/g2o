@@ -292,8 +292,10 @@ export class Path extends Shape<Group> {
 
     getBoundingClientRect(shallow?: boolean): { width: number; height: number; top?: number; left?: number; right?: number; bottom?: number } {
 
-        let left = Infinity, right = -Infinity,
-            top = Infinity, bottom = -Infinity;
+        let left = Infinity;
+        let right = -Infinity;
+        let top = Infinity;
+        let bottom = -Infinity;
 
         // TODO: Update this to not __always__ update. Just when it needs to.
         this.update();
@@ -363,26 +365,19 @@ export class Path extends Shape<Group> {
                 left = min(bb.min.x - border, left);
                 right = max(bb.max.x + border, right);
                 bottom = max(bb.max.y + border, bottom);
-
             }
             else {
-
                 if (i <= 1) {
-
                     top = min(v0y - border, top);
                     left = min(v0x - border, left);
                     right = max(v0x + border, right);
                     bottom = max(v0y + border, bottom);
-
                 }
-
                 top = min(v1y - border, top);
                 left = min(v1x - border, left);
                 right = max(v1x + border, right);
                 bottom = max(v1y + border, bottom);
-
             }
-
         }
 
         return {
@@ -393,7 +388,6 @@ export class Path extends Shape<Group> {
             width: right - left,
             height: bottom - top
         };
-
     }
 
     hasBoundingClientRect(): boolean {
