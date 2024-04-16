@@ -236,6 +236,12 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
             this.#position_change = null;
         }
     }
+    get hidden(): boolean {
+        return !this.visible;
+    }
+    set hidden(hidden: boolean) {
+        this.visible = !hidden;
+    }
     get position(): G20 {
         return this.#position;
     }

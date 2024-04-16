@@ -6,10 +6,9 @@ import { Path } from '../path.js';
 import { TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 
-
 const cos = Math.cos, sin = Math.sin;
 
-export class Polygon extends Path {
+export class RegularPolygon extends Path {
 
     _flagWidth = false;
     _flagHeight = false;
@@ -35,31 +34,10 @@ export class Polygon extends Path {
         this.closed = true;
         this.automatic = false;
 
-        /**
-         * @name Two.Polygon#radius
-         * @property {Number} - The radius value of the polygon.
-         * @nota-bene This property is tied to {@link Two.Polygon#width} and {@link Two.Polygon#height}. When you set `radius`, it affects `width` and `height`. Likewise, if you set `width` or `height` it will change the `radius`.
-         */
         if (typeof radius === 'number') {
             this.radius = radius;
         }
 
-        /**
-         * @name Two.Polygon#width
-         * @property {Number} - The size of the width of the polygon.
-         * @nota-bene This property is tied to {@link Two.Polygon#radius}. When you set `radius`, it affects the `width`. Likewise, if you set `width` it will change the `radius`.
-         */
-
-        /**
-         * @name Two.Polygon#height
-         * @property {Number} - The size of the height of the polygon.
-         * @nota-bene This property is tied to {@link Two.Polygon#radius}. When you set `radius`, it affects the `height`. Likewise, if you set `height` it will change the `radius`.
-         */
-
-        /**
-         * @name Two.Polygon#sides
-         * @property {Number} - The amount of sides the polyogn has.
-         */
         if (typeof sides === 'number') {
             this.sides = sides;
         }

@@ -25,9 +25,6 @@ export function set_dashes_offset(dashes: number[], offset: number): void {
     (dashes as any)['offset'] = offset;
 }
 
-
-// Constants
-
 const min = Math.min;
 const max = Math.max;
 const ceil = Math.ceil;
@@ -97,10 +94,10 @@ export class Path extends Shape<Group> {
     readonly #anchor_change_subscriptions = new Map<Anchor, Subscription>();
 
     /**
-     * @param {Two.Anchor[]} [vertices] - A list of {@link Two.Anchor}s that represent the order and coordinates to construct the rendered shape.
-     * @param {Boolean} [closed=false] - Describes whether the shape is closed or open.
-     * @param {Boolean} [curved=false] - Describes whether the shape automatically calculates bezier handles for each vertex.
-     * @param {Boolean} [manual=false] - Describes whether the developer controls how vertices are plotted or if Two.js automatically plots coordinates based on closed and curved booleans.
+     * @param vertices A list of {@link Anchor}s that represent the order and coordinates to construct the rendered shape.
+     * @param closed Describes whether the path is closed or open.
+     * @param curved Describes whether the path automatically calculates bezier handles for each vertex.
+     * @param manual Describes whether the developer controls how vertices are plotted or if Two.js automatically plots coordinates based on closed and curved booleans.
      * @description This is the primary primitive class for creating all drawable shapes in Two.js. Unless specified methods return their instance of `Two.Path` for the purpose of chaining.
      */
     constructor(board: IBoard, vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean, options: PathOptions = {}) {
@@ -233,30 +230,6 @@ export class Path extends Shape<Group> {
     }
 
     /**
-     * @name Two.Path.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.Path}.
-     */
-    static Properties = [
-        'fill',
-        'stroke',
-        'linewidth',
-        'opacity',
-        'visible',
-        'cap',
-        'join',
-        'miter',
-        'closed',
-        'curved',
-        'automatic',
-        'beginning',
-        'ending'
-    ];
-
-    static Utils = {
-        getCurveLength
-    };
-
-    /**
      * A convenience method for setting the `fill` attribute to "none".
      */
     noFill(): this {
@@ -272,7 +245,7 @@ export class Path extends Shape<Group> {
         return this;
     }
 
-    corner() {
+    corner(): this {
         const rect = this.getBoundingClientRect(true);
         const hw = rect.width / 2;
         const hh = rect.height / 2;
@@ -296,7 +269,7 @@ export class Path extends Shape<Group> {
         return this;
     }
 
-    center() {
+    center(): this {
         const rect = this.getBoundingClientRect(true);
 
         const cx = rect.left + rect.width / 2 - this.position.x;

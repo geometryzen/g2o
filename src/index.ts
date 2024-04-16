@@ -24,7 +24,7 @@ export { ArcSegment } from './lib/shapes/arc-segment';
 export { Circle, CircleOptions } from './lib/shapes/circle';
 export { Ellipse } from './lib/shapes/ellipse';
 export { Line } from './lib/shapes/line';
-export { Polygon } from './lib/shapes/polygon';
+export { RegularPolygon } from './lib/shapes/RegularPolygon';
 export { Rectangle, RectangleOptions } from './lib/shapes/rectangle';
 export { RoundedRectangle } from './lib/shapes/rounded-rectangle';
 export { Star } from './lib/shapes/star';

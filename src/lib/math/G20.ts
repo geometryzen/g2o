@@ -684,29 +684,21 @@ export class G20 {
             const ay = a.y;
             const bx = b.x;
             const by = b.y;
-            const mb = Math.sqrt(bx * bx + by * by);
-            const ma = Math.sqrt(ax * ax + ay * ay);
-            /**
-             * s = |b||a|
-             */
-            const s = mb * ma;
-            /**
-             * p = b.a or b << a
-             */
-            const p = bx * ax + by * ay;
+            const absB = Math.sqrt(bx * bx + by * by);
+            const absA = Math.sqrt(ax * ax + ay * ay);
+            const BA = absB * absA;
+            const dotBA = bx * ax + by * ay;
             /**
              * q = b ^ a
              */
             const q = bx * ay - by * ax;
-            const d = Math.sqrt(2 * s * (s + p));
-            const f = Math.sqrt(mb) / (Math.sqrt(ma) * d);
+            const denom = Math.sqrt(2 * BA * (BA + dotBA));
+            const f = Math.sqrt(absB) / (Math.sqrt(absA) * denom);
 
-            const A = f * (s + p);
-            const X = 0;
-            const Y = 0;
+            const A = f * (BA + dotBA);
             const B = f * q;
 
-            return this.set(X, Y, A, B);
+            return this.set(0, 0, A, B);
         }
     }
 

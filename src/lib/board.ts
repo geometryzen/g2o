@@ -19,8 +19,9 @@ import { ArcSegment } from './shapes/arc-segment.js';
 import { Circle, CircleOptions } from './shapes/circle.js';
 import { Ellipse, EllipseOptions } from './shapes/ellipse.js';
 import { Line } from './shapes/line.js';
-import { Polygon } from './shapes/polygon.js';
-import { Rectangle } from './shapes/rectangle.js';
+import { Polygon } from './shapes/Polygon.js';
+import { Rectangle, RectangleOptions } from './shapes/rectangle.js';
+import { RegularPolygon } from './shapes/RegularPolygon.js';
 import { RoundedRectangle } from './shapes/rounded-rectangle.js';
 import { Star } from './shapes/star.js';
 import { Text } from './text.js';
@@ -281,19 +282,38 @@ export class Board implements IBoard {
     }
     */
 
-    createCircle(options: CircleOptions = {}): Circle {
+    circle(options: CircleOptions = {}): Circle {
         const circle = new Circle(this, options);
         this.add(circle);
         return circle;
     }
 
-    createEllipse(options: EllipseOptions = {}): Ellipse {
+    ellipse(options: EllipseOptions = {}): Ellipse {
         const ellipse = new Ellipse(this, options);
         this.#scene.add(ellipse);
         return ellipse;
     }
 
-    createPoint(position: PositionLike): Shape<Group> {
+    line(point1: PositionLike, point2: PositionLike): Line {
+        const line = new Line(this, point1, point2);
+        line.linewidth = 2;
+        line.stroke = "#999999"
+        this.#scene.add(line);
+        return line;
+    }
+
+    path(closed: boolean, ...points: Anchor[]): Path {
+        const path = new Path(this, points, closed);
+        const rect = path.getBoundingClientRect();
+        if (typeof rect.top === 'number' && typeof rect.left === 'number' &&
+            typeof rect.right === 'number' && typeof rect.bottom === 'number') {
+            path.center().position.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        }
+        this.#scene.add(path);
+        return path;
+    }
+
+    point(position: PositionLike): Shape<Group> {
         const [x1, x2, y1, y2] = this.getBoundingBox();
         const sx = this.width / (x2 - x1);
         const sy = this.height / (y2 - y1);
@@ -309,12 +329,18 @@ export class Board implements IBoard {
         return ellipse;
     }
 
-    createLine(point1: PositionLike, point2: PositionLike): Line {
-        const line = new Line(this, point1, point2);
-        line.linewidth = 2;
-        line.stroke = "#999999"
-        this.#scene.add(line);
-        return line;
+    polygon(points: PositionLike[] = []): Polygon {
+        const polygon = new Polygon(this, points);
+        this.add(polygon);
+        return polygon;
+    }
+
+    rectangle(options: RectangleOptions): Rectangle {
+        const rect = new Rectangle(this, options);
+        this.#scene.add(rect);
+        rect.linewidth = 2;
+        rect.stroke = "#999999"
+        return rect;
     }
 
     makeArrow(x1: number, y1: number, x2: number, y2: number, size?: number): Path {
@@ -350,14 +376,6 @@ export class Board implements IBoard {
         return path;
     }
 
-    makeRectangle(x: number, y: number, width: number, height: number): Rectangle {
-        const rect = new Rectangle(this, { position: new G20(x, y), width, height });
-        this.#scene.add(rect);
-        rect.linewidth = 2;
-        rect.stroke = "#999999"
-        return rect;
-    }
-
     makeRoundedRectangle(x: number, y: number, width: number, height: number, sides: number): RoundedRectangle {
         const rect = new RoundedRectangle(this, x, y, width, height, sides);
         this.#scene.add(rect);
@@ -379,8 +397,8 @@ export class Board implements IBoard {
         return curve;
     }
 
-    makePolygon(x: number, y: number, radius: number, sides: number): Polygon {
-        const poly = new Polygon(this, x, y, radius, sides);
+    makePolygon(x: number, y: number, radius: number, sides: number): RegularPolygon {
+        const poly = new RegularPolygon(this, x, y, radius, sides);
         this.#scene.add(poly);
         return poly;
     }
@@ -417,17 +435,6 @@ export class Board implements IBoard {
 
     }
     */
-
-    makePath(closed: boolean, ...points: Anchor[]): Path {
-        const path = new Path(this, points, closed);
-        const rect = path.getBoundingClientRect();
-        if (typeof rect.top === 'number' && typeof rect.left === 'number' &&
-            typeof rect.right === 'number' && typeof rect.bottom === 'number') {
-            path.center().position.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
-        }
-        this.#scene.add(path);
-        return path;
-    }
 
     makeText(message: string, x: number, y: number, styles?: object): Text {
         const text = new Text(this, message, x, y, styles);

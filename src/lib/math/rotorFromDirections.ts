@@ -19,22 +19,17 @@ const sqrt = Math.sqrt;
  * @param m The output multivector.
  */
 export function rotorFromDirections(a: Readonly<Vector>, b: Readonly<Vector>, m: G20): void {
-    const quadA = quad(a);
-    const absA = sqrt(quadA);
-    const quadB = quad(b);
-    const absB = sqrt(quadB);
+    const aa = quad(a);
+    const absA = sqrt(aa);
+    const bb = quad(b);
+    const absB = sqrt(bb);
     const BA = absB * absA;
     const dotBA = dot(b, a);
-    const denom = sqrt(2 * (quadB * quadA + BA * dotBA));
+    const denom = sqrt(2 * (bb * aa + BA * dotBA));
     if (denom !== 0) {
-        // m.versor(b, a);
         const A = a.x * b.x + a.y * b.y;
-        const X = 0;
-        const Y = 0;
-        const B = a.x * b.y - a.y * b.x;
-        // m.addScalar(BA, 1);
-        // m.divByNumber(denom);
-        m.set(X / denom, Y / denom, (A + BA) / denom, B / denom);
+        const B = a.y * b.x - a.x * b.y;
+        m.set(0, 0, (BA + A) / denom, B / denom);
     }
     else {
         // The denominator is zero when |a||b| + a << b = 0.
