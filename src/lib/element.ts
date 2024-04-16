@@ -23,7 +23,9 @@ export abstract class ElementBase<P> implements Child {
      * TODO: Since every element has an identifier, it should be possible to store this information that is shared
      * between the model and view in a map elsewhere. I suspect, though, that this is faster.
      */
-    viewInfo: SharedInfo = {};
+    viewInfo: SharedInfo = {
+        disposables: []
+    };
 
     #id: string | null = null;
     readonly #id_and_previous: Subject<{ id: string, previous_id: string | null }>;

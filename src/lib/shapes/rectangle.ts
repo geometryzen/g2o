@@ -2,14 +2,15 @@ import { Anchor } from '../anchor';
 import { Flag } from '../Flag';
 import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
-import { Path, PathOptions } from '../path';
+import { Path, PathAttributes } from '../path';
 import { Subscription } from '../rxjs/Subscription';
 
-export interface RectangleOptions {
-    position?: G20;
-    attitude?: G20;
-    width?: number;
-    height?: number;
+export interface RectangleAttributes {
+    id: string;
+    position: G20;
+    attitude: G20;
+    width: number;
+    height: number;
 }
 
 export class Rectangle extends Path {
@@ -21,7 +22,7 @@ export class Rectangle extends Path {
     // DGH: How does origin differ from position?
     #origin_change_subscription: Subscription | null = null;
 
-    constructor(board: IBoard, options: RectangleOptions = {}) {
+    constructor(board: IBoard, options: Partial<RectangleAttributes> = {}) {
 
         const points = [
             new Anchor(G20.vector(0, 0), 0, 0, 0, 0, 'M'),
@@ -106,10 +107,11 @@ export class Rectangle extends Path {
     }
 }
 
-function path_options_from_rectangle_options(circle_options: RectangleOptions): PathOptions {
-    const path_options: PathOptions = {
-        attitude: circle_options.attitude,
-        position: circle_options.position
+function path_options_from_rectangle_options(attributes: Partial<RectangleAttributes>): PathAttributes {
+    const path_options: PathAttributes = {
+        id: attributes.id,
+        attitude: attributes.attitude,
+        position: attributes.position
     };
     return path_options;
 }

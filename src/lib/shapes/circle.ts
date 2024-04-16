@@ -3,7 +3,7 @@ import { Anchor } from '../anchor';
 import { Flag } from '../Flag';
 import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
-import { Path, PathOptions } from '../path';
+import { Path, PathAttributes } from '../path';
 import { Observable } from '../rxjs/Observable';
 import { PositionLike } from '../shape';
 import { HALF_PI, TWO_PI } from '../utils/math';
@@ -31,7 +31,7 @@ export class Circle extends Path {
             points.push(new Anchor(G20.vector(0, 0), 0, 0, 0, 0));
         }
 
-        super(board, points, true, true, true, path_options_from_circle_options(options));
+        super(board, points, true, true, true, path_attributes(options));
 
         if (typeof options.radius === 'number') {
             this.#radius.next(options.radius);
@@ -114,10 +114,10 @@ export class Circle extends Path {
     }
 }
 
-function path_options_from_circle_options(circle_options: CircleOptions): PathOptions {
-    const path_options: PathOptions = {
-        attitude: circle_options.attitude,
-        position: circle_options.position
+function path_attributes(attributes: CircleOptions): Partial<PathAttributes> {
+    const retval: Partial<PathAttributes> = {
+        attitude: attributes.attitude,
+        position: attributes.position
     };
-    return path_options;
+    return retval;
 }

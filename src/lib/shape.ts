@@ -12,6 +12,7 @@ import { G20 } from './math/G20';
 import { Matrix } from './matrix';
 import { Subscription } from './rxjs/Subscription';
 import { computed_world_matrix } from './utils/compute_world_matrix';
+import { effect } from './utils/effect';
 
 export type PositionLike = Anchor | G20 | Shape<unknown> | [x: number, y: number];
 
@@ -37,9 +38,10 @@ export interface Parent {
     update?(): void;
 }
 
-export interface ShapeOptions {
-    position?: PositionLike;
-    attitude?: G20;
+export interface ShapeAttributes {
+    id: string;
+    position: PositionLike;
+    attitude: G20;
 }
 
 export abstract class Shape<P extends Parent> extends ElementBase<P> implements IShape<P> {
@@ -98,7 +100,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     abstract noStroke(): this;
     abstract subdivide(limit: number): this;
 
-    constructor(readonly board: IBoard, options: ShapeOptions = {}) {
+    constructor(readonly board: IBoard, attributes: Partial<ShapeAttributes> = {}) {
 
         super();
 
@@ -106,7 +108,12 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
 
         this.isShape = true;
 
-        this.id = Constants.Identifier + Constants.uniqueId();
+        if (attributes.id) {
+            this.id = attributes.id;
+        }
+        else {
+            this.id = Constants.Identifier + Constants.uniqueId();
+        }
 
         /**
          * The transformation matrix of the shape.
@@ -118,15 +125,15 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
          */
         this.worldMatrix = new Matrix();
 
-        if (options.position) {
-            this.#position = position_from_like(options.position);
+        if (attributes.position) {
+            this.#position = position_from_like(attributes.position);
         }
         else {
             this.#position = new G20(0, 0);
         }
 
-        if (options.attitude) {
-            this.#attitude = options.attitude;
+        if (attributes.attitude) {
+            this.#attitude = attributes.attitude;
         }
         else {
             this.#attitude = new G20(0, 0, 1, 0);
@@ -225,6 +232,10 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         this.#position_change = this.#position_change_bind();
     }
     #position_change_bind(): Subscription {
+        effect(() => {
+            this.#update_matrix();
+
+        });
         return this.#position.change$.subscribe(() => {
             this.#update_matrix();
             this.flags[Flag.Matrix] = true;

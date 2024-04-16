@@ -1,11 +1,16 @@
 import { Anchor } from "../anchor";
-import { Subscription } from "../rxjs/Subscription";
 import { G20 } from "../math/G20";
+import { Disposable } from "../rxjs/Disposable";
 
 /**
  * Information that is shared between the model and the view.
  */
 export interface SharedInfo {
+    /**
+     * 
+     */
+    disposables: Disposable[];
+
     appended?: boolean;
     clip?: SVGClipPathElement;
     context?: {
@@ -30,10 +35,6 @@ export interface SharedInfo {
     image?: SVGImageElement;
     offset?: G20;
     opacity?: number;
-    /**
-     * DGH: How do we clean this up? It was put there by the View, so naturally...
-     */
-    matrix_change?: Subscription | undefined;
     scale?: G20;
     type?: 'group' | 'linear-gradient' | 'path' | 'points' | 'radial-gradient' | 'text' | 'texture';
     // Used by Path

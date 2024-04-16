@@ -17,24 +17,28 @@ import { Subscription } from './rxjs/Subscription.js';
 import { PositionLike, Shape } from './shape.js';
 import { ArcSegment } from './shapes/arc-segment.js';
 import { Circle, CircleOptions } from './shapes/circle.js';
-import { Ellipse, EllipseOptions } from './shapes/ellipse.js';
+import { Ellipse, EllipseAttributes } from './shapes/ellipse.js';
 import { Line } from './shapes/line.js';
-import { Polygon } from './shapes/Polygon.js';
-import { Rectangle, RectangleOptions } from './shapes/rectangle.js';
+import { Polygon, PolygonAttributes } from './shapes/Polygon.js';
+import { Rectangle, RectangleAttributes } from './shapes/rectangle.js';
 import { RegularPolygon } from './shapes/RegularPolygon.js';
 import { RoundedRectangle } from './shapes/rounded-rectangle.js';
 import { Star } from './shapes/star.js';
-import { Text, TextStyles } from './text.js';
+import { Text, TextAttributes } from './text.js';
 import { Commands } from './utils/path-commands.js';
 import { dateTime } from './utils/performance.js';
 import { xhr } from './utils/xhr.js';
 
-export interface BoardOptions {
+export interface BoardAttributes {
     boundingBox?: [x1: number, y1: number, x2: number, y2: number];
     resizeTo?: Element;
     scene?: Group;
     size?: { width: number; height: number };
     view?: View;
+}
+
+export interface PointAttributes {
+    id: string;
 }
 
 export class Board implements IBoard {
@@ -45,7 +49,7 @@ export class Board implements IBoard {
     /**
      * A wrapper group that is used to transform the scene from user coordinates to pixels.
      */
-    readonly #viewBox: Group = new Group(this);
+    readonly #viewBox: Group;
     /**
      * 
      */
@@ -92,9 +96,12 @@ export class Board implements IBoard {
     readonly #boundingBox: [x1: number, y1: number, x2: number, y2: number] = [-5, 5, 5, -5];
     readonly goofy: boolean;
 
-    constructor(elementOrId: string | HTMLElement, options: BoardOptions = {}) {
+    constructor(elementOrId: string | HTMLElement, options: BoardAttributes = {}) {
 
         const container = get_container(elementOrId);
+        const container_id = get_container_id(elementOrId);
+
+        this.#viewBox = new Group(this, [], { id: `${container_id}-viewbox` });
 
         if (Array.isArray(options.boundingBox)) {
             const x1 = options.boundingBox[0];
@@ -115,7 +122,7 @@ export class Board implements IBoard {
             this.#scene = options.scene;
         }
         else {
-            this.#scene = new Group(this);
+            this.#scene = new Group(this, [], { id: `${container_id}-scene` });
         }
         this.#viewBox.add(this.#scene);
 
@@ -292,7 +299,7 @@ export class Board implements IBoard {
         return circle;
     }
 
-    ellipse(options: EllipseOptions = {}): Ellipse {
+    ellipse(options: Partial<EllipseAttributes> = {}): Ellipse {
         const ellipse = new Ellipse(this, options);
         this.#scene.add(ellipse);
         return ellipse;
@@ -317,13 +324,13 @@ export class Board implements IBoard {
         return path;
     }
 
-    point(position: PositionLike): Shape<Group> {
+    point(position: PositionLike, attributes: Partial<PointAttributes> = {}): Shape<Group> {
         const [x1, x2, y1, y2] = this.getBoundingBox();
         const sx = this.width / (x2 - x1);
         const sy = this.height / (y2 - y1);
         const rx = 4 / sx;
         const ry = 4 / sy;
-        const options: EllipseOptions = { position, rx, ry }
+        const options: Partial<EllipseAttributes> = { position, rx, ry, id: attributes.id }
         const ellipse = new Ellipse(this, options);
         ellipse.stroke = "#ff0000"
         ellipse.fill = "#ff0000"
@@ -333,14 +340,14 @@ export class Board implements IBoard {
         return ellipse;
     }
 
-    polygon(points: PositionLike[] = []): Polygon {
-        const polygon = new Polygon(this, points);
+    polygon(points: PositionLike[] = [], attributes: Partial<PolygonAttributes> = {}): Polygon {
+        const polygon = new Polygon(this, points, attributes);
         this.add(polygon);
         return polygon;
     }
 
-    rectangle(options: RectangleOptions): Rectangle {
-        const rect = new Rectangle(this, options);
+    rectangle(attributes: Partial<RectangleAttributes>): Rectangle {
+        const rect = new Rectangle(this, attributes);
         this.#scene.add(rect);
         rect.linewidth = 2;
         rect.stroke = "#999999"
@@ -440,8 +447,8 @@ export class Board implements IBoard {
     }
     */
 
-    makeText(message: string, x: number, y: number, styles?: Partial<TextStyles>): Text {
-        const text = new Text(this, message, x, y, styles);
+    makeText(message: string, x: number, y: number, attributes?: Partial<TextAttributes>): Text {
+        const text = new Text(this, message, x, y, attributes);
         this.add(text);
         return text;
     }
@@ -646,7 +653,7 @@ interface BoardConfig {
     size?: { width: number; height: number };
 }
 
-function config_from_options(container: HTMLElement, options: BoardOptions): BoardConfig {
+function config_from_options(container: HTMLElement, options: BoardAttributes): BoardConfig {
     const config: BoardConfig = {
         resizeTo: compute_config_resize_to(container, options),
         size: compute_config_size(container, options)
@@ -654,14 +661,14 @@ function config_from_options(container: HTMLElement, options: BoardOptions): Boa
     return config;
 }
 
-function compute_config_resize_to(container: HTMLElement, options: BoardOptions): Element | null {
+function compute_config_resize_to(container: HTMLElement, options: BoardAttributes): Element | null {
     if (options.resizeTo) {
         return options.resizeTo;
     }
     return container;
 }
 
-function compute_config_size(container: HTMLElement, options: BoardOptions): { width: number; height: number } | null {
+function compute_config_size(container: HTMLElement, options: BoardAttributes): { width: number; height: number } | null {
     if (typeof options.size === 'object') {
         return options.size;
     }
@@ -681,6 +688,15 @@ function get_container(elementOrId: string | HTMLElement): HTMLElement {
     }
     else {
         return elementOrId;
+    }
+}
+
+function get_container_id(elementOrId: string | HTMLElement): string {
+    if (typeof elementOrId === 'string') {
+        return elementOrId;
+    }
+    else {
+        return elementOrId.id;
     }
 }
 

@@ -6,10 +6,14 @@ import { Flag } from './Flag.js';
 import { IBoard } from './IBoard.js';
 import { IShape } from './IShape.js';
 import { Subscription } from './rxjs/Subscription';
-import { Parent, Shape } from './shape.js';
+import { Parent, Shape, ShapeAttributes } from './shape.js';
 
 export interface IGroup extends Parent {
     remove(...shapes: Shape<IGroup>[]): void;
+}
+
+export interface GroupAttributes {
+    id: string;
 }
 
 export class Group extends Shape<Group> {
@@ -68,9 +72,9 @@ export class Group extends Shape<Group> {
      */
     readonly subtractions: Shape<Group>[] = [];
 
-    constructor(board: IBoard, shapes: Shape<Group>[] = []) {
+    constructor(board: IBoard, shapes: Shape<Group>[] = [], attributes: Partial<GroupAttributes> = {}) {
 
-        super(board);
+        super(board, shape_attributes(attributes));
 
         this.flagReset(true);
         this.flags[Flag.Additions] = false;
@@ -242,24 +246,10 @@ export class Group extends Shape<Group> {
     }
 
     remove(...shapes: Shape<Group>[]) {
-        const l = arguments.length;
-        const grandparent = this.parent;
-        // TODO: I don't like this double-meaning. It's in Shape too.
-        // Allow to call remove without arguments
-        // This will detach the object from its own parent.
-        if (l <= 0 && grandparent) {
-            if (grandparent instanceof Group) {
-                (grandparent as IGroup).remove(this as Shape<IGroup>);
-            }
-            return this;
-        }
-        // Remove the objects
         for (let i = 0; i < shapes.length; i++) {
-            const object = shapes[i];
-            if (!object || !this.children.ids[object.id]) {
-                continue;
-            }
-            const index = this.children.indexOf(object);
+            const shape = shapes[i];
+            shape.dispose();
+            const index = this.children.indexOf(shape);
             if (index >= 0) {
                 this.children.splice(index, 1);
             }
@@ -673,4 +663,11 @@ export function update_shape_group(child: Shape<Group>, parent?: Group) {
             previous_parent.flags[Flag.Subtractions] = true;
         }
     }
+}
+
+function shape_attributes(attributes: Partial<GroupAttributes>): Partial<ShapeAttributes> {
+    const retval: Partial<ShapeAttributes> = {
+        id: attributes.id
+    };
+    return retval;
 }

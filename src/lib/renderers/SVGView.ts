@@ -11,6 +11,7 @@ import { decompose_2d_3x3_matrix } from '../math/decompose_2d_3x3_matrix';
 import { G20 } from '../math/G20';
 import { Matrix } from '../matrix';
 import { get_dashes_offset, Path } from '../path';
+import { disposableFromFunction, disposableFromSubscription, dispose } from '../rxjs/Disposable';
 import { Observable } from '../rxjs/Observable';
 import { Shape } from '../shape';
 import { Points } from '../shapes/points';
@@ -437,44 +438,44 @@ const svg = {
 
     'group': {
 
-        appendChild: function (this: DomContext, object: Shape<Group>) {
+        appendChild: function (this: DomContext, shape: Shape<Group>) {
 
-            const elem = object.viewInfo.elem;
+            const childNode = shape.viewInfo.elem;
 
-            if (!elem) {
+            if (!childNode) {
                 return;
             }
 
-            const tag = elem.nodeName;
+            const tag = childNode.nodeName;
 
-            if (!tag || /(radial|linear)gradient/i.test(tag) || object.clip) {
+            if (!tag || /(radial|linear)gradient/i.test(tag) || shape.clip) {
                 return;
             }
 
-            this.elem.appendChild(elem);
-
+            this.elem.appendChild(childNode);
         },
 
-        removeChild: function (this: DomContext, object: Shape<Group>) {
+        removeChild: function (this: DomContext, shape: Shape<Group>) {
+            const childNode = shape.viewInfo.elem;
 
-            const elem = object.viewInfo.elem;
-
-            if (!elem || elem.parentNode != this.elem) {
+            if (!childNode || childNode.parentNode != this.elem) {
                 return;
             }
 
-            const tag = elem.nodeName;
+            const tag = childNode.nodeName;
 
             if (!tag) {
                 return;
             }
 
             // Defer subtractions while clipping.
-            if (object.clip) {
+            if (shape.clip) {
                 return;
             }
 
-            this.elem.removeChild(elem);
+            dispose(shape.viewInfo.disposables);
+
+            this.elem.removeChild(childNode);
         },
 
         orderChild: function (this: DomContext, object: Shape<Group>) {
@@ -498,9 +499,9 @@ const svg = {
             else {
                 this.viewInfo.elem = svg.createElement('g', { id: this.id });
                 domElement.appendChild(this.viewInfo.elem);
-                this.viewInfo.matrix_change = this.matrix.change$.subscribe(() => {
-                    this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.board, this.matrix));
-                });
+                this.viewInfo.disposables.push(disposableFromSubscription(this.matrix.change$.subscribe(() => {
+                    this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.matrix));
+                })));
             }
 
             // _Update styles for the <g>
@@ -511,7 +512,7 @@ const svg = {
             };
 
             if (flagMatrix) {
-                this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.board, this.matrix));
+                this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.matrix));
             }
 
             for (let i = 0; i < this.children.length; i++) {
@@ -607,6 +608,7 @@ const svg = {
             }
         },
     },
+
     'path': {
         render: function (this: Path, domElement: DOMElement, svgElement: SVGElement) {
             // Shortcut for hidden objects.
@@ -624,7 +626,7 @@ const svg = {
             const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
 
             if (flagMatrix) {
-                changed.transform = transform_value_of_matrix(this.board, this.matrix);
+                changed.transform = transform_value_of_matrix(this.matrix);
             }
 
             if (this.flags[Flag.Id]) {
@@ -748,18 +750,20 @@ const svg = {
                 this.viewInfo.elem = svg.createElement('path', changed);
                 domElement.appendChild(this.viewInfo.elem);
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                this.viewInfo.matrix_change = this.matrix.change$.subscribe((matrix) => {
+                this.viewInfo.disposables.push(disposableFromSubscription(this.matrix.change$.subscribe((matrix) => {
                     const change: SVGAttributes = {};
-                    change.transform = transform_value_of_matrix(this.board, matrix);
+                    change.transform = transform_value_of_matrix(matrix);
                     svg.setAttributes(this.viewInfo.elem, change);
-                });
+                })));
 
-                effect(() => {
-                    console.log("visible", this.visible);
+                this.viewInfo.disposables.push(disposableFromFunction(effect(() => {
                     const change: SVGAttributes = {};
                     change.visibility = this.visible ? 'visible' : 'hidden';
                     svg.setAttributes(this.viewInfo.elem, change);
-                })
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                })));
             }
 
             if (this.flags[Flag.Clip]) {
@@ -821,7 +825,7 @@ const svg = {
             const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
 
             if (flagMatrix) {
-                changed.transform = transform_value_of_matrix(this.board, this.matrix);
+                changed.transform = transform_value_of_matrix(this.matrix);
             }
 
             if (this.flags[Flag.Id]) {
@@ -915,34 +919,8 @@ const svg = {
             const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
 
             if (flagMatrix) {
-                // Text and Images, unlike Path(s), are not compensated (yet) for the 90 degree rotation that makes the  
-                const goofy = this.board.goofy;
-                const position = this.position;
-                const x = position.x;
-                const y = position.y;
-                const attitude = this.attitude;
-                const scale = this.scaleXY;
-                const sx = scale.x;
-                const sy = scale.y;
-                if (goofy) {
-                    const cos_φ = attitude.a;
-                    const sin_φ = attitude.b;
-                    compose_2d_3x3_transform(x, y, sx, sy, cos_φ, sin_φ, this.skewX, this.skewY, this.matrix);
-                }
-                else {
-                    // Text needs an additional rotation of -π/2 (i.e. clockwise 90 degrees) to compensate for 
-                    // the use of a right-handed coordinate frame. The rotor for this is cos(π/4)+sin(π/4)*I.
-                    // Here we compute the effective rotator (which is obtained by multiplying the two rotors),
-                    // and use that to compose the transformation matrix.
-                    const a = attitude.a;
-                    const b = attitude.b;
-                    const cos_φ = (a - b) / SQRT2;
-                    const sin_φ = (a + b) / SQRT2;
-                    compose_2d_3x3_transform(y, x, sy, sx, cos_φ, sin_φ, this.skewY, this.skewX, this.matrix);
-                }
-
-                // compose_2d_3x3_transform()
-                changed.transform = transform_value_of_matrix(this.board, this.matrix);
+                update_text_matrix(this);
+                changed.transform = transform_value_of_matrix(this.matrix);
             }
 
             if (this.flags[Flag.Id]) {
@@ -1029,21 +1007,35 @@ const svg = {
                 this.viewInfo.elem = svg.createElement('text', changed);
                 domElement.appendChild(this.viewInfo.elem);
 
-                this.family$.subscribe((family) => {
+                this.viewInfo.disposables.push(disposableFromFunction(effect(() => {
+                    update_text_matrix(this);
+                    const change: SVGAttributes = {};
+                    change.transform = transform_value_of_matrix(this.matrix);
+                    svg.setAttributes(this.viewInfo.elem, change);
+                    return function () {
+                        // Nothing to do here...
+                    }
+                })));
+
+                this.viewInfo.disposables.push(disposableFromSubscription(this.family$.subscribe((family) => {
                     svg.setAttributes(this.viewInfo.elem, { 'font-family': family });
-                })
-                this.opacity$.subscribe((opacity) => {
+                })));
+
+                this.viewInfo.disposables.push(disposableFromSubscription(this.opacity$.subscribe((opacity) => {
                     svg.setAttributes(this.viewInfo.elem, { opacity: `${opacity}` });
-                })
-                this.size$.subscribe((size) => {
+                })));
+
+                this.viewInfo.disposables.push(disposableFromSubscription(this.size$.subscribe((size) => {
                     svg.setAttributes(this.viewInfo.elem, { 'font-size': `${size}` });
-                })
-                this.value$.subscribe((value) => {
+                })));
+
+                this.viewInfo.disposables.push(disposableFromSubscription(this.value$.subscribe((value) => {
                     this.viewInfo.elem.textContent = value;
-                })
-                this.visible$.subscribe((visible) => {
+                })));
+
+                this.viewInfo.disposables.push(disposableFromSubscription(this.visible$.subscribe((visible) => {
                     svg.setAttributes(this.viewInfo.elem, { visibility: visible ? 'visible' : 'hidden' });
-                })
+                })));
             }
 
             if (this._flagClip) {
@@ -1465,7 +1457,7 @@ export class SVGView implements View {
  *    [0 0 1]
  * ] => "matrix(a b c d e f)""
  */
-function transform_value_of_matrix(board: IBoard, m: Matrix): string {
+function transform_value_of_matrix(m: Matrix): string {
     const a = m.a;
     const b = m.b;
     const c = m.c;
@@ -1494,5 +1486,33 @@ function screen_functions(board: IBoard) {
     }
     else {
         return [(x: number, y: number): number => y, (x: number, y: number): number => x];
+    }
+}
+
+function update_text_matrix(text: Text) {
+    // Text and Images, unlike Path(s), are not compensated (yet) for the 90 degree rotation that makes the  
+    const goofy = text.board.goofy;
+    const position = text.position;
+    const x = position.x;
+    const y = position.y;
+    const attitude = text.attitude;
+    const scale = text.scaleXY;
+    const sx = scale.x;
+    const sy = scale.y;
+    if (goofy) {
+        const cos_φ = attitude.a;
+        const sin_φ = attitude.b;
+        compose_2d_3x3_transform(x, y, sx, sy, cos_φ, sin_φ, text.skewX, text.skewY, text.matrix);
+    }
+    else {
+        // Text needs an additional rotation of -π/2 (i.e. clockwise 90 degrees) to compensate for 
+        // the use of a right-handed coordinate frame. The rotor for this is cos(π/4)+sin(π/4)*I.
+        // Here we compute the effective rotator (which is obtained by multiplying the two rotors),
+        // and use that to compose the transformation matrix.
+        const a = attitude.a;
+        const b = attitude.b;
+        const cos_φ = (a - b) / SQRT2;
+        const sin_φ = (a + b) / SQRT2;
+        compose_2d_3x3_transform(y, x, sy, sx, cos_φ, sin_φ, text.skewY, text.skewX, text.matrix);
     }
 }

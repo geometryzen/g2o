@@ -12,7 +12,6 @@ import { G20 } from './math/G20.js';
 import { Subscription } from './rxjs/Subscription';
 import { PositionLike, Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
-import { effect } from './utils/effect';
 import { lerp, mod } from './utils/math';
 import { Commands } from './utils/path-commands';
 import { contains, getCurveLength, getIdByLength, getSubdivisions } from './utils/shape';
@@ -34,9 +33,10 @@ const floor = Math.floor;
 
 const vector = new G20();
 
-export interface PathOptions {
-    position?: PositionLike;
-    attitude?: G20;
+export interface PathAttributes {
+    id: string,
+    position: PositionLike;
+    attitude: G20;
 }
 
 export class Path extends Shape<Group> {
@@ -102,7 +102,7 @@ export class Path extends Shape<Group> {
      * @param manual Describes whether the developer controls how vertices are plotted or if Two.js automatically plots coordinates based on closed and curved booleans.
      * @description This is the primary primitive class for creating all drawable shapes in Two.js. Unless specified methods return their instance of `Two.Path` for the purpose of chaining.
      */
-    constructor(board: IBoard, vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean, options: PathOptions = {}) {
+    constructor(board: IBoard, vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean, options: Partial<PathAttributes> = {}) {
 
         super(board, options);
 
@@ -229,14 +229,6 @@ export class Path extends Shape<Group> {
         this.dashes = [];
 
         set_dashes_offset(this.dashes, 0);
-
-        const subscription = effect(() => {
-            console.log("constructor visible", this.visible);
-            return function () {
-                console.log("effect cleanup being called.")
-            }
-        });
-        subscription();
     }
 
     /**
@@ -1105,7 +1097,6 @@ export class Path extends Shape<Group> {
     set visible(visible: boolean) {
         if (typeof visible === 'boolean') {
             if (this.visible !== visible) {
-                console.log("setting #visible to", visible)
                 this.#visible.set(visible);
                 this.flags[Flag.Visible] = true;
             }

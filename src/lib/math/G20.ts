@@ -54,11 +54,10 @@ function isScalar(m: G20): boolean {
  */
 export class G20 {
 
-    #k: Signal.State<number>;
-    #a: number;
-    #x: number;
-    #y: number;
-    #b: number;
+    #a: Signal.State<number>;
+    #x: Signal.State<number>;
+    #y: Signal.State<number>;
+    #b: Signal.State<number>;
 
     #lock = UNLOCKED;
 
@@ -66,11 +65,10 @@ export class G20 {
     readonly change$: Observable<this>;
 
     constructor(x = 0, y = 0, a = 0, b = 0) {
-        this.#k = new Signal.State(0);
-        this.#x = x;
-        this.#y = y;
-        this.#a = a;
-        this.#b = b;
+        this.#x = new Signal.State(x);
+        this.#y = new Signal.State(y);
+        this.#a = new Signal.State(a);
+        this.#b = new Signal.State(b);
 
         this.#change = new BehaviorSubject(this);
         this.change$ = this.#change.asObservable();
@@ -136,58 +134,55 @@ export class G20 {
         }
     }
 
-    get k(): number {
-        return this.#k.get();
-    }
-
-    set k(k: number) {
-        if (this.k !== k) {
-            this.#k.set(k);
-            this.#change.next(this);
-        }
-    }
-
     get a(): number {
-        return this.#a;
+        return this.#a.get();
     }
 
     set a(a: number) {
-        if (this.a !== a) {
-            this.#a = a;
-            this.#change.next(this);
+        if (typeof a === 'number') {
+            if (this.a !== a) {
+                this.#a.set(a);
+                this.#change.next(this);
+            }
         }
     }
 
     get x(): number {
-        return this.#x;
+        return this.#x.get();
     }
 
     set x(x: number) {
-        if (this.x !== x) {
-            this.#x = x;
-            this.#change.next(this);
+        if (typeof x === 'number') {
+            if (this.x !== x) {
+                this.#x.set(x);
+                this.#change.next(this);
+            }
         }
     }
 
     get y(): number {
-        return this.#y;
+        return this.#y.get();
     }
 
     set y(y: number) {
-        if (this.y !== y) {
-            this.#y = y;
-            this.#change.next(this);
+        if (typeof y === 'number') {
+            if (this.y !== y) {
+                this.#y.set(y);
+                this.#change.next(this);
+            }
         }
     }
 
     get b(): number {
-        return this.#b;
+        return this.#b.get();
     }
 
     set b(b: number) {
-        if (this.b !== b) {
-            this.#b = b;
-            this.#change.next(this);
+        if (typeof b === 'number') {
+            if (this.b !== b) {
+                this.#b.set(b);
+                this.#change.next(this);
+            }
         }
     }
 
@@ -762,11 +757,11 @@ export class G20 {
     set(x: number, y: number, a = 0, b = 0): this {
         // Take special care to only fire changed event if necessary.
         const changed = (this.x !== x || this.y !== y || this.a !== a || this.b != b);
-        this.#x = x;
-        this.#y = y;
-        this.#a = a;
-        this.#b = b;
         if (changed) {
+            this.#x.set(x);
+            this.#y.set(y);
+            this.#a.set(a);
+            this.#b.set(b);
             this.#change.next(this);
         }
         return this;

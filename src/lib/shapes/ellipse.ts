@@ -2,19 +2,20 @@ import { Anchor } from '../anchor.js';
 import { Flag } from '../Flag.js';
 import { IBoard } from '../IBoard.js';
 import { G20 } from '../math/G20.js';
-import { Path, PathOptions } from '../path.js';
+import { Path, PathAttributes } from '../path.js';
 import { PositionLike } from '../shape.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 
 const cos = Math.cos, sin = Math.sin;
 
-export interface EllipseOptions {
-    position?: PositionLike;
-    attitude?: G20;
-    rx?: number;
-    ry?: number;
-    resolution?: number;
+export interface EllipseAttributes {
+    id: string;
+    position: PositionLike;
+    attitude: G20;
+    rx: number;
+    ry: number;
+    resolution: number;
 }
 
 export class Ellipse extends Path {
@@ -25,7 +26,7 @@ export class Ellipse extends Path {
     _width = 0;
     _height = 0;
 
-    constructor(board: IBoard, options: EllipseOptions = {}) {
+    constructor(board: IBoard, options: Partial<EllipseAttributes> = {}) {
 
         // At least 2 vertices are required for proper circlage
         const amount = options.resolution ? Math.max(options.resolution, 2) : 4;
@@ -34,7 +35,7 @@ export class Ellipse extends Path {
             points.push(new Anchor(G20.vector(0, 0)));
         }
 
-        super(board, points, true, true, true, path_options_from_ellipse_options(options));
+        super(board, points, true, true, true, path_attributes(options));
 
         if (typeof options.rx === 'number') {
             this.width = options.rx * 2;
@@ -120,10 +121,11 @@ export class Ellipse extends Path {
     }
 }
 
-function path_options_from_ellipse_options(circle_options: EllipseOptions): PathOptions {
-    const path_options: PathOptions = {
-        attitude: circle_options.attitude,
-        position: circle_options.position
+function path_attributes(attributes: Partial<EllipseAttributes>): Partial<PathAttributes> {
+    const retval: Partial<PathAttributes> = {
+        id: attributes.id,
+        attitude: attributes.attitude,
+        position: attributes.position
     };
-    return path_options;
+    return retval;
 }

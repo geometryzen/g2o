@@ -9,7 +9,7 @@ import { IBoard } from './IBoard';
 import { get_dashes_offset, set_dashes_offset } from './path';
 import { Observable } from './rxjs/Observable';
 import { Subscription } from './rxjs/Subscription';
-import { Shape } from './shape';
+import { Shape, ShapeAttributes } from './shape';
 import { root } from './utils/root';
 
 let canvas: HTMLCanvasElement;
@@ -19,13 +19,14 @@ if (root.document) {
     canvas = document.createElement('canvas');
 }
 
-export interface TextStyles {
+export interface TextAttributes {
     alignment: 'center' | 'left' | 'right';
     baseline: 'bottom' | 'middle' | 'top';
     decoration: string;
     direction: 'ltr' | 'rtl';
     family: string;
     fill: string;
+    id: string;
     leading: number;
     linewidth: number;
     opacity: number;
@@ -158,11 +159,11 @@ export class Text extends Shape<Group> {
      * @param message The String to be rendered to the scene.
      * @param x The position in the x direction for the object.
      * @param y The position in the y direction for the object.
-     * @param styles An object where styles are applied. Attribute must exist in Two.Text.Properties.
+     * @param attributes An object where styles are applied. Attribute must exist in Two.Text.Properties.
      */
-    constructor(board: IBoard, message: string, x: number = 0, y: number = 0, styles: Partial<TextStyles> = {}) {
+    constructor(board: IBoard, message: string, x: number = 0, y: number = 0, attributes: Partial<TextAttributes> = {}) {
 
-        super(board);
+        super(board, shape_attributes_from_text_attributes(attributes));
 
         this.viewInfo.type = 'text';
 
@@ -187,66 +188,66 @@ export class Text extends Shape<Group> {
 
         for (let i = 0; i < Text.Properties.length; i++) {
             const property = Text.Properties[i];
-            if (property in styles) {
+            if (property in attributes) {
                 switch (property) {
                     case 'alignment': {
-                        this.alignment = styles.alignment;
+                        this.alignment = attributes.alignment;
                         break;
                     }
                     case 'baseline': {
-                        this.baseline = styles.baseline;
+                        this.baseline = attributes.baseline;
                         break;
                     }
                     case 'decoration': {
-                        this.decoration = styles.decoration;
+                        this.decoration = attributes.decoration;
                         break;
                     }
                     case 'direction': {
-                        this.direction = styles.direction;
+                        this.direction = attributes.direction;
                         break;
                     }
                     case 'family': {
-                        this.family = styles.family;
+                        this.family = attributes.family;
                         break;
                     }
                     case 'fill': {
-                        this.fill = styles.fill;
+                        this.fill = attributes.fill;
                         break;
                     }
                     case 'leading': {
-                        this.leading = styles.leading;
+                        this.leading = attributes.leading;
                         break;
                     }
                     case 'linewidth': {
-                        this.linewidth = styles.linewidth;
+                        this.linewidth = attributes.linewidth;
                         break;
                     }
                     case 'opacity': {
-                        this.opacity = styles.opacity;
+                        this.opacity = attributes.opacity;
                         break;
                     }
                     case 'size': {
-                        this.size = styles.size;
+                        this.size = attributes.size;
                         break;
                     }
                     case 'stroke': {
-                        this.stroke = styles.stroke;
+                        this.stroke = attributes.stroke;
                         break;
                     }
                     case 'style': {
-                        this.style = styles.style;
+                        this.style = attributes.style;
                         break;
                     }
                     case 'value': {
-                        this.value = styles.value;
+                        this.value = attributes.value;
                         break;
                     }
                     case 'visible': {
-                        this.visible = styles.visible;
+                        this.visible = attributes.visible;
                         break;
                     }
                     case 'weight': {
-                        this.weight = styles.weight;
+                        this.weight = attributes.weight;
                         break;
                     }
                     default: {
@@ -592,4 +593,11 @@ export class Text extends Shape<Group> {
         this._weight = v;
         this._flagWeight = true;
     }
+}
+
+function shape_attributes_from_text_attributes(attributes: Partial<TextAttributes>): Partial<ShapeAttributes> {
+    const retval: Partial<ShapeAttributes> = {
+        id: attributes.id
+    };
+    return retval;
 }
