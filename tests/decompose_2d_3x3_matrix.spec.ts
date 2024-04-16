@@ -44,7 +44,7 @@ describe("decompose_2d_3x3_matrix", function () {
         const skewY = 0;
         const m = new Matrix();
 
-        compose_2d_3x3_transform(G20.vector(x, y), { x: sx, y: sy }, attitude, skewX, skewY, m);
+        compose_2d_3x3_transform(x, y, sx, sy, attitude.a, -attitude.b, skewX, skewY, m);
 
         expect(m.a11).toBe(0.4534498453140259);
         expect(m.a12).toBe(-0.2617993950843811);
@@ -67,7 +67,7 @@ describe("decompose_2d_3x3_matrix", function () {
         const skewY = 0;
         const m = new Matrix();
 
-        compose_2d_3x3_transform(G20.vector(x, y), { x: sx, y: sy }, attitude, skewX, skewY, m);
+        compose_2d_3x3_transform(x, y, sx, sy, attitude.a, -attitude.b, skewX, skewY, m);
 
         const decomposition: MatrixDecomposition = decompose_2d_3x3_matrix(m);
 
@@ -91,7 +91,7 @@ describe("decompose_2d_3x3_matrix", function () {
         const skewY = 0;
         const m = new Matrix();
 
-        compose_2d_3x3_transform(G20.vector(x, y), { x: sx, y: sy }, attitude, skewX, skewY, m);
+        compose_2d_3x3_transform(x, y, sx, sy, attitude.a, -attitude.b, skewX, skewY, m);
 
         const decomposition = decompose_2d_3x3_matrix_wang(m);
 

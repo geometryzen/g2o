@@ -27,10 +27,6 @@ document.addEventListener('DOMContentLoaded', function () {
     box.position.y += 1.55
     box.position.x += 2.5
 
-    A.hidden = true
-    B.hidden = true
-    C.hidden = true
-
     const textA = board.makeText("A", A.position.x, A.position.y, { family: 'Lato', size: 20 })
     rescale(textA, board);
 
@@ -44,6 +40,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // 1. The points remain visible.
     // 2. The fill, stroke, and linewidth are not applied.
     board.update();
+
+    A.hidden = true
+    B.hidden = true
+    C.hidden = true
 
     function animate() {
         // board.update()

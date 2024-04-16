@@ -15,6 +15,7 @@ import { Observable } from '../rxjs/Observable';
 import { Shape } from '../shape';
 import { Points } from '../shapes/points';
 import { Text } from '../text';
+import { effect } from '../utils/effect';
 import { mod, toFixed } from '../utils/math';
 import { Commands } from '../utils/path-commands';
 import { View } from './View';
@@ -752,6 +753,13 @@ const svg = {
                     change.transform = transform_value_of_matrix(this.board, matrix);
                     svg.setAttributes(this.viewInfo.elem, change);
                 });
+
+                effect(() => {
+                    console.log("visible", this.visible);
+                    const change: SVGAttributes = {};
+                    change.visibility = this.visible ? 'visible' : 'hidden';
+                    svg.setAttributes(this.viewInfo.elem, change);
+                })
             }
 
             if (this.flags[Flag.Clip]) {

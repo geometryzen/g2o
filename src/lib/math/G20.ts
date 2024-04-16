@@ -1,4 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
+import { Signal } from "signal-polyfill";
 import { Observable } from '../rxjs/Observable';
 import { Bivector } from './Bivector';
 import { gauss } from './gauss';
@@ -53,6 +54,7 @@ function isScalar(m: G20): boolean {
  */
 export class G20 {
 
+    #k: Signal.State<number>;
     #a: number;
     #x: number;
     #y: number;
@@ -64,6 +66,7 @@ export class G20 {
     readonly change$: Observable<this>;
 
     constructor(x = 0, y = 0, a = 0, b = 0) {
+        this.#k = new Signal.State(0);
         this.#x = x;
         this.#y = y;
         this.#a = a;
@@ -130,6 +133,17 @@ export class G20 {
         }
         else {
             throw new Error("unlock denied");
+        }
+    }
+
+    get k(): number {
+        return this.#k.get();
+    }
+
+    set k(k: number) {
+        if (this.k !== k) {
+            this.#k.set(k);
+            this.#change.next(this);
         }
     }
 

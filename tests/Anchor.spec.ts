@@ -1,4 +1,4 @@
-import { Anchor } from "../src/index";
+import { Anchor, G20 } from "../src/index";
 import { Commands } from "../src/lib/utils/path-commands";
 
 const booleans = [true, false];
@@ -17,7 +17,7 @@ describe("Anchor", function () {
         const bx = Math.random();
         const by = Math.random();
         const command = random(commands);
-        const anchor = new Anchor(x, y, ax, ay, bx, by, command);
+        const anchor = new Anchor(G20.vector(x, y), ax, ay, bx, by, command);
         expect(anchor.x).toBe(x);
         expect(anchor.y).toBe(y);
         expect(anchor.controls.left.x).toBe(ax);
@@ -30,7 +30,7 @@ describe("Anchor", function () {
         expect(anchor.relative).toBe(true);
     });
     it("defaults", function () {
-        const anchor = new Anchor();
+        const anchor = new Anchor(G20.vector(0, 0));
         expect(anchor.x).toBe(0);
         expect(anchor.y).toBe(0);
         expect(anchor.controls.left.x).toBe(0);
@@ -53,8 +53,8 @@ describe("Anchor", function () {
         const bx = Math.random();
         const by = Math.random();
         const command = random(commands);
-        const original = new Anchor(x, y, ax, ay, bx, by, command);
-        const anchor = new Anchor();
+        const original = new Anchor(G20.vector(x, y), ax, ay, bx, by, command);
+        const anchor = new Anchor(G20.vector(0, 0));
         anchor.copy(original);
         expect(anchor.x).toBe(x);
         expect(anchor.y).toBe(y);
@@ -79,7 +79,7 @@ describe("Anchor", function () {
         const largeArcFlag = Math.random();
         const sweepFlag = Math.random();
 
-        const anchor = new Anchor();
+        const anchor = new Anchor(G20.vector(0, 0));
         anchor.origin.set(x, y);
         anchor.controls.left.set(ax, ay);
         anchor.controls.right.set(bx, by);
@@ -115,8 +115,8 @@ describe("Anchor", function () {
         const command = random(commands);
         const relative = random(booleans);
 
-        const anchor = new Anchor(x, y, ax, ay, bx, by, command);
-        const ditto = new Anchor(x, y, ax, ay, bx, by, command);
+        const anchor = new Anchor(G20.vector(x, y), ax, ay, bx, by, command);
+        const ditto = new Anchor(G20.vector(x, y), ax, ay, bx, by, command);
         anchor.origin.set(ditto.x, ditto.y);
         anchor.controls.left.set(ax, ay);
         anchor.controls.right.set(bx, by);

@@ -1,3 +1,4 @@
+import { Signal } from 'signal-polyfill';
 import { Anchor } from './anchor';
 import { Collection } from './collection';
 import { LinearGradient } from './effects/linear-gradient';
@@ -11,6 +12,7 @@ import { G20 } from './math/G20.js';
 import { Subscription } from './rxjs/Subscription';
 import { PositionLike, Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
+import { effect } from './utils/effect';
 import { lerp, mod } from './utils/math';
 import { Commands } from './utils/path-commands';
 import { contains, getCurveLength, getIdByLength, getSubdivisions } from './utils/shape';
@@ -58,7 +60,7 @@ export class Path extends Shape<Group> {
 
     #vectorEffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position' = 'non-scaling-stroke';
 
-    #visible = true;
+    #visible = new Signal.State(true);
 
     /**
      * stroke-linecap
@@ -227,6 +229,14 @@ export class Path extends Shape<Group> {
         this.dashes = [];
 
         set_dashes_offset(this.dashes, 0);
+
+        const subscription = effect(() => {
+            console.log("constructor visible", this.visible);
+            return function () {
+                console.log("effect cleanup being called.")
+            }
+        });
+        subscription();
     }
 
     /**
@@ -1090,11 +1100,16 @@ export class Path extends Shape<Group> {
         this.flags[Flag.VectorEffect] = true;
     }
     get visible(): boolean {
-        return this.#visible;
+        return this.#visible.get();
     }
     set visible(visible: boolean) {
-        this.#visible = visible;
-        this.flags[Flag.Visible] = true;
+        if (typeof visible === 'boolean') {
+            if (this.visible !== visible) {
+                console.log("setting #visible to", visible)
+                this.#visible.set(visible);
+                this.flags[Flag.Visible] = true;
+            }
+        }
     }
 }
 

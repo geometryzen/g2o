@@ -183,7 +183,6 @@ export class Board implements IBoard {
         if (!this.goofy) {
             this.#viewBox.attitude.rotorFromAngle(Math.PI / 2);
         }
-        console.log("sx", sx, "sy", sy)
         this.#viewBox.scaleXY.set(sx, sy);
     }
 
