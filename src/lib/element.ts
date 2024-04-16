@@ -1,8 +1,8 @@
 import { Subject } from 'rxjs';
 import { Child } from './children';
 import { Flag } from './Flag';
+import { DisposableObservable, Observable } from './reactive/Observable';
 import { SharedInfo } from './renderers/SharedInfo';
-import { Observable } from './rxjs/Observable';
 
 /**
  * The foundational object for the scenegraph.
@@ -37,7 +37,7 @@ export abstract class ElementBase<P> implements Child {
 
     constructor() {
         this.#id_and_previous = new Subject();
-        this.id$ = this.#id_and_previous.asObservable();
+        this.id$ = new DisposableObservable(this.#id_and_previous.asObservable());
         this.flagReset(false);
     }
 

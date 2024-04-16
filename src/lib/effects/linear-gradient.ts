@@ -1,16 +1,16 @@
-import { Subscription } from '../rxjs/Subscription';
-import { G20 } from '../math/G20.js';
-import { Gradient } from './gradient.js';
-import { Stop } from './stop.js';
+import { G20 } from '../math/G20';
+import { Disposable } from '../reactive/Disposable';
+import { Gradient } from './gradient';
+import { Stop } from './stop';
 
 export class LinearGradient extends Gradient {
 
     _flagEndPoints = false;
 
     #left: G20 | null = null;
-    #left_change_subscription: Subscription | null = null;
+    #left_change_subscription: Disposable | null = null;
     #right: G20 | null = null;
-    #right_change_subscription: Subscription | null = null;
+    #right_change_subscription: Disposable | null = null;
 
     /**
      * @param x1 The x position of the first end point of the linear gradient.
@@ -28,12 +28,6 @@ export class LinearGradient extends Gradient {
     }
 
     static Properties = ['left', 'right'];
-
-    /**
-     * @name Two.LinearGradient.Stop
-     * @see {@link Two.Stop}
-     */
-    static Stop = Stop;
 
     update() {
         if (this._flagEndPoints || this._flagSpread || this._flagStops) {
@@ -58,7 +52,7 @@ export class LinearGradient extends Gradient {
     }
     set left(v) {
         if (this.#left_change_subscription) {
-            this.#left_change_subscription.unsubscribe();
+            this.#left_change_subscription.dispose();
             this.#left_change_subscription = null;
         }
         this.#left = v;
@@ -72,7 +66,7 @@ export class LinearGradient extends Gradient {
     }
     set right(v) {
         if (this.#right_change_subscription) {
-            this.#right_change_subscription.unsubscribe();
+            this.#right_change_subscription.dispose();
             this.#right_change_subscription = null;
         }
         this.#right = v;

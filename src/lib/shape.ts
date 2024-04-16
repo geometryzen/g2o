@@ -10,9 +10,8 @@ import { IShape } from './IShape';
 import { compose_2d_3x3_transform } from './math/compose_2d_3x3_transform';
 import { G20 } from './math/G20';
 import { Matrix } from './matrix';
-import { Subscription } from './rxjs/Subscription';
+import { Disposable } from './reactive/Disposable';
 import { computed_world_matrix } from './utils/compute_world_matrix';
-import { effect } from './utils/effect';
 
 export type PositionLike = Anchor | G20 | Shape<unknown> | [x: number, y: number];
 
@@ -57,10 +56,10 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     #worldMatrix: Matrix = null;
 
     #position: G20;
-    #position_change: Subscription;
+    #position_change: Disposable;
 
     #attitude: G20;
-    #attitude_change: Subscription;
+    #attitude_change: Disposable;
 
     /**
      * The scale supports non-uniform scaling.
@@ -68,7 +67,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
      * Make the easy things easy...
      */
     #scale: G20 = new G20(1, 1);
-    #scale_change: Subscription | null = null;
+    #scale_change: Disposable | null = null;
 
     #skewX = 0;
 
@@ -90,7 +89,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     abstract fill: string | LinearGradient | RadialGradient | Texture;
     abstract join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round';
     abstract length: number;
-    abstract linewidth: number;
+    abstract strokeWidth: number;
     abstract miter: number;
     abstract stroke: string | LinearGradient | RadialGradient | Texture;
     abstract visible: boolean;
@@ -214,7 +213,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         this.#attitude = attitude;
         this.#attitude_change = this.#attitude_change_bind();
     }
-    #attitude_change_bind(): Subscription {
+    #attitude_change_bind(): Disposable {
         return this.#attitude.change$.subscribe(() => {
             this.#update_matrix();
             this.flags[Flag.Matrix] = true;
@@ -222,7 +221,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     }
     #attitude_change_unbind(): void {
         if (this.#attitude_change) {
-            this.#attitude_change.unsubscribe();
+            this.#attitude_change.dispose();
             this.#attitude_change = null;
         }
     }
@@ -231,11 +230,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         this.#position = position;
         this.#position_change = this.#position_change_bind();
     }
-    #position_change_bind(): Subscription {
-        effect(() => {
-            this.#update_matrix();
-
-        });
+    #position_change_bind(): Disposable {
         return this.#position.change$.subscribe(() => {
             this.#update_matrix();
             this.flags[Flag.Matrix] = true;
@@ -243,7 +238,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     }
     #position_change_unbind(): void {
         if (this.#position_change) {
-            this.#position_change.unsubscribe();
+            this.#position_change.dispose();
             this.#position_change = null;
         }
     }
@@ -277,7 +272,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     set scale(scale: number) {
         // TODO: We need another API to support non-uniform scaling.
         if (this.#scale_change) {
-            this.#scale_change.unsubscribe();
+            this.#scale_change.dispose();
             this.#scale_change = null;
         }
         this.#scale.x = scale;
@@ -298,7 +293,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         // TODO: We need another API to support non-uniform scaling.
         // TODO: Why bother to do all this? Make it readonly.
         if (this.#scale_change) {
-            this.#scale_change.unsubscribe();
+            this.#scale_change.dispose();
             this.#scale_change = null;
         }
         this.#scale.set(scale.x, scale.y, 0, 0);

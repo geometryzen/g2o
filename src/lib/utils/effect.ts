@@ -1,4 +1,5 @@
 import { Signal } from "signal-polyfill";
+import { Disposable, disposableFromFunction } from "../reactive/Disposable";
 
 let needsEnqueue = true;
 
@@ -19,7 +20,7 @@ function processPending() {
     w.watch();
 }
 
-export function effect(callback: () => unknown) {
+export function effect(callback: () => unknown): Disposable {
     let cleanup: unknown;
 
     const computed = new Signal.Computed(() => {
@@ -30,8 +31,8 @@ export function effect(callback: () => unknown) {
     w.watch(computed);
     computed.get();
 
-    return () => {
+    return disposableFromFunction(() => {
         w.unwatch(computed);
         typeof cleanup === "function" && cleanup();
-    };
+    });
 }

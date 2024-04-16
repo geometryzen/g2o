@@ -1,6 +1,6 @@
 import { BehaviorSubject } from 'rxjs';
 import { ElementBase } from '../element';
-import { Observable } from '../rxjs/Observable';
+import { DisposableObservable, Observable } from '../reactive/Observable';
 import { Gradient } from './gradient';
 
 export class Stop extends ElementBase<Gradient> {
@@ -14,7 +14,7 @@ export class Stop extends ElementBase<Gradient> {
     _color = '#fff';
 
     readonly #change: BehaviorSubject<this> = new BehaviorSubject(this);
-    readonly change$: Observable<this> = this.#change.asObservable();
+    readonly change$: Observable<this> = new DisposableObservable(this.#change.asObservable());
 
     /**
      * @param offset The offset percentage of the stop represented as a zero-to-one value. Default value flip flops from zero-to-one as new stops are created.
@@ -25,43 +25,23 @@ export class Stop extends ElementBase<Gradient> {
 
         super();
 
-        /**
-         * @name Two.Stop#offset
-         * @property {Number} - The offset percentage of the stop represented as a zero-to-one value.
-         */
         this.offset = typeof offset === 'number' ? offset : Stop.Index <= 0 ? 0 : 1;
 
-        /**
-         * @name Two.Stop#opacity
-         * @property {Number} - The alpha percentage of the stop represented as a zero-to-one value.
-         * @nota-bene This is only supported on the {@link Two.SVGRenderer}. You can get the same effect by encoding opacity into `rgba` strings in the color.
-         */
         this.opacity = typeof opacity === 'number' ? opacity : 1;
 
-        /**
-         * @name Two.Stop#color
-         * @property {String} - The color of the stop.
-         */
         this.color = (typeof color === 'string') ? color : Stop.Index <= 0 ? '#fff' : '#000';
 
         Stop.Index = (Stop.Index + 1) % 2;
     }
 
     /**
-     * @name Two.Stop.Index
-     * @property {Number} - The current index being referenced for calculating a stop's default offset value.
+     * The current index being referenced for calculating a stop's default offset value.
      */
     static Index = 0;
 
-    /**
-     * @name Two.Stop.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.Stop}.
-     */
-    static Properties = ['offset', 'opacity', 'color'];
-
-    flagReset() {
-        this._flagOffset = this._flagColor = this._flagOpacity = false;
-        super.flagReset.call(this);
+    flagReset(dirtyFlag = false) {
+        this._flagOffset = this._flagColor = this._flagOpacity = dirtyFlag;
+        super.flagReset(dirtyFlag);
         return this;
     }
     get color(): string {

@@ -1,6 +1,6 @@
 import { BehaviorSubject } from 'rxjs';
 import { Signal } from "signal-polyfill";
-import { Observable } from '../rxjs/Observable';
+import { DisposableObservable, Observable } from '../reactive/Observable';
 import { Bivector } from './Bivector';
 import { gauss } from './gauss';
 import { rotorFromDirections } from './rotorFromDirections';
@@ -71,7 +71,7 @@ export class G20 {
         this.#b = new Signal.State(b);
 
         this.#change = new BehaviorSubject(this);
-        this.change$ = this.#change.asObservable();
+        this.change$ = new DisposableObservable(this.#change.asObservable());
     }
 
     static scalar(a: number): G20 {
@@ -831,7 +831,6 @@ export class G20 {
     /**
      * Subtracts a multiple of a scalar from this multivector.
      * @param a The scalar value to be subtracted from this multivector.
-     * @param uom The optional unit of measure.
      * @param α The fraction of (a * uom) to be subtracted. Default is 1.
      * @returns this - (a * uom) * α
      */

@@ -11,8 +11,8 @@ import { decompose_2d_3x3_matrix } from '../math/decompose_2d_3x3_matrix';
 import { G20 } from '../math/G20';
 import { Matrix } from '../matrix';
 import { get_dashes_offset, Path } from '../path';
-import { disposableFromFunction, disposableFromSubscription, dispose } from '../rxjs/Disposable';
-import { Observable } from '../rxjs/Observable';
+import { dispose } from '../reactive/Disposable';
+import { DisposableObservable, Observable } from '../reactive/Observable';
 import { Shape } from '../shape';
 import { Points } from '../shapes/points';
 import { Text } from '../text';
@@ -218,7 +218,7 @@ const svg = {
 
     // Add attributes from an svg element.
     setAttributes: function (elem: Element, attrs: SVGAttributes) {
-        // SVGAttributes does snot have an index signature.
+        // SVGAttributes does not have an index signature.
         const styles = attrs as { [name: string]: string };
         const keys = Object.keys(attrs);
         for (let i = 0; i < keys.length; i++) {
@@ -499,9 +499,9 @@ const svg = {
             else {
                 this.viewInfo.elem = svg.createElement('g', { id: this.id });
                 domElement.appendChild(this.viewInfo.elem);
-                this.viewInfo.disposables.push(disposableFromSubscription(this.matrix.change$.subscribe(() => {
+                this.viewInfo.disposables.push(this.matrix.change$.subscribe(() => {
                     this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.matrix));
-                })));
+                }));
             }
 
             // _Update styles for the <g>
@@ -614,7 +614,7 @@ const svg = {
             // Shortcut for hidden objects.
             // Doesn't reset the flags, so changes are stored and
             // applied once the object is visible again
-            if (this.opacity === 0 && !this.flags[Flag.Opacity]) {
+            if (this.strokeOpacity === 0 && !this.flags[Flag.Opacity]) {
                 return this;
             }
 
@@ -704,12 +704,12 @@ const svg = {
             }
 
             if (this.flags[Flag.Linewidth]) {
-                changed['stroke-width'] = `${this.linewidth}`;
+                changed['stroke-width'] = `${this.strokeWidth}`;
             }
 
             if (this.flags[Flag.Opacity]) {
-                changed['stroke-opacity'] = `${this.opacity}`;
-                changed['fill-opacity'] = `${this.opacity}`;
+                changed['stroke-opacity'] = `${this.strokeOpacity}`;
+                changed['fill-opacity'] = `${this.strokeOpacity}`;
             }
 
             if (this.flags[Flag.ClassName]) {
@@ -750,20 +750,83 @@ const svg = {
                 this.viewInfo.elem = svg.createElement('path', changed);
                 domElement.appendChild(this.viewInfo.elem);
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                this.viewInfo.disposables.push(disposableFromSubscription(this.matrix.change$.subscribe((matrix) => {
+                this.viewInfo.disposables.push(this.matrix.change$.subscribe((matrix) => {
                     const change: SVGAttributes = {};
                     change.transform = transform_value_of_matrix(matrix);
                     svg.setAttributes(this.viewInfo.elem, change);
-                })));
+                }));
 
-                this.viewInfo.disposables.push(disposableFromFunction(effect(() => {
+                // fill
+                this.viewInfo.disposables.push(effect(() => {
+                    const change: SVGAttributes = {};
+                    change.fill = serialize_color(this.fill);
+                    svg.setAttributes(this.viewInfo.elem, change);
+
+                    if (this.viewInfo.hasFillEffect && typeof this.fill === 'string') {
+                        set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                        delete this.viewInfo.hasFillEffect;
+                    }
+
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
+                // fillOpacity
+                this.viewInfo.disposables.push(effect(() => {
+                    const change: SVGAttributes = {};
+                    change['fill-opacity'] = `${this.fillOpacity}`;
+                    svg.setAttributes(this.viewInfo.elem, change);
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
+                // stroke
+                this.viewInfo.disposables.push(effect(() => {
+                    const change: SVGAttributes = {};
+                    change.stroke = serialize_color(this.stroke);
+                    svg.setAttributes(this.viewInfo.elem, change);
+
+                    if (this.viewInfo.hasStrokeEffect && typeof this.stroke === 'string') {
+                        set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                        delete this.viewInfo.hasStrokeEffect;
+                    }
+
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
+                // strokeOpacity
+                this.viewInfo.disposables.push(effect(() => {
+                    const change: SVGAttributes = {};
+                    change['stroke-opacity'] = `${this.strokeOpacity}`;
+                    svg.setAttributes(this.viewInfo.elem, change);
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
+                // strokeWidth
+                this.viewInfo.disposables.push(effect(() => {
+                    const change: SVGAttributes = {};
+                    change['stroke-width'] = `${this.strokeWidth}`;
+                    svg.setAttributes(this.viewInfo.elem, change);
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
+                // visibility
+                this.viewInfo.disposables.push(effect(() => {
                     const change: SVGAttributes = {};
                     change.visibility = this.visible ? 'visible' : 'hidden';
                     svg.setAttributes(this.viewInfo.elem, change);
                     return function () {
                         // No cleanup to be done.
                     }
-                })));
+                }));
             }
 
             if (this.flags[Flag.Clip]) {
@@ -875,7 +938,7 @@ const svg = {
             }
 
             if (this._flagLinewidth) {
-                changed['stroke-width'] = `${this.linewidth}`;
+                changed['stroke-width'] = `${this.strokeWidth}`;
             }
 
             if (this._flagOpacity) {
@@ -948,9 +1011,6 @@ const svg = {
             if (this._flagWeight) {
                 changed['font-weight'] = `${this.weight}`;
             }
-            if (this._flagDecoration) {
-                changed['text-decoration'] = this.decoration;
-            }
             if (this._flagDirection) {
                 changed['direction'] = this.direction;
             }
@@ -983,7 +1043,7 @@ const svg = {
                 }
             }
             if (this._flagLinewidth) {
-                changed['stroke-width'] = `${this.linewidth}`;
+                changed['stroke-width'] = `${this.strokeWidth}`;
             }
             if (this.flags[Flag.Opacity]) {
                 changed.opacity = `${this.opacity}`;
@@ -1007,7 +1067,7 @@ const svg = {
                 this.viewInfo.elem = svg.createElement('text', changed);
                 domElement.appendChild(this.viewInfo.elem);
 
-                this.viewInfo.disposables.push(disposableFromFunction(effect(() => {
+                this.viewInfo.disposables.push(effect(() => {
                     update_text_matrix(this);
                     const change: SVGAttributes = {};
                     change.transform = transform_value_of_matrix(this.matrix);
@@ -1015,27 +1075,52 @@ const svg = {
                     return function () {
                         // Nothing to do here...
                     }
-                })));
+                }));
 
-                this.viewInfo.disposables.push(disposableFromSubscription(this.family$.subscribe((family) => {
+                // decoration
+                this.viewInfo.disposables.push(effect(() => {
+                    const change: SVGAttributes = {};
+                    change['text-decoration'] = this.decoration.join(' ');
+                    svg.setAttributes(this.viewInfo.elem, change);
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
+                // font-family
+                this.viewInfo.disposables.push(this.family$.subscribe((family) => {
                     svg.setAttributes(this.viewInfo.elem, { 'font-family': family });
-                })));
+                }));
 
-                this.viewInfo.disposables.push(disposableFromSubscription(this.opacity$.subscribe((opacity) => {
-                    svg.setAttributes(this.viewInfo.elem, { opacity: `${opacity}` });
-                })));
-
-                this.viewInfo.disposables.push(disposableFromSubscription(this.size$.subscribe((size) => {
+                // font-size
+                this.viewInfo.disposables.push(this.size$.subscribe((size) => {
                     svg.setAttributes(this.viewInfo.elem, { 'font-size': `${size}` });
-                })));
+                }));
 
-                this.viewInfo.disposables.push(disposableFromSubscription(this.value$.subscribe((value) => {
+                // opacity
+                this.viewInfo.disposables.push(this.opacity$.subscribe((opacity) => {
+                    svg.setAttributes(this.viewInfo.elem, { opacity: `${opacity}` });
+                }));
+
+                // stroke-width
+                this.viewInfo.disposables.push(effect(() => {
+                    const change: SVGAttributes = {};
+                    change['stroke-width'] = `${this.strokeWidth}`;
+                    svg.setAttributes(this.viewInfo.elem, change);
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
+                // textContent
+                this.viewInfo.disposables.push(this.value$.subscribe((value) => {
                     this.viewInfo.elem.textContent = value;
-                })));
+                }));
 
-                this.viewInfo.disposables.push(disposableFromSubscription(this.visible$.subscribe((visible) => {
+                // visibility
+                this.viewInfo.disposables.push(this.visible$.subscribe((visible) => {
                     svg.setAttributes(this.viewInfo.elem, { visibility: visible ? 'visible' : 'hidden' });
-                })));
+                }));
             }
 
             if (this._flagClip) {
@@ -1426,7 +1511,7 @@ export class SVGView implements View {
         this.domElement.style.overflow = 'hidden';
 
         this.#size = new BehaviorSubject({ width: this.width, height: this.height });
-        this.size$ = this.#size.asObservable();
+        this.size$ = new DisposableObservable(this.#size.asObservable());
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

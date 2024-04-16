@@ -1,4 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
+import { Signal } from 'signal-polyfill';
 import { Gradient } from './effects/gradient';
 import { LinearGradient } from './effects/linear-gradient';
 import { RadialGradient } from './effects/radial-gradient';
@@ -7,8 +8,8 @@ import { Flag } from './Flag';
 import { Group } from './group';
 import { IBoard } from './IBoard';
 import { get_dashes_offset, set_dashes_offset } from './path';
-import { Observable } from './rxjs/Observable';
-import { Subscription } from './rxjs/Subscription';
+import { Disposable } from './reactive/Disposable';
+import { DisposableObservable, Observable } from './reactive/Observable';
 import { Shape, ShapeAttributes } from './shape';
 import { root } from './utils/root';
 
@@ -19,16 +20,18 @@ if (root.document) {
     canvas = document.createElement('canvas');
 }
 
+export type TextDecoration = 'none' | 'underline' | 'overline' | 'line-through';
+
 export interface TextAttributes {
     alignment: 'center' | 'left' | 'right';
     baseline: 'bottom' | 'middle' | 'top';
-    decoration: string;
+    decoration: TextDecoration[];
     direction: 'ltr' | 'rtl';
     family: string;
     fill: string;
     id: string;
     leading: number;
-    linewidth: number;
+    strokeWidth: number;
     opacity: number;
     size: number;
     stroke: string;
@@ -54,7 +57,6 @@ export class Text extends Shape<Group> {
     _flagBaseline = true;
     _flagStyle = true;
     _flagWeight = true;
-    _flagDecoration = true;
     _flagFill = true;
     _flagStroke = true;
     _flagLinewidth = true;
@@ -63,13 +65,13 @@ export class Text extends Shape<Group> {
     _flagDirection = false;
 
     readonly #value: BehaviorSubject<string> = new BehaviorSubject('');
-    readonly value$: Observable<string> = this.#value.asObservable();
+    readonly value$: Observable<string> = new DisposableObservable(this.#value.asObservable());
 
     readonly #family: BehaviorSubject<string> = new BehaviorSubject('sans-serif');
-    readonly family$: Observable<string> = this.#family.asObservable();
+    readonly family$: Observable<string> = new DisposableObservable(this.#family.asObservable());
 
     readonly #size: BehaviorSubject<number> = new BehaviorSubject(13);
-    readonly size$: Observable<number> = this.#size.asObservable();
+    readonly size$: Observable<number> = new DisposableObservable(this.#size.asObservable());
 
     /**
      * The height between lines measured from base to base in Two.js point space. Defaults to `17`.
@@ -83,29 +85,17 @@ export class Text extends Shape<Group> {
     _alignment: 'center' | 'left' | 'right' = 'center';
 
     /**
-     * The vertical aligment of the text in relation to {@link Two.Text#position}'s coordinates.
+     * The vertical aligment of the text in relation to {@link Text#position}'s coordinates.
      * Possible values include `'top'`, `'middle'`, `'bottom'`, and `'baseline'`. Defaults to `'baseline'`.
      * @nota-bene In headless environments where the canvas is based on {@link https://github.com/Automattic/node-canvas}, `baseline` seems to be the only valid property.
      */
     _baseline: 'bottom' | 'middle' | 'top' = 'middle';
 
-    /**
-     * @name Two.Text#style
-     * @property {String} - The font's style. Possible values include '`normal`', `'italic'`. Defaults to `'normal'`.
-     */
     _style = 'normal';
 
-    /**
-     * @name Two.Text#weight
-     * @property {Number} - A number at intervals of 100 to describe the font's weight. This compatibility varies with the typeface's variant weights. Larger values are bolder. Smaller values are thinner. Defaults to `'500'`.
-     */
     _weight = 500;
 
-    /**
-     * @name Two.Text#decoration
-     * @property {String} - String to delineate whether text should be decorated with for instance an `'underline'`. Defaults to `'none'`.
-     */
-    _decoration = 'none';
+    #decoration: Signal.State<TextDecoration[]> = new Signal.State(['none' as TextDecoration]);
 
     /**
      * determine what direction the text should run.
@@ -117,25 +107,21 @@ export class Text extends Shape<Group> {
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
     #fill: string | LinearGradient | RadialGradient | Texture = '#000';
-    #fill_change_subscription: Subscription | null = null;
+    #fill_change: Disposable | null = null;
 
     /**
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
     _stroke: string | LinearGradient | RadialGradient | Texture = 'none';
-    #stroke_change_subscription: Subscription | null = null;
+    #stroke_change: Disposable | null = null;
 
-    /**
-     * @name Two.Text#linewidth
-     * @property {Number} - The thickness in pixels of the stroke.
-     */
-    _linewidth = 1;
+    readonly #stroke_width = new Signal.State(1);
 
     readonly #opacity: BehaviorSubject<number> = new BehaviorSubject(1);
-    readonly opacity$: Observable<number> = this.#opacity.asObservable();
+    readonly opacity$: Observable<number> = new DisposableObservable(this.#opacity.asObservable());
 
     readonly #visible: BehaviorSubject<boolean> = new BehaviorSubject(true) as BehaviorSubject<boolean>;
-    readonly visible$: Observable<boolean> = this.#visible.asObservable();
+    readonly visible$: Observable<boolean> = new DisposableObservable(this.#visible.asObservable());
 
     /**
      * The shape whose alpha property becomes a clipping area for the text.
@@ -148,19 +134,8 @@ export class Text extends Shape<Group> {
      */
     #clip = false;
 
-    /**
-     * @name Two.Text#_dashes
-     * @private
-     * @see {@link Two.Text#dashes}
-     */
     _dashes: number[] | null = null;
 
-    /**
-     * @param message The String to be rendered to the scene.
-     * @param x The position in the x direction for the object.
-     * @param y The position in the y direction for the object.
-     * @param attributes An object where styles are applied. Attribute must exist in Two.Text.Properties.
-     */
     constructor(board: IBoard, message: string, x: number = 0, y: number = 0, attributes: Partial<TextAttributes> = {}) {
 
         super(board, shape_attributes_from_text_attributes(attributes));
@@ -177,99 +152,60 @@ export class Text extends Shape<Group> {
         }
 
         /**
-         * @name Two.Text#dashes
-         * @property {Number[]} - Array of numbers. Odd indices represent dash length. Even indices represent dash space.
-         * @description A list of numbers that represent the repeated dash length and dash space applied to the stroke of the text.
          * @see {@link https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray} for more information on the SVG stroke-dasharray attribute.
          */
         this.dashes = [];
 
         set_dashes_offset(this.dashes, 0);
 
-        for (let i = 0; i < Text.Properties.length; i++) {
-            const property = Text.Properties[i];
-            if (property in attributes) {
-                switch (property) {
-                    case 'alignment': {
-                        this.alignment = attributes.alignment;
-                        break;
-                    }
-                    case 'baseline': {
-                        this.baseline = attributes.baseline;
-                        break;
-                    }
-                    case 'decoration': {
-                        this.decoration = attributes.decoration;
-                        break;
-                    }
-                    case 'direction': {
-                        this.direction = attributes.direction;
-                        break;
-                    }
-                    case 'family': {
-                        this.family = attributes.family;
-                        break;
-                    }
-                    case 'fill': {
-                        this.fill = attributes.fill;
-                        break;
-                    }
-                    case 'leading': {
-                        this.leading = attributes.leading;
-                        break;
-                    }
-                    case 'linewidth': {
-                        this.linewidth = attributes.linewidth;
-                        break;
-                    }
-                    case 'opacity': {
-                        this.opacity = attributes.opacity;
-                        break;
-                    }
-                    case 'size': {
-                        this.size = attributes.size;
-                        break;
-                    }
-                    case 'stroke': {
-                        this.stroke = attributes.stroke;
-                        break;
-                    }
-                    case 'style': {
-                        this.style = attributes.style;
-                        break;
-                    }
-                    case 'value': {
-                        this.value = attributes.value;
-                        break;
-                    }
-                    case 'visible': {
-                        this.visible = attributes.visible;
-                        break;
-                    }
-                    case 'weight': {
-                        this.weight = attributes.weight;
-                        break;
-                    }
-                    default: {
-                        throw new Error(property);
-                    }
-                }
-            }
+        if (attributes.alignment) {
+            this.alignment = attributes.alignment;
+        }
+        if (attributes.baseline) {
+            this.baseline = attributes.baseline;
+        }
+        if (attributes.decoration) {
+            this.decoration = attributes.decoration;
+        }
+        if (attributes.direction) {
+            this.direction = attributes.direction;
+        }
+        if (attributes.family) {
+            this.family = attributes.family;
+        }
+        if (attributes.fill) {
+            this.fill = attributes.fill;
+        }
+        if (attributes.leading) {
+            this.leading = attributes.leading;
+        }
+        if (attributes.strokeWidth) {
+            this.strokeWidth = attributes.strokeWidth;
+        }
+        if (attributes.opacity) {
+            this.opacity = attributes.opacity;
+        }
+        if (attributes.size) {
+            this.size = attributes.size;
+        }
+        if (attributes.stroke) {
+            this.stroke = attributes.stroke;
+        }
+        if (attributes.style) {
+            this.style = attributes.style;
+        }
+        if (attributes.value) {
+            this.value = attributes.value;
+        }
+        if (attributes.visible) {
+            this.visible = attributes.visible;
+        }
+        if (attributes.weight) {
+            this.weight = attributes.weight;
         }
 
         this.flagReset(true);
     }
-
-    /**
-     * Approximate aspect ratio of a typeface's character width to height.
-     */
-    static Ratio = 0.6;
-
-    static Properties = [
-        'value', 'family', 'size', 'leading', 'alignment', 'linewidth', 'style',
-        'weight', 'decoration', 'direction', 'baseline', 'opacity', 'visible',
-        'fill', 'stroke'
-    ] as const;
 
     static Measure(text: Text): { width: number; height: number } {
         if (canvas) {
@@ -284,7 +220,8 @@ export class Text extends Shape<Group> {
             };
         }
         else {
-            const width = text.value.length * text.size * Text.Ratio;
+            // 0.6 is approximate aspect ratio of a typeface's character width to height.
+            const width = text.value.length * text.size * 0.6;
             const height = text.leading;
             // eslint-disable-next-line no-console
             console.warn('Two.Text: unable to accurately measure text, so using an approximation.');
@@ -295,9 +232,7 @@ export class Text extends Shape<Group> {
     }
 
     /**
-     * @name Two.Text#noFill
-     * @function
-     * @description Short hand method to set fill to `none`.
+     * Convenience method to set fill to `none`.
      */
     noFill() {
         this.fill = 'none';
@@ -305,28 +240,14 @@ export class Text extends Shape<Group> {
     }
 
     /**
-     * @name Two.Text#noStroke
-     * @function
-     * @description Short hand method to set stroke to `none`.
+     * Convenience method to set stroke to `none`.
      */
     noStroke() {
         this.stroke = 'none';
-        this.linewidth = 0;
         return this;
     }
 
-    // A shim to not break `getBoundingClientRect` calls.
-    // TODO: Implement a way to calculate proper bounding
-    // boxes of `Two.Text`.
-
-    /**
-     * @name Two.Text#getBoundingClientRect
-     * @function
-     * @param {Boolean} [shallow=false] - Describes whether to calculate off local matrix or world matrix.
-     * @returns {Object} - Returns object with top, left, right, bottom, width, height attributes.
-     * @description Return an object with top, left, right, bottom, width, and height parameters of the text object.
-     */
-    getBoundingClientRect(shallow = false) {
+    getBoundingClientRect(shallow = false): { top: number; left: number; right: number; bottom: number; width: number; height: number } {
 
         let left: number;
         let right: number;
@@ -339,7 +260,7 @@ export class Text extends Shape<Group> {
         const matrix = shallow ? this.matrix : this.worldMatrix;
 
         const { width, height } = Text.Measure(this);
-        const border = (this._linewidth || 0) / 2;
+        const border = (this.strokeWidth || 0) / 2;
 
         switch (this.alignment) {
             case 'left':
@@ -408,7 +329,6 @@ export class Text extends Shape<Group> {
         this.flags[Flag.Opacity] = dirtyFlag;
         this.flags[Flag.Visible] = dirtyFlag;
         this._flagClip = dirtyFlag;
-        this._flagDecoration = dirtyFlag;
         this.flags[Flag.ClassName] = dirtyFlag;
         this._flagBaseline = dirtyFlag;
         this._flagWeight = dirtyFlag;
@@ -446,12 +366,11 @@ export class Text extends Shape<Group> {
         }
         this._dashes = v;
     }
-    get decoration() {
-        return this._decoration;
+    get decoration(): TextDecoration[] {
+        return this.#decoration.get();
     }
-    set decoration(v) {
-        this._decoration = v;
-        this._flagDecoration = true;
+    set decoration(v: TextDecoration[]) {
+        this.#decoration.set(v);
     }
     get direction() {
         return this._direction;
@@ -475,19 +394,19 @@ export class Text extends Shape<Group> {
         return this.#fill;
     }
     set fill(f) {
-        if (this.#fill_change_subscription) {
-            this.#fill_change_subscription.unsubscribe();
-            this.#fill_change_subscription = null;
+        if (this.#fill_change) {
+            this.#fill_change.dispose();
+            this.#fill_change = null;
         }
         this.#fill = f;
         this._flagFill = true;
         if (this.fill instanceof Gradient) {
-            this.#fill_change_subscription = this.fill.change$.subscribe(() => {
+            this.#fill_change = this.fill.change$.subscribe(() => {
                 this._flagFill = true;
             });
         }
         if (this.fill instanceof Texture) {
-            this.#fill_change_subscription = this.fill.change$.subscribe(() => {
+            this.#fill_change = this.fill.change$.subscribe(() => {
                 this._flagFill = true;
             });
         }
@@ -499,12 +418,16 @@ export class Text extends Shape<Group> {
         this._leading = v;
         this._flagLeading = true;
     }
-    get linewidth() {
-        return this._linewidth;
+    get strokeWidth(): number {
+        return this.#stroke_width.get();
     }
-    set linewidth(v) {
-        this._linewidth = v;
-        this._flagLinewidth = true;
+    set strokeWidth(strokeWidth: number) {
+        if (typeof strokeWidth === 'number') {
+            if (this.strokeWidth !== strokeWidth) {
+                this.#stroke_width.set(strokeWidth);
+                this._flagLinewidth = true;
+            }
+        }
     }
     get mask(): Shape<Group> | null {
         return this._mask;
@@ -542,19 +465,19 @@ export class Text extends Shape<Group> {
         return this._stroke;
     }
     set stroke(f) {
-        if (this.#stroke_change_subscription) {
-            this.#stroke_change_subscription.unsubscribe();
-            this.#stroke_change_subscription = null;
+        if (this.#stroke_change) {
+            this.#stroke_change.dispose();
+            this.#stroke_change = null;
         }
         this._stroke = f;
         this._flagStroke = true;
         if (this.stroke instanceof Gradient) {
-            this.#stroke_change_subscription = this.stroke.change$.subscribe(() => {
+            this.#stroke_change = this.stroke.change$.subscribe(() => {
                 this._flagStroke = true;
             });
         }
         if (this.stroke instanceof Texture) {
-            this.#stroke_change_subscription = this.stroke.change$.subscribe(() => {
+            this.#stroke_change = this.stroke.change$.subscribe(() => {
                 this._flagStroke = true;
             });
         }

@@ -9,7 +9,7 @@ import { Group } from './group';
 import { IBoard } from './IBoard';
 import { decompose_2d_3x3_matrix } from './math/decompose_2d_3x3_matrix';
 import { G20 } from './math/G20.js';
-import { Subscription } from './rxjs/Subscription';
+import { Disposable } from './reactive/Disposable';
 import { PositionLike, Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
 import { lerp, mod } from './utils/math';
@@ -39,24 +39,22 @@ export interface PathAttributes {
     attitude: G20;
 }
 
+type Color = string | LinearGradient | RadialGradient | Texture;
+
 export class Path extends Shape<Group> {
 
     #length = 0;
 
     readonly #lengths: number[] = [];
 
-    #fill: string | LinearGradient | RadialGradient | Texture = '#fff';
-    #fill_change_subscription: Subscription | null = null;
+    #fill = new Signal.State('#fff' as Color);
+    #fill_change: Disposable | null = null;
+    #fill_opacity = new Signal.State(1.0);
 
-    #stroke: string | LinearGradient | RadialGradient | Texture = '#000';
-    #stroke_change_subscription: Subscription | null = null;
-
-    #linewidth = 1;
-
-    /**
-     * Used for both fill opacity and stroke opacity.
-     */
-    #opacity = 1.0;
+    #stroke = new Signal.State('#000' as Color);
+    #stroke_change: Disposable | null = null;
+    #stroke_width = new Signal.State(1);
+    #stroke_opacity = new Signal.State(1.0);
 
     #vectorEffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position' = 'non-scaling-stroke';
 
@@ -90,10 +88,10 @@ export class Path extends Shape<Group> {
     #dashes: number[] = null;
 
     #collection: Collection<Anchor>;
-    #collection_insert_subscription: Subscription | null = null;
-    #collection_remove_subscription: Subscription | null = null;
+    #collection_insert_subscription: Disposable | null = null;
+    #collection_remove_subscription: Disposable | null = null;
 
-    readonly #anchor_change_subscriptions = new Map<Anchor, Subscription>();
+    readonly #anchor_change_subscriptions = new Map<Anchor, Disposable>();
 
     /**
      * @param vertices A list of {@link Anchor}s that represent the order and coordinates to construct the rendered shape.
@@ -135,8 +133,7 @@ export class Path extends Shape<Group> {
         this.beginning = 0;
 
         /**
-         * @name Two.Path#ending
-         * @property {Number} - Number between zero and one to state the ending of where the path is rendered.
+         * Number between zero and one to state the ending of where the path is rendered.
          * @description {@link Two.Path#ending} is a percentage value that represents at what percentage into the path should the renderer start drawing.
          * @nota-bene This is great for animating in and out stroked paths in conjunction with {@link Two.Path#beginning}.
          */
@@ -145,31 +142,20 @@ export class Path extends Shape<Group> {
         // Style properties
 
         /**
-         * @name Two.Path#fill
-         * @property {(String|Two.Gradient|Two.Texture)} - The value of what the path should be filled in with.
+         * The value of what the path should be filled in with.
          * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
          */
         this.fill = '#fff';
 
         /**
-         * @name Two.Path#stroke
-         * @property {(String|Two.Gradient|Two.Texture)} - The value of what the path should be outlined in with.
+         * The value of what the path should be outlined in with.
          * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
          */
         this.stroke = '#000';
 
-        /**
-         * @name Two.Path#linewidth
-         * @property {Number} - The thickness in pixels of the stroke.
-         */
-        this.linewidth = 1.0;
+        this.strokeWidth = 1;
 
-        /**
-         * @name Two.Path#opacity
-         * @property {Number} - The opaqueness of the path.
-         * @nota-bene Can be used in conjunction with CSS Colors that have an alpha value.
-         */
-        this.opacity = 1.0;
+        this.strokeOpacity = 1.0;
 
         /**
          * @name Two.Path#className
@@ -304,13 +290,13 @@ export class Path extends Shape<Group> {
 
         const M = shallow ? this.matrix : this.worldMatrix;
 
-        let border = (this.linewidth || 0) / 2;
+        let border = (this.strokeWidth || 0) / 2;
         const l = this.viewInfo.anchor_vertices.length;
 
-        if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
+        if (this.strokeWidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
                 const { scaleX, scaleY } = decompose_2d_3x3_matrix(M);
-                border = Math.max(scaleX, scaleY) * (this.linewidth || 0) / 2;
+                border = Math.max(scaleX, scaleY) * (this.strokeWidth || 0) / 2;
             }
             else {
                 border *= Math.max(this.scaleXY.x, this.scaleXY.y);
@@ -919,29 +905,29 @@ export class Path extends Shape<Group> {
         this.flags[Flag.Vertices] = true;
     }
     get fill(): string | LinearGradient | RadialGradient | Texture {
-        return this.#fill;
+        return this.#fill.get();
     }
     set fill(fill: string | LinearGradient | RadialGradient | Texture) {
-        if (this.#fill_change_subscription) {
-            this.#fill_change_subscription.unsubscribe();
-            this.#fill_change_subscription = null;
+        if (this.#fill_change) {
+            this.#fill_change.dispose();
+            this.#fill_change = null;
         }
 
-        this.#fill = fill;
+        this.#fill.set(fill);
         this.flags[Flag.Fill] = true;
 
         if (fill instanceof LinearGradient) {
-            this.#fill_change_subscription = fill.change$.subscribe(() => {
+            this.#fill_change = fill.change$.subscribe(() => {
                 this.flags[Flag.Fill] = true;
             });
         }
         else if (fill instanceof RadialGradient) {
-            this.#fill_change_subscription = fill.change$.subscribe(() => {
+            this.#fill_change = fill.change$.subscribe(() => {
                 this.flags[Flag.Fill] = true;
             });
         }
         else if (fill instanceof Texture) {
-            this.#fill_change_subscription = fill.change$.subscribe(() => {
+            this.#fill_change = fill.change$.subscribe(() => {
                 this.flags[Flag.Fill] = true;
             });
         }
@@ -951,6 +937,13 @@ export class Path extends Shape<Group> {
         else {
             fill
         }
+    }
+    get fillOpacity(): number {
+        return this.#fill_opacity.get();
+    }
+    set fillOpacity(fillOpacity: number) {
+        this.#fill_opacity.set(fillOpacity);
+        this.flags[Flag.Opacity] = true;
     }
     get join(): 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' {
         return this.#join;
@@ -968,12 +961,16 @@ export class Path extends Shape<Group> {
     get lengths(): number[] {
         return this.#lengths;
     }
-    get linewidth(): number {
-        return this.#linewidth;
+    get strokeWidth(): number {
+        return this.#stroke_width.get();
     }
-    set linewidth(linewidth: number) {
-        this.#linewidth = linewidth;
-        this.flags[Flag.Linewidth] = true;
+    set strokeWidth(stroeWidth: number) {
+        if (typeof stroeWidth === 'number') {
+            if (this.strokeWidth !== stroeWidth) {
+                this.#stroke_width.set(stroeWidth);
+                this.flags[Flag.Linewidth] = true;
+            }
+        }
     }
     get mask(): Shape<Group> | null {
         return this.#mask;
@@ -992,40 +989,40 @@ export class Path extends Shape<Group> {
         this.#miter = miter;
         this.flags[Flag.Miter] = true;
     }
-    get opacity(): number {
-        return this.#opacity;
-    }
-    set opacity(opacity: number) {
-        this.#opacity = opacity;
-        this.flags[Flag.Opacity] = true;
-    }
     get stroke(): string | LinearGradient | RadialGradient | Texture {
-        return this.#stroke;
+        return this.#stroke.get();
     }
     set stroke(stroke: string | LinearGradient | RadialGradient | Texture) {
-        if (this.#stroke_change_subscription) {
-            this.#stroke_change_subscription.unsubscribe();
-            this.#stroke_change_subscription = null;
+        if (this.#stroke_change) {
+            this.#stroke_change.dispose();
+            this.#stroke_change = null;
         }
 
-        this.#stroke = stroke;
+        this.#stroke.set(stroke);
         this.flags[Flag.Stroke] = true;
 
         if (stroke instanceof LinearGradient) {
-            this.#stroke_change_subscription = stroke.change$.subscribe(() => {
+            this.#stroke_change = stroke.change$.subscribe(() => {
                 this.flags[Flag.Stroke] = true;
             });
         }
         else if (stroke instanceof RadialGradient) {
-            this.#stroke_change_subscription = stroke.change$.subscribe(() => {
+            this.#stroke_change = stroke.change$.subscribe(() => {
                 this.flags[Flag.Stroke] = true;
             });
         }
         else if (stroke instanceof Texture) {
-            this.#stroke_change_subscription = stroke.change$.subscribe(() => {
+            this.#stroke_change = stroke.change$.subscribe(() => {
                 this.flags[Flag.Stroke] = true;
             });
         }
+    }
+    get strokeOpacity(): number {
+        return this.#stroke_opacity.get();
+    }
+    set strokeOpacity(strokeOpacity: number) {
+        this.#stroke_opacity.set(strokeOpacity);
+        this.flags[Flag.Opacity] = true;
     }
     get vertices() {
         return this.#collection;
@@ -1034,11 +1031,11 @@ export class Path extends Shape<Group> {
 
         // Remove previous listeners
         if (this.#collection_insert_subscription) {
-            this.#collection_insert_subscription.unsubscribe();
+            this.#collection_insert_subscription.dispose();
             this.#collection_insert_subscription = null;
         }
         if (this.#collection_remove_subscription) {
-            this.#collection_remove_subscription.unsubscribe();
+            this.#collection_remove_subscription.dispose();
             this.#collection_remove_subscription = null;
         }
 
@@ -1070,7 +1067,7 @@ export class Path extends Shape<Group> {
             while (i--) {
                 const anchor = removes[i];
                 const subscription = this.#anchor_change_subscriptions.get(anchor);
-                subscription.unsubscribe();
+                subscription.dispose();
                 this.#anchor_change_subscriptions.delete(anchor);
             }
             this.flags[Flag.Vertices] = true;

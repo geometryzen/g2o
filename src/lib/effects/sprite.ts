@@ -39,9 +39,9 @@ export class Sprite extends Rectangle {
     _onLastFrame: () => void;
 
     /**
-     * @param path The URL path or {@link Two.Texture} to be used as the bitmap data displayed on the sprite.
-     * @param ox The initial `x` position of the Two.Sprite.
-     * @param oy The initial `y` position of the Two.Sprite.
+     * @param path The URL path or {@link Texture} to be used as the bitmap data displayed on the sprite.
+     * @param ox The initial `x` position of the Sprite.
+     * @param oy The initial `y` position of the Sprite.
      * @param cols The number of columns the sprite contains.
      * @param rows The number of rows the sprite contains.
      * @param frameRate The frame rate at which the partitions of the image should playback at.
@@ -54,10 +54,6 @@ export class Sprite extends Rectangle {
         this.noStroke();
         this.noFill();
 
-        /**
-         * @name Two.Sprite#texture
-         * @property {Two.Texture} - The texture to be used as bitmap data to display image in the scene.
-         */
         if (path instanceof Texture) {
             this.texture = path;
         }
@@ -67,53 +63,26 @@ export class Sprite extends Rectangle {
 
         this.update();
 
-        /**
-         * @name Two.Sprite#columns
-         * @property {Number} - The number of columns to split the texture into. Defaults to `1`.
-         */
         if (typeof cols === 'number') {
             this.columns = cols;
         }
 
-        /**
-         * @name Two.Sprite#rows
-         * @property {Number} - The number of rows to split the texture into. Defaults to `1`.
-         */
         if (typeof rows === 'number') {
             this.rows = rows;
         }
 
-        /**
-         * @name Two.Sprite#frameRate
-         * @property {Number} - The number of frames to animate against per second. Defaults to `0` for non-animated sprites.
-         */
         if (typeof frameRate === 'number') {
             this.frameRate = frameRate;
         }
 
-        /**
-         * @name Two.Sprite#index
-         * @property {Number} - The index of the current tile of the sprite to display. Defaults to `0`.
-         */
         this.index = 0;
-
     }
 
     /**
-     * @name Two.Sprite.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.Sprite}.
-     */
-    static Properties = [
-        'texture', 'columns', 'rows', 'frameRate', 'index'
-    ];
-
-    /**
-     * @name Two.Sprite#play
-     * @function
      * @param firstFrame The index of the frame to start the animation with.
-     * @param lastFrame The index of the frame to end the animation with. Defaults to the last item in the {@link Two.Sprite#textures}.
+     * @param lastFrame The index of the frame to end the animation with.
      * @param onLastFrame Optional callback function to be triggered after playing the last frame. This fires multiple times when the sprite is looped.
-     * @description Initiate animation playback of a {@link Two.Sprite}.
+     * @description Initiate animation playback of a {@link Sprite}.
      */
     play(firstFrame = 0, lastFrame?: number, onLastFrame?: () => void): this {
 
@@ -140,25 +109,18 @@ export class Sprite extends Rectangle {
         }
 
         return this;
-
     }
 
     /**
-     * @name Two.Sprite#pause
-     * @function
-     * @description Halt animation playback of a {@link Two.Sprite}.
+     * Halt animation playback of a {@link Sprite}.
      */
-    pause() {
-
+    pause(): this {
         this._playing = false;
         return this;
-
     }
 
     /**
-     * @name Two.Sprite#stop
-     * @function
-     * @description Halt animation playback of a {@link Two.Sprite} and set the current frame back to the first frame.
+     * Halt animation playback of a {@link Sprite} and set the current frame back to the first frame.
      */
     stop(): this {
         this._playing = false;

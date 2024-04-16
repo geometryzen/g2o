@@ -20,7 +20,7 @@ export interface IShape<P> extends Child {
     fill: string | LinearGradient | RadialGradient | Texture;
     join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round';
     length: number;
-    linewidth: number;
+    strokeWidth: number;
     miter: number;
     parent: P;
     position: G20;

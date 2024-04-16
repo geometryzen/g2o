@@ -365,7 +365,7 @@ function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyl
                     elem._linewidth = parseFloat(value);
                     break;
                 }
-                elem.linewidth = parseFloat(value);
+                elem.strokeWidth = parseFloat(value);
                 break;
             case 'opacity':
             case 'stroke-opacity':

@@ -4,7 +4,7 @@ import { Flag } from '../Flag';
 import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
 import { Path, PathAttributes } from '../path';
-import { Observable } from '../rxjs/Observable';
+import { DisposableObservable, Observable } from '../reactive/Observable';
 import { PositionLike } from '../shape';
 import { HALF_PI, TWO_PI } from '../utils/math';
 import { Commands } from '../utils/path-commands';
@@ -19,7 +19,7 @@ export interface CircleOptions {
 export class Circle extends Path {
 
     readonly #radius: BehaviorSubject<number> = new BehaviorSubject(1);
-    readonly radius$: Observable<number> = this.#radius.asObservable();
+    readonly radius$: Observable<number> = new DisposableObservable(this.#radius.asObservable());
 
     constructor(board: IBoard, options: CircleOptions = {}) {
 
@@ -37,7 +37,7 @@ export class Circle extends Path {
             this.#radius.next(options.radius);
         }
 
-        this.linewidth = 2
+        this.strokeWidth = 2
 
         this.flagReset(true);
 

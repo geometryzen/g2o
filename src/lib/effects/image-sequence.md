@@ -112,13 +112,13 @@ export class ImageSequence extends Rectangle {
 
         /**
          * @name Two.ImageSequence#textures
-         * @property {Two.Texture[]} - A list of textures to be used as frames for animating the {@link Two.ImageSequence}.
+         * @property {Texture[]} - A list of textures to be used as frames for animating the {@link Two.ImageSequence}.
          */
         if (Array.isArray(paths)) {
             this.textures = paths.map((path) => ensure_texture(path));
         }
         else {
-            // If just a single path convert into a single Two.Texture
+            // If just a single path convert into a single Texture
             this.textures = [ensure_texture(paths)];
         }
 

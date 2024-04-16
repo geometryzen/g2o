@@ -1,16 +1,16 @@
-import { Collection } from '../collection.js';
-import { LinearGradient } from '../effects/linear-gradient.js';
-import { RadialGradient } from '../effects/radial-gradient.js';
-import { Texture } from '../effects/texture.js';
-import { Group } from '../group.js';
-import { IBoard } from '../IBoard.js';
-import { decompose_2d_3x3_matrix } from '../math/decompose_2d_3x3_matrix.js';
-import { G20 } from '../math/G20.js';
-import { get_dashes_offset, set_dashes_offset } from '../path.js';
-import { Subscription } from '../rxjs/Subscription';
-import { Shape } from '../shape.js';
-import { getCurveLength as gcl, subdivide } from '../utils/curves.js';
-import { getIdByLength } from '../utils/shape.js';
+import { Collection } from '../collection';
+import { LinearGradient } from '../effects/linear-gradient';
+import { RadialGradient } from '../effects/radial-gradient';
+import { Texture } from '../effects/texture';
+import { Group } from '../group';
+import { IBoard } from '../IBoard';
+import { decompose_2d_3x3_matrix } from '../math/decompose_2d_3x3_matrix';
+import { G20 } from '../math/G20';
+import { get_dashes_offset, set_dashes_offset } from '../path';
+import { Disposable } from '../reactive/Disposable';
+import { Shape } from '../shape';
+import { getCurveLength as gcl, subdivide } from '../utils/curves';
+import { getIdByLength } from '../utils/shape';
 
 const min = Math.min;
 const max = Math.max;
@@ -46,10 +46,10 @@ export class Points extends Shape<Group> {
     readonly _lengths: number[] = [];
 
     #fill: string | LinearGradient | RadialGradient | Texture = '#fff';
-    #fill_change_subscription: Subscription | null = null;
+    #fill_change_subscription: Disposable | null = null;
 
     #stroke: string | LinearGradient | RadialGradient | Texture = '#000';
-    #stroke_change_subscription: Subscription | null = null;
+    #stroke_change_subscription: Disposable | null = null;
 
     _linewidth = 1;
     _opacity = 1.0;
@@ -61,10 +61,10 @@ export class Points extends Shape<Group> {
     _dashes: number[] | null = null;
 
     _collection: Collection<G20>;
-    #collection_insert_subscription: Subscription | null = null;
-    #collection_remove_subscription: Subscription | null = null;
+    #collection_insert_subscription: Disposable | null = null;
+    #collection_remove_subscription: Disposable | null = null;
 
-    readonly #vector_change_subscriptions = new Map<G20, Subscription>();
+    readonly #vector_change_subscriptions = new Map<G20, Disposable>();
 
     constructor(board: IBoard, vertices: G20[]) {
 
@@ -98,29 +98,25 @@ export class Points extends Shape<Group> {
         // Style properties
 
         /**
-         * @name Two.Points#fill
-         * @property {(String|Two.Gradient|Two.Texture)} - The value of what the path should be filled in with.
+         * The value of what the path should be filled in with.
          * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
          */
         this.fill = '#fff';
 
         /**
-         * @name Two.Points#stroke
-         * @property {(String|Two.Gradient|Two.Texture)} - The value of what the path should be outlined in with.
+         * The value of what the path should be outlined in with.
          * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
          */
         this.stroke = '#000';
 
         /**
-         * @name Two.Points#className
-         * @property {String} - A class to be applied to the element to be compatible with CSS styling.
+         * A class to be applied to the element to be compatible with CSS styling.
          * @nota-bene Only available for the SVG renderer.
          */
         this.className = '';
 
         /**
-         * @name Two.Points#visible
-         * @property {Boolean} - Display the points or not.
+         * Display the points or not.
          * @nota-bene For {@link Two.CanvasRenderer} and {@link Two.WebGLRenderer} when set to false all updating is disabled improving performance dramatically with many objects in the scene.
          */
         this.visible = true;
@@ -143,18 +139,6 @@ export class Points extends Shape<Group> {
 
         set_dashes_offset(this.dashes, 0);
     }
-
-    static Properties = [
-        'fill',
-        'stroke',
-        'linewidth',
-        'opacity',
-        'visible',
-        'size',
-        'sizeAttenuation',
-        'beginning',
-        'ending'
-    ];
 
     noFill() {
         this.fill = 'none';
@@ -223,13 +207,13 @@ export class Points extends Shape<Group> {
 
         const M = shallow ? this.matrix : this.worldMatrix;
 
-        let border = (this.linewidth || 0) / 2;
+        let border = (this.strokeWidth || 0) / 2;
         const l = this.viewInfo.vector_vertices.length;
 
-        if (this.linewidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
+        if (this.strokeWidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
                 const { scaleX, scaleY } = decompose_2d_3x3_matrix(M);
-                border = Math.max(scaleX, scaleY) * (this.linewidth || 0) / 2;
+                border = Math.max(scaleX, scaleY) * (this.strokeWidth || 0) / 2;
             }
             else {
                 border *= Math.max(this.scaleXY.x, this.scaleXY.y);
@@ -437,7 +421,7 @@ export class Points extends Shape<Group> {
     }
     set fill(fill: string | LinearGradient | RadialGradient | Texture) {
         if (this.#fill_change_subscription) {
-            this.#fill_change_subscription.unsubscribe();
+            this.#fill_change_subscription.dispose();
             this.#fill_change_subscription = null;
         }
 
@@ -469,10 +453,10 @@ export class Points extends Shape<Group> {
     get lengths(): number[] {
         return this._lengths;
     }
-    get linewidth() {
+    get strokeWidth() {
         return this._linewidth;
     }
-    set linewidth(v) {
+    set strokeWidth(v) {
         this._linewidth = v;
         this._flagLinewidth = true;
     }
@@ -502,7 +486,7 @@ export class Points extends Shape<Group> {
     }
     set stroke(stroke: string | LinearGradient | RadialGradient | Texture) {
         if (this.#stroke_change_subscription) {
-            this.#stroke_change_subscription.unsubscribe();
+            this.#stroke_change_subscription.dispose();
             this.#stroke_change_subscription = null;
         }
 
@@ -532,11 +516,11 @@ export class Points extends Shape<Group> {
 
         // Remove previous listeners
         if (this.#collection_insert_subscription) {
-            this.#collection_insert_subscription.unsubscribe();
+            this.#collection_insert_subscription.dispose();
             this.#collection_insert_subscription = null;
         }
         if (this.#collection_remove_subscription) {
-            this.#collection_remove_subscription.unsubscribe();
+            this.#collection_remove_subscription.dispose();
             this.#collection_remove_subscription = null;
         }
 
@@ -568,7 +552,7 @@ export class Points extends Shape<Group> {
             while (i--) {
                 const anchor = removes[i];
                 const subscription = this.#vector_change_subscriptions.get(anchor);
-                subscription.unsubscribe();
+                subscription.dispose();
                 this.#vector_change_subscriptions.delete(anchor);
             }
             this._flagVertices = true;

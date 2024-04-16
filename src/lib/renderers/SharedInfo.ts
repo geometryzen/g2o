@@ -1,6 +1,6 @@
 import { Anchor } from "../anchor";
 import { G20 } from "../math/G20";
-import { Disposable } from "../rxjs/Disposable";
+import { Disposable } from "../reactive/Disposable";
 
 /**
  * Information that is shared between the model and the view.

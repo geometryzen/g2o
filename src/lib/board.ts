@@ -1,33 +1,33 @@
-import { BehaviorSubject, debounceTime, fromEvent } from 'rxjs';
-import { Anchor } from './anchor.js';
-import { Constants } from './constants.js';
-import { LinearGradient } from './effects/linear-gradient.js';
-import { RadialGradient } from './effects/radial-gradient.js';
-import { Sprite } from './effects/sprite.js';
-import { Stop } from './effects/stop.js';
-import { Texture } from './effects/texture.js';
-import { Group } from './group.js';
-import { IBoard } from './IBoard.js';
-import { G20 } from './math/G20.js';
-import { Path } from './path.js';
-import { SVGView } from './renderers/SVGView.js';
-import { View } from './renderers/View.js';
-import { Observable } from './rxjs/Observable.js';
-import { Subscription } from './rxjs/Subscription.js';
-import { PositionLike, Shape } from './shape.js';
-import { ArcSegment } from './shapes/arc-segment.js';
-import { Circle, CircleOptions } from './shapes/circle.js';
-import { Ellipse, EllipseAttributes } from './shapes/ellipse.js';
-import { Line } from './shapes/line.js';
-import { Polygon, PolygonAttributes } from './shapes/Polygon.js';
-import { Rectangle, RectangleAttributes } from './shapes/rectangle.js';
-import { RegularPolygon } from './shapes/RegularPolygon.js';
-import { RoundedRectangle } from './shapes/rounded-rectangle.js';
-import { Star } from './shapes/star.js';
-import { Text, TextAttributes } from './text.js';
-import { Commands } from './utils/path-commands.js';
-import { dateTime } from './utils/performance.js';
-import { xhr } from './utils/xhr.js';
+import { BehaviorSubject, debounceTime, fromEvent, Subscription } from 'rxjs';
+import { Anchor } from './anchor';
+import { Constants } from './constants';
+import { LinearGradient } from './effects/linear-gradient';
+import { RadialGradient } from './effects/radial-gradient';
+import { Sprite } from './effects/sprite';
+import { Stop } from './effects/stop';
+import { Texture } from './effects/texture';
+import { Group } from './group';
+import { IBoard } from './IBoard';
+import { G20 } from './math/G20';
+import { Path } from './path';
+import { Disposable } from './reactive/Disposable';
+import { DisposableObservable, Observable } from './reactive/Observable';
+import { SVGView } from './renderers/SVGView';
+import { View } from './renderers/View';
+import { PositionLike, Shape } from './shape';
+import { ArcSegment } from './shapes/arc-segment';
+import { Circle, CircleOptions } from './shapes/circle';
+import { Ellipse, EllipseAttributes } from './shapes/ellipse';
+import { Line } from './shapes/line';
+import { Polygon, PolygonAttributes } from './shapes/Polygon';
+import { Rectangle, RectangleAttributes } from './shapes/rectangle';
+import { RegularPolygon } from './shapes/RegularPolygon';
+import { RoundedRectangle } from './shapes/rounded-rectangle';
+import { Star } from './shapes/star';
+import { Text, TextAttributes } from './text';
+import { Commands } from './utils/path-commands';
+import { dateTime } from './utils/performance';
+import { xhr } from './utils/xhr';
 
 export interface BoardAttributes {
     boundingBox?: [x1: number, y1: number, x2: number, y2: number];
@@ -44,7 +44,7 @@ export interface PointAttributes {
 export class Board implements IBoard {
 
     readonly #view: View;
-    #view_resize: Subscription | null = null;
+    #view_resize: Disposable | null = null;
 
     /**
      * A wrapper group that is used to transform the scene from user coordinates to pixels.
@@ -66,7 +66,7 @@ export class Board implements IBoard {
     height = 0;
 
     readonly #size = new BehaviorSubject({ width: this.width, height: this.height });
-    readonly size$: Observable<{ width: number; height: number }> = this.#size.asObservable();
+    readonly size$: Observable<{ width: number; height: number }> = new DisposableObservable(this.#size.asObservable());
 
     /**
      * 
@@ -141,7 +141,7 @@ export class Board implements IBoard {
 
         this.frameCount = 0;
         this.#frameCount = new BehaviorSubject(this.frameCount);
-        this.frameCount$ = this.#frameCount.asObservable();
+        this.frameCount$ = new DisposableObservable(this.#frameCount.asObservable());
 
         if (container instanceof HTMLElement) {
             this.#fitter.set_target(container as HTMLElement);
@@ -168,7 +168,7 @@ export class Board implements IBoard {
 
     dispose(): void {
         if (this.#view_resize) {
-            this.#view_resize.unsubscribe();
+            this.#view_resize.dispose();
             this.#view_resize = null;
         }
         this.#fitter.unsubscribe();
@@ -307,7 +307,7 @@ export class Board implements IBoard {
 
     line(point1: PositionLike, point2: PositionLike): Line {
         const line = new Line(this, point1, point2);
-        line.linewidth = 2;
+        line.strokeWidth = 2;
         line.stroke = "#999999"
         this.#scene.add(line);
         return line;
@@ -335,7 +335,7 @@ export class Board implements IBoard {
         ellipse.stroke = "#ff0000"
         ellipse.fill = "#ff0000"
         // ellipse.noFill();
-        ellipse.linewidth = 2
+        ellipse.strokeWidth = 2
         this.add(ellipse);
         return ellipse;
     }
@@ -349,9 +349,15 @@ export class Board implements IBoard {
     rectangle(attributes: Partial<RectangleAttributes>): Rectangle {
         const rect = new Rectangle(this, attributes);
         this.#scene.add(rect);
-        rect.linewidth = 2;
+        rect.strokeWidth = 2;
         rect.stroke = "#999999"
         return rect;
+    }
+
+    text(message: string, x: number, y: number, attributes?: Partial<TextAttributes>): Text {
+        const text = new Text(this, message, x, y, attributes);
+        this.add(text);
+        return text;
     }
 
     makeArrow(x1: number, y1: number, x2: number, y2: number, size?: number): Path {
@@ -446,12 +452,6 @@ export class Board implements IBoard {
 
     }
     */
-
-    makeText(message: string, x: number, y: number, attributes?: Partial<TextAttributes>): Text {
-        const text = new Text(this, message, x, y, attributes);
-        this.add(text);
-        return text;
-    }
 
     makeLinearGradient(x1: number, y1: number, x2: number, y2: number, ...stops: Stop[]): LinearGradient {
         const gradient = new LinearGradient(x1, y1, x2, y2, stops);

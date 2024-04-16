@@ -2,12 +2,12 @@ import { BehaviorSubject } from 'rxjs';
 import { Constants } from '../constants';
 import { ElementBase } from '../element';
 import { Group } from '../group';
+import { G20 } from '../math/G20';
+import { Disposable } from '../reactive/Disposable';
+import { DisposableObservable, Observable } from '../reactive/Observable';
 import { Registry } from '../registry.js';
 import { SharedInfo } from '../renderers/SharedInfo';
-import { Observable } from '../rxjs/Observable';
-import { Subscription } from '../rxjs/Subscription';
 import { root } from '../utils/root';
-import { G20 } from '../math/G20';
 
 export function is_canvas(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLCanvasElement {
     const tagName = (element && element.nodeName && element.nodeName.toLowerCase());
@@ -53,10 +53,10 @@ export class Texture extends ElementBase<Group> {
     _repeat = 'no-repeat';
 
     _scale: G20 | number = 1;
-    #scale_change: Subscription | null = null;
+    #scale_change: Disposable | null = null;
 
     _offset: G20 | null = null;
-    #offset_change: Subscription | null = null;
+    #offset_change: Disposable | null = null;
 
     readonly #change: BehaviorSubject<this>;
     readonly change$: Observable<this>;
@@ -93,11 +93,11 @@ export class Texture extends ElementBase<Group> {
         this.offset = new G20();
 
         this.#loaded = new BehaviorSubject(this);
-        this.loaded$ = this.#change.asObservable();
+        this.loaded$ = new DisposableObservable(this.#change.asObservable());
 
         if (typeof callback === 'function') {
             const loaded = () => {
-                subscription.unsubscribe();
+                subscription.dispose();
                 callback();
             };
             const subscription = this.loaded$.subscribe(loaded);
@@ -119,7 +119,7 @@ export class Texture extends ElementBase<Group> {
         }
 
         this.#change = new BehaviorSubject(this);
-        this.change$ = this.#change.asObservable();
+        this.change$ = new DisposableObservable(this.#change.asObservable());
 
         this.update();
     }
@@ -129,20 +129,17 @@ export class Texture extends ElementBase<Group> {
     ];
 
     /**
-     * @name Two.Texture.RegularExpressions
-     * @property {Object} - A map of compatible DOM Elements categorized by media format.
+     * A map of compatible DOM Elements categorized by media format.
      */
     static RegularExpressions = regex;
 
     /**
-     * @name Two.Texture.ImageRegistry
-     * @property {Two.Registry} - A canonical listing of image data used in a single session of Two.js.
+     * A canonical listing of image data used in a single session of Two.js.
      * @nota-bene This object is used to cache image data between different textures.
      */
     static ImageRegistry: Registry<HTMLCanvasElement | HTMLImageElement | HTMLVideoElement> = new Registry();
 
     /**
-     * @name Two.Texture.getAbsoluteURL
      * @property {Function} - Serializes a URL as an absolute path for canonical attribution in {@link Two.ImageRegistry}.
      * @param {String} path
      * @returns {String} - The serialized absolute path.
@@ -186,7 +183,7 @@ export class Texture extends ElementBase<Group> {
         }
         else {
             // eslint-disable-next-line no-console
-            console.warn('Two.js: no prototypical image defined for Two.Texture');
+            console.warn('no prototypical image defined for Texture');
         }
 
         image.crossOrigin = 'anonymous';
@@ -201,7 +198,7 @@ export class Texture extends ElementBase<Group> {
     /**
      * @name Two.Register
      * @interface
-     * @description A collection of functions to register different types of textures. Used internally by a {@link Two.Texture}.
+     * @description A collection of functions to register different types of textures. Used internally by a {@link Texture}.
      */
     static Register = {
         canvas: function (texture: Texture, callback: () => void) {
@@ -299,10 +296,8 @@ export class Texture extends ElementBase<Group> {
     } as const;
 
     /**
-     * @name Two.Texture.load
-     * @function
-     * @param {Two.Texture} texture - The texture to load.
-     * @param {Function} callback - The function to be called once the texture is loaded.
+     * @param texture The texture to load.
+     * @param callback The function to be called once the texture is loaded.
      */
     static load(texture: Texture, callback: () => void): void {
 
@@ -402,7 +397,7 @@ export class Texture extends ElementBase<Group> {
     }
     set offset(v) {
         if (this.#offset_change) {
-            this.#offset_change.unsubscribe();
+            this.#offset_change.dispose();
             this.#offset_change = null;
         }
         this._offset = v;
@@ -423,7 +418,7 @@ export class Texture extends ElementBase<Group> {
     }
     set scale(v) {
         if (this.#scale_change) {
-            this.#scale_change.unsubscribe();
+            this.#scale_change.dispose();
             this.#scale_change = null;
         }
         this._scale = v;

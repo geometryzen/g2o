@@ -3,7 +3,7 @@ import { Flag } from '../Flag';
 import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
 import { Path } from '../path';
-import { Subscription } from '../rxjs/Subscription';
+import { Disposable } from '../reactive/Disposable';
 import { Commands } from '../utils/path-commands';
 
 export class RoundedRectangle extends Path {
@@ -16,7 +16,7 @@ export class RoundedRectangle extends Path {
     _height = 0;
 
     _radius: number | G20 = 12;
-    #radius_change_subscription: Subscription | null = null;
+    #radius_change_subscription: Disposable | null = null;
 
     /**
      * @param x The x position of the rounded rectangle.
@@ -205,7 +205,7 @@ export class RoundedRectangle extends Path {
     set radius(radius) {
 
         if (this.#radius_change_subscription) {
-            this.#radius_change_subscription.unsubscribe();
+            this.#radius_change_subscription.dispose();
             this.#radius_change_subscription = null;
         }
 

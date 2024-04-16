@@ -1,5 +1,5 @@
 import { Subject } from 'rxjs';
-import { Observable } from './rxjs/Observable';
+import { DisposableObservable, Observable } from './reactive/Observable';
 
 /**
  * TODO: If this was iterable then there would be less need for the length and getAt.
@@ -23,13 +23,13 @@ export class Collection<T> {
         this.#items = items;
 
         this.#insert = new Subject();
-        this.insert$ = this.#insert.asObservable();
+        this.insert$ = new DisposableObservable(this.#insert.asObservable());
 
         this.#remove = new Subject();
-        this.remove$ = this.#remove.asObservable();
+        this.remove$ = new DisposableObservable(this.#remove.asObservable());
 
         this.#order = new Subject();
-        this.order$ = this.#order.asObservable();
+        this.order$ = new DisposableObservable(this.#order.asObservable());
     }
 
     forEach(callbackfn: (value: T, index: number, array: T[]) => void, thisArg?: unknown): void {

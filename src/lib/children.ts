@@ -1,6 +1,6 @@
-import { Collection } from './collection.js';
-import { Observable } from './rxjs/Observable.js';
-import { Subscription } from './rxjs/Subscription.js';
+import { Collection } from './collection';
+import { Disposable } from './reactive/Disposable';
+import { Observable } from './reactive/Observable';
 
 export interface Child {
     id: string;
@@ -13,10 +13,10 @@ export interface Child {
 export class Children<T extends Child> extends Collection<T> {
 
     readonly ids: { [id: string]: T } = {};
-    readonly #child_subscriptions: { [id: string]: Subscription } = {};
+    readonly #child_subscriptions: { [id: string]: Disposable } = {};
 
-    readonly #insert_subscription: Subscription;
-    readonly #remove_subscription: Subscription;
+    readonly #insert_subscription: Disposable;
+    readonly #remove_subscription: Disposable;
 
     constructor(children: T[]) {
         super(children);
@@ -33,8 +33,8 @@ export class Children<T extends Child> extends Collection<T> {
     }
 
     dispose(): void {
-        this.#insert_subscription.unsubscribe();
-        this.#remove_subscription.unsubscribe();
+        this.#insert_subscription.dispose();
+        this.#remove_subscription.dispose();
     }
 
     #attach(children: T[]): this {
@@ -59,7 +59,7 @@ export class Children<T extends Child> extends Collection<T> {
     #detach(children: T[]): this {
         for (let i = 0; i < children.length; i++) {
             const child = children[i];
-            this.#child_subscriptions[child.id].unsubscribe();
+            this.#child_subscriptions[child.id].dispose();
             delete this.#child_subscriptions[child.id];
             delete this.ids[child.id];
         }

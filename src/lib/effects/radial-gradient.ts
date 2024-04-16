@@ -1,7 +1,7 @@
-import { Subscription } from '../rxjs/Subscription';
-import { G20 } from '../math/G20.js';
-import { Gradient } from './gradient.js';
-import { Stop } from './stop.js';
+import { G20 } from '../math/G20';
+import { Disposable } from '../reactive/Disposable';
+import { Gradient } from './gradient';
+import { Stop } from './stop';
 
 export class RadialGradient extends Gradient {
 
@@ -11,15 +11,15 @@ export class RadialGradient extends Gradient {
 
     #radius = 0;
     #center: G20 | null = null;
-    #center_change_subscription: Subscription | null = null;
+    #center_change_subscription: Disposable | null = null;
     #focal: G20 | null = null;
-    #focal_change_subscription: Subscription | null = null;
+    #focal_change_subscription: Disposable | null = null;
 
     /**
      * @param cx The x position of the origin of the radial gradient.
      * @param cy The y position of the origin of the radial gradient.
      * @param r The radius of the radial gradient.
-     * @param stops A list of {@link Two.Stop}s that contain the gradient fill pattern for the gradient.
+     * @param stops A list of {@link Stop}s that contain the gradient fill pattern for the gradient.
      * @param fx The x position of the focal point on the radial gradient.
      * @param fy The y position of the focal point on the radial gradient.
      */
@@ -65,7 +65,7 @@ export class RadialGradient extends Gradient {
 
     set center(v) {
         if (this.#center_change_subscription) {
-            this.#center_change_subscription.unsubscribe();
+            this.#center_change_subscription.dispose();
             this.#center_change_subscription = null;
         }
         this.#center = v;
@@ -81,7 +81,7 @@ export class RadialGradient extends Gradient {
 
     set focal(v) {
         if (this.#focal_change_subscription) {
-            this.#focal_change_subscription.unsubscribe();
+            this.#focal_change_subscription.dispose();
             this.#focal_change_subscription = null;
         }
         this.#focal = v;

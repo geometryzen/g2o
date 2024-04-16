@@ -1,12 +1,12 @@
-import { Children } from './children.js';
-import { LinearGradient } from './effects/linear-gradient.js';
-import { RadialGradient } from './effects/radial-gradient.js';
-import { Texture } from './effects/texture.js';
-import { Flag } from './Flag.js';
-import { IBoard } from './IBoard.js';
-import { IShape } from './IShape.js';
-import { Subscription } from './rxjs/Subscription';
-import { Parent, Shape, ShapeAttributes } from './shape.js';
+import { Children } from './children';
+import { LinearGradient } from './effects/linear-gradient';
+import { RadialGradient } from './effects/radial-gradient';
+import { Texture } from './effects/texture';
+import { Flag } from './Flag';
+import { IBoard } from './IBoard';
+import { IShape } from './IShape';
+import { Disposable } from './reactive/Disposable';
+import { Parent, Shape, ShapeAttributes } from './shape';
 
 export interface IGroup extends Parent {
     remove(...shapes: Shape<IGroup>[]): void;
@@ -20,7 +20,7 @@ export class Group extends Shape<Group> {
 
     #fill: string | LinearGradient | RadialGradient | Texture = '#fff';
     #stroke: string | LinearGradient | RadialGradient | Texture = '#000';
-    #linewidth = 1.0;
+    #strokeWidth = 1.0;
     #opacity = 1.0;
     #visible = true;
     #cap: 'butt' | 'round' | 'square' = 'round';
@@ -57,9 +57,9 @@ export class Group extends Shape<Group> {
     #mask: Shape<Group> = null;
 
     #shapes: Children<Shape<Group>>;
-    #shapes_insert: Subscription | null = null;
-    #shapes_remove: Subscription | null = null;
-    #shapes_order: Subscription | null = null;
+    #shapes_insert: Disposable | null = null;
+    #shapes_remove: Disposable | null = null;
+    #shapes_order: Disposable | null = null;
 
     clip: boolean;
 
@@ -122,15 +122,15 @@ export class Group extends Shape<Group> {
 
     #unsubscribe_from_shapes(): void {
         if (this.#shapes_insert) {
-            this.#shapes_insert.unsubscribe();
+            this.#shapes_insert.dispose();
             this.#shapes_insert = null;
         }
         if (this.#shapes_remove) {
-            this.#shapes_remove.unsubscribe();
+            this.#shapes_remove.dispose();
             this.#shapes_remove = null;
         }
         if (this.#shapes_order) {
-            this.#shapes_order.unsubscribe();
+            this.#shapes_order.dispose();
             this.#shapes_order = null;
         }
     }
@@ -526,14 +526,14 @@ export class Group extends Shape<Group> {
         }
         return this.#length;
     }
-    get linewidth(): number {
-        return this.#linewidth;
+    get strokeWidth(): number {
+        return this.#strokeWidth;
     }
-    set linewidth(linewidth: number) {
-        this.#linewidth = linewidth;
+    set strokeWidth(strokeWidth: number) {
+        this.#strokeWidth = strokeWidth;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
-            child.linewidth = linewidth;
+            child.strokeWidth = strokeWidth;
         }
     }
     get mask(): Shape<Group> {

@@ -3,8 +3,8 @@ import { Children } from '../children';
 import { Constants } from '../constants';
 import { ElementBase } from '../element';
 import { Group } from '../group';
-import { Observable } from '../rxjs/Observable';
-import { Subscription } from '../rxjs/Subscription';
+import { Disposable } from '../reactive/Disposable';
+import { DisposableObservable, Observable } from '../reactive/Observable';
 import { Stop } from './stop';
 
 /**
@@ -20,13 +20,13 @@ export abstract class Gradient extends ElementBase<Group> {
     _units: 'userSpaceOnUse' | 'objectBoundingBox' | null = null;
 
     _stops: Children<Stop> | null = null;
-    _stops_insert: Subscription | null = null;
-    _stops_remove: Subscription | null = null;
+    _stops_insert: Disposable | null = null;
+    _stops_remove: Disposable | null = null;
 
     readonly _change: BehaviorSubject<this>;
     readonly change$: Observable<this>;
 
-    readonly _stop_subscriptions: { [id: string]: Subscription } = {};
+    readonly _stop_subscriptions: { [id: string]: Disposable } = {};
 
     constructor(stops?: Stop[]) {
 
@@ -53,7 +53,7 @@ export abstract class Gradient extends ElementBase<Group> {
         this.#set_children(stops);
 
         this._change = new BehaviorSubject(this);
-        this.change$ = this._change.asObservable();
+        this.change$ = new DisposableObservable(this._change.asObservable());
     }
 
     dispose(): void {
@@ -82,7 +82,7 @@ export abstract class Gradient extends ElementBase<Group> {
             while (i--) {
                 const stop = stops[i];
                 const subscription = this._stop_subscriptions[stop.id];
-                subscription.unsubscribe();
+                subscription.dispose();
                 delete this._stop_subscriptions[stop.id];
                 delete stops[i].parent;
             }
@@ -94,11 +94,11 @@ export abstract class Gradient extends ElementBase<Group> {
 
     #unset_children(): void {
         if (this._stops_insert) {
-            this._stops_insert.unsubscribe();
+            this._stops_insert.dispose();
             this._stops_insert = null;
         }
         if (this._stops_remove) {
-            this._stops_remove.unsubscribe();
+            this._stops_remove.dispose();
             this._stops_remove = null;
         }
         if (this._stops) {

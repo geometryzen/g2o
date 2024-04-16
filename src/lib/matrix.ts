@@ -1,5 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
-import { Observable } from './rxjs/Observable.js';
+import { DisposableObservable, Observable } from './reactive/Observable.js';
 import { NumArray } from './utils/math.js';
 
 const cos = Math.cos;
@@ -38,7 +38,7 @@ export class Matrix {
         this.#elements[8] = a33;
 
         this.#change = new BehaviorSubject(this);
-        this.change$ = this.#change.asObservable();
+        this.change$ = new DisposableObservable(this.#change.asObservable());
     }
     get a(): number {
         return this.#elements[0];

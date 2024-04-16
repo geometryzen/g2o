@@ -3,7 +3,7 @@ import { Flag } from '../Flag';
 import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
 import { Path, PathAttributes } from '../path';
-import { Subscription } from '../rxjs/Subscription';
+import { Disposable } from '../reactive/Disposable';
 
 export interface RectangleAttributes {
     id: string;
@@ -20,7 +20,7 @@ export class Rectangle extends Path {
 
     _origin: G20;
     // DGH: How does origin differ from position?
-    #origin_change_subscription: Subscription | null = null;
+    #origin_change: Disposable | null = null;
 
     constructor(board: IBoard, options: Partial<RectangleAttributes> = {}) {
 
@@ -57,7 +57,7 @@ export class Rectangle extends Path {
             this.vertices.getAt(1).origin.set(xr, -yr).sub(this._origin);
             this.vertices.getAt(2).origin.set(xr, yr).sub(this._origin);
             this.vertices.getAt(3).origin.set(-xr, yr).sub(this._origin);
-            // FYI: Two.Sprite and Two.ImageSequence have 4 verts
+            // FYI: Sprite and ImageSequence have 4 verts
             const anchor = this.vertices.getAt(4);
             if (anchor) {
                 anchor.origin.set(-xr, -yr).sub(this._origin);
@@ -88,12 +88,12 @@ export class Rectangle extends Path {
         return this._origin;
     }
     set origin(v: G20) {
-        if (this.#origin_change_subscription) {
-            this.#origin_change_subscription.unsubscribe();
-            this.#origin_change_subscription = null;
+        if (this.#origin_change) {
+            this.#origin_change.dispose();
+            this.#origin_change = null;
         }
         this._origin = v;
-        this.#origin_change_subscription = this._origin.change$.subscribe(() => {
+        this.#origin_change = this._origin.change$.subscribe(() => {
             this.flags[Flag.Vertices] = true;
         });
         this.flags[Flag.Vertices] = true;

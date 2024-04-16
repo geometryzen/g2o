@@ -1,10 +1,9 @@
-import { Subscription } from "./Subscription";
 
 /**
  * An object should be Disposable if its lifetime is bounded by the holder.
  * Such objects are normally created by the holding object.
  */
- export interface Disposable {
+export interface Disposable {
     dispose(): void;
 }
 
@@ -35,14 +34,6 @@ export function disposableFromFunction(f: Function): Disposable {
     return {
         dispose: () => {
             f();
-        },
-    };
-}
-
-export function disposableFromSubscription(subscription: Subscription): Disposable {
-    return {
-        dispose: () => {
-            subscription.unsubscribe();
         },
     };
 }

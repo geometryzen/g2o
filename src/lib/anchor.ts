@@ -1,21 +1,21 @@
 import { BehaviorSubject } from 'rxjs';
-import { G20 } from './math/G20.js';
-import { Observable } from './rxjs/Observable.js';
-import { Subscription } from './rxjs/Subscription.js';
-import { Commands } from './utils/path-commands.js';
+import { G20 } from './math/G20';
+import { Disposable } from './reactive/Disposable';
+import { DisposableObservable, Observable } from './reactive/Observable';
+import { Commands } from './utils/path-commands';
 
 export class Anchor {
     /**
      * default is zero.
      */
     readonly origin: G20;
-    #origin_change: Subscription | null = null;
+    #origin_change: Disposable | null = null;
     readonly controls = {
         left: new G20(),
         right: new G20()
     };
-    #a_change: Subscription | null = null;
-    #b_change: Subscription | null = null;
+    #a_change: Disposable | null = null;
+    #b_change: Disposable | null = null;
 
     #command: 'M' | 'L' | 'C' | 'A' | 'Z';
     #relative: boolean;
@@ -56,7 +56,7 @@ export class Anchor {
         this.#t = 0;
 
         this.#change = new BehaviorSubject(this);
-        this.change$ = this.#change.asObservable();
+        this.change$ = new DisposableObservable(this.#change.asObservable());
 
         this.#origin_change = this.origin.change$.subscribe(() => {
             this.#change.next(this);
@@ -71,15 +71,15 @@ export class Anchor {
 
     dispose(): void {
         if (this.#origin_change) {
-            this.#origin_change.unsubscribe();
+            this.#origin_change.dispose();
             this.#origin_change = null;
         }
         if (this.#a_change) {
-            this.#a_change.unsubscribe();
+            this.#a_change.dispose();
             this.#a_change = null;
         }
         if (this.#b_change) {
-            this.#b_change.unsubscribe();
+            this.#b_change.dispose();
             this.#b_change = null;
         }
     }
