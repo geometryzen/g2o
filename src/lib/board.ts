@@ -12,8 +12,9 @@ import { G20 } from './math/G20';
 import { Path } from './path';
 import { Disposable } from './reactive/Disposable';
 import { DisposableObservable, Observable } from './reactive/Observable';
-import { SVGView } from './renderers/SVGView';
+import { SVGViewFactory } from './renderers/SVGViewFactory';
 import { View } from './renderers/View';
+import { ViewFactory } from './renderers/ViewFactory';
 import { PositionLike, Shape } from './shape';
 import { ArcSegment } from './shapes/arc-segment';
 import { Circle, CircleOptions } from './shapes/circle';
@@ -31,7 +32,7 @@ export interface BoardAttributes {
     resizeTo?: Element;
     scene?: Group;
     size?: { width: number; height: number };
-    view?: View;
+    viewFactory?: ViewFactory;
 }
 
 export interface PointAttributes {
@@ -123,12 +124,11 @@ export class Board implements IBoard {
         }
         this.#viewBox.add(this.#scene);
 
-        if (typeof options.view === 'object') {
-            this.#view = options.view;
+        if (typeof options.viewFactory === 'object') {
+            this.#view = options.viewFactory.createView(this.#viewBox, container_id);
         }
         else {
-            // The group used by the scene is actually a wrapper around the scene.
-            this.#view = new SVGView(this.#viewBox);
+            this.#view = new SVGViewFactory().createView(this.#viewBox, container_id);
         }
 
         const config: BoardConfig = config_from_options(container, options);
@@ -155,12 +155,17 @@ export class Board implements IBoard {
         }
 
         // Why do we need to create this subscription to the view?
-        this.#view_resize = this.#view.size$.subscribe(({ width, height }) => {
-            this.width = width;
-            this.height = height;
-            this.#update_view_box();
-            this.#size.next({ width, height });
-        });
+        if (typeof this.#view.size$ === 'object') {
+            this.#view_resize = this.#view.size$.subscribe(({ width, height }) => {
+                this.width = width;
+                this.height = height;
+                this.#update_view_box();
+                this.#size.next({ width, height });
+            });
+        }
+        else {
+            throw new Error("view.size$ MUST be defined");
+        }
     }
 
     dispose(): void {
@@ -201,7 +206,13 @@ export class Board implements IBoard {
     appendTo(container: Element) {
         if (container && typeof container.nodeType === 'number') {
             if (container.nodeType === Node.ELEMENT_NODE) {
-                container.appendChild(this.#view.domElement);
+                const domElement = this.#view.domElement;
+                if (domElement instanceof SVGElement || domElement instanceof HTMLCanvasElement) {
+                    container.appendChild(this.#view.domElement);
+                }
+                else {
+                    console.warn("domElement must be an SVGElement or HTMLCanvasElement")
+                }
 
                 if (!this.#fitter.is_target_body()) {
                     this.#fitter.set_target(container);

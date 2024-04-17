@@ -1506,7 +1506,7 @@ export interface SVGViewParams {
 export class SVGView implements View {
 
     readonly domElement: SVGElement;
-    readonly scene: Group;
+    readonly viewBox: Group;
     readonly defs: SVGDefsElement;
 
     width?: number;
@@ -1515,10 +1515,10 @@ export class SVGView implements View {
     readonly #size: BehaviorSubject<{ width: number; height: number }>;
     readonly size$: Observable<{ width: number; height: number }>;
 
-    constructor(scene: Group, params: SVGViewParams = {}) {
-        if (scene instanceof Group) {
-            this.scene = scene;
-            this.scene.parent = null;//this;
+    constructor(viewBox: Group, containerId: string, params: SVGViewParams = {}) {
+        if (viewBox instanceof Group) {
+            this.viewBox = viewBox;
+            this.viewBox.parent = null;
         }
         else {
             throw new Error("scene must be a Group");
@@ -1527,7 +1527,7 @@ export class SVGView implements View {
             this.domElement = params.domElement;
         }
         else {
-            this.domElement = svg.createElement('svg');
+            this.domElement = svg.createElement('svg', { id: `${containerId}-svg` });
         }
 
         this.defs = svg.createElement('defs') as SVGDefsElement;
@@ -1550,7 +1550,7 @@ export class SVGView implements View {
     }
 
     render(): this {
-        const thisArg = this.scene;
+        const thisArg = this.viewBox;
         const svgElement = this.domElement;
         // The problem with this approach is that this view does not get to maintain state.
         svg.group.render.call(thisArg, this.domElement, svgElement);
