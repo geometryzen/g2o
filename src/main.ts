@@ -28,27 +28,57 @@ document.addEventListener('DOMContentLoaded', function () {
     box.strokeWidth = 2;
     box.position.copyVector(A.position).add(AC.__mul__(0.75)).add(N.__mul__(box.height / 2));
 
-    const textA = board.text("A", A.position.x, A.position.y, { id: 'text-A', fontFamily: 'Lato', fontSize: 20, opacity: 0.4 })
-    // textA.dx = -15
-    textA.anchor = 'end'
+    const textA = board.text("A", A.position.x, A.position.y, {
+        id: 'text-A',
+        anchor: 'end',
+        dx: -5,
+        fontFamily: 'Lato',
+        fontSize: 20,
+        opacity: 0.4
+    })
     rescale(textA, board);
 
-    const textB = board.text("B", B.position.x, B.position.y, { id: 'text-B', fontFamily: 'Lato', fontSize: 20, opacity: 0.4 })
-    // textB.dx = 15
-    textB.anchor = 'start'
+    const textB = board.text("B", B.position.x, B.position.y, {
+        id: 'text-B',
+        anchor: 'start',
+        dx: 5,
+        fontFamily: 'Lato',
+        fontSize: 20,
+        opacity: 0.4
+    })
     rescale(textB, board);
 
-    const textC = board.text("C", C.position.x, C.position.y, { id: 'text-C', fontFamily: 'Lato', fontSize: 20, opacity: 0.4 })
-    // textC.dx = 10
-    textC.anchor = 'start'
+    const textC = board.text("C", C.position.x, C.position.y, {
+        id: 'text-C',
+        anchor: 'start',
+        dx: 5,
+        fontFamily: 'Lato',
+        fontSize: 20,
+        opacity: 0.4
+    })
     rescale(textC, board);
 
-    const textD = board.text("D", box.position.x, box.position.y, { id: 'text-D', fontFamily: 'Lato', fontSize: 20, opacity: 1 })
+    const textD = board.text("Box", box.position.x, box.position.y, {
+        id: 'text-D',
+        anchor: 'middle',
+        fontFamily: 'Lato',
+        fontSize: 20,
+        opacity: 1
+    })
     textD.attitude.rotorFromDirections(AB, AC)
     rescale(textD, board);
 
+    const textE = board.text("Ramp", ramp.position.x, ramp.position.y, {
+        id: 'text-E',
+        anchor: 'middle',
+        fontFamily: 'Lato',
+        fontSize: 20,
+        opacity: 1
+    })
+    textE.attitude.rotorFromDirections(AB, AC)
+    rescale(textE, board);
+
     const D = board.point([box.position.x, box.position.y], { id: 'D' })
-    textD.anchor = 'middle'
     board.update()
 
     A.hidden = true
@@ -56,21 +86,13 @@ document.addEventListener('DOMContentLoaded', function () {
     C.hidden = true
     D.hidden = true
 
-    textC.opacity = 0.4
-    textC.strokeWidth = 6
-
     box.stroke = "#FFCC00"
     box.strokeWidth = 4
     box.strokeOpacity = 0.6
     box.fill = "#FFFF00"
     box.fillOpacity = 0.3
 
-    // textA.fontWeight = 'normal'
-    // textA.direction="rtl"
-    //textA.fontStyle='italic'
-    //textA.strokeWidth=10
-
-    board.update()
+    // board.update()
 
     window.onunload = function () {
         board.dispose();

@@ -27,6 +27,8 @@ export interface TextAttributes {
     baseline: 'bottom' | 'middle' | 'top';
     decoration: TextDecoration[];
     direction: 'ltr' | 'rtl';
+    dx: number | string;
+    dy: number | string;
     fontFamily: string;
     fill: string | LinearGradient | RadialGradient | Texture;
     id: string;
@@ -185,6 +187,12 @@ export class Text extends Shape<Group> implements TextAttributes {
         }
         if (attributes.direction) {
             this.direction = attributes.direction;
+        }
+        if (typeof attributes.dx === 'number' || typeof attributes.dx === 'string') {
+            this.dx = attributes.dx;
+        }
+        if (typeof attributes.dy === 'number' || typeof attributes.dy === 'string') {
+            this.dy = attributes.dy;
         }
         if (attributes.fontFamily) {
             this.fontFamily = attributes.fontFamily;
