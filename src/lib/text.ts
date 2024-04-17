@@ -23,7 +23,7 @@ if (root.document) {
 export type TextDecoration = 'none' | 'underline' | 'overline' | 'line-through';
 
 export interface TextAttributes {
-    alignment: 'center' | 'left' | 'right';
+    anchor: 'start' | 'middle' | 'end';
     baseline: 'bottom' | 'middle' | 'top';
     decoration: TextDecoration[];
     direction: 'ltr' | 'rtl';
@@ -59,27 +59,27 @@ export class Text extends Shape<Group> implements TextAttributes {
     /**
      * @deprecated
      */
-     _flagAlignment = true;
+    _flagAlignment = true;
     /**
      * @deprecated
      */
-     _flagBaseline = true;
+    _flagBaseline = true;
     /**
      * @deprecated
      */
-     _flagFill = true;
+    _flagFill = true;
     /**
      * @deprecated
      */
-     _flagStroke = true;
+    _flagStroke = true;
     /**
      * @deprecated
      */
-     _flagMask = false;
+    _flagMask = false;
     /**
      * @deprecated
      */
-     _flagClip = false;
+    _flagClip = false;
 
     readonly #value: BehaviorSubject<string> = new BehaviorSubject('');
     readonly value$: Observable<string> = new DisposableObservable(this.#value.asObservable());
@@ -91,15 +91,11 @@ export class Text extends Shape<Group> implements TextAttributes {
     readonly fontSize$: Observable<number> = new DisposableObservable(this.#fontSize.asObservable());
 
     /**
-     * The height between lines measured from base to base in Two.js point space. Defaults to `17`.
+     * The height between lines measured from base to base in point space. Defaults to `17`.
      */
     #leading = 17;
 
-    /**
-     * Alignment of text in relation to {@link Text#position}'s coordinates.
-     * Possible values include `'left'`, `'center'`, `'right'`. Defaults to `'center'`.
-     */
-    #alignment: 'center' | 'left' | 'right' = 'center';
+    readonly #anchor = new Signal.State('start' as 'start' | 'middle' | 'end');
 
     /**
      * The vertical aligment of the text in relation to {@link Text#position}'s coordinates.
@@ -178,8 +174,8 @@ export class Text extends Shape<Group> implements TextAttributes {
 
         set_dashes_offset(this.dashes, 0);
 
-        if (attributes.alignment) {
-            this.alignment = attributes.alignment;
+        if (attributes.anchor) {
+            this.anchor = attributes.anchor;
         }
         if (attributes.baseline) {
             this.baseline = attributes.baseline;
@@ -282,18 +278,22 @@ export class Text extends Shape<Group> implements TextAttributes {
         const { width, height } = Text.Measure(this);
         const border = (this.strokeWidth || 0) / 2;
 
-        switch (this.alignment) {
-            case 'left':
+        switch (this.anchor) {
+            case 'start': {
                 left = - border;
                 right = width + border;
                 break;
-            case 'right':
+            }
+            case 'middle': {
+                left = - (width / 2 + border);
+                right = width / 2 + border;
+                break;
+            }
+            case 'end': {
                 left = - (width + border);
                 right = border;
                 break;
-            default:
-                left = - (width / 2 + border);
-                right = width / 2 + border;
+            }
         }
 
         switch (this.baseline) {
@@ -341,7 +341,6 @@ export class Text extends Shape<Group> implements TextAttributes {
         this.flags[Flag.Value] = dirtyFlag;
         this.flags[Flag.Size] = dirtyFlag;
         this._flagLeading = dirtyFlag;
-        this._flagAlignment = dirtyFlag;
         this._flagFill = dirtyFlag;
         this._flagStroke = dirtyFlag;
         this.flags[Flag.Opacity] = dirtyFlag;
@@ -351,12 +350,20 @@ export class Text extends Shape<Group> implements TextAttributes {
         this._flagBaseline = dirtyFlag;
         return this;
     }
-    get alignment(): 'center' | 'left' | 'right' {
-        return this.#alignment;
+    get anchor(): 'start' | 'middle' | 'end' {
+        return this.#anchor.get();
     }
-    set alignment(v: 'center' | 'left' | 'right') {
-        this.#alignment = v;
-        this._flagAlignment = true;
+    set anchor(anchor: 'start' | 'middle' | 'end') {
+        if (typeof anchor === 'string') {
+            switch (anchor) {
+                case 'start':
+                case 'middle':
+                case 'end': {
+                    this.#anchor.set(anchor);
+                    break;
+                }
+            }
+        }
     }
     get baseline() {
         return this.#baseline;

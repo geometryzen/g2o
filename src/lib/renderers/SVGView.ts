@@ -195,12 +195,6 @@ const svg = {
 
     xlink: 'http://www.w3.org/1999/xlink',
 
-    alignments: {
-        left: 'start',
-        center: 'middle',
-        right: 'end'
-    } as const,
-
     baselines: {
         top: 'hanging',
         middle: 'middle',
@@ -978,9 +972,6 @@ const svg = {
             if (this._flagLeading) {
                 changed['line-height'] = `${this.leading}`;
             }
-            if (this._flagAlignment) {
-                changed['text-anchor'] = svg.alignments[this.alignment]/* || this._alignment*/;
-            }
             if (this._flagBaseline) {
                 changed['dominant-baseline'] = svg.baselines[this.baseline]/* || this._baseline*/;
             }
@@ -1041,6 +1032,25 @@ const svg = {
                     svg.setAttributes(this.viewInfo.elem, change);
                     return function () {
                         // Nothing to do here...
+                    }
+                }));
+
+                // anchor
+                this.viewInfo.disposables.push(effect(() => {
+                    const anchor = this.anchor;
+                    switch (anchor) {
+                        case 'start': {
+                            svg.removeAttributes(this.viewInfo.elem, { 'text-anchor': anchor });
+                            break;
+                        }
+                        case 'middle':
+                        case 'end': {
+                            svg.setAttributes(this.viewInfo.elem, { 'text-anchor': anchor });
+                            break;
+                        }
+                    }
+                    return function () {
+                        // No cleanup to be done.
                     }
                 }));
 

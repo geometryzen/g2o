@@ -1,4 +1,4 @@
-import { Board, Text } from './index';
+import { Board, G20, Text } from './index';
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -9,10 +9,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const A = board.point([0.0, 0.0], { id: 'A' })
     const B = board.point([8.0, 0.0], { id: 'B' })
-    const C = board.point([8.0, 3.0], { id: 'C' })
+    const C = board.point([8.0, 4.0], { id: 'C' })
 
-    const AB = B.position.__sub__(A.position).normalize();
-    const AC = C.position.__sub__(A.position).normalize();
+    const AB = B.position.__sub__(A.position);
+    const AC = C.position.__sub__(A.position);
+    const N = AC.normalize().__mul__(G20.I);
 
     const ramp = board.polygon([A, B, C], { id: 'ramp' });
     ramp.fill = 'rgba(0, 191, 168, 0.33)';
@@ -25,28 +26,35 @@ document.addEventListener('DOMContentLoaded', function () {
     box.fill = 'rgba(255, 128, 0, 0.33)';
     box.stroke = 'rgb(255, 128, 0)';
     box.strokeWidth = 2;
-    box.position.y += 1.55
-    box.position.x += 2.5
+    box.position.copyVector(A.position).add(AC.__mul__(0.75)).add(N.__mul__(box.height / 2));
 
     const textA = board.text("A", A.position.x, A.position.y, { id: 'text-A', fontFamily: 'Lato', fontSize: 20, opacity: 0.4 })
-    textA.dx = -10
+    // textA.dx = -15
+    textA.anchor = 'end'
     rescale(textA, board);
 
     const textB = board.text("B", B.position.x, B.position.y, { id: 'text-B', fontFamily: 'Lato', fontSize: 20, opacity: 0.4 })
-    textB.dx = 10
+    // textB.dx = 15
+    textB.anchor = 'start'
     rescale(textB, board);
 
     const textC = board.text("C", C.position.x, C.position.y, { id: 'text-C', fontFamily: 'Lato', fontSize: 20, opacity: 0.4 })
-    textC.dx = 10
+    // textC.dx = 10
+    textC.anchor = 'start'
     rescale(textC, board);
 
     const textD = board.text("D", box.position.x, box.position.y, { id: 'text-D', fontFamily: 'Lato', fontSize: 20, opacity: 1 })
     textD.attitude.rotorFromDirections(AB, AC)
     rescale(textD, board);
 
+    const D = board.point([box.position.x, box.position.y], { id: 'D' })
+    textD.anchor = 'middle'
+    board.update()
+
     A.hidden = true
     B.hidden = true
     C.hidden = true
+    D.hidden = true
 
     textC.opacity = 0.4
     textC.strokeWidth = 6
