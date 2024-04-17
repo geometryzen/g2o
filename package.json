@@ -1,6 +1,6 @@
 {
     "name": "g2o",
-    "version": "0.9.132",
+    "version": "0.9.133",
     "description": "Geometric Algebra 2D Graphics Library",
     "exports": {
         ".": {
