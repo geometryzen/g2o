@@ -1,11 +1,12 @@
 import { Child } from './children';
 import { Flag } from './Flag';
-import { SharedInfo } from './renderers/SharedInfo';
+import { Disposable } from './reactive/Disposable';
+import { ZZZ } from './renderers/SharedInfo';
 
 /**
  * The foundational object for the scenegraph.
  */
-export abstract class ElementBase<P> implements Child {
+export abstract class ElementBase<P> implements Child, Disposable {
     /**
      * Gradient, Shape, Stop, and Texture all extend Element.
      */
@@ -18,12 +19,9 @@ export abstract class ElementBase<P> implements Child {
     readonly flags: { [flag: number]: boolean } = {};
 
     /**
-     * TODO: Since every element has an identifier, it should be possible to store this information that is shared
-     * between the model and view in a map elsewhere. I suspect, though, that this is faster.
+     * 
      */
-    viewInfo: SharedInfo = {
-        disposables: []
-    };
+    readonly zzz: ZZZ = new ZZZ();
 
     readonly #id: string;
 
@@ -34,6 +32,10 @@ export abstract class ElementBase<P> implements Child {
     constructor(id: string) {
         this.#id = id;
         this.flagReset(false);
+    }
+
+    dispose(): void {
+        this.zzz.dispose();
     }
 
     flagReset(dirtyFlag = false): this {

@@ -1,3 +1,4 @@
+import { BehaviorSubject } from 'rxjs';
 import { Signal } from 'signal-polyfill';
 import { Anchor } from './anchor';
 import { Collection } from './collection';
@@ -10,6 +11,7 @@ import { IBoard } from './IBoard';
 import { decompose_2d_3x3_matrix } from './math/decompose_2d_3x3_matrix';
 import { G20 } from './math/G20.js';
 import { Disposable } from './reactive/Disposable';
+import { DisposableObservable } from './reactive/Observable';
 import { PositionLike, Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
 import { lerp, mod } from './utils/math';
@@ -28,8 +30,6 @@ export function set_dashes_offset(dashes: number[], offset: number): void {
 
 const min = Math.min;
 const max = Math.max;
-const ceil = Math.ceil;
-const floor = Math.floor;
 
 const vector = new G20();
 
@@ -87,18 +87,26 @@ export class Path extends Shape<Group> implements PathAttributes {
 
     #dashes: number[] = null;
 
-    #collection: Collection<Anchor>;
-    #collection_insert_subscription: Disposable | null = null;
-    #collection_remove_subscription: Disposable | null = null;
+    /**
+     * The hidden variable behind the `vertices` property.
+     */
+    #vertices: Collection<Anchor>;
+    // TODO; These could be unified into e.g. vertices_disposables.
+    #vertices_insert: Disposable | null = null;
+    #vertices_remove: Disposable | null = null;
+    /**
+     * [Q] What exactly is this?
+     * [A] It appears to be a working storage between the model vertices here and those that are used to compute the SVG path `d` attribute.
+     */
+    readonly #anchors: Anchor[] = [];
 
-    readonly #anchor_change_subscriptions = new Map<Anchor, Disposable>();
+    readonly #anchor_change_map = new Map<Anchor, Disposable>();
 
     /**
      * @param vertices A list of {@link Anchor}s that represent the order and coordinates to construct the rendered shape.
      * @param closed Describes whether the path is closed or open.
      * @param curved Describes whether the path automatically calculates bezier handles for each vertex.
      * @param manual Describes whether the developer controls how vertices are plotted or if Two.js automatically plots coordinates based on closed and curved booleans.
-     * @description This is the primary primitive class for creating all drawable shapes in Two.js. Unless specified methods return their instance of `Two.Path` for the purpose of chaining.
      */
     constructor(board: IBoard, vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean, attributes: Partial<PathAttributes> = {}) {
 
@@ -108,19 +116,18 @@ export class Path extends Shape<Group> implements PathAttributes {
         this.flags[Flag.Mask] = false;
         this.flags[Flag.Clip] = false;
 
-        this.viewInfo.type = 'path';
-        this.viewInfo.anchor_vertices = [];
-        this.viewInfo.anchor_collection = [];
+        this.zzz.type = 'path';
+        this.zzz.vertices = [];
+        this.zzz.vertices_subject = new BehaviorSubject(0);
+        this.zzz.vertices$ = new DisposableObservable(this.zzz.vertices_subject.asObservable());
 
         /**
-         * @name Two.Path#closed
-         * @property {Boolean} - Determines whether a final line is drawn between the final point in the `vertices` array and the first point.
+         * Determines whether a final line is drawn between the final point in the `vertices` array and the first point.
          */
         this.closed = !!closed;
 
         /**
-         * @name Two.Path#curved
-         * @property {Boolean} - When the path is `automatic = true` this boolean determines whether the lines between the points are curved or not.
+         * When the path is `automatic = true` this boolean determines whether the lines between the points are curved or not.
          */
         this.curved = !!curved;
 
@@ -261,15 +268,15 @@ export class Path extends Shape<Group> implements PathAttributes {
         const M = shallow ? this.matrix : this.worldMatrix;
 
         let border = (this.strokeWidth || 0) / 2;
-        const l = this.viewInfo.anchor_vertices.length;
+        const l = this.zzz.vertices.length;
 
         if (this.strokeWidth > 0 || (this.stroke && typeof this.stroke === 'string' && !(/(transparent|none)/i.test(this.stroke)))) {
             if (this.matrix.manual) {
                 const { scaleX, scaleY } = decompose_2d_3x3_matrix(M);
-                border = Math.max(scaleX, scaleY) * (this.strokeWidth || 0) / 2;
+                border = max(scaleX, scaleY) * (this.strokeWidth || 0) / 2;
             }
             else {
-                border *= Math.max(this.scaleXY.x, this.scaleXY.y);
+                border *= max(this.scaleXY.x, this.scaleXY.y);
             }
         }
 
@@ -282,10 +289,10 @@ export class Path extends Shape<Group> implements PathAttributes {
 
         for (let i = 0; i < l; i++) {
 
-            const v1 = this.viewInfo.anchor_vertices[i];
+            const v1 = this.zzz.vertices[i];
             // If i = 0, then this "wraps around" to the last vertex. Otherwise, it's the previous vertex.
             // This is important for handling cyclic paths.
-            const v0 = this.viewInfo.anchor_vertices[(i + l - 1) % l];
+            const v0 = this.zzz.vertices[(i + l - 1) % l];
 
             const [v0x, v0y] = M.multiply_vector(v0.x, v0.y);
             const [v1x, v1y] = M.multiply_vector(v1.x, v1.y);
@@ -353,31 +360,50 @@ export class Path extends Shape<Group> implements PathAttributes {
     }
 
     /**
-     * TODO: Bad name. THis function is called for its side effects which are to modify the Anchor.
+     * TODO: Bad name. This function is called for its side effects which are to modify the Anchor.
      * Originally the function appears to promote a Vector and return an Anchor, but this is not used
      * and the call always involves an Anchor.
+     * There is a return value but it is not being used.
      * @param t Percentage value describing where on the {@link Path} to estimate and assign coordinate values.
-     * @param obj - Object to apply calculated x, y to. If none available returns new `Object`.
+     * @param anchor - Object to apply calculated x, y to. If none available returns new `Object`.
      * @description Given a float `t` from 0 to 1, return a point or assign a passed `obj`'s coordinates to that percentage on this {@link Path}'s curve.
      */
-    getPointAt(t: number, obj: Anchor): Anchor {
+    getPointAt(t: number, anchor: Anchor): Anchor {
+        /**
+         * This line proves that the anchor argument is not re-assigned. 
+         */
+        const ank = anchor;
 
-        let ia, ib;
-        let x2, x3, y2, y3;
-        let target = this.length * Math.min(Math.max(t, 0), 1);
-        const length = this.vertices.length;
-        const last = length - 1;
+        /**
+         * target is initialized to the distance along the total `length` determined by `t`.
+         */
+        let target = this.length * min(max(t, 0), 1);
+        /**
+         * The number of vertices.
+         */
+        const Nvs = this.vertices.length;
+        const last = Nvs - 1;
 
-        let a = null;
-        let b = null;
+        let a: Anchor | null = null;
+        let b: Anchor | null = null;
 
-        for (let i = 0, l = this.#lengths.length, sum = 0; i < l; i++) {
-
+        /**
+         * The number of length segments.
+         */
+        const Nseg = this.#lengths.length;
+        /**
+         * Keeps track of the cumulative distance travelled over the segments.
+         */
+        let sum = 0;
+        for (let i = 0; i < Nseg; i++) {
+            // When the target point lies inside the current segment...
             if (sum + this.#lengths[i] >= target) {
-
+                // Determine the anchors that enclose the target...
+                let ia: number;
+                let ib: number;
                 if (this.closed) {
-                    ia = mod(i, length);
-                    ib = mod(i - 1, length);
+                    ia = mod(i, Nvs);
+                    ib = mod(i - 1, Nvs);
                     if (i === 0) {
                         ia = ib;
                         ib = i;
@@ -385,11 +411,14 @@ export class Path extends Shape<Group> implements PathAttributes {
                 }
                 else {
                     ia = i;
-                    ib = Math.min(Math.max(i - 1, 0), last);
+                    ib = min(max(i - 1, 0), last);
                 }
-
                 a = this.vertices.getAt(ia);
                 b = this.vertices.getAt(ib);
+
+                // We'll be breaking out of the loop and target will not be used anymore,
+                // so we could introduce a new variable here. The goal seems to be to re-use t for some lerping
+                // later on, so this new t value must somehow be better?
                 target -= sum;
                 if (this.#lengths[i] !== 0) {
                     t = target / this.#lengths[i];
@@ -397,11 +426,8 @@ export class Path extends Shape<Group> implements PathAttributes {
                 else {
                     t = 0;
                 }
-
                 break;
-
             }
-
             sum += this.#lengths[i];
         }
 
@@ -421,10 +447,10 @@ export class Path extends Shape<Group> implements PathAttributes {
 
         const x1 = b.x;
         const y1 = b.y;
-        x2 = (right || b).x;
-        y2 = (right || b).y;
-        x3 = (left || a).x;
-        y3 = (left || a).y;
+        let x2 = (right || b).x;
+        let y2 = (right || b).y;
+        let x3 = (left || a).x;
+        let y3 = (left || a).y;
         const x4 = a.x;
         const y4 = a.y;
 
@@ -455,35 +481,24 @@ export class Path extends Shape<Group> implements PathAttributes {
         const alx = lerp(t2x, t3x, t);
         const aly = lerp(t2y, t3y, t);
 
-        obj.x = x;
-        obj.y = y;
+        ank.x = x;
+        ank.y = y;
 
-        obj.controls.left.x = brx;
-        obj.controls.left.y = bry;
-        obj.controls.right.x = alx;
-        obj.controls.right.y = aly;
+        ank.controls.left.x = brx;
+        ank.controls.left.y = bry;
+        ank.controls.right.x = alx;
+        ank.controls.right.y = aly;
 
-        if (!(typeof obj.relative === 'boolean') || obj.relative) {
-            obj.controls.left.x -= x;
-            obj.controls.left.y -= y;
-            obj.controls.right.x -= x;
-            obj.controls.right.y -= y;
+        if (!(typeof ank.relative === 'boolean') || ank.relative) {
+            ank.controls.left.x -= x;
+            ank.controls.left.y -= y;
+            ank.controls.right.x -= x;
+            ank.controls.right.y -= y;
         }
 
-        obj.t = t;
+        ank.t = t;
 
-        return obj;
-
-        /*
-        const result = new Anchor(
-            x, y, brx - x, bry - y, alx - x, aly - y,
-            this._curved ? Commands.curve : Commands.line
-        );
- 
-        result.t = t;
- 
-        return result;
-            */
+        return ank;
     }
 
     /**
@@ -491,11 +506,11 @@ export class Path extends Shape<Group> implements PathAttributes {
      */
     plot(): this {
         if (this.curved) {
-            getCurveFromPoints(this.#collection, this.closed);
+            getCurveFromPoints(this.#vertices, this.closed);
             return this;
         }
-        for (let i = 0; i < this.#collection.length; i++) {
-            this.#collection.getAt(i).command = i === 0 ? Commands.move : Commands.line;
+        for (let i = 0; i < this.#vertices.length; i++) {
+            this.#vertices.getAt(i).command = i === 0 ? Commands.move : Commands.line;
         }
         return this;
     }
@@ -617,17 +632,15 @@ export class Path extends Shape<Group> implements PathAttributes {
             }
 
             b = a;
-
         });
 
         this.#length = sum;
         this.flags[Flag.Length] = false;
 
         return this;
-
     }
 
-    update() {
+    override update(): this {
         if (this.flags[Flag.Vertices]) {
 
             if (this.automatic) {
@@ -638,17 +651,13 @@ export class Path extends Shape<Group> implements PathAttributes {
                 this.#updateLength(undefined, true);
             }
 
-            const l = this.#collection.length;
             const closed = this.closed;
 
-            const beginning = Math.min(this.beginning, this.ending);
-            const ending = Math.max(this.beginning, this.ending);
+            const beginning = min(this.beginning, this.ending);
+            const ending = max(this.beginning, this.ending);
 
-            const bid = getIdByLength(this, beginning * this.length);
-            const eid = getIdByLength(this, ending * this.length);
-
-            const low = ceil(bid);
-            const high = floor(eid);
+            const lBound = Math.ceil(getIdByLength(this, beginning * this.length));
+            const uBound = Math.floor(getIdByLength(this, ending * this.length));
 
             {
                 /**
@@ -660,26 +669,31 @@ export class Path extends Shape<Group> implements PathAttributes {
                  */
                 let next: Anchor;
 
-                this.viewInfo.anchor_vertices.length = 0;
+                /**
+                 * The source for the updates are the vertices maintained by derived classes that specialize Path.
+                 */
+                const vertices = this.vertices;
+                this.zzz.vertices.length = 0;
                 {
                     let right: Anchor;
                     let prev: Anchor;
-                    for (let i = 0; i < l; i++) {
+                    const L = vertices.length;
+                    for (let i = 0; i < L; i++) {
 
-                        if (this.viewInfo.anchor_collection.length <= i) {
+                        if (this.#anchors.length <= i) {
                             // Expected to be `relative` anchor points.
-                            this.viewInfo.anchor_collection.push(new Anchor(G20.vector(0, 0)));
+                            this.#anchors.push(new Anchor(G20.vector(0, 0)));
                         }
 
-                        if (i > high && !right) {
+                        if (i > uBound && !right) {
 
-                            const v = this.viewInfo.anchor_collection[i].copy(this.#collection.getAt(i));
+                            const v = this.#anchors[i].copy(vertices.getAt(i));
                             this.getPointAt(ending, v);
-                            v.command = this.viewInfo.anchor_collection[i].command;
-                            this.viewInfo.anchor_vertices.push(v);
+                            v.command = this.#anchors[i].command;
+                            this.zzz.vertices.push(v);
 
                             right = v;
-                            prev = this.#collection.getAt(i - 1);
+                            prev = vertices.getAt(i - 1);
 
                             // Project control over the percentage `t`
                             // of the in-between point
@@ -693,25 +707,23 @@ export class Path extends Shape<Group> implements PathAttributes {
                                 }
 
                                 if (prev.relative) {
-                                    this.viewInfo.anchor_collection[i - 1].controls.right
+                                    this.#anchors[i - 1].controls.right
                                         .copy(prev.controls.right)
                                         .lerp(G20.zero, 1 - v.t);
                                 }
                                 else {
-                                    this.viewInfo.anchor_collection[i - 1].controls.right
+                                    this.#anchors[i - 1].controls.right
                                         .copy(prev.controls.right)
                                         .lerp(prev.origin, 1 - v.t);
                                 }
-
                             }
-
                         }
-                        else if (i >= low && i <= high) {
+                        else if (i >= lBound && i <= uBound) {
 
-                            const v = this.viewInfo.anchor_collection[i].copy(this.#collection.getAt(i));
-                            this.viewInfo.anchor_vertices.push(v);
+                            const v = this.#anchors[i].copy(vertices.getAt(i));
+                            this.zzz.vertices.push(v);
 
-                            if (i === high && contains(this, ending)) {
+                            if (i === uBound && contains(this, ending)) {
                                 right = v;
                                 if (!closed && right.controls) {
                                     if (right.relative) {
@@ -722,7 +734,7 @@ export class Path extends Shape<Group> implements PathAttributes {
                                     }
                                 }
                             }
-                            else if (i === low && contains(this, beginning)) {
+                            else if (i === lBound && contains(this, beginning)) {
                                 left = v;
                                 left.command = Commands.move;
                                 if (!closed && left.controls) {
@@ -734,23 +746,21 @@ export class Path extends Shape<Group> implements PathAttributes {
                                     }
                                 }
                             }
-
                         }
-
                     }
                 }
 
                 // Prepend the trimmed point if necessary.
-                if (low > 0 && !left) {
+                if (lBound > 0 && !left) {
 
-                    const i = low - 1;
+                    const i = lBound - 1;
 
-                    const v = this.viewInfo.anchor_collection[i].copy(this.#collection.getAt(i));
+                    const v = this.#anchors[i].copy(vertices.getAt(i));
                     this.getPointAt(beginning, v);
                     v.command = Commands.move;
-                    this.viewInfo.anchor_vertices.unshift(v);
+                    this.zzz.vertices.unshift(v);
 
-                    next = this.#collection.getAt(i + 1);
+                    next = vertices.getAt(i + 1);
 
                     // Project control over the percentage `t`
                     // of the in-between point
@@ -759,27 +769,26 @@ export class Path extends Shape<Group> implements PathAttributes {
                         v.controls.left.clear();
 
                         if (next.relative) {
-                            this.viewInfo.anchor_collection[i + 1].controls.left
+                            this.#anchors[i + 1].controls.left
                                 .copy(next.controls.left)
                                 .lerp(G20.zero, v.t);
                         }
                         else {
                             vector.copy(next.origin);
-                            this.viewInfo.anchor_collection[i + 1].controls.left
+                            this.#anchors[i + 1].controls.left
                                 .copy(next.controls.left)
                                 .lerp(next.origin, v.t);
                         }
-
                     }
-
                 }
             }
+            this.zzz.vertices_subject.next(this.zzz.vertices_subject.value + 1);
         }
         super.update();
         return this;
     }
 
-    flagReset(dirtyFlag = false): this {
+    override flagReset(dirtyFlag = false): this {
 
         this.flags[Flag.Cap] = dirtyFlag;
         this.flags[Flag.Clip] = dirtyFlag;
@@ -988,32 +997,31 @@ export class Path extends Shape<Group> implements PathAttributes {
     set strokeOpacity(strokeOpacity: number) {
         this.#stroke_opacity.set(strokeOpacity);
     }
-    get vertices() {
-        return this.#collection;
+    get vertices(): Collection<Anchor> {
+        return this.#vertices;
     }
-    set vertices(vertices) {
-
+    set vertices(vertices: Collection<Anchor>) {
         // Remove previous listeners
-        if (this.#collection_insert_subscription) {
-            this.#collection_insert_subscription.dispose();
-            this.#collection_insert_subscription = null;
+        if (this.#vertices_insert) {
+            this.#vertices_insert.dispose();
+            this.#vertices_insert = null;
         }
-        if (this.#collection_remove_subscription) {
-            this.#collection_remove_subscription.dispose();
-            this.#collection_remove_subscription = null;
+        if (this.#vertices_remove) {
+            this.#vertices_remove.dispose();
+            this.#vertices_remove = null;
         }
 
         // Create new Collection with copy of vertices
         if (vertices instanceof Collection) {
-            this.#collection = vertices;
+            this.#vertices = vertices;
         }
         else {
-            this.#collection = new Collection(vertices || []);
+            this.#vertices = new Collection(vertices || []);
         }
 
 
         // Listen for Collection changes and bind / unbind
-        this.#collection_insert_subscription = this.#collection.insert$.subscribe((inserts: Anchor[]) => {
+        this.#vertices_insert = this.vertices.insert$.subscribe((inserts: Anchor[]) => {
             let i = inserts.length;
             while (i--) {
                 const anchor = inserts[i];
@@ -1021,28 +1029,27 @@ export class Path extends Shape<Group> implements PathAttributes {
                     this.flags[Flag.Vertices] = true;
                 });
                 // TODO: Check that we are not already mapped?
-                this.#anchor_change_subscriptions.set(anchor, subscription);
+                this.#anchor_change_map.set(anchor, subscription);
             }
             this.flags[Flag.Vertices] = true;
         });
 
-        this.#collection_remove_subscription = this.#collection.remove$.subscribe((removes: Anchor[]) => {
+        this.#vertices_remove = this.vertices.remove$.subscribe((removes: Anchor[]) => {
             let i = removes.length;
             while (i--) {
                 const anchor = removes[i];
-                const subscription = this.#anchor_change_subscriptions.get(anchor);
+                const subscription = this.#anchor_change_map.get(anchor);
                 subscription.dispose();
-                this.#anchor_change_subscriptions.delete(anchor);
+                this.#anchor_change_map.delete(anchor);
             }
             this.flags[Flag.Vertices] = true;
         });
 
-        // Bind Initial Vertices
-        this.#collection.forEach((anchor: Anchor) => {
+        this.vertices.forEach((anchor: Anchor) => {
             const subscription = anchor.change$.subscribe(() => {
                 this.flags[Flag.Vertices] = true;
             });
-            this.#anchor_change_subscriptions.set(anchor, subscription);
+            this.#anchor_change_map.set(anchor, subscription);
         });
     }
     get vectorEffect(): 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position' {
@@ -1051,13 +1058,5 @@ export class Path extends Shape<Group> implements PathAttributes {
     set vectorEffect(vectorEffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position') {
         this.#vectorEffect = vectorEffect;
         this.flags[Flag.VectorEffect] = true;
-    }
-}
-
-export function FlagVertices(this: Path) {
-    this.flags[Flag.Vertices] = true;
-    this.flags[Flag.Length] = true;
-    if (this.parent) {
-        this.parent.flags[Flag.Length] = true;
     }
 }

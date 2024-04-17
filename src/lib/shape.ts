@@ -167,9 +167,10 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         this.#attitude_change = this.#attitude_change_bind();
     }
 
-    dispose(): void {
+    override dispose(): void {
         this.#position_change_unbind();
         this.#attitude_change_unbind();
+        super.dispose();
     }
 
     #update_matrix(): void {

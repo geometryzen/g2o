@@ -22,7 +22,7 @@ export class LinearGradient extends Gradient {
      */
     constructor(x1 = 0, y1 = 0, x2 = 0, y2 = 0, stops: Stop[] = []) {
         super(stops);
-        this.viewInfo.type = 'linear-gradient';
+        this.zzz.type = 'linear-gradient';
         this.left = new G20(x1, y1);
         this.right = new G20(x2, y2);
     }
@@ -36,15 +36,9 @@ export class LinearGradient extends Gradient {
         return this;
     }
 
-    /**
-     * @name Two.LinearGradient#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
-    flagReset() {
-        this._flagEndPoints = false;
-        super.flagReset.call(this);
+    override flagReset(dirtyFlag = false) {
+        this._flagEndPoints = dirtyFlag;
+        super.flagReset(dirtyFlag);
         return this;
     }
     get left() {

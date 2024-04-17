@@ -128,7 +128,7 @@ export class Sprite extends Rectangle {
         return this;
     }
 
-    update(): this {
+    override update(): this {
 
         const effect = this._texture;
         const cols = this._columns;
@@ -221,7 +221,7 @@ export class Sprite extends Rectangle {
 
     }
 
-    flagReset(dirtyFlag = false) {
+    override flagReset(dirtyFlag = false) {
         this.flags[Flag.Texture] = dirtyFlag;
         this.flags[Flag.Columns] = dirtyFlag;
         this.flags[Flag.Rows] = dirtyFlag;

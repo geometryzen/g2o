@@ -27,7 +27,7 @@ export class RadialGradient extends Gradient {
 
         super(stops);
 
-        this.viewInfo.type = 'radial-gradient';
+        this.zzz.type = 'radial-gradient';
 
         this.center = new G20(cx, cy);
 
@@ -53,9 +53,9 @@ export class RadialGradient extends Gradient {
         return this;
     }
 
-    flagReset() {
+    override flagReset(dirtyFlag=false) {
         this._flagRadius = this._flagCenter = this._flagFocal = false;
-        super.flagReset.call(this);
+        super.flagReset(dirtyFlag);
         return this;
     }
 

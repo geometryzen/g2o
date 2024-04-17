@@ -84,16 +84,17 @@ export class Group extends Shape<Group> {
 
         this.#subscribe_to_shapes();
 
-        this.viewInfo.type = 'group';
+        this.zzz.type = 'group';
     }
 
     hasBoundingClientRect(): boolean {
         return false;
     }
 
-    dispose() {
+    override dispose() {
         this.#unsubscribe_from_shapes();
         this.#shapes.dispose();
+        super.dispose();
     }
 
     #subscribe_to_shapes(): void {
@@ -380,7 +381,7 @@ export class Group extends Shape<Group> {
         return super.update();
     }
 
-    flagReset(dirtyFlag = false) {
+    override flagReset(dirtyFlag = false) {
         if (this.flags[Flag.Additions]) {
             this.additions.length = 0;
             this.flags[Flag.Additions] = dirtyFlag;
@@ -397,7 +398,7 @@ export class Group extends Shape<Group> {
         this.flags[Flag.Beginning] = dirtyFlag;
         this.flags[Flag.Ending] = dirtyFlag;
 
-        super.flagReset.call(this);
+        super.flagReset(dirtyFlag);
 
         return this;
 

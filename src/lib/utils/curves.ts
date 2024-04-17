@@ -251,7 +251,7 @@ export function integrate(f: (x: number) => number, a: number, b: number, n: num
 }
 
 /**
- * Sets the bezier handles on {@link Anchor}s in the `points` list with estimated values to create a catmull-rom like curve. Used by {@link Two.Path#plot}.
+ * Sets the bezier handles on {@link Anchor}s in the `points` list with estimated values to create a catmull-rom like curve.
  */
 export function getCurveFromPoints(points: Collection<Anchor>, closed: boolean): void {
 

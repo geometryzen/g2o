@@ -9,19 +9,31 @@ import { PositionLike } from '../shape';
 import { HALF_PI, TWO_PI } from '../utils/math';
 import { Commands } from '../utils/path-commands';
 
-export interface CircleOptions {
+export interface CircleAPI<X> {
+    position: X;
+    attitude: G20;
+    radius: number;
+}
+
+export interface CircleAttributes extends Partial<CircleAPI<PositionLike>> {
     position?: PositionLike;
     attitude?: G20;
     radius?: number;
     resolution?: number;
 }
 
-export class Circle extends Path {
+export interface CircleProperties extends CircleAPI<G20> {
+    position: G20;
+    attitude: G20;
+    radius: number;
+}
+
+export class Circle extends Path implements CircleProperties {
 
     readonly #radius: BehaviorSubject<number> = new BehaviorSubject(1);
     readonly radius$: Observable<number> = new DisposableObservable(this.#radius.asObservable());
 
-    constructor(board: IBoard, options: CircleOptions = {}) {
+    constructor(board: IBoard, options: CircleAttributes = {}) {
 
         // At least 2 vertices are required for proper circle.
         const amount = options.resolution ? Math.max(options.resolution, 2) : 4;
@@ -44,11 +56,11 @@ export class Circle extends Path {
         this.update();
     }
 
-    dispose(): void {
+    override dispose(): void {
         super.dispose();
     }
 
-    update(): this {
+    override update(): this {
         if (this.flags[Flag.Vertices] || this.flags[Flag.Radius]) {
 
             let length = this.vertices.length;
@@ -114,7 +126,7 @@ export class Circle extends Path {
     }
 }
 
-function path_attributes(attributes: CircleOptions): Partial<PathAttributes> {
+function path_attributes(attributes: CircleAttributes): Partial<PathAttributes> {
     const retval: Partial<PathAttributes> = {
         attitude: attributes.attitude,
         position: attributes.position

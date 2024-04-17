@@ -714,8 +714,6 @@ export const read = {
 
         if (path) {
 
-            // Create a Two.Path from the paths.
-
             let coord = new Anchor();
             let control, coords;
             let commands = path.match(/[a-df-z][^a-df-z]*/ig);
@@ -801,8 +799,6 @@ export const read = {
                 }
 
             });
-
-            // Create the vertices for our Two.Path
 
             _.each(commands, function (command, i) {
 

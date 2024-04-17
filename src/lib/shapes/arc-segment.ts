@@ -8,9 +8,6 @@ import { HALF_PI, mod, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 
 /**
- * @name Two.ArcSegment
- * @class
- * @extends Two.Path
  * @param {Number} [x=0] - The x position of the arc segment.
  * @param {Number} [y=0] - The y position of the arc segment.
  * @param {Number} [innerRadius=0] - The inner radius value of the arc segment.
@@ -275,14 +272,8 @@ export class ArcSegment extends Path {
 
     }
 
-    /**
-     * @name Two.ArcSegment#flagReset
-     * @function
-     * @private
-     * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
-     */
-    flagReset() {
-        super.flagReset.call(this);
+    override flagReset(dirtyFlag=false) {
+        super.flagReset(dirtyFlag);
 
         this._flagStartAngle = this._flagEndAngle
             = this._flagInnerRadius = this._flagOuterRadius = false;

@@ -54,8 +54,9 @@ export abstract class Gradient extends ElementBase<Group> {
         this.change$ = new DisposableObservable(this._change.asObservable());
     }
 
-    dispose(): void {
+    override dispose(): void {
         this.#unset_children();
+        super.dispose();
     }
 
     /**
@@ -113,7 +114,7 @@ export abstract class Gradient extends ElementBase<Group> {
         return this;
     }
 
-    flagReset(dirtyFlag = false): this {
+    override flagReset(dirtyFlag = false): this {
         this._flagSpread = dirtyFlag;
         this._flagUnits = dirtyFlag;
         this._flagStops = dirtyFlag;

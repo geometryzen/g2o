@@ -17,7 +17,7 @@ import { View } from './renderers/View';
 import { ViewFactory } from './renderers/ViewFactory';
 import { PositionLike, Shape } from './shape';
 import { ArcSegment } from './shapes/arc-segment';
-import { Circle, CircleOptions } from './shapes/circle';
+import { Circle, CircleAttributes } from './shapes/circle';
 import { Ellipse, EllipseAttributes } from './shapes/ellipse';
 import { Line } from './shapes/line';
 import { Polygon, PolygonAttributes } from './shapes/Polygon';
@@ -302,7 +302,7 @@ export class Board implements IBoard {
     }
     */
 
-    circle(options: CircleOptions = {}): Circle {
+    circle(options: CircleAttributes = {}): Circle {
         const circle = new Circle(this, options);
         this.add(circle);
         return circle;
@@ -355,7 +355,7 @@ export class Board implements IBoard {
         return polygon;
     }
 
-    rectangle(attributes: Partial<RectangleAttributes>): Rectangle {
+    rectangle(attributes: RectangleAttributes): Rectangle {
         const rect = new Rectangle(this, attributes);
         this.#scene.add(rect);
         rect.strokeWidth = 2;
@@ -416,33 +416,6 @@ export class Board implements IBoard {
         this.#scene.add(arcSegment);
         return arcSegment;
     }
-
-    /*
-    makePoints(p: G20[]): Points {
-
-        const l = arguments.length;
-        let vertices = p;
-
-        if (!Array.isArray(p)) {
-            vertices = [];
-            for (let i = 0; i < l; i += 2) {
-                const x = arguments[i];
-                if (typeof x !== 'number') {
-                    break;
-                }
-                const y = arguments[i + 1];
-                vertices.push(new G20(x, y));
-            }
-        }
-
-        const points = new Points(vertices);
-
-        this.scene.add(points);
-
-        return points;
-
-    }
-    */
 
     makeLinearGradient(x1: number, y1: number, x2: number, y2: number, ...stops: Stop[]): LinearGradient {
         const gradient = new LinearGradient(x1, y1, x2, y2, stops);

@@ -40,7 +40,7 @@ export class Stop extends ElementBase<Gradient> {
      */
     static Index = 0;
 
-    flagReset(dirtyFlag = false) {
+    override flagReset(dirtyFlag = false) {
         this._flagOffset = this._flagColor = this._flagOpacity = dirtyFlag;
         super.flagReset(dirtyFlag);
         return this;

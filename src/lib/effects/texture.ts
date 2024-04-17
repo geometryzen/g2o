@@ -6,7 +6,6 @@ import { G20 } from '../math/G20';
 import { Disposable } from '../reactive/Disposable';
 import { DisposableObservable, Observable } from '../reactive/Observable';
 import { Registry } from '../registry.js';
-import { SharedInfo } from '../renderers/SharedInfo';
 import { root } from '../utils/root';
 
 export function is_canvas(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLCanvasElement {
@@ -72,9 +71,7 @@ export class Texture extends ElementBase<Group> {
 
         super(Constants.Identifier + Constants.uniqueId());
 
-        this.viewInfo = {} as SharedInfo;
-
-        this.viewInfo.type = 'texture';
+        this.zzz.type = 'texture';
 
         this.classList = [];
 
@@ -352,10 +349,10 @@ export class Texture extends ElementBase<Group> {
         return this;
     }
 
-    flagReset() {
+    override flagReset(dirtyFlag = false) {
         this._flagSrc = this._flagImage = this._flagLoaded = this._flagRepeat
             = this._flagVideo = this._flagScale = this._flagOffset = false;
-        super.flagReset.call(this);
+        super.flagReset(dirtyFlag);
         return this;
     }
     get image() {

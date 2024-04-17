@@ -1,15 +1,17 @@
+import { BehaviorSubject } from "rxjs";
 import { Anchor } from "../anchor";
 import { G20 } from "../math/G20";
-import { Disposable } from "../reactive/Disposable";
+import { Disposable, dispose } from "../reactive/Disposable";
+import { Observable } from "../reactive/Observable";
 
 /**
  * Information that is shared between the model and the view.
  */
-export interface SharedInfo {
+export class ZZZ implements Disposable {
     /**
      * 
      */
-    disposables: Disposable[];
+    readonly disposables: Disposable[] = [];
 
     appended?: boolean;
     clip?: SVGClipPathElement;
@@ -36,11 +38,13 @@ export interface SharedInfo {
     offset?: G20;
     opacity?: number;
     scale?: G20;
-    type?: 'group' | 'linear-gradient' | 'path' | 'points' | 'radial-gradient' | 'text' | 'texture';
-    // Used by Path
-    anchor_vertices?: Anchor[];
-    anchor_collection?: Anchor[];
-    // Used by Points
-    vector_vertices?: G20[];
-    vector_collection?: G20[];
+    type?: 'group' | 'linear-gradient' | 'path' | 'radial-gradient' | 'text' | 'texture';
+
+    vertices?: Anchor[];
+    vertices_subject?: BehaviorSubject<number>;
+    vertices$?: Observable<number>;
+
+    dispose(): void {
+        dispose(this.disposables);
+    }
 }

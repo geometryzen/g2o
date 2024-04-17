@@ -123,7 +123,7 @@ export class Text extends Shape<Group> implements TextAttributes {
 
         super(board, shape_attributes_from_text_attributes(attributes));
 
-        this.viewInfo.type = 'text';
+        this.zzz.type = 'text';
 
         this.value = message;
 
@@ -292,7 +292,7 @@ export class Text extends Shape<Group> implements TextAttributes {
         throw new Error('Method not implemented.');
     }
 
-    flagReset(dirtyFlag = false) {
+    override flagReset(dirtyFlag = false) {
         super.flagReset(dirtyFlag);
 
         this.flags[Flag.Value] = dirtyFlag;

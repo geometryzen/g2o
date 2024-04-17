@@ -26,8 +26,8 @@ export class Anchor {
     #largeArcFlag: number;
     #sweepFlag: number;
 
-    readonly #change: BehaviorSubject<this>;
-    readonly change$: Observable<this>;
+    readonly #change: BehaviorSubject<this> = new BehaviorSubject(this);
+    readonly change$: Observable<this> = new DisposableObservable(this.#change.asObservable());
 
     #t: number;
 
@@ -54,9 +54,6 @@ export class Anchor {
         this.#sweepFlag = 1;
 
         this.#t = 0;
-
-        this.#change = new BehaviorSubject(this);
-        this.change$ = new DisposableObservable(this.#change.asObservable());
 
         this.#origin_change = this.origin.change$.subscribe(() => {
             this.#change.next(this);
