@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const textA = board.text("A", A.position.x, A.position.y, {
         id: 'text-A',
         anchor: 'end',
+        dominantBaseline: 'middle',
         dx: -5,
         fontFamily: 'Lato',
         fontSize: 20,
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const textB = board.text("B", B.position.x, B.position.y, {
         id: 'text-B',
         anchor: 'start',
+        dominantBaseline: 'middle',
         dx: 5,
         fontFamily: 'Lato',
         fontSize: 20,
@@ -51,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const textC = board.text("C", C.position.x, C.position.y, {
         id: 'text-C',
         anchor: 'start',
+        dominantBaseline: 'middle',
         dx: 5,
         fontFamily: 'Lato',
         fontSize: 20,
@@ -61,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const textD = board.text("Box", box.position.x, box.position.y, {
         id: 'text-D',
         anchor: 'middle',
+        dominantBaseline: 'middle',
         fontFamily: 'Lato',
         fontSize: 20,
         opacity: 1
@@ -71,12 +75,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const textE = board.text("Ramp", ramp.position.x, ramp.position.y, {
         id: 'text-E',
         anchor: 'middle',
+        dominantBaseline: 'hanging',
         fontFamily: 'Lato',
         fontSize: 20,
         opacity: 1
     })
     textE.attitude.rotorFromDirections(AB, AC)
     rescale(textE, board);
+    board.update()
 
     const D = board.point([box.position.x, box.position.y], { id: 'D' })
     board.update()

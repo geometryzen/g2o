@@ -195,13 +195,6 @@ const svg = {
 
     xlink: 'http://www.w3.org/1999/xlink',
 
-    baselines: {
-        top: 'hanging',
-        middle: 'middle',
-        bottom: 'ideographic',
-        baseline: 'alphabetic'
-    } as const,
-
     // Create an svg namespaced element.
     createElement: function (name: string, attrs: SVGAttributes = {}) {
         const tag = name;
@@ -972,9 +965,6 @@ const svg = {
             if (this._flagLeading) {
                 changed['line-height'] = `${this.leading}`;
             }
-            if (this._flagBaseline) {
-                changed['dominant-baseline'] = svg.baselines[this.baseline]/* || this._baseline*/;
-            }
             const fill = this.fill;
             if (fill && typeof fill === 'object' && fill.viewInfo) {
                 this.viewInfo.hasFillEffect = true;
@@ -1072,6 +1062,24 @@ const svg = {
                     }
                     else {
                         svg.removeAttributes(this.viewInfo.elem, { direction });
+                    }
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
+                // dominant-baseline
+                this.viewInfo.disposables.push(effect(() => {
+                    const dominantBaseline = this.dominantBaseline;
+                    switch (dominantBaseline) {
+                        case 'auto': {
+                            svg.removeAttributes(this.viewInfo.elem, { 'dominant-baseline': dominantBaseline });
+                            break;
+                        }
+                        default: {
+                            svg.setAttributes(this.viewInfo.elem, { 'dominant-baseline': dominantBaseline });
+                            break;
+                        }
                     }
                     return function () {
                         // No cleanup to be done.

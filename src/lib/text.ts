@@ -24,7 +24,7 @@ export type TextDecoration = 'none' | 'underline' | 'overline' | 'line-through';
 
 export interface TextAttributes {
     anchor: 'start' | 'middle' | 'end';
-    baseline: 'bottom' | 'middle' | 'top';
+    dominantBaseline: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top';
     decoration: TextDecoration[];
     direction: 'ltr' | 'rtl';
     dx: number | string;
@@ -61,14 +61,6 @@ export class Text extends Shape<Group> implements TextAttributes {
     /**
      * @deprecated
      */
-    _flagAlignment = true;
-    /**
-     * @deprecated
-     */
-    _flagBaseline = true;
-    /**
-     * @deprecated
-     */
     _flagFill = true;
     /**
      * @deprecated
@@ -99,18 +91,13 @@ export class Text extends Shape<Group> implements TextAttributes {
 
     readonly #anchor = new Signal.State('start' as 'start' | 'middle' | 'end');
 
-    /**
-     * The vertical aligment of the text in relation to {@link Text#position}'s coordinates.
-     * Possible values include `'top'`, `'middle'`, `'bottom'`, and `'baseline'`. Defaults to `'baseline'`.
-     * @nota-bene In headless environments where the canvas is based on {@link https://github.com/Automattic/node-canvas}, `baseline` seems to be the only valid property.
-     */
-    #baseline: 'bottom' | 'middle' | 'top' = 'middle';
+    readonly #dominant_baseline = new Signal.State('auto' as 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top');
 
     readonly #fontStyle = new Signal.State('normal' as 'normal' | 'italic' | 'oblique');
 
     readonly #fontWeight = new Signal.State('normal' as 'normal' | 'bold' | 'bolder' | 'lighter' | number);
 
-    #decoration: Signal.State<TextDecoration[]> = new Signal.State(['none' as TextDecoration]);
+    readonly #decoration: Signal.State<TextDecoration[]> = new Signal.State(['none' as TextDecoration]);
 
     /**
      * determine what direction the text should run.
@@ -179,8 +166,8 @@ export class Text extends Shape<Group> implements TextAttributes {
         if (attributes.anchor) {
             this.anchor = attributes.anchor;
         }
-        if (attributes.baseline) {
-            this.baseline = attributes.baseline;
+        if (attributes.dominantBaseline) {
+            this.dominantBaseline = attributes.dominantBaseline;
         }
         if (attributes.decoration) {
             this.decoration = attributes.decoration;
@@ -304,7 +291,7 @@ export class Text extends Shape<Group> implements TextAttributes {
             }
         }
 
-        switch (this.baseline) {
+        switch (this.dominantBaseline) {
             case 'middle':
                 top = - (height / 2 + border);
                 bottom = height / 2 + border;
@@ -355,7 +342,6 @@ export class Text extends Shape<Group> implements TextAttributes {
         this.flags[Flag.Visible] = dirtyFlag;
         this._flagClip = dirtyFlag;
         this.flags[Flag.ClassName] = dirtyFlag;
-        this._flagBaseline = dirtyFlag;
         return this;
     }
     get anchor(): 'start' | 'middle' | 'end' {
@@ -373,12 +359,25 @@ export class Text extends Shape<Group> implements TextAttributes {
             }
         }
     }
-    get baseline() {
-        return this.#baseline;
+    get dominantBaseline(): 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top' {
+        return this.#dominant_baseline.get();
     }
-    set baseline(v) {
-        this.#baseline = v;
-        this._flagBaseline = true;
+    set dominantBaseline(dominantBaseline: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top') {
+        if (typeof dominantBaseline === 'string') {
+            switch (dominantBaseline) {
+                case 'alphabetic':
+                case 'auto':
+                case 'central':
+                case 'hanging':
+                case 'ideographic':
+                case 'mathematical':
+                case 'middle':
+                case 'text-bottom':
+                case 'text-top': {
+                    this.#dominant_baseline.set(dominantBaseline);
+                }
+            }
+        }
     }
     get clip(): boolean {
         return this.#clip;
