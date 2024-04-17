@@ -22,7 +22,6 @@ export class Group extends Shape<Group> {
     #stroke: string | LinearGradient | RadialGradient | Texture = '#000';
     #strokeWidth = 1.0;
     #opacity = 1.0;
-    #visible = true;
     #cap: 'butt' | 'round' | 'square' = 'round';
     #join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' = 'round';
     #miter = 4;
@@ -37,15 +36,12 @@ export class Group extends Shape<Group> {
     /**
      * Number between zero and one to state the beginning of where the path is rendered.
      * a percentage value that represents at what percentage into all child shapes should the renderer start drawing.
-     * @nota-bene This is great for animating in and out stroked paths in conjunction with {@link Group#ending}.
      */
     #beginning = 0.0;
 
     /**
-     * @name Two.Group#ending
      * Number between zero and one to state the ending of where the path is rendered.
      * a percentage value that represents at what percentage into all child shapes should the renderer start drawing.
-     * @nota-bene This is great for animating in and out stroked paths in conjunction with {@link Group#beginning}.
      */
     #ending = 1.0;
 
@@ -84,7 +80,6 @@ export class Group extends Shape<Group> {
         this.flags[Flag.Length] = false;
         this.flags[Flag.Order] = false;
         this.flags[Flag.Mask] = false;
-        this.flags[Flag.Visible] = false;
 
         this.#shapes = new Children(shapes);
 
@@ -271,7 +266,7 @@ export class Group extends Shape<Group> {
 
             const child = this.children.getAt(i);
 
-            if (!child.visible || child.hasBoundingClientRect()) {
+            if (!(child.visibility === 'visible') || child.hasBoundingClientRect()) {
                 continue;
             }
 
@@ -441,10 +436,7 @@ export class Group extends Shape<Group> {
         }
     }
     /**
-     * @name Two.Group#children
-     * @property {Two.Group.Children}
-     * @description A list of all the children in the scenegraph.
-     * @nota-bene Ther order of this list indicates the order each element is rendered to the screen.
+     * A list of all the children in the scenegraph.
      */
     get children(): Children<Shape<Group>> {
         return this.#shapes;
@@ -575,17 +567,6 @@ export class Group extends Shape<Group> {
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             child.stroke = stroke;
-        }
-    }
-    get visible(): boolean {
-        return this.#visible;
-    }
-    set visible(visible: boolean) {
-        this.flags[Flag.Visible] = this.#visible !== visible || this.flags[Flag.Visible];
-        this.#visible = visible;
-        for (let i = 0; i < this.children.length; i++) {
-            const child = this.children.getAt(i);
-            child.visible = visible;
         }
     }
 }

@@ -37,6 +37,7 @@ export interface BoardAttributes {
 
 export interface PointAttributes {
     id: string;
+    visibility: 'visible' | 'hidden' | 'collapse';
 }
 
 export class Board implements IBoard {
@@ -338,7 +339,7 @@ export class Board implements IBoard {
         const sy = this.height / (y2 - y1);
         const rx = 4 / sx;
         const ry = 4 / sy;
-        const options: Partial<EllipseAttributes> = { position, rx, ry, id: attributes.id }
+        const options: Partial<EllipseAttributes> = { position, rx, ry, id: attributes.id, visibility: attributes.visibility }
         const ellipse = new Ellipse(this, options);
         ellipse.stroke = "#ff0000"
         ellipse.fill = "#ff0000"

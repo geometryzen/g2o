@@ -7,14 +7,12 @@ import { Flag } from '../Flag';
 import { Group } from '../group';
 import { IBoard } from '../IBoard';
 import { compose_2d_3x3_transform } from '../math/compose_2d_3x3_transform';
-import { decompose_2d_3x3_matrix } from '../math/decompose_2d_3x3_matrix';
 import { G20 } from '../math/G20';
 import { Matrix } from '../matrix';
 import { get_dashes_offset, Path } from '../path';
 import { dispose } from '../reactive/Disposable';
 import { DisposableObservable, Observable } from '../reactive/Observable';
 import { Shape } from '../shape';
-import { Points } from '../shapes/points';
 import { Text } from '../text';
 import { effect } from '../utils/effect';
 import { mod, toFixed } from '../utils/math';
@@ -124,7 +122,7 @@ export interface SVGAttributes {
      */
     'transform'?: string;
     'vector-effect'?: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position';
-    'visibility'?: 'visible' | 'hidden';
+    'visibility'?: 'visible' | 'hidden' | 'collapse';
     'width'?: string;
     'x'?: string;
     'x1'?: string;
@@ -164,7 +162,7 @@ export interface SVGProperties {
     'stroke-opacity'?: number;
     'stroke-width'?: number;
     'transform'?: string;
-    'visibility'?: 'visible' | 'hidden';
+    'visibility'?: 'visible' | 'hidden' | 'collapse';
     'width'?: number;
     'x'?: number;
     'y'?: number;
@@ -473,13 +471,6 @@ const svg = {
 
         render: function (this: Group, domElement: DOMElement, svgElement: SVGElement): void {
 
-            // Shortcut for hidden objects.
-            // Doesn't reset the flags, so changes are stored and
-            // applied once the object is visible again
-            if ((!this.visible && !this.flags[Flag.Visible]) || (this.opacity === 0 && !this.flags[Flag.Opacity])) {
-                return;
-            }
-
             this.update();
 
             if (this.viewInfo.elem) {
@@ -490,6 +481,26 @@ const svg = {
                 domElement.appendChild(this.viewInfo.elem);
                 this.viewInfo.disposables.push(this.matrix.change$.subscribe(() => {
                     this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.matrix));
+                }));
+
+                // visibility
+                this.viewInfo.disposables.push(effect(() => {
+                    const visibility = this.visibility;
+                    switch (visibility) {
+                        case 'visible': {
+                            const change: SVGAttributes = { visibility };
+                            svg.removeAttributes(this.viewInfo.elem, change);
+                            break;
+                        }
+                        default: {
+                            const change: SVGAttributes = { visibility };
+                            svg.setAttributes(this.viewInfo.elem, change);
+                            break;
+                        }
+                    }
+                    return function () {
+                        // No cleanup to be done.
+                    }
                 }));
             }
 
@@ -530,10 +541,6 @@ const svg = {
 
             if (this.flags[Flag.Opacity]) {
                 this.viewInfo.elem.setAttribute('opacity', `${this.opacity}`);
-            }
-
-            if (this.flags[Flag.Visible]) {
-                this.viewInfo.elem.setAttribute('display', this.visible ? 'inline' : 'none');
             }
 
             if (this.flags[Flag.ClassName]) {
@@ -697,10 +704,6 @@ const svg = {
                 changed['vector-effect'] = this.vectorEffect;
             }
 
-            if (this.flags[Flag.Visible]) {
-                changed.visibility = this.visible ? 'visible' : 'hidden';
-            }
-
             if (this.flags[Flag.Cap]) {
                 changed['stroke-linecap'] = this.cap;
             }
@@ -797,9 +800,19 @@ const svg = {
 
                 // visibility
                 this.viewInfo.disposables.push(effect(() => {
-                    const change: SVGAttributes = {};
-                    change.visibility = this.visible ? 'visible' : 'hidden';
-                    svg.setAttributes(this.viewInfo.elem, change);
+                    const visibility = this.visibility;
+                    switch (visibility) {
+                        case 'visible': {
+                            const change: SVGAttributes = { visibility };
+                            svg.removeAttributes(this.viewInfo.elem, change);
+                            break;
+                        }
+                        default: {
+                            const change: SVGAttributes = { visibility };
+                            svg.setAttributes(this.viewInfo.elem, change);
+                            break;
+                        }
+                    }
                     return function () {
                         // No cleanup to be done.
                     }
@@ -847,103 +860,6 @@ const svg = {
 
     },
 
-    'points': {
-        render: function (this: Points, domElement: DOMElement, svgElement: SVGElement) {
-
-            // Shortcut for hidden objects.
-            // Doesn't reset the flags, so changes are stored and
-            // applied once the object is visible again
-            if (this._opacity === 0 && !this._flagOpacity) {
-                return this;
-            }
-
-            this.update();
-
-            // Collect any attribute that needs to be changed here
-            const changed: SVGAttributes = {};
-
-            const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
-
-            if (flagMatrix) {
-                changed.transform = transform_value_of_matrix(this.matrix);
-            }
-
-            if (this._flagVertices || this._flagSize || this._flagSizeAttenuation) {
-                let size = this._size;
-                if (!this._sizeAttenuation) {
-                    const { scaleX, scaleY } = decompose_2d_3x3_matrix(this.worldMatrix);
-                    size /= Math.max(scaleX, scaleY);
-                }
-                const vertices = svg.pointsToPathDefinition(this.viewInfo.anchor_collection, size);
-                changed.d = vertices;
-            }
-
-            const fill = this.fill;
-            if (fill && typeof fill === 'object' && fill.viewInfo) {
-                this.viewInfo.hasFillEffect = true;
-                fill.update();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (svg as any)[fill.viewInfo.type].render.call(this.fill, domElement, true);
-            }
-
-            if (this._flagFill) {
-                changed.fill = color_value(fill);
-                if (this.viewInfo.hasFillEffect && typeof fill === 'string') {
-                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
-                    delete this.viewInfo.hasFillEffect;
-                }
-            }
-
-            const stroke = this.stroke;
-            if (stroke && typeof stroke === 'object' && stroke.viewInfo) {
-                this.viewInfo.hasStrokeEffect = true;
-                stroke.update();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (svg as any)[stroke.viewInfo.type].render.call(this.stroke, domElement, true);
-            }
-
-            if (this._flagStroke) {
-                changed.stroke = color_value(stroke);
-                if (this.viewInfo.hasStrokeEffect && typeof stroke === 'string') {
-                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
-                    delete this.viewInfo.hasStrokeEffect;
-                }
-            }
-
-            if (this._flagLinewidth) {
-                changed['stroke-width'] = `${this.strokeWidth}`;
-            }
-
-            if (this._flagOpacity) {
-                changed['stroke-opacity'] = `${this.opacity}`;
-                changed['fill-opacity'] = `${this.opacity}`;
-            }
-
-            if (this.flags[Flag.ClassName]) {
-                changed['class'] = this.classList.join(' ');
-            }
-
-            if (this._flagVisible) {
-                changed.visibility = this._visible ? 'visible' : 'hidden';
-            }
-
-            if (this.dashes && this.dashes.length > 0) {
-                changed['stroke-dasharray'] = this.dashes.join(' ');
-                changed['stroke-dashoffset'] = `${get_dashes_offset(this.dashes) || 0}`;
-            }
-
-            if (!this.viewInfo.elem) {
-                changed.id = this.id;
-                this.viewInfo.elem = svg.createElement('path', changed);
-                domElement.appendChild(this.viewInfo.elem);
-            }
-            else {
-                svg.setAttributes(this.viewInfo.elem, changed);
-            }
-            return this.flagReset();
-        }
-    },
-
     'text': {
         render: function (this: Text, domElement: DOMElement, svgElement: SVGElement) {
 
@@ -961,9 +877,6 @@ const svg = {
 
             if (this.flags[Flag.Size]) {
                 changed['font-size'] = `${this.fontSize}`;
-            }
-            if (this._flagLeading) {
-                changed['line-height'] = `${this.leading}`;
             }
             const fill = this.fill;
             if (fill && typeof fill === 'object' && fill.viewInfo) {
@@ -998,9 +911,6 @@ const svg = {
             }
             if (this.flags[Flag.ClassName]) {
                 changed['class'] = this.classList.join(' ');
-            }
-            if (this.flags[Flag.Visible]) {
-                changed.visibility = this.visible ? 'visible' : 'hidden';
             }
             if (this.dashes && this.dashes.length > 0) {
                 changed['stroke-dasharray'] = this.dashes.join(' ');
@@ -1173,8 +1083,23 @@ const svg = {
                 }));
 
                 // visibility
-                this.viewInfo.disposables.push(this.visible$.subscribe((visible) => {
-                    svg.setAttributes(this.viewInfo.elem, { visibility: visible ? 'visible' : 'hidden' });
+                this.viewInfo.disposables.push(effect(() => {
+                    const visibility = this.visibility;
+                    switch (visibility) {
+                        case 'visible': {
+                            const change: SVGAttributes = { visibility };
+                            svg.removeAttributes(this.viewInfo.elem, change);
+                            break;
+                        }
+                        default: {
+                            const change: SVGAttributes = { visibility };
+                            svg.setAttributes(this.viewInfo.elem, change);
+                            break;
+                        }
+                    }
+                    return function () {
+                        // No cleanup to be done.
+                    }
                 }));
             }
 

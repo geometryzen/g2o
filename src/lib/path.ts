@@ -37,11 +37,12 @@ export interface PathAttributes {
     id: string,
     position: PositionLike;
     attitude: G20;
+    visibility: 'visible' | 'hidden' | 'collapse';
 }
 
 type Color = string | LinearGradient | RadialGradient | Texture;
 
-export class Path extends Shape<Group> {
+export class Path extends Shape<Group> implements PathAttributes {
 
     #length = 0;
 
@@ -57,8 +58,6 @@ export class Path extends Shape<Group> {
     #stroke_opacity = new Signal.State(1.0);
 
     #vectorEffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position' = 'non-scaling-stroke';
-
-    #visible = new Signal.State(true);
 
     /**
      * stroke-linecap
@@ -100,9 +99,9 @@ export class Path extends Shape<Group> {
      * @param manual Describes whether the developer controls how vertices are plotted or if Two.js automatically plots coordinates based on closed and curved booleans.
      * @description This is the primary primitive class for creating all drawable shapes in Two.js. Unless specified methods return their instance of `Two.Path` for the purpose of chaining.
      */
-    constructor(board: IBoard, vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean, options: Partial<PathAttributes> = {}) {
+    constructor(board: IBoard, vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean, attributes: Partial<PathAttributes> = {}) {
 
-        super(board, options);
+        super(board, attributes);
 
         this.flagReset(true);
         this.flags[Flag.Mask] = false;
@@ -125,17 +124,13 @@ export class Path extends Shape<Group> {
         this.curved = !!curved;
 
         /**
-         * @name Two.Path#beginning
-         * @property {Number} - Number between zero and one to state the beginning of where the path is rendered.
-         * @description {@link Two.Path#beginning} is a percentage value that represents at what percentage into the path should the renderer start drawing.
-         * @nota-bene This is great for animating in and out stroked paths in conjunction with {@link Two.Path#ending}.
+         * Number between zero and one to state the beginning of where the path is rendered.
+         * A percentage value that represents at what percentage into the path should the renderer start drawing.
          */
         this.beginning = 0;
 
         /**
          * Number between zero and one to state the ending of where the path is rendered.
-         * @description {@link Two.Path#ending} is a percentage value that represents at what percentage into the path should the renderer start drawing.
-         * @nota-bene This is great for animating in and out stroked paths in conjunction with {@link Two.Path#beginning}.
          */
         this.ending = 1;
 
@@ -158,58 +153,32 @@ export class Path extends Shape<Group> {
         this.strokeOpacity = 1.0;
 
         /**
-         * @name Two.Path#className
-         * @property {String} - A class to be applied to the element to be compatible with CSS styling.
-         * @nota-bene Only available for the SVG renderer.
+         * A class to be applied to the element to be compatible with CSS styling.
          */
         this.className = '';
 
         /**
-         * @name Two.Path#visible
-         * @property {Boolean} - Display the path or not.
-         * @nota-bene For {@link Two.CanvasRenderer} and {@link Two.WebGLRenderer} when set to false all updating is disabled improving performance dramatically with many objects in the scene.
-         */
-        this.visible = true;
-
-        /**
-         * @name Two.Path#cap
-         * @property {String}
          * @see {@link https://www.w3.org/TR/SVG11/painting.html#StrokeLinecapProperty}
          */
         this.cap = 'butt';      // Default of Adobe Illustrator
 
         /**
-         * @name Two.Path#join
-         * @property {String}
          * @see {@link https://www.w3.org/TR/SVG11/painting.html#StrokeLinejoinProperty}
          */
         this.join = 'miter';    // Default of Adobe Illustrator
 
         /**
-         * @name Two.Path#miter
-         * @property {String}
          * @see {@link https://www.w3.org/TR/SVG11/painting.html#StrokeMiterlimitProperty}
          */
         this.miter = 4;         // Default of Adobe Illustrator
 
-        /**
-         * @name Two.Path#vertices
-         * @property {Two.Anchor[]} - An ordered list of anchor points for rendering the path.
-         * @description A list of {@link Two.Anchor} objects that consist of what form the path takes.
-         * @nota-bene The array when manipulating is actually a {@link Two.Collection}.
-         */
         this.vertices = new Collection(vertices);
 
-        /**
-         * @name Two.Path#automatic
-         * @property {Boolean} - Determines whether or not Two.js should calculate curves, lines, and commands automatically for you or to let the developer manipulate them for themselves.
-         */
         this.automatic = !manual;
 
         /**
-         * @name Two.Path#dashes
-         * @property {Number[]} - Array of numbers. Odd indices represent dash length. Even indices represent dash space.
-         * @description A list of numbers that represent the repeated dash length and dash space applied to the stroke of the text.
+         * Array of numbers. Odd indices represent dash length. Even indices represent dash space.
+         * A list of numbers that represent the repeated dash length and dash space applied to the stroke of the text.
          * @see {@link https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray} for more information on the SVG stroke-dasharray attribute.
          */
         this.dashes = [];
@@ -388,7 +357,6 @@ export class Path extends Shape<Group> {
      * and the call always involves an Anchor.
      * @param t Percentage value describing where on the {@link Path} to estimate and assign coordinate values.
      * @param obj - Object to apply calculated x, y to. If none available returns new `Object`.
-     * @returns {Object}
      * @description Given a float `t` from 0 to 1, return a point or assign a passed `obj`'s coordinates to that percentage on this {@link Path}'s curve.
      */
     getPointAt(t: number, obj: Anchor): Anchor {
@@ -518,8 +486,7 @@ export class Path extends Shape<Group> {
     }
 
     /**
-     * @description Based on closed / curved and sorting of vertices plot where all points should be and where the respective handles should be too.
-     * @nota-bene While this method is public it is internally called by {@link Path#update} when `automatic = true`.
+     * Based on closed / curved and sorting of vertices plot where all points should be and where the respective handles should be too.
      */
     plot(): this {
         if (this.curved) {
@@ -825,7 +792,6 @@ export class Path extends Shape<Group> {
         this.flags[Flag.Stroke] = dirtyFlag;
         this.flags[Flag.VectorEffect] = dirtyFlag;
         this.flags[Flag.Vertices] = dirtyFlag;
-        this.flags[Flag.Visible] = dirtyFlag;
 
         super.flagReset(dirtyFlag);
 
@@ -1087,17 +1053,6 @@ export class Path extends Shape<Group> {
     set vectorEffect(vectorEffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position') {
         this.#vectorEffect = vectorEffect;
         this.flags[Flag.VectorEffect] = true;
-    }
-    get visible(): boolean {
-        return this.#visible.get();
-    }
-    set visible(visible: boolean) {
-        if (typeof visible === 'boolean') {
-            if (this.visible !== visible) {
-                this.#visible.set(visible);
-                this.flags[Flag.Visible] = true;
-            }
-        }
     }
 }
 

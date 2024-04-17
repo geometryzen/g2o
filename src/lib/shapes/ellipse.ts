@@ -16,6 +16,7 @@ export interface EllipseAttributes {
     rx: number;
     ry: number;
     resolution: number;
+    visibility: 'visible' | 'hidden' | 'collapse';
 }
 
 export class Ellipse extends Path {
@@ -125,7 +126,8 @@ function path_attributes(attributes: Partial<EllipseAttributes>): Partial<PathAt
     const retval: Partial<PathAttributes> = {
         id: attributes.id,
         attitude: attributes.attitude,
-        position: attributes.position
+        position: attributes.position,
+        visibility: attributes.visibility
     };
     return retval;
 }

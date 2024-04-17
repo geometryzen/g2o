@@ -134,7 +134,7 @@ export class Texture extends ElementBase<Group> {
 
     /**
      * A canonical listing of image data used in a single session of Two.js.
-     * @nota-bene This object is used to cache image data between different textures.
+     * This object is used to cache image data between different textures.
      */
     static ImageRegistry: Registry<HTMLCanvasElement | HTMLImageElement | HTMLVideoElement> = new Registry();
 

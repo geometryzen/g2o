@@ -34,6 +34,5 @@ export enum Flag {
     Vertices,
     Value,
     VectorEffect,
-    Visible,
     Width
 }

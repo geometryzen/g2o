@@ -1,3 +1,4 @@
+import { Signal } from 'signal-polyfill';
 import { Anchor } from './anchor';
 import { Constants } from './constants';
 import { LinearGradient } from './effects/linear-gradient';
@@ -41,6 +42,7 @@ export interface ShapeAttributes {
     id: string;
     position: PositionLike;
     attitude: G20;
+    visibility: 'visible' | 'hidden' | 'collapse';
 }
 
 function ensure_identifier(attributes: Partial<ShapeAttributes>): string {
@@ -52,7 +54,7 @@ function ensure_identifier(attributes: Partial<ShapeAttributes>): string {
     }
 }
 
-export abstract class Shape<P extends Parent> extends ElementBase<P> implements IShape<P> {
+export abstract class Shape<P extends Parent> extends ElementBase<P> implements IShape<P>, ShapeAttributes {
 
     /**
      * The matrix value of the shape's position, rotation, and scale.
@@ -82,6 +84,8 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
 
     #skewY = 0;
 
+    readonly #visibility = new Signal.State('visible' as 'visible' | 'hidden' | 'collapse');
+
     abstract automatic: boolean;
     abstract beginning: number;
     abstract cap: 'butt' | 'round' | 'square';
@@ -95,7 +99,6 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     abstract strokeWidth: number;
     abstract miter: number;
     abstract stroke: string | LinearGradient | RadialGradient | Texture;
-    abstract visible: boolean;
     abstract getBoundingClientRect(shallow?: boolean): { width?: number; height?: number; top?: number; left?: number; right?: number; bottom?: number };
     abstract hasBoundingClientRect(): boolean;
     abstract noFill(): this;
@@ -132,6 +135,10 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         }
         else {
             this.#attitude = new G20(0, 0, 1, 0);
+        }
+
+        if (attributes.visibility) {
+            this.#visibility.set(attributes.visibility);
         }
 
         /**
@@ -238,12 +245,6 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
             this.#position_change = null;
         }
     }
-    get hidden(): boolean {
-        return !this.visible;
-    }
-    set hidden(hidden: boolean) {
-        this.visible = !hidden;
-    }
     get position(): G20 {
         return this.#position;
     }
@@ -325,6 +326,28 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     set matrix(matrix: Matrix) {
         this.#matrix = matrix;
         this.flags[Flag.Matrix] = true;
+    }
+    get visibility(): 'visible' | 'hidden' | 'collapse' {
+        return this.#visibility.get();
+    }
+    set visibility(visible: 'visible' | 'hidden' | 'collapse') {
+        if (typeof visible === 'string') {
+            if (this.visibility !== visible) {
+                this.#visibility.set(visible);
+            }
+        }
+    }
+    show(): this {
+        this.visibility = 'visible';
+        return this;
+    }
+    hide(): this {
+        this.visibility = 'hidden';
+        return this;
+    }
+    collapse(): this {
+        this.visibility = 'collapse';
+        return this;
     }
     get worldMatrix() {
         // TODO: Make DRY

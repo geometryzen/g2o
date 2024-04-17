@@ -25,7 +25,7 @@ export interface IShape<P> extends Child {
     parent: P;
     position: G20;
     stroke: string | LinearGradient | RadialGradient | Texture;
-    visible: boolean;
+    visibility: 'visible' | 'hidden' | 'collapse';
     getBoundingClientRect(shallow?: boolean): { width?: number; height?: number; top?: number; left?: number; right?: number; bottom?: number };
     // const regex = /texture|gradient/i;
     // regex.test(child._renderer.type)

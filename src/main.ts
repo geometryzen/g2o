@@ -7,9 +7,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // viewFactory: new CanvgViewFactory()
     })
 
-    const A = board.point([0.0, 0.0], { id: 'A' })
-    const B = board.point([8.0, 0.0], { id: 'B' })
-    const C = board.point([8.0, 4.0], { id: 'C' })
+    const A = board.point([0.0, 0.0], { id: 'A', visibility: 'hidden' })
+    const B = board.point([8.0, 0.0], { id: 'B', visibility: 'hidden' })
+    const C = board.point([8.0, 4.0], { id: 'C', visibility: 'hidden' })
 
     const AB = B.position.__sub__(A.position);
     const AC = C.position.__sub__(A.position);
@@ -84,13 +84,8 @@ document.addEventListener('DOMContentLoaded', function () {
     rescale(textE, board);
     board.update()
 
-    const D = board.point([box.position.x, box.position.y], { id: 'D' })
+    board.point([box.position.x, box.position.y], { id: 'D', visibility: 'hidden' })
     board.update()
-
-    A.hidden = true
-    B.hidden = true
-    C.hidden = true
-    D.hidden = true
 
     box.stroke = "#FFCC00"
     box.strokeWidth = 4

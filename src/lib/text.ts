@@ -11,14 +11,8 @@ import { get_dashes_offset, set_dashes_offset } from './path';
 import { Disposable } from './reactive/Disposable';
 import { DisposableObservable, Observable } from './reactive/Observable';
 import { Shape, ShapeAttributes } from './shape';
-import { root } from './utils/root';
 
-let canvas: HTMLCanvasElement;
 const min = Math.min, max = Math.max;
-
-if (root.document) {
-    canvas = document.createElement('canvas');
-}
 
 export type TextDecoration = 'none' | 'underline' | 'overline' | 'line-through';
 
@@ -32,14 +26,13 @@ export interface TextAttributes {
     fontFamily: string;
     fill: string | LinearGradient | RadialGradient | Texture;
     id: string;
-    leading: number;
     strokeWidth: number;
     opacity: number;
     fontSize: number;
     stroke: string | LinearGradient | RadialGradient | Texture;
     fontStyle: 'normal' | 'italic' | 'oblique';
     value: string;
-    visible: boolean;
+    visibility: 'visible' | 'hidden' | 'collapse';
     fontWeight: 'normal' | 'bold' | 'bolder' | 'lighter' | number;
 }
 
@@ -54,10 +47,6 @@ export class Text extends Shape<Group> implements TextAttributes {
     length: number;
     miter: number;
 
-    /**
-     * @deprecated
-     */
-    _flagLeading = true;
     /**
      * @deprecated
      */
@@ -83,11 +72,6 @@ export class Text extends Shape<Group> implements TextAttributes {
 
     readonly #fontSize: BehaviorSubject<number> = new BehaviorSubject(13);
     readonly fontSize$: Observable<number> = new DisposableObservable(this.#fontSize.asObservable());
-
-    /**
-     * The height between lines measured from base to base in point space. Defaults to `17`.
-     */
-    #leading = 17;
 
     readonly #anchor = new Signal.State('start' as 'start' | 'middle' | 'end');
 
@@ -125,17 +109,14 @@ export class Text extends Shape<Group> implements TextAttributes {
     readonly #opacity: BehaviorSubject<number> = new BehaviorSubject(1);
     readonly opacity$: Observable<number> = new DisposableObservable(this.#opacity.asObservable());
 
-    readonly #visible: BehaviorSubject<boolean> = new BehaviorSubject(true) as BehaviorSubject<boolean>;
-    readonly visible$: Observable<boolean> = new DisposableObservable(this.#visible.asObservable());
-
     /**
      * The shape whose alpha property becomes a clipping area for the text.
-     * @nota-bene This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
+     * This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
      */
     #mask: Shape<Group> | null = null;
 
     /**
-     * @nota-bene This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
+     * This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
      */
     #clip = false;
 
@@ -187,9 +168,6 @@ export class Text extends Shape<Group> implements TextAttributes {
         if (attributes.fill) {
             this.fill = attributes.fill;
         }
-        if (attributes.leading) {
-            this.leading = attributes.leading;
-        }
         if (attributes.strokeWidth) {
             this.strokeWidth = attributes.strokeWidth;
         }
@@ -208,8 +186,8 @@ export class Text extends Shape<Group> implements TextAttributes {
         if (attributes.value) {
             this.value = attributes.value;
         }
-        if (attributes.visible) {
-            this.visible = attributes.visible;
+        if (typeof attributes.visibility === 'string') {
+            this.visibility = attributes.visibility;
         }
         if (attributes.fontWeight) {
             this.fontWeight = attributes.fontWeight;
@@ -219,27 +197,14 @@ export class Text extends Shape<Group> implements TextAttributes {
     }
 
     static Measure(text: Text): { width: number; height: number } {
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            ctx.font = [text.fontStyle, text.fontWeight, `${text.fontSize}px/${text.leading}px`,
-            text.fontFamily].join(' ');
-            const metrics = ctx.measureText(text.value);
-            const height = metrics.actualBoundingBoxDescent + metrics.actualBoundingBoxAscent;
-            return {
-                width: metrics.width,
-                height
-            };
-        }
-        else {
-            // 0.6 is approximate aspect ratio of a typeface's character width to height.
-            const width = text.value.length * text.fontSize * 0.6;
-            const height = text.leading;
-            // eslint-disable-next-line no-console
-            console.warn('Two.Text: unable to accurately measure text, so using an approximation.');
-            return {
-                width, height
-            };
-        }
+        // 0.6 is approximate aspect ratio of a typeface's character width to height.
+        const width = text.value.length * text.fontSize * 0.6;
+        const height = text.fontSize;
+        // eslint-disable-next-line no-console
+        console.warn('Two.Text: unable to accurately measure text, so using an approximation.');
+        return {
+            width, height
+        };
     }
 
     /**
@@ -335,11 +300,9 @@ export class Text extends Shape<Group> implements TextAttributes {
 
         this.flags[Flag.Value] = dirtyFlag;
         this.flags[Flag.Size] = dirtyFlag;
-        this._flagLeading = dirtyFlag;
         this._flagFill = dirtyFlag;
         this._flagStroke = dirtyFlag;
         this.flags[Flag.Opacity] = dirtyFlag;
-        this.flags[Flag.Visible] = dirtyFlag;
         this._flagClip = dirtyFlag;
         this.flags[Flag.ClassName] = dirtyFlag;
         return this;
@@ -464,13 +427,6 @@ export class Text extends Shape<Group> implements TextAttributes {
             });
         }
     }
-    get leading(): number {
-        return this.#leading;
-    }
-    set leading(leading: number) {
-        this.#leading = leading;
-        this._flagLeading = true;
-    }
     get strokeWidth(): number {
         return this.#stroke_width.get();
     }
@@ -551,15 +507,6 @@ export class Text extends Shape<Group> implements TextAttributes {
                 this.#value.next(value);
                 this.flags[Flag.Value] = true;
             }
-        }
-    }
-    get visible(): boolean {
-        return this.#visible.value;
-    }
-    set visible(visible: boolean) {
-        if (this.visible !== visible) {
-            this.#visible.next(visible);
-            this.flags[Flag.Visible] = true;
         }
     }
     get fontWeight() {

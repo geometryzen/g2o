@@ -11,6 +11,7 @@ export interface RectangleAttributes {
     attitude: G20;
     width: number;
     height: number;
+    visibility: 'visible' | 'hidden' | 'collapse';
 }
 
 export class Rectangle extends Path implements RectangleAttributes, Disposable {
@@ -105,11 +106,12 @@ export class Rectangle extends Path implements RectangleAttributes, Disposable {
     }
 }
 
-function path_options_from_rectangle_options(attributes: Partial<RectangleAttributes>): PathAttributes {
-    const path_options: PathAttributes = {
+function path_options_from_rectangle_options(attributes: Partial<RectangleAttributes>): Partial<PathAttributes> {
+    const retval: Partial<PathAttributes> = {
         id: attributes.id,
         attitude: attributes.attitude,
-        position: attributes.position
+        position: attributes.position,
+        visibility: attributes.visibility
     };
-    return path_options;
+    return retval;
 }

@@ -18,7 +18,7 @@ export class LinearGradient extends Gradient {
      * @param x2 The x position of the second end point of the linear gradient.
      * @param y2 The y position of the second end point of the linear gradient.
      * @param stops A list of {@link Stop}s that contain the gradient fill pattern for the gradient.
-     * @nota-bene The linear gradient lives within the space of the parent object's matrix space.
+     * The linear gradient lives within the space of the parent object's matrix space.
      */
     constructor(x1 = 0, y1 = 0, x2 = 0, y2 = 0, stops: Stop[] = []) {
         super(stops);
