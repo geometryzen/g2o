@@ -27,18 +27,18 @@ export interface TextAttributes {
     baseline: 'bottom' | 'middle' | 'top';
     decoration: TextDecoration[];
     direction: 'ltr' | 'rtl';
-    family: string;
+    fontFamily: string;
     fill: string | LinearGradient | RadialGradient | Texture;
     id: string;
     leading: number;
     strokeWidth: number;
     opacity: number;
-    size: number;
+    fontSize: number;
     stroke: string | LinearGradient | RadialGradient | Texture;
-    style: string;
+    fontStyle: 'normal' | 'italic' | 'oblique';
     value: string;
     visible: boolean;
-    weight: number;
+    fontWeight: 'normal' | 'bold' | 'bolder' | 'lighter' | number;
 }
 
 export class Text extends Shape<Group> implements TextAttributes {
@@ -52,48 +52,65 @@ export class Text extends Shape<Group> implements TextAttributes {
     length: number;
     miter: number;
 
+    /**
+     * @deprecated
+     */
     _flagLeading = true;
-    _flagAlignment = true;
-    _flagBaseline = true;
-    _flagStyle = true;
-    _flagWeight = true;
-    _flagFill = true;
-    _flagStroke = true;
-    _flagLinewidth = true;
-    _flagMask = false;
-    _flagClip = false;
-    _flagDirection = false;
+    /**
+     * @deprecated
+     */
+     _flagAlignment = true;
+    /**
+     * @deprecated
+     */
+     _flagBaseline = true;
+    /**
+     * @deprecated
+     */
+     _flagFill = true;
+    /**
+     * @deprecated
+     */
+     _flagStroke = true;
+    /**
+     * @deprecated
+     */
+     _flagMask = false;
+    /**
+     * @deprecated
+     */
+     _flagClip = false;
 
     readonly #value: BehaviorSubject<string> = new BehaviorSubject('');
     readonly value$: Observable<string> = new DisposableObservable(this.#value.asObservable());
 
-    readonly #family: BehaviorSubject<string> = new BehaviorSubject('sans-serif');
-    readonly family$: Observable<string> = new DisposableObservable(this.#family.asObservable());
+    readonly #fontFamily: BehaviorSubject<string> = new BehaviorSubject('sans-serif');
+    readonly fontFamily$: Observable<string> = new DisposableObservable(this.#fontFamily.asObservable());
 
-    readonly #size: BehaviorSubject<number> = new BehaviorSubject(13);
-    readonly size$: Observable<number> = new DisposableObservable(this.#size.asObservable());
+    readonly #fontSize: BehaviorSubject<number> = new BehaviorSubject(13);
+    readonly fontSize$: Observable<number> = new DisposableObservable(this.#fontSize.asObservable());
 
     /**
      * The height between lines measured from base to base in Two.js point space. Defaults to `17`.
      */
-    _leading = 17;
+    #leading = 17;
 
     /**
      * Alignment of text in relation to {@link Text#position}'s coordinates.
      * Possible values include `'left'`, `'center'`, `'right'`. Defaults to `'center'`.
      */
-    _alignment: 'center' | 'left' | 'right' = 'center';
+    #alignment: 'center' | 'left' | 'right' = 'center';
 
     /**
      * The vertical aligment of the text in relation to {@link Text#position}'s coordinates.
      * Possible values include `'top'`, `'middle'`, `'bottom'`, and `'baseline'`. Defaults to `'baseline'`.
      * @nota-bene In headless environments where the canvas is based on {@link https://github.com/Automattic/node-canvas}, `baseline` seems to be the only valid property.
      */
-    _baseline: 'bottom' | 'middle' | 'top' = 'middle';
+    #baseline: 'bottom' | 'middle' | 'top' = 'middle';
 
-    _style = 'normal';
+    readonly #fontStyle = new Signal.State('normal' as 'normal' | 'italic' | 'oblique');
 
-    _weight = 500;
+    readonly #fontWeight = new Signal.State('normal' as 'normal' | 'bold' | 'bolder' | 'lighter' | number);
 
     #decoration: Signal.State<TextDecoration[]> = new Signal.State(['none' as TextDecoration]);
 
@@ -101,7 +118,7 @@ export class Text extends Shape<Group> implements TextAttributes {
      * determine what direction the text should run.
      * Possibly values are `'ltr'` for left-to-right and `'rtl'` for right-to-left. Defaults to `'ltr'`.
      */
-    _direction: 'ltr' | 'rtl' = 'ltr';
+    readonly #direction = new Signal.State('ltr' as 'ltr' | 'rtl');
 
     readonly #dx = new Signal.State(0 as number | string);
     readonly #dy = new Signal.State(0 as number | string);
@@ -115,7 +132,7 @@ export class Text extends Shape<Group> implements TextAttributes {
     /**
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
-    _stroke: string | LinearGradient | RadialGradient | Texture = 'none';
+    #stroke: string | LinearGradient | RadialGradient | Texture = 'none';
     #stroke_change: Disposable | null = null;
 
     readonly #stroke_width = new Signal.State(1);
@@ -130,14 +147,14 @@ export class Text extends Shape<Group> implements TextAttributes {
      * The shape whose alpha property becomes a clipping area for the text.
      * @nota-bene This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
      */
-    _mask: Shape<Group> | null = null;
+    #mask: Shape<Group> | null = null;
 
     /**
      * @nota-bene This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
      */
     #clip = false;
 
-    _dashes: number[] | null = null;
+    #dashes: number[] | null = null;
 
     constructor(board: IBoard, message: string, x: number = 0, y: number = 0, attributes: Partial<TextAttributes> = {}) {
 
@@ -173,8 +190,8 @@ export class Text extends Shape<Group> implements TextAttributes {
         if (attributes.direction) {
             this.direction = attributes.direction;
         }
-        if (attributes.family) {
-            this.family = attributes.family;
+        if (attributes.fontFamily) {
+            this.fontFamily = attributes.fontFamily;
         }
         if (attributes.fill) {
             this.fill = attributes.fill;
@@ -188,14 +205,14 @@ export class Text extends Shape<Group> implements TextAttributes {
         if (attributes.opacity) {
             this.opacity = attributes.opacity;
         }
-        if (attributes.size) {
-            this.size = attributes.size;
+        if (attributes.fontSize) {
+            this.fontSize = attributes.fontSize;
         }
         if (attributes.stroke) {
             this.stroke = attributes.stroke;
         }
-        if (attributes.style) {
-            this.style = attributes.style;
+        if (attributes.fontStyle) {
+            this.fontStyle = attributes.fontStyle;
         }
         if (attributes.value) {
             this.value = attributes.value;
@@ -203,8 +220,8 @@ export class Text extends Shape<Group> implements TextAttributes {
         if (attributes.visible) {
             this.visible = attributes.visible;
         }
-        if (attributes.weight) {
-            this.weight = attributes.weight;
+        if (attributes.fontWeight) {
+            this.fontWeight = attributes.fontWeight;
         }
 
         this.flagReset(true);
@@ -213,8 +230,8 @@ export class Text extends Shape<Group> implements TextAttributes {
     static Measure(text: Text): { width: number; height: number } {
         if (canvas) {
             const ctx = canvas.getContext('2d');
-            ctx.font = [text._style, text._weight, `${text.size}px/${text._leading}px`,
-            text.family].join(' ');
+            ctx.font = [text.fontStyle, text.fontWeight, `${text.fontSize}px/${text.leading}px`,
+            text.fontFamily].join(' ');
             const metrics = ctx.measureText(text.value);
             const height = metrics.actualBoundingBoxDescent + metrics.actualBoundingBoxAscent;
             return {
@@ -224,7 +241,7 @@ export class Text extends Shape<Group> implements TextAttributes {
         }
         else {
             // 0.6 is approximate aspect ratio of a typeface's character width to height.
-            const width = text.value.length * text.size * 0.6;
+            const width = text.value.length * text.fontSize * 0.6;
             const height = text.leading;
             // eslint-disable-next-line no-console
             console.warn('Two.Text: unable to accurately measure text, so using an approximation.');
@@ -322,35 +339,30 @@ export class Text extends Shape<Group> implements TextAttributes {
         super.flagReset(dirtyFlag);
 
         this.flags[Flag.Value] = dirtyFlag;
-        this.flags[Flag.Family] = dirtyFlag;
         this.flags[Flag.Size] = dirtyFlag;
         this._flagLeading = dirtyFlag;
         this._flagAlignment = dirtyFlag;
         this._flagFill = dirtyFlag;
         this._flagStroke = dirtyFlag;
-        this._flagLinewidth = dirtyFlag;
         this.flags[Flag.Opacity] = dirtyFlag;
         this.flags[Flag.Visible] = dirtyFlag;
         this._flagClip = dirtyFlag;
         this.flags[Flag.ClassName] = dirtyFlag;
         this._flagBaseline = dirtyFlag;
-        this._flagWeight = dirtyFlag;
-        this._flagStyle = dirtyFlag;
-        this._flagDirection = dirtyFlag;
         return this;
     }
     get alignment(): 'center' | 'left' | 'right' {
-        return this._alignment;
+        return this.#alignment;
     }
     set alignment(v: 'center' | 'left' | 'right') {
-        this._alignment = v;
+        this.#alignment = v;
         this._flagAlignment = true;
     }
     get baseline() {
-        return this._baseline;
+        return this.#baseline;
     }
     set baseline(v) {
-        this._baseline = v;
+        this.#baseline = v;
         this._flagBaseline = true;
     }
     get clip(): boolean {
@@ -361,13 +373,13 @@ export class Text extends Shape<Group> implements TextAttributes {
         this._flagClip = true;
     }
     get dashes() {
-        return this._dashes;
+        return this.#dashes;
     }
     set dashes(v) {
         if (typeof get_dashes_offset(v) !== 'number') {
-            set_dashes_offset(v, (this.dashes && get_dashes_offset(this._dashes)) || 0);
+            set_dashes_offset(v, (this.dashes && get_dashes_offset(this.#dashes)) || 0);
         }
-        this._dashes = v;
+        this.#dashes = v;
     }
     get decoration(): TextDecoration[] {
         return this.#decoration.get();
@@ -375,12 +387,17 @@ export class Text extends Shape<Group> implements TextAttributes {
     set decoration(v: TextDecoration[]) {
         this.#decoration.set(v);
     }
-    get direction() {
-        return this._direction;
+    get direction(): 'ltr' | 'rtl' {
+        return this.#direction.get();
     }
-    set direction(v) {
-        this._direction = v;
-        this._flagDirection = true;
+    set direction(direction: 'ltr' | 'rtl') {
+        if (typeof direction === 'string') {
+            if (direction === 'ltr' || direction === 'rtl') {
+                if (this.direction !== direction) {
+                    this.#direction.set(direction);
+                }
+            }
+        }
     }
     get dx(): number | string {
         return this.#dx.get();
@@ -402,14 +419,13 @@ export class Text extends Shape<Group> implements TextAttributes {
             }
         }
     }
-    get family(): string {
-        return this.#family.value;
+    get fontFamily(): string {
+        return this.#fontFamily.value;
     }
-    set family(family: string) {
+    set fontFamily(family: string) {
         if (typeof family === 'string') {
-            if (this.family !== family) {
-                this.#family.next(family);
-                this.flags[Flag.Family] = true;
+            if (this.fontFamily !== family) {
+                this.#fontFamily.next(family);
             }
         }
     }
@@ -434,11 +450,11 @@ export class Text extends Shape<Group> implements TextAttributes {
             });
         }
     }
-    get leading() {
-        return this._leading;
+    get leading(): number {
+        return this.#leading;
     }
-    set leading(v) {
-        this._leading = v;
+    set leading(leading: number) {
+        this.#leading = leading;
         this._flagLeading = true;
     }
     get strokeWidth(): number {
@@ -448,15 +464,14 @@ export class Text extends Shape<Group> implements TextAttributes {
         if (typeof strokeWidth === 'number') {
             if (this.strokeWidth !== strokeWidth) {
                 this.#stroke_width.set(strokeWidth);
-                this._flagLinewidth = true;
             }
         }
     }
     get mask(): Shape<Group> | null {
-        return this._mask;
+        return this.#mask;
     }
     set mask(mask) {
-        this._mask = mask;
+        this.#mask = mask;
         this._flagMask = true;
         if (mask instanceof Shape && !mask.clip) {
             mask.clip = true;
@@ -473,26 +488,26 @@ export class Text extends Shape<Group> implements TextAttributes {
             }
         }
     }
-    get size(): number {
-        return this.#size.value;
+    get fontSize(): number {
+        return this.#fontSize.value;
     }
-    set size(size: number) {
+    set fontSize(size: number) {
         if (typeof size === 'number') {
-            if (this.size !== size) {
-                this.#size.next(size);
+            if (this.fontSize !== size) {
+                this.#fontSize.next(size);
                 this.flags[Flag.Size] = true;
             }
         }
     }
     get stroke() {
-        return this._stroke;
+        return this.#stroke;
     }
     set stroke(f) {
         if (this.#stroke_change) {
             this.#stroke_change.dispose();
             this.#stroke_change = null;
         }
-        this._stroke = f;
+        this.#stroke = f;
         this._flagStroke = true;
         if (this.stroke instanceof Gradient) {
             this.#stroke_change = this.stroke.change$.subscribe(() => {
@@ -505,12 +520,13 @@ export class Text extends Shape<Group> implements TextAttributes {
             });
         }
     }
-    get style() {
-        return this._style;
+    get fontStyle(): 'normal' | 'italic' | 'oblique' {
+        return this.#fontStyle.get();
     }
-    set style(v) {
-        this._style = v;
-        this._flagStyle = true;
+    set fontStyle(fontStyle: 'normal' | 'italic' | 'oblique') {
+        if (typeof fontStyle === 'string') {
+            this.#fontStyle.set(fontStyle);
+        }
     }
     get value(): string {
         return this.#value.value;
@@ -532,12 +548,11 @@ export class Text extends Shape<Group> implements TextAttributes {
             this.flags[Flag.Visible] = true;
         }
     }
-    get weight() {
-        return this._weight;
+    get fontWeight() {
+        return this.#fontWeight.get();
     }
-    set weight(v) {
-        this._weight = v;
-        this._flagWeight = true;
+    set fontWeight(fontWeight) {
+        this.#fontWeight.set(fontWeight);
     }
 }
 

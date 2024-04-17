@@ -27,19 +27,19 @@ document.addEventListener('DOMContentLoaded', function () {
     box.position.y += 1.55
     box.position.x += 2.5
 
-    const textA = board.text("A", A.position.x, A.position.y, { id: 'text-A', family: 'Lato', size: 20, opacity: 0.4 })
+    const textA = board.text("A", A.position.x, A.position.y, { id: 'text-A', fontFamily: 'Lato', fontSize: 20, opacity: 0.4 })
     textA.dx = -10
     rescale(textA, board);
 
-    const textB = board.text("B", B.position.x, B.position.y, { id: 'text-B', family: 'Lato', size: 20, opacity: 0.4 })
+    const textB = board.text("B", B.position.x, B.position.y, { id: 'text-B', fontFamily: 'Lato', fontSize: 20, opacity: 0.4 })
     textB.dx = 10
     rescale(textB, board);
 
-    const textC = board.text("C", C.position.x, C.position.y, { id: 'text-C', family: 'Lato', size: 20, opacity: 0.4 })
+    const textC = board.text("C", C.position.x, C.position.y, { id: 'text-C', fontFamily: 'Lato', fontSize: 20, opacity: 0.4 })
     textC.dx = 10
     rescale(textC, board);
 
-    const textD = board.text("D", box.position.x, box.position.y, { id: 'text-D', family: 'Lato', size: 20, opacity: 1 })
+    const textD = board.text("D", box.position.x, box.position.y, { id: 'text-D', fontFamily: 'Lato', fontSize: 20, opacity: 1 })
     textD.attitude.rotorFromDirections(AB, AC)
     rescale(textD, board);
 
@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function () {
     B.hidden = true
     C.hidden = true
 
-
     textC.opacity = 0.4
     textC.strokeWidth = 6
 
@@ -58,6 +57,12 @@ document.addEventListener('DOMContentLoaded', function () {
     box.strokeOpacity = 0.6
     box.fill = "#FFFF00"
     box.fillOpacity = 0.3
+
+    textA._flagAlignment
+    // textA.fontWeight = 'normal'
+    // textA.direction="rtl"
+    //textA.fontStyle='italic'
+    //textA.strokeWidth=10
 
     // board.update()
 

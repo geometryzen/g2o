@@ -17,8 +17,6 @@ export const CanvasShim: CanvasShimType = {
     isHeadless: false,
 
     /**
-     * @name Two.Utils.shim
-     * @function
      * @param {canvas} canvas - The instanced `Canvas` object provided by `node-canvas`.
      * @param {Image} [Image] - The prototypical `Image` object provided by `node-canvas`. This is only necessary to pass if you're going to load bitmap imagery.
      * @returns {canvas} Returns the instanced canvas object you passed from with additional attributes needed for Two.js.

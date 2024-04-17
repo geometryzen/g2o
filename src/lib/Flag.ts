@@ -7,7 +7,6 @@ export enum Flag {
     Columns,
     EndAngle,
     Ending,
-    Family,
     Fill,
     FrameRate,
     Height,

@@ -119,7 +119,7 @@ export function subdivide<T>(builder: (x: number, y: number) => T, x1: number, y
  * @param {Number} y3 - y position of second anchor point's "left" bezier handle.
  * @param {Number} x4 - x position of second anchor point.
  * @param {Number} y4 - y position of second anchor point.
- * @param {Number} [limit=Two.Utils.Curve.RecursionLimit] - The amount of vertices to create by subdividing.
+ * @param limit The amount of vertices to create by subdividing.
  * @returns {Number} The length of a curve.
  * @description Given 2 points (a, b) and corresponding control point for each, return a float that represents the length of the curve using Gauss-Legendre algorithm. Limit iterations of calculation by `limit`.
  */

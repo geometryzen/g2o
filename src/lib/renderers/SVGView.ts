@@ -91,8 +91,8 @@ export interface SVGAttributes {
     'fill-opacity'?: string;
     'font-family'?: string;
     'font-size'?: string;
-    'font-style'?: string;
-    'font-weight'?: string;
+    'font-style'?: 'normal' | 'italic' | 'oblique';
+    'font-weight'?: 'normal' | 'bold' | 'bolder' | 'lighter' | string;
     'fx'?: string;
     'fy'?: string;
     'gradientUnits'?: 'userSpaceOnUse' | 'objectBoundingBox';
@@ -972,11 +972,8 @@ const svg = {
                 changed.transform = transform_value_of_matrix(this.matrix);
             }
 
-            if (this.flags[Flag.Family]) {
-                changed['font-family'] = this.family;
-            }
             if (this.flags[Flag.Size]) {
-                changed['font-size'] = `${this.size}`;
+                changed['font-size'] = `${this.fontSize}`;
             }
             if (this._flagLeading) {
                 changed['line-height'] = `${this.leading}`;
@@ -986,15 +983,6 @@ const svg = {
             }
             if (this._flagBaseline) {
                 changed['dominant-baseline'] = svg.baselines[this.baseline]/* || this._baseline*/;
-            }
-            if (this._flagStyle) {
-                changed['font-style'] = this.style;
-            }
-            if (this._flagWeight) {
-                changed['font-weight'] = `${this.weight}`;
-            }
-            if (this._flagDirection) {
-                changed['direction'] = this.direction;
             }
             const fill = this.fill;
             if (fill && typeof fill === 'object' && fill.viewInfo) {
@@ -1023,9 +1011,6 @@ const svg = {
                     set_defs_flag_update(get_dom_element_defs(svgElement), true);
                     delete this.viewInfo.hasStrokeEffect;
                 }
-            }
-            if (this._flagLinewidth) {
-                changed['stroke-width'] = `${this.strokeWidth}`;
             }
             if (this.flags[Flag.Opacity]) {
                 changed.opacity = `${this.opacity}`;
@@ -1069,6 +1054,20 @@ const svg = {
                     }
                 }));
 
+                // direction
+                this.viewInfo.disposables.push(effect(() => {
+                    const direction = this.direction;
+                    if (direction === 'rtl') {
+                        svg.setAttributes(this.viewInfo.elem, { direction });
+                    }
+                    else {
+                        svg.removeAttributes(this.viewInfo.elem, { direction });
+                    }
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
                 // dx
                 this.viewInfo.disposables.push(effect(() => {
                     const dx = this.dx;
@@ -1098,13 +1097,41 @@ const svg = {
                 }));
 
                 // font-family
-                this.viewInfo.disposables.push(this.family$.subscribe((family) => {
+                this.viewInfo.disposables.push(this.fontFamily$.subscribe((family) => {
                     svg.setAttributes(this.viewInfo.elem, { 'font-family': family });
                 }));
 
                 // font-size
-                this.viewInfo.disposables.push(this.size$.subscribe((size) => {
+                this.viewInfo.disposables.push(this.fontSize$.subscribe((size) => {
                     svg.setAttributes(this.viewInfo.elem, { 'font-size': `${size}` });
+                }));
+
+                // font-style
+                this.viewInfo.disposables.push(effect(() => {
+                    const change: SVGAttributes = { 'font-style': this.fontStyle };
+                    if (change['font-style'] === 'normal') {
+                        svg.removeAttributes(this.viewInfo.elem, change);
+                    }
+                    else {
+                        svg.setAttributes(this.viewInfo.elem, change);
+                    }
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
+                // font-weight
+                this.viewInfo.disposables.push(effect(() => {
+                    const change: SVGAttributes = { 'font-weight': `${this.fontWeight}` };
+                    if (change['font-weight'] === 'normal') {
+                        svg.removeAttributes(this.viewInfo.elem, change);
+                    }
+                    else {
+                        svg.setAttributes(this.viewInfo.elem, change);
+                    }
+                    return function () {
+                        // No cleanup to be done.
+                    }
                 }));
 
                 // opacity
@@ -1154,10 +1181,10 @@ const svg = {
             // https://code.google.com/p/chromium/issues/detail?id=370951
 
             if (this._flagMask) {
-                if (this._mask) {
+                if (this.mask) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (svg as any)[this._mask.viewInfo.type].render.call(this._mask, domElement);
-                    this.viewInfo.elem.setAttribute('clip-path', 'url(#' + this._mask.id + ')');
+                    (svg as any)[this.mask.viewInfo.type].render.call(this.mask, domElement);
+                    this.viewInfo.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
                 }
                 else {
                     this.viewInfo.elem.removeAttribute('clip-path');
