@@ -85,6 +85,8 @@ export interface SVGAttributes {
      * @see https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/dominant-baseline
      */
     'dominant-baseline'?: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top';
+    'dx'?: string;
+    'dy'?: string;
     'fill'?: string;
     'fill-opacity'?: string;
     'font-family'?: string;
@@ -539,10 +541,6 @@ const svg = {
                 (svg as any)[type].render.call(child, domElement);
             }
 
-            if (this.flags[Flag.Id]) {
-                this.viewInfo.elem.setAttribute('id', this.id);
-            }
-
             if (this.flags[Flag.Opacity]) {
                 this.viewInfo.elem.setAttribute('opacity', `${this.opacity}`);
             }
@@ -600,10 +598,6 @@ const svg = {
                     }
                 }
 
-                if (this.dataset) {
-                    Object.assign(this.viewInfo.elem.dataset, this.dataset);
-                }
-
                 this.flagReset();
             }
         },
@@ -627,10 +621,6 @@ const svg = {
 
             if (flagMatrix) {
                 changed.transform = transform_value_of_matrix(this.matrix);
-            }
-
-            if (this.flags[Flag.Id]) {
-                changed.id = this.id;
             }
 
             if (this.flags[Flag.Vertices]) {
@@ -891,10 +881,6 @@ const svg = {
                 changed.transform = transform_value_of_matrix(this.matrix);
             }
 
-            if (this.flags[Flag.Id]) {
-                changed.id = this.id;
-            }
-
             if (this._flagVertices || this._flagSize || this._flagSizeAttenuation) {
                 let size = this._size;
                 if (!this._sizeAttenuation) {
@@ -984,10 +970,6 @@ const svg = {
             if (flagMatrix) {
                 update_text_matrix(this);
                 changed.transform = transform_value_of_matrix(this.matrix);
-            }
-
-            if (this.flags[Flag.Id]) {
-                changed.id = this.id;
             }
 
             if (this.flags[Flag.Family]) {
@@ -1087,6 +1069,34 @@ const svg = {
                     }
                 }));
 
+                // dx
+                this.viewInfo.disposables.push(effect(() => {
+                    const dx = this.dx;
+                    if (typeof dx === 'number' && dx === 0) {
+                        svg.removeAttributes(this.viewInfo.elem, { dx: "" });
+                    }
+                    else {
+                        svg.setAttributes(this.viewInfo.elem, { dx: `${dx}` });
+                    }
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
+                // dy
+                this.viewInfo.disposables.push(effect(() => {
+                    const dy = this.dy;
+                    if (typeof dy === 'number' && dy === 0) {
+                        svg.removeAttributes(this.viewInfo.elem, { dy: "" });
+                    }
+                    else {
+                        svg.setAttributes(this.viewInfo.elem, { dy: `${dy}` });
+                    }
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
                 // font-family
                 this.viewInfo.disposables.push(this.family$.subscribe((family) => {
                     svg.setAttributes(this.viewInfo.elem, { 'font-family': family });
@@ -1170,10 +1180,6 @@ const svg = {
             }
 
             const changed: SVGAttributes = {};
-
-            if (this.flags[Flag.Id]) {
-                changed.id = this.id;
-            }
 
             if (this._flagEndPoints) {
                 changed.x1 = `${this.left.x}`;
@@ -1261,9 +1267,6 @@ const svg = {
 
             const changed: SVGAttributes = {};
 
-            if (this.flags[Flag.Id]) {
-                changed.id = this.id;
-            }
             if (this._flagCenter) {
                 changed.cx = `${this.center.x}`;
                 changed.cy = `${this.center.y}`;
@@ -1355,10 +1358,6 @@ const svg = {
             const styles: SVGAttributes = { x: '0', y: '0' };
 
             const image = this.image;
-
-            if (this.flags[Flag.Id]) {
-                changed.id = this.id;
-            }
 
             if (this._flagLoaded && this.loaded) {
 

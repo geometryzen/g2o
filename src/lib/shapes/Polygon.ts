@@ -7,7 +7,7 @@ export interface PolygonAttributes {
     id: string;
 }
 
-export class Polygon extends Path {
+export class Polygon extends Path implements PolygonAttributes {
     constructor(board: IBoard, points: PositionLike[] = [], attributes: Partial<PolygonAttributes> = {}) {
 
         const vertices = points

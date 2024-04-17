@@ -1,4 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
+import { Constants } from '../constants';
 import { ElementBase } from '../element';
 import { DisposableObservable, Observable } from '../reactive/Observable';
 import { Gradient } from './gradient';
@@ -23,7 +24,7 @@ export class Stop extends ElementBase<Gradient> {
      */
     constructor(offset?: number, color?: string, opacity?: number) {
 
-        super();
+        super(Constants.Identifier + Constants.uniqueId());
 
         this.offset = typeof offset === 'number' ? offset : Stop.Index <= 0 ? 0 : 1;
 

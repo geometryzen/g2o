@@ -28,20 +28,20 @@ export interface TextAttributes {
     decoration: TextDecoration[];
     direction: 'ltr' | 'rtl';
     family: string;
-    fill: string;
+    fill: string | LinearGradient | RadialGradient | Texture;
     id: string;
     leading: number;
     strokeWidth: number;
     opacity: number;
     size: number;
-    stroke: string;
+    stroke: string | LinearGradient | RadialGradient | Texture;
     style: string;
     value: string;
     visible: boolean;
     weight: number;
 }
 
-export class Text extends Shape<Group> {
+export class Text extends Shape<Group> implements TextAttributes {
     automatic: boolean;
     beginning: number;
     cap: 'butt' | 'round' | 'square';
@@ -102,6 +102,9 @@ export class Text extends Shape<Group> {
      * Possibly values are `'ltr'` for left-to-right and `'rtl'` for right-to-left. Defaults to `'ltr'`.
      */
     _direction: 'ltr' | 'rtl' = 'ltr';
+
+    readonly #dx = new Signal.State(0 as number | string);
+    readonly #dy = new Signal.State(0 as number | string);
 
     /**
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
@@ -378,6 +381,26 @@ export class Text extends Shape<Group> {
     set direction(v) {
         this._direction = v;
         this._flagDirection = true;
+    }
+    get dx(): number | string {
+        return this.#dx.get();
+    }
+    set dx(dx: number | string) {
+        if (typeof dx === 'number' || typeof dx === 'string') {
+            if (this.dx !== dx) {
+                this.#dx.set(dx);
+            }
+        }
+    }
+    get dy(): number | string {
+        return this.#dy.get();
+    }
+    set dy(dy: number | string) {
+        if (typeof dy === 'number' || typeof dy === 'string') {
+            if (this.dy !== dy) {
+                this.#dy.set(dy);
+            }
+        }
     }
     get family(): string {
         return this.#family.value;

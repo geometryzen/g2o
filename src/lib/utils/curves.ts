@@ -6,7 +6,6 @@ import { G20 } from '../math/G20.js';
 import { HALF_PI, mod } from './math.js';
 import { Commands } from './path-commands.js';
 
-
 export const Curve = {
 
     CollinearityEpsilon: Math.pow(10, -30),
@@ -63,8 +62,6 @@ export const Curve = {
 } as const;
 
 /**
- * @name Two.Utils.getComponentOnCubicBezier
- * @function
  * @param {Number} t - Zero-to-one value describing what percentage to calculate.
  * @param {Number} a - The firt point's component value.
  * @param {Number} b - The first point's bezier component value.
@@ -111,12 +108,9 @@ export function subdivide<T>(builder: (x: number, y: number) => T, x1: number, y
     }
 
     return result;
-
 }
 
 /**
- * @name Two.Utils.getCurveLength
- * @function
  * @param {Number} x1 - x position of first anchor point.
  * @param {Number} y1 - y position of first anchor point.
  * @param {Number} x2 - x position of first anchor point's "right" bezier handle.
@@ -161,8 +155,6 @@ export function getCurveLength(x1: number, y1: number, x2: number, y2: number, x
 }
 
 /**
- * @name Two.Utils.getCurveBoundingBox
- * @function
  * @param {Number} x1 - x position of first anchor point.
  * @param {Number} y1 - y position of first anchor point.
  * @param {Number} x2 - x position of first anchor point's "right" bezier handle.
@@ -241,13 +233,6 @@ export function getCurveBoundingBox(x1: number, y1: number, x2: number, y2: numb
 }
 
 /**
- * @name Two.Utils.integrate
- * @function
- * @param {Function} f
- * @param {Number} a
- * @param {Number} b
- * @param {Number} n
- * @description Integration for `getCurveLength` calculations.
  * @see [Paper.js](@link https://github.com/paperjs/paper.js/blob/master/src/util/Numerical.js#L101)
  */
 export function integrate(f: (x: number) => number, a: number, b: number, n: number) {
@@ -266,11 +251,7 @@ export function integrate(f: (x: number) => number, a: number, b: number, n: num
 }
 
 /**
- * @name Two.Utils.getCurveFromPoints
- * @function
- * @param {Anchor[]} points
- * @param {Boolean} closed
- * @description Sets the bezier handles on {@link Anchor}s in the `points` list with estimated values to create a catmull-rom like curve. Used by {@link Two.Path#plot}.
+ * Sets the bezier handles on {@link Anchor}s in the `points` list with estimated values to create a catmull-rom like curve. Used by {@link Two.Path#plot}.
  */
 export function getCurveFromPoints(points: Collection<Anchor>, closed: boolean): void {
 
@@ -289,18 +270,11 @@ export function getCurveFromPoints(points: Collection<Anchor>, closed: boolean):
         getControlPoints(a, b, c);
 
         b.command = i === 0 ? Commands.move : Commands.curve;
-
     }
 }
 
 /**
- * @name Two.Utils.getControlPoints
- * @function
- * @param {Anchor} a
- * @param {Anchor} b
- * @param {Anchor} c
- * @returns {Anchor} Returns the passed middle point `b`.
- * @description Given three coordinates set the control points for the middle, b, vertex based on its position with the adjacent points.
+ * Given three coordinates set the control points for the middle, b, vertex based on its position with the adjacent points.
  */
 export function getControlPoints(a: Anchor, b: Anchor, c: Anchor): Anchor {
 
@@ -351,13 +325,7 @@ export function getControlPoints(a: Anchor, b: Anchor, c: Anchor): Anchor {
 }
 
 /**
- * @name Two.Utils.getReflection
- * @function
- * @param {G20} a
- * @param {G20} b
- * @param {Boolean} [relative=false]
- * @returns {G20} New {@link G20} that represents the reflection point.
- * @description Get the reflection of a point `b` about point `a`. Where `a` is in absolute space and `b` is relative to `a`.
+ * Get the reflection of a point `b` about point `a`. Where `a` is in absolute space and `b` is relative to `a`.
  * @see {@link http://www.w3.org/TR/SVG11/implnote.html#PathElementImplementationNotes}
  */
 export function getReflection(a: G20, b: G20, relative = false): G20 {
@@ -369,17 +337,6 @@ export function getReflection(a: G20, b: G20, relative = false): G20 {
 
 }
 
-/**
- * @name Two.Utils.getAnchorsFromArcData
- * @function
- * @param {G20} center
- * @param {Number} xAxisRotation
- * @param {Number} rx - x radius
- * @param {Number} ry - y radius
- * @param {Number} ts
- * @param {Number} td
- * @param {Boolean} [ccw=false] - Set path traversal to counter-clockwise
- */
 export function getAnchorsFromArcData(center: G20, xAxisRotation: number, rx: number, ry: number, ts: number, td: number, ccw = false): void {
 
     const resolution = Constants.Resolution;
@@ -405,7 +362,5 @@ export function getAnchorsFromArcData(center: G20, xAxisRotation: number, rx: nu
         // TODO: Calculate control points here...
 
         anchors.push(anchor);
-
     }
-
 }

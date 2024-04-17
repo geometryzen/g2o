@@ -43,6 +43,15 @@ export interface ShapeAttributes {
     attitude: G20;
 }
 
+function ensure_identifier(attributes: Partial<ShapeAttributes>): string {
+    if (typeof attributes.id === 'string') {
+        return attributes.id;
+    }
+    else {
+        return Constants.Identifier + Constants.uniqueId();
+    }
+}
+
 export abstract class Shape<P extends Parent> extends ElementBase<P> implements IShape<P> {
 
     /**
@@ -73,12 +82,6 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
 
     #skewY = 0;
 
-    /**
-     * DGH: This is plonked on here by the interpretation of SVG.
-     * It's then copied by the SVG renderer to the dataset property of the renderer elem.
-     */
-    dataset?: DOMStringMap;
-
     abstract automatic: boolean;
     abstract beginning: number;
     abstract cap: 'butt' | 'round' | 'square';
@@ -101,18 +104,11 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
 
     constructor(readonly board: IBoard, attributes: Partial<ShapeAttributes> = {}) {
 
-        super();
+        super(ensure_identifier(attributes));
 
         this.flagReset(true);
 
         this.isShape = true;
-
-        if (attributes.id) {
-            this.id = attributes.id;
-        }
-        else {
-            this.id = Constants.Identifier + Constants.uniqueId();
-        }
 
         /**
          * The transformation matrix of the shape.
@@ -252,13 +248,17 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         return this.#position;
     }
     set position(position: G20) {
-        this.#position.set(position.x, position.y, 0, 0);
+        if (position instanceof G20) {
+            this.#position.copyVector(position);
+        }
     }
-    get attitude() {
+    get attitude(): G20 {
         return this.#attitude;
     }
-    set attitude(attitude) {
-        this.#attitude.set(0, 0, attitude.a, attitude.b);
+    set attitude(attitude: G20) {
+        if (attitude instanceof G20) {
+            this.#attitude.copySpinor(attitude);
+        }
     }
     get scale(): number {
         if (this.#scale.x === this.#scale.y) {

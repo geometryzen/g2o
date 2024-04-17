@@ -70,13 +70,12 @@ export class Texture extends ElementBase<Group> {
      */
     constructor(src?: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement, callback?: () => void) {
 
-        super();
+        super(Constants.Identifier + Constants.uniqueId());
 
         this.viewInfo = {} as SharedInfo;
 
         this.viewInfo.type = 'texture';
 
-        this.id = Constants.Identifier + Constants.uniqueId();
         this.classList = [];
 
         this.loaded = false;

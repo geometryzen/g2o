@@ -1,10 +1,8 @@
 import { Collection } from './collection';
 import { Disposable } from './reactive/Disposable';
-import { Observable } from './reactive/Observable';
 
 export interface Child {
-    id: string;
-    id$: Observable<{ id: string, previous_id: string }>;
+    readonly id: string;
 }
 
 /**
@@ -43,15 +41,6 @@ export class Children<T extends Child> extends Collection<T> {
             if (child && child.id) {
                 this.ids[child.id] = child;
             }
-            this.#child_subscriptions[child.id] = child.id$.subscribe(({ id, previous_id }) => {
-                if (previous_id) {
-                    delete this.ids[previous_id];
-                    // Move the subscription to the new id and delete the reference for the previous_id
-                    this.#child_subscriptions[id] = this.#child_subscriptions[previous_id];
-                    delete this.#child_subscriptions[previous_id];
-                }
-                this.ids[id] = child;
-            });
         }
         return this;
     }

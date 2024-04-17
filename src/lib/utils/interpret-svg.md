@@ -429,7 +429,7 @@ function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyl
             case 'id':
                 elem.id = value;
                 // Overwritten id for non-conflicts on same page SVG documents
-                // TODO: Make this non-descructive
+                // TODO: Make this non-destructive
                 // node.id = value + '-' + Constants.Identifier + 'applied';
                 break;
             case 'class':

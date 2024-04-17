@@ -21,9 +21,6 @@ import { Ellipse, EllipseAttributes } from './shapes/ellipse';
 import { Line } from './shapes/line';
 import { Polygon, PolygonAttributes } from './shapes/Polygon';
 import { Rectangle, RectangleAttributes } from './shapes/rectangle';
-import { RegularPolygon } from './shapes/RegularPolygon';
-import { RoundedRectangle } from './shapes/rounded-rectangle';
-import { Star } from './shapes/star';
 import { Text, TextAttributes } from './text';
 import { Commands } from './utils/path-commands';
 import { dateTime } from './utils/performance';
@@ -393,18 +390,6 @@ export class Board implements IBoard {
         return path;
     }
 
-    makeRoundedRectangle(x: number, y: number, width: number, height: number, sides: number): RoundedRectangle {
-        const rect = new RoundedRectangle(this, x, y, width, height, sides);
-        this.#scene.add(rect);
-        return rect;
-    }
-
-    makeStar(x: number, y: number, outerRadius: number, innerRadius: number, sides: number): Star {
-        const star = new Star(this, x, y, outerRadius, innerRadius, sides);
-        this.#scene.add(star);
-        return star;
-    }
-
     makeCurve(closed: boolean, ...anchors: Anchor[]): Path {
         const curved = true;
         const curve = new Path(this, anchors, closed, curved);
@@ -412,12 +397,6 @@ export class Board implements IBoard {
         curve.center().position.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
         this.#scene.add(curve);
         return curve;
-    }
-
-    makePolygon(x: number, y: number, radius: number, sides: number): RegularPolygon {
-        const poly = new RegularPolygon(this, x, y, radius, sides);
-        this.#scene.add(poly);
-        return poly;
     }
 
     makeArcSegment(x: number, y: number, innerRadius: number, outerRadius: number, startAngle: number, endAngle: number, resolution: number = Constants.Resolution): ArcSegment {

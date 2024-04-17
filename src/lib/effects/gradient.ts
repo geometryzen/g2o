@@ -30,10 +30,8 @@ export abstract class Gradient extends ElementBase<Group> {
 
     constructor(stops?: Stop[]) {
 
-        super();
+        super(Constants.Identifier + Constants.uniqueId());
 
-
-        this.id = Constants.Identifier + Constants.uniqueId();
         this.classList = [];
 
         /**

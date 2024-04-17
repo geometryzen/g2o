@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     polygon.fill = 'rgba(0, 191, 168, 0.33)';
     polygon.stroke = 'rgb(0, 191, 168)';
     polygon.strokeWidth = 2;
-    polygon.center()
+    polygon.center();
 
     const box = board.rectangle({ id: 'box', width: 2, height: 1 })
     box.attitude.rotorFromDirections(AB, AC)
@@ -28,20 +28,19 @@ document.addEventListener('DOMContentLoaded', function () {
     box.position.x += 2.5
 
     const textA = board.text("A", A.position.x, A.position.y, { id: 'text-A', family: 'Lato', size: 20, opacity: 0.4 })
-    textA.position.x = A.position.x - 0.2
+    textA.dx = -10
     rescale(textA, board);
 
     const textB = board.text("B", B.position.x, B.position.y, { id: 'text-B', family: 'Lato', size: 20, opacity: 0.4 })
-    textB.position.x = B.position.x + 0.2
+    textB.dx = 10
     rescale(textB, board);
 
     const textC = board.text("C", C.position.x, C.position.y, { id: 'text-C', family: 'Lato', size: 20, opacity: 0.4 })
-    textC.position.x = C.position.x + 0.2
+    textC.dx = 10
     rescale(textC, board);
 
     const textD = board.text("D", box.position.x, box.position.y, { id: 'text-D', family: 'Lato', size: 20, opacity: 1 })
     textD.attitude.rotorFromDirections(AB, AC)
-    textD.decoration = ['underline']
     rescale(textD, board);
 
     // board.remove(textD)

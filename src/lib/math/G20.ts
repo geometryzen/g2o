@@ -331,9 +331,11 @@ export class G20 {
     }
 
     copySpinor(spinor: Spinor): this {
-        const a = spinor.a;
-        const b = spinor.b;
-        return this.set(0, 0, a, b);
+        return this.set(0, 0, spinor.a, spinor.b);
+    }
+
+    copyVector(vector: Vector): this {
+        return this.set(vector.x, vector.y, 0, 0);
     }
 
     clear(): this {
