@@ -106,9 +106,6 @@ export class Text extends Shape<Group> implements TextAttributes {
 
     readonly #stroke_width = new Signal.State(1);
 
-    readonly #opacity: BehaviorSubject<number> = new BehaviorSubject(1);
-    readonly opacity$: Observable<number> = new DisposableObservable(this.#opacity.asObservable());
-
     /**
      * The shape whose alpha property becomes a clipping area for the text.
      * This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
@@ -302,7 +299,6 @@ export class Text extends Shape<Group> implements TextAttributes {
         this.flags[Flag.Size] = dirtyFlag;
         this._flagFill = dirtyFlag;
         this._flagStroke = dirtyFlag;
-        this.flags[Flag.Opacity] = dirtyFlag;
         this._flagClip = dirtyFlag;
         this.flags[Flag.ClassName] = dirtyFlag;
         return this;
@@ -445,17 +441,6 @@ export class Text extends Shape<Group> implements TextAttributes {
         this._flagMask = true;
         if (mask instanceof Shape && !mask.clip) {
             mask.clip = true;
-        }
-    }
-    get opacity(): number {
-        return this.#opacity.value;
-    }
-    set opacity(opacity: number) {
-        if (typeof opacity === 'number') {
-            if (this.opacity !== opacity) {
-                this.#opacity.next(opacity);
-                this.flags[Flag.Opacity] = true;
-            }
         }
     }
     get fontSize(): number {

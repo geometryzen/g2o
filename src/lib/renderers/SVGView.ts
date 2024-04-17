@@ -483,6 +483,21 @@ const svg = {
                     this.viewInfo.elem.setAttribute('transform', transform_value_of_matrix(this.matrix));
                 }));
 
+                // opacity
+                this.viewInfo.disposables.push(effect(() => {
+                    const opacity = this.opacity;
+                    const change: SVGAttributes = { opacity: `${opacity}` };
+                    if (opacity === 1) {
+                        svg.removeAttributes(this.viewInfo.elem, change);
+                    }
+                    else {
+                        svg.setAttributes(this.viewInfo.elem, change);
+                    }
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
                 // visibility
                 this.viewInfo.disposables.push(effect(() => {
                     const visibility = this.visibility;
@@ -537,10 +552,6 @@ const svg = {
                     }
                 }
                 (svg as any)[type].render.call(child, domElement);
-            }
-
-            if (this.flags[Flag.Opacity]) {
-                this.viewInfo.elem.setAttribute('opacity', `${this.opacity}`);
             }
 
             if (this.flags[Flag.ClassName]) {
@@ -599,12 +610,6 @@ const svg = {
 
     'path': {
         render: function (this: Path, domElement: DOMElement, svgElement: SVGElement) {
-            // Shortcut for hidden objects.
-            // Doesn't reset the flags, so changes are stored and
-            // applied once the object is visible again
-            if (this.strokeOpacity === 0 && !this.flags[Flag.Opacity]) {
-                return this;
-            }
 
             this.update();
 
@@ -691,11 +696,6 @@ const svg = {
                 changed['stroke-width'] = `${this.strokeWidth}`;
             }
 
-            if (this.flags[Flag.Opacity]) {
-                changed['stroke-opacity'] = `${this.strokeOpacity}`;
-                changed['fill-opacity'] = `${this.strokeOpacity}`;
-            }
-
             if (this.flags[Flag.ClassName]) {
                 changed['class'] = this.classList.join(' ');
             }
@@ -757,6 +757,21 @@ const svg = {
                     const change: SVGAttributes = {};
                     change['fill-opacity'] = `${this.fillOpacity}`;
                     svg.setAttributes(this.viewInfo.elem, change);
+                    return function () {
+                        // No cleanup to be done.
+                    }
+                }));
+
+                // opacity
+                this.viewInfo.disposables.push(effect(() => {
+                    const opacity = this.opacity;
+                    const change: SVGAttributes = { opacity: `${opacity}` };
+                    if (opacity === 1) {
+                        svg.removeAttributes(this.viewInfo.elem, change);
+                    }
+                    else {
+                        svg.setAttributes(this.viewInfo.elem, change);
+                    }
                     return function () {
                         // No cleanup to be done.
                     }
@@ -905,9 +920,6 @@ const svg = {
                     set_defs_flag_update(get_dom_element_defs(svgElement), true);
                     delete this.viewInfo.hasStrokeEffect;
                 }
-            }
-            if (this.flags[Flag.Opacity]) {
-                changed.opacity = `${this.opacity}`;
             }
             if (this.flags[Flag.ClassName]) {
                 changed['class'] = this.classList.join(' ');
@@ -1063,8 +1075,18 @@ const svg = {
                 }));
 
                 // opacity
-                this.viewInfo.disposables.push(this.opacity$.subscribe((opacity) => {
-                    svg.setAttributes(this.viewInfo.elem, { opacity: `${opacity}` });
+                this.viewInfo.disposables.push(effect(() => {
+                    const opacity = this.opacity;
+                    const change: SVGAttributes = { opacity: `${opacity}` };
+                    if (opacity === 1) {
+                        svg.removeAttributes(this.viewInfo.elem, change);
+                    }
+                    else {
+                        svg.setAttributes(this.viewInfo.elem, change);
+                    }
+                    return function () {
+                        // No cleanup to be done.
+                    }
                 }));
 
                 // stroke-width

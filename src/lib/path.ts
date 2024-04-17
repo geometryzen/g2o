@@ -34,9 +34,10 @@ const floor = Math.floor;
 const vector = new G20();
 
 export interface PathAttributes {
-    id: string,
-    position: PositionLike;
     attitude: G20;
+    id: string,
+    opacity: number;
+    position: PositionLike;
     visibility: 'visible' | 'hidden' | 'collapse';
 }
 
@@ -788,7 +789,6 @@ export class Path extends Shape<Group> implements PathAttributes {
         this.flags[Flag.Linewidth] = dirtyFlag;
         this.flags[Flag.Mask] = dirtyFlag;
         this.flags[Flag.Miter] = dirtyFlag;
-        this.flags[Flag.Opacity] = dirtyFlag;
         this.flags[Flag.Stroke] = dirtyFlag;
         this.flags[Flag.VectorEffect] = dirtyFlag;
         this.flags[Flag.Vertices] = dirtyFlag;
@@ -909,7 +909,6 @@ export class Path extends Shape<Group> implements PathAttributes {
     }
     set fillOpacity(fillOpacity: number) {
         this.#fill_opacity.set(fillOpacity);
-        this.flags[Flag.Opacity] = true;
     }
     get join(): 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' {
         return this.#join;
@@ -988,7 +987,6 @@ export class Path extends Shape<Group> implements PathAttributes {
     }
     set strokeOpacity(strokeOpacity: number) {
         this.#stroke_opacity.set(strokeOpacity);
-        this.flags[Flag.Opacity] = true;
     }
     get vertices() {
         return this.#collection;

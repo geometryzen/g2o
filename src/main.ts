@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const AC = C.position.__sub__(A.position);
     const N = AC.normalize().__mul__(G20.I);
 
-    const ramp = board.polygon([A, B, C], { id: 'ramp' });
+    const ramp = board.polygon([A, B, C], { id: 'ramp', opacity: 0.8 });
     ramp.fill = 'rgba(0, 191, 168, 0.33)';
     ramp.stroke = 'rgb(0, 191, 168)';
     ramp.strokeWidth = 2;
@@ -66,8 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
         anchor: 'middle',
         dominantBaseline: 'middle',
         fontFamily: 'Lato',
-        fontSize: 20,
-        opacity: 1
+        fontSize: 20
     })
     textD.attitude.rotorFromDirections(AB, AC)
     rescale(textD, board);
@@ -77,8 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
         anchor: 'middle',
         dominantBaseline: 'hanging',
         fontFamily: 'Lato',
-        fontSize: 20,
-        opacity: 1
+        fontSize: 20
     })
     textE.attitude.rotorFromDirections(AB, AC)
     rescale(textE, board);

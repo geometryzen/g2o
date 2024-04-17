@@ -40,6 +40,7 @@ export interface Parent {
 
 export interface ShapeAttributes {
     id: string;
+    opacity: number;
     position: PositionLike;
     attitude: G20;
     visibility: 'visible' | 'hidden' | 'collapse';
@@ -84,6 +85,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
 
     #skewY = 0;
 
+    readonly #opacity = new Signal.State(1);
     readonly #visibility = new Signal.State('visible' as 'visible' | 'hidden' | 'collapse');
 
     abstract automatic: boolean;
@@ -135,6 +137,10 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         }
         else {
             this.#attitude = new G20(0, 0, 1, 0);
+        }
+
+        if (typeof attributes.opacity === 'number') {
+            this.#opacity.set(attributes.opacity);
         }
 
         if (attributes.visibility) {
@@ -326,6 +332,18 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     set matrix(matrix: Matrix) {
         this.#matrix = matrix;
         this.flags[Flag.Matrix] = true;
+    }
+    get opacity(): number {
+        return this.#opacity.get();
+    }
+    set opacity(opacity: number) {
+        if (typeof opacity === 'number') {
+            if (opacity >= 0 && opacity <= 1) {
+                if (this.opacity !== opacity) {
+                    this.#opacity.set(opacity);
+                }
+            }
+        }
     }
     get visibility(): 'visible' | 'hidden' | 'collapse' {
         return this.#visibility.get();

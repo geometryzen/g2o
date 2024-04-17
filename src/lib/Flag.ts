@@ -17,7 +17,6 @@ export enum Flag {
     Mask,
     Matrix,
     Miter,
-    Opacity,
     Order,
     Radius,
     Rows,

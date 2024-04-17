@@ -5,6 +5,7 @@ import { PositionLike, position_from_like } from "../shape";
 
 export interface PolygonAttributes {
     id: string;
+    opacity: number;
 }
 
 export class Polygon extends Path implements PolygonAttributes {
@@ -24,6 +25,7 @@ export class Polygon extends Path implements PolygonAttributes {
 function path_attributes(attributes: Partial<PolygonAttributes>): Partial<PathAttributes> {
     const retval: Partial<PathAttributes> = {
         id: attributes.id,
+        opacity: attributes.opacity
     };
     return retval;
 }

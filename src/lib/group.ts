@@ -21,7 +21,6 @@ export class Group extends Shape<Group> {
     #fill: string | LinearGradient | RadialGradient | Texture = '#fff';
     #stroke: string | LinearGradient | RadialGradient | Texture = '#000';
     #strokeWidth = 1.0;
-    #opacity = 1.0;
     #cap: 'butt' | 'round' | 'square' = 'round';
     #join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' = 'round';
     #miter = 4;
@@ -394,7 +393,6 @@ export class Group extends Shape<Group> {
 
         this.flags[Flag.Order] = dirtyFlag;
         this.flags[Flag.Mask] = dirtyFlag;
-        this.flags[Flag.Opacity] = dirtyFlag;
 
         this.flags[Flag.Beginning] = dirtyFlag;
         this.flags[Flag.Ending] = dirtyFlag;
@@ -546,17 +544,6 @@ export class Group extends Shape<Group> {
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             child.miter = v;
-        }
-    }
-    get opacity(): number {
-        return this.#opacity;
-    }
-    set opacity(opacity: number) {
-        if (typeof opacity === 'number') {
-            if (this.opacity !== opacity) {
-                this.#opacity = opacity;
-                this.flags[Flag.Opacity] = true;
-            }
         }
     }
     get stroke(): string | LinearGradient | RadialGradient | Texture {

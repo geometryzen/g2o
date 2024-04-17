@@ -7,6 +7,7 @@ import { Disposable } from '../reactive/Disposable';
 
 export interface RectangleAttributes {
     id: string;
+    opacity: number;
     position: G20;
     attitude: G20;
     width: number;
@@ -110,6 +111,7 @@ function path_options_from_rectangle_options(attributes: Partial<RectangleAttrib
     const retval: Partial<PathAttributes> = {
         id: attributes.id,
         attitude: attributes.attitude,
+        opacity: attributes.opacity,
         position: attributes.position,
         visibility: attributes.visibility
     };
