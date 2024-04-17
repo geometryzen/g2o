@@ -561,8 +561,13 @@ export class G20 {
         return a * a + x * x + y * y - b * b;
     }
 
-    normalize(): this {
-        return this.divByNumber(this.magnitude());
+    normalize(): G20 {
+        if (this.isLocked()) {
+            return lock(this.clone().normalize());
+        }
+        else {
+            return this.divByNumber(this.magnitude());
+        }
     }
 
     distanceTo(v: G20): number {
@@ -767,10 +772,6 @@ export class G20 {
             this.#change.next(this);
         }
         return this;
-    }
-
-    setLength(l: number): this {
-        return this.normalize().mulByNumber(l);
     }
 
     equals(v: G20, eps?: number): boolean {
