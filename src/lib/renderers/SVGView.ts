@@ -1,3 +1,4 @@
+import { effect } from '@geometryzen/reactive';
 import { BehaviorSubject } from 'rxjs';
 import { Anchor } from '../anchor';
 import { is_color_provider, serialize_color } from '../effects/ColorProvider';
@@ -12,7 +13,6 @@ import { dispose } from '../reactive/Disposable';
 import { DisposableObservable, Observable } from '../reactive/Observable';
 import { Shape } from '../shape';
 import { Text } from '../text';
-import { effect } from '../utils/effect';
 import { mod, toFixed } from '../utils/math';
 import { Commands } from '../utils/path-commands';
 import { View } from './View';

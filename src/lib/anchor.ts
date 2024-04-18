@@ -1,7 +1,7 @@
-import { BehaviorSubject } from 'rxjs';
 import { G20 } from './math/G20';
 import { Disposable } from './reactive/Disposable';
-import { DisposableObservable, Observable } from './reactive/Observable';
+import { Observable } from './reactive/Observable';
+import { variable } from './reactive/variable';
 import { Commands } from './utils/path-commands';
 
 export class Anchor {
@@ -26,8 +26,8 @@ export class Anchor {
     #largeArcFlag: number;
     #sweepFlag: number;
 
-    readonly #change: BehaviorSubject<this> = new BehaviorSubject(this);
-    readonly change$: Observable<this> = new DisposableObservable(this.#change.asObservable());
+    readonly #change = variable(this)
+    readonly change$: Observable<this> = this.#change.asObservable();
 
     #t: number;
 
@@ -56,13 +56,13 @@ export class Anchor {
         this.#t = 0;
 
         this.#origin_change = this.origin.change$.subscribe(() => {
-            this.#change.next(this);
+            this.#change.set(this);
         });
         this.#a_change = this.controls.left.change$.subscribe(() => {
-            this.#change.next(this);
+            this.#change.set(this);
         });
         this.#b_change = this.controls.right.change$.subscribe(() => {
-            this.#change.next(this);
+            this.#change.set(this);
         });
     }
 

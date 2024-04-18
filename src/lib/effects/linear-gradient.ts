@@ -1,7 +1,7 @@
+import { effect } from '@geometryzen/reactive';
 import { G20 } from '../math/G20';
 import { Disposable } from '../reactive/Disposable';
 import { get_dom_element_defs, svg, SVGAttributes } from '../renderers/SVGView';
-import { effect } from '../utils/effect';
 import { ColorProvider } from './ColorProvider';
 import { Gradient } from './gradient';
 import { Stop } from './stop';

@@ -1,5 +1,5 @@
+import { atomic } from '@geometryzen/reactive';
 import { BehaviorSubject } from 'rxjs';
-import { Signal } from 'signal-polyfill';
 import { Color, is_color_provider } from './effects/ColorProvider';
 import { Flag } from './Flag';
 import { Group } from './group';
@@ -70,24 +70,24 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
     readonly #fontSize: BehaviorSubject<number> = new BehaviorSubject(13);
     readonly fontSize$: Observable<number> = new DisposableObservable(this.#fontSize.asObservable());
 
-    readonly #anchor = new Signal.State('start' as 'start' | 'middle' | 'end');
+    readonly #anchor = atomic('start' as 'start' | 'middle' | 'end');
 
-    readonly #dominant_baseline = new Signal.State('auto' as 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top');
+    readonly #dominant_baseline = atomic('auto' as 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top');
 
-    readonly #fontStyle = new Signal.State('normal' as 'normal' | 'italic' | 'oblique');
+    readonly #fontStyle = atomic('normal' as 'normal' | 'italic' | 'oblique');
 
-    readonly #fontWeight = new Signal.State('normal' as 'normal' | 'bold' | 'bolder' | 'lighter' | number);
+    readonly #fontWeight = atomic('normal' as 'normal' | 'bold' | 'bolder' | 'lighter' | number);
 
-    readonly #decoration: Signal.State<TextDecoration[]> = new Signal.State(['none' as TextDecoration]);
+    readonly #decoration = atomic(['none' as TextDecoration]);
 
     /**
      * determine what direction the text should run.
      * Possibly values are `'ltr'` for left-to-right and `'rtl'` for right-to-left. Defaults to `'ltr'`.
      */
-    readonly #direction = new Signal.State('ltr' as 'ltr' | 'rtl');
+    readonly #direction = atomic('ltr' as 'ltr' | 'rtl');
 
-    readonly #dx = new Signal.State(0 as number | string);
-    readonly #dy = new Signal.State(0 as number | string);
+    readonly #dx = atomic(0 as number | string);
+    readonly #dy = atomic(0 as number | string);
 
     /**
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
@@ -101,7 +101,7 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
     #stroke: Color = 'none';
     #stroke_change: Disposable | null = null;
 
-    readonly #stroke_width = new Signal.State(1);
+    readonly #stroke_width = atomic(1);
 
     /**
      * The shape whose alpha property becomes a clipping area for the text.

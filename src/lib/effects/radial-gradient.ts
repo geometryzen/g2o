@@ -1,8 +1,7 @@
-import { Signal } from 'signal-polyfill';
+import { atomic, effect } from '@geometryzen/reactive';
 import { G20 } from '../math/G20';
 import { Disposable } from '../reactive/Disposable';
 import { get_dom_element_defs, svg, SVGAttributes } from '../renderers/SVGView';
-import { effect } from '../utils/effect';
 import { ColorProvider } from './ColorProvider';
 import { Gradient } from './gradient';
 import { Stop } from './stop';
@@ -12,7 +11,7 @@ export class RadialGradient extends Gradient<'radial-gradient'> implements Color
     _flagCenter = false;
     _flagFocal = false;
 
-    readonly #radius = new Signal.State(null as number | null);
+    readonly #radius = atomic(null as number | null);
 
     #center: G20 | null = null;
     #center_change: Disposable | null = null;

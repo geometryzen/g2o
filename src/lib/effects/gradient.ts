@@ -1,5 +1,5 @@
+import { atomic } from '@geometryzen/reactive';
 import { BehaviorSubject } from 'rxjs';
-import { Signal } from "signal-polyfill";
 import { Children } from '../children';
 import { Constants } from '../constants';
 import { ElementBase } from '../element';
@@ -19,12 +19,12 @@ export abstract class Gradient<T extends 'linear-gradient' | 'radial-gradient'> 
      * Indicates what happens if the gradient starts or ends inside the bounds of the target rectangle.
      * @see {@link https://www.w3.org/TR/SVG11/pservers.html#LinearGradientElementSpreadMethodAttribute} for more information
      */
-    readonly #spreadMethod = new Signal.State('pad' as 'pad' | 'reflect' | 'repeat');
+    readonly #spreadMethod = atomic('pad' as 'pad' | 'reflect' | 'repeat');
     /**
      * Indicates how coordinate values are interpreted by the renderer.
      * @see {@link https://www.w3.org/TR/SVG11/pservers.html#RadialGradientElementGradientUnitsAttribute} for more information
      */
-    readonly #units = new Signal.State('userSpaceOnUse' as 'userSpaceOnUse' | 'objectBoundingBox');
+    readonly #units = atomic('userSpaceOnUse' as 'userSpaceOnUse' | 'objectBoundingBox');
 
     _stops: Children<Stop> | null = null;
     _stops_insert: Disposable | null = null;

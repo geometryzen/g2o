@@ -1,4 +1,4 @@
-import { Signal } from 'signal-polyfill';
+import { atomic, effect } from '@geometryzen/reactive';
 import { Anchor } from '../anchor';
 import { Collection } from '../collection';
 import { Flag } from '../Flag';
@@ -7,7 +7,6 @@ import { G20 } from '../math/G20';
 import { Path, PathAttributes } from '../path';
 import { Disposable, dispose } from '../reactive/Disposable';
 import { PositionLike } from '../shape';
-import { effect } from '../utils/effect';
 
 export interface RectangleAPI<X> {
     id: string;
@@ -43,8 +42,8 @@ export class Rectangle extends Path implements RectangleProperties, Disposable {
 
     readonly #disposables: Disposable[] = [];
 
-    readonly #width = new Signal.State(1);
-    readonly #height = new Signal.State(1);
+    readonly #width = atomic(1);
+    readonly #height = atomic(1);
 
     readonly #origin = G20.zero.clone();
 

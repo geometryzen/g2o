@@ -35,5 +35,4 @@ export { Line } from './lib/shapes/line';
 export { Polygon, PolygonAttributes } from './lib/shapes/Polygon';
 export { Rectangle, RectangleAttributes, RectangleProperties } from './lib/shapes/rectangle';
 export { Text, TextAttributes, TextDecoration } from './lib/text';
-export { effect } from './lib/utils/effect';
 

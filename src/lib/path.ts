@@ -1,5 +1,5 @@
+import { atomic } from '@geometryzen/reactive';
 import { BehaviorSubject } from 'rxjs';
-import { Signal } from 'signal-polyfill';
 import { Anchor } from './anchor';
 import { Collection } from './collection';
 import { Color, is_color_provider } from './effects/ColorProvider';
@@ -45,14 +45,14 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
 
     readonly #lengths: number[] = [];
 
-    #fill = new Signal.State('#fff' as Color);
+    #fill = atomic('#fff' as Color);
     #fill_change: Disposable | null = null;
-    #fill_opacity = new Signal.State(1.0);
+    #fill_opacity = atomic(1.0);
 
-    #stroke = new Signal.State('#000' as Color);
+    #stroke = atomic('#000' as Color);
     #stroke_change: Disposable | null = null;
-    #stroke_width = new Signal.State(1);
-    #stroke_opacity = new Signal.State(1.0);
+    #stroke_width = atomic(1);
+    #stroke_opacity = atomic(1.0);
 
     #vectorEffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position' = 'non-scaling-stroke';
 

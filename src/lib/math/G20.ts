@@ -1,6 +1,7 @@
+import { atomic } from '@geometryzen/reactive';
 import { BehaviorSubject } from 'rxjs';
-import { Signal } from "signal-polyfill";
 import { DisposableObservable, Observable } from '../reactive/Observable';
+import { State } from '../reactive/types';
 import { Bivector } from './Bivector';
 import { gauss } from './gauss';
 import { rotorFromDirections } from './rotorFromDirections';
@@ -54,10 +55,10 @@ function isScalar(m: G20): boolean {
  */
 export class G20 {
 
-    #a: Signal.State<number>;
-    #x: Signal.State<number>;
-    #y: Signal.State<number>;
-    #b: Signal.State<number>;
+    #a: State<number>;
+    #x: State<number>;
+    #y: State<number>;
+    #b: State<number>;
 
     #lock = UNLOCKED;
 
@@ -65,10 +66,10 @@ export class G20 {
     readonly change$: Observable<this>;
 
     constructor(x = 0, y = 0, a = 0, b = 0) {
-        this.#x = new Signal.State(x);
-        this.#y = new Signal.State(y);
-        this.#a = new Signal.State(a);
-        this.#b = new Signal.State(b);
+        this.#x = atomic(x);
+        this.#y = atomic(y);
+        this.#a = atomic(a);
+        this.#b = atomic(b);
 
         this.#change = new BehaviorSubject(this);
         this.change$ = new DisposableObservable(this.#change.asObservable());
