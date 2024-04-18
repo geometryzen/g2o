@@ -28,7 +28,6 @@ export enum Flag {
     Stops,
     Stroke,
     Subtractions,
-    Texture,
     Units,
     Vertices,
     Value,

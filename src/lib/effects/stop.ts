@@ -4,7 +4,7 @@ import { ElementBase } from '../element';
 import { DisposableObservable, Observable } from '../reactive/Observable';
 import { Gradient } from './gradient';
 
-export class Stop extends ElementBase<Gradient> {
+export class Stop extends ElementBase<Gradient<'linear-gradient' | 'radial-gradient'>, 'stop'> {
 
     _flagOffset = true;
     _flagOpacity = true;

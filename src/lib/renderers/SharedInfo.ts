@@ -7,7 +7,7 @@ import { Observable } from "../reactive/Observable";
 /**
  * Information that is shared between the model and the view.
  */
-export class ZZZ implements Disposable {
+export class ZZZ<T> implements Disposable {
     /**
      * 
      */
@@ -38,7 +38,7 @@ export class ZZZ implements Disposable {
     offset?: G20;
     opacity?: number;
     scale?: G20;
-    type?: 'group' | 'linear-gradient' | 'path' | 'radial-gradient' | 'text' | 'texture';
+    type?: T;
 
     vertices?: Anchor[];
     vertices_subject?: BehaviorSubject<number>;

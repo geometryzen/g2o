@@ -6,7 +6,9 @@ import { G20 } from '../math/G20';
 import { Disposable } from '../reactive/Disposable';
 import { DisposableObservable, Observable } from '../reactive/Observable';
 import { Registry } from '../registry.js';
+import { get_dom_element_defs, serialize_svg_props, svg, SVGAttributes, SVGProperties } from '../renderers/SVGView';
 import { root } from '../utils/root';
+import { ColorProvider } from './ColorProvider';
 
 export function is_canvas(element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement): element is HTMLCanvasElement {
     const tagName = (element && element.nodeName && element.nodeName.toLowerCase());
@@ -36,7 +38,7 @@ if (root.document) {
     anchor = document.createElement('a');
 }
 
-export class Texture extends ElementBase<Group> {
+export class Texture extends ElementBase<Group, 'texture'> implements ColorProvider {
 
     _flagSrc = false;
     _flagImage = false;
@@ -105,6 +107,123 @@ export class Texture extends ElementBase<Group> {
         }
 
         this.update();
+    }
+
+    render(svgElement: SVGElement): this {
+
+        const changed: SVGProperties = {};
+
+        const styles: SVGAttributes = { x: '0', y: '0' };
+
+        const image = this.image;
+
+        if (this._flagLoaded && this.loaded) {
+
+            if (is_canvas(image)) {
+                styles.href = image.toDataURL('image/png');
+            }
+            else if (is_img(image)) {
+                styles.href = this.src;
+            }
+            else if (is_video(image)) {
+                styles.href = this.src;
+            }
+            else {
+                throw new Error();
+            }
+        }
+
+        if (this._flagOffset || this._flagLoaded || this._flagScale) {
+
+            changed.x = this.offset.x;
+            changed.y = this.offset.y;
+
+            if (image) {
+
+                changed.x -= image.width / 2;
+                changed.y -= image.height / 2;
+
+                if (this.scale instanceof G20) {
+                    changed.x *= this.scale.x;
+                    changed.y *= this.scale.y;
+                }
+                else {
+                    changed.x *= this.scale;
+                    changed.y *= this.scale;
+                }
+            }
+
+            if (changed.x > 0) {
+                changed.x *= - 1;
+            }
+            if (changed.y > 0) {
+                changed.y *= - 1;
+            }
+
+        }
+
+        if (this._flagScale || this._flagLoaded || this._flagRepeat) {
+
+            changed.width = 0;
+            changed.height = 0;
+
+            if (image) {
+
+                changed.width = image.width;
+                styles.width = `${image.width}`;
+                changed.height = image.height;
+                styles.height = `${image.height}`;
+
+                // TODO: Hack / Band-aid
+                switch (this._repeat) {
+                    case 'no-repeat':
+                        changed.width += 1;
+                        changed.height += 1;
+                        break;
+                }
+
+                if (this.scale instanceof G20) {
+                    changed.width *= this.scale.x;
+                    changed.height *= this.scale.y;
+                }
+                else {
+                    changed.width *= this.scale;
+                    changed.height *= this.scale;
+                }
+            }
+
+        }
+
+        if (this._flagScale || this._flagLoaded) {
+            if (!this.zzz.image) {
+                this.zzz.image = svg.createElement('image', styles) as SVGImageElement;
+            }
+            else {
+                svg.setAttributes(this.zzz.image, styles);
+            }
+        }
+
+        if (!this.zzz.elem) {
+
+            changed.id = this.id;
+            changed.patternUnits = 'userSpaceOnUse';
+            // TODO: Complete serializwer?
+            this.zzz.elem = svg.createElement('pattern', serialize_svg_props(changed));
+        }
+        else if (Object.keys(changed).length !== 0) {
+            svg.setAttributes(this.zzz.elem, serialize_svg_props(changed));
+        }
+
+        if (this.zzz.elem.parentNode === null) {
+            get_dom_element_defs(svgElement).appendChild(this.zzz.elem);
+        }
+
+        if (this.zzz.elem && this.zzz.image && !this.zzz.appended) {
+            this.zzz.elem.appendChild(this.zzz.image);
+            this.zzz.appended = true;
+        }
+
+        return this.flagReset();
     }
 
     /**

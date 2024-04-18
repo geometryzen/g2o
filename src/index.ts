@@ -2,12 +2,11 @@ export { Anchor } from './lib/anchor';
 export { Board, BoardAttributes, PointAttributes } from './lib/board';
 export { Child, Children } from './lib/children';
 export { Collection } from './lib/collection';
+export { Color, ColorProvider } from './lib/effects/ColorProvider';
 export { Gradient } from './lib/effects/gradient';
 export { LinearGradient } from './lib/effects/linear-gradient';
 export { RadialGradient } from './lib/effects/radial-gradient';
-export { Sprite, SpriteOptions } from './lib/effects/sprite';
 export { Stop } from './lib/effects/stop';
-export { Texture } from './lib/effects/texture';
 export { ElementBase } from './lib/element';
 export { circle_intersection } from './lib/euclid/euclid';
 export { Group, GroupAttributes } from './lib/group';
@@ -35,7 +34,7 @@ export { Circle, CircleAttributes, CircleProperties } from './lib/shapes/circle'
 export { Ellipse, EllipseAttributes } from './lib/shapes/ellipse';
 export { Line } from './lib/shapes/line';
 export { Polygon, PolygonAttributes } from './lib/shapes/Polygon';
-export { Rectangle, RectangleAttributes } from './lib/shapes/rectangle';
+export { Rectangle, RectangleAttributes, RectangleProperties } from './lib/shapes/rectangle';
 export { Text, TextAttributes, TextDecoration } from './lib/text';
 export { effect } from './lib/utils/effect';
 

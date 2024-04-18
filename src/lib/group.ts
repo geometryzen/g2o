@@ -1,7 +1,5 @@
 import { Children } from './children';
-import { LinearGradient } from './effects/linear-gradient';
-import { RadialGradient } from './effects/radial-gradient';
-import { Texture } from './effects/texture';
+import { Color } from './effects/ColorProvider';
 import { Flag } from './Flag';
 import { IBoard } from './IBoard';
 import { IShape } from './IShape';
@@ -9,17 +7,17 @@ import { Disposable } from './reactive/Disposable';
 import { Parent, Shape, ShapeAttributes } from './shape';
 
 export interface IGroup extends Parent {
-    remove(...shapes: Shape<IGroup>[]): void;
+    remove(...shapes: Shape<IGroup, unknown>[]): void;
 }
 
 export interface GroupAttributes {
     id: string;
 }
 
-export class Group extends Shape<Group> {
+export class Group extends Shape<Group, 'group'> {
 
-    #fill: string | LinearGradient | RadialGradient | Texture = '#fff';
-    #stroke: string | LinearGradient | RadialGradient | Texture = '#000';
+    #fill: Color = '#fff';
+    #stroke: Color = '#000';
     #strokeWidth = 1.0;
     #cap: 'butt' | 'round' | 'square' = 'round';
     #join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' = 'round';
@@ -49,9 +47,9 @@ export class Group extends Shape<Group> {
     /**
      * The shape to clip from a group's rendering.
      */
-    #mask: Shape<Group> = null;
+    #mask: Shape<Group, string> = null;
 
-    #shapes: Children<Shape<Group>>;
+    #shapes: Children<Shape<Group, string>>;
     #shapes_insert: Disposable | null = null;
     #shapes_remove: Disposable | null = null;
     #shapes_order: Disposable | null = null;
@@ -61,13 +59,13 @@ export class Group extends Shape<Group> {
     /**
      * An automatically updated list of shapes that need to be appended to the renderer's scenegraph.
      */
-    readonly additions: Shape<Group>[] = [];
+    readonly additions: Shape<Group, string>[] = [];
     /**
      * An automatically updated list of children that need to be removed from the renderer's scenegraph.
      */
-    readonly subtractions: Shape<Group>[] = [];
+    readonly subtractions: Shape<Group, string>[] = [];
 
-    constructor(board: IBoard, shapes: Shape<Group>[] = [], attributes: Partial<GroupAttributes> = {}) {
+    constructor(board: IBoard, shapes: Shape<Group, string>[] = [], attributes: Partial<GroupAttributes> = {}) {
 
         super(board, shape_attributes(attributes));
 
@@ -98,13 +96,13 @@ export class Group extends Shape<Group> {
     }
 
     #subscribe_to_shapes(): void {
-        this.#shapes_insert = this.#shapes.insert$.subscribe((inserts: Shape<Group>[]) => {
+        this.#shapes_insert = this.#shapes.insert$.subscribe((inserts: Shape<Group, string>[]) => {
             for (const shape of inserts) {
                 update_shape_group(shape, this);
             }
         });
 
-        this.#shapes_remove = this.#shapes.remove$.subscribe((removes: Shape<Group>[]) => {
+        this.#shapes_remove = this.#shapes.remove$.subscribe((removes: Shape<Group, string>[]) => {
             for (const shape of removes) {
                 update_shape_group(shape, null);
             }
@@ -225,7 +223,7 @@ export class Group extends Shape<Group> {
         return search(this);
     }
 
-    add(...shapes: Shape<Group>[]) {
+    add(...shapes: Shape<Group, string>[]) {
         for (let i = 0; i < shapes.length; i++) {
             const child = shapes[i];
             if (!(child && child.id)) {
@@ -240,7 +238,7 @@ export class Group extends Shape<Group> {
         return this;
     }
 
-    remove(...shapes: Shape<Group>[]) {
+    remove(...shapes: Shape<Group, string>[]) {
         for (let i = 0; i < shapes.length; i++) {
             const shape = shapes[i];
             shape.dispose();
@@ -437,7 +435,7 @@ export class Group extends Shape<Group> {
     /**
      * A list of all the children in the scenegraph.
      */
-    get children(): Children<Shape<Group>> {
+    get children(): Children<Shape<Group, string>> {
         return this.#shapes;
     }
     set children(children) {
@@ -484,10 +482,10 @@ export class Group extends Shape<Group> {
             }
         }
     }
-    get fill(): string | LinearGradient | RadialGradient | Texture {
+    get fill(): Color {
         return this.#fill;
     }
-    set fill(fill: string | LinearGradient | RadialGradient | Texture) {
+    set fill(fill: Color) {
         this.#fill = fill;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
@@ -527,10 +525,10 @@ export class Group extends Shape<Group> {
             child.strokeWidth = strokeWidth;
         }
     }
-    get mask(): Shape<Group> {
+    get mask(): Shape<Group, string> {
         return this.#mask;
     }
-    set mask(mask: Shape<Group>) {
+    set mask(mask: Shape<Group, string>) {
         this.#mask = mask;
         this.flags[Flag.Mask] = true;
         if (!mask.clip) {
@@ -547,10 +545,10 @@ export class Group extends Shape<Group> {
             child.miter = v;
         }
     }
-    get stroke(): string | LinearGradient | RadialGradient | Texture {
+    get stroke(): Color {
         return this.#stroke;
     }
-    set stroke(stroke: string | LinearGradient | RadialGradient | Texture) {
+    set stroke(stroke: Color) {
         this.#stroke = stroke;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
@@ -567,7 +565,7 @@ export class Group extends Shape<Group> {
 //  * and updates parent-child relationships
 //  * Calling with one arguments will simply remove the parenting
 //  */
-export function update_shape_group(child: Shape<Group>, parent?: Group) {
+export function update_shape_group(child: Shape<Group, string>, parent?: Group) {
 
     const previous_parent = child.parent;
 

@@ -155,7 +155,7 @@ function update_rectangle_vertices(sizeX: number, sizeY: number, origin: G20, cl
     vertices.getAt(1).origin.set(x, -y).sub(origin);
     vertices.getAt(2).origin.set(x, y).sub(origin);
     vertices.getAt(3).origin.set(-x, y).sub(origin);
-    // FYI: Sprite and ImageSequence have 4 verts
+
     const anchor = vertices.getAt(4);
     if (anchor) {
         anchor.origin.set(-x, -y).sub(origin);

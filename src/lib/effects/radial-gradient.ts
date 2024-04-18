@@ -1,19 +1,24 @@
+import { Signal } from 'signal-polyfill';
 import { G20 } from '../math/G20';
 import { Disposable } from '../reactive/Disposable';
+import { get_dom_element_defs, svg, SVGAttributes } from '../renderers/SVGView';
+import { effect } from '../utils/effect';
+import { ColorProvider } from './ColorProvider';
 import { Gradient } from './gradient';
 import { Stop } from './stop';
 
-export class RadialGradient extends Gradient {
+export class RadialGradient extends Gradient<'radial-gradient'> implements ColorProvider {
 
-    _flagRadius = false;
     _flagCenter = false;
     _flagFocal = false;
 
-    #radius = 0;
+    readonly #radius = new Signal.State(null as number | null);
+
     #center: G20 | null = null;
-    #center_change_subscription: Disposable | null = null;
+    #center_change: Disposable | null = null;
+
     #focal: G20 | null = null;
-    #focal_change_subscription: Disposable | null = null;
+    #focal_change: Disposable | null = null;
 
     /**
      * @param cx The x position of the origin of the radial gradient.
@@ -43,18 +48,101 @@ export class RadialGradient extends Gradient {
         }
     }
 
+    render(svgElement: SVGElement): this {
+        const changed: SVGAttributes = {};
+
+        if (this._flagCenter) {
+            changed.cx = `${this.center.x}`;
+            changed.cy = `${this.center.y}`;
+        }
+        if (this._flagFocal) {
+            changed.fx = `${this.focal.x}`;
+            changed.fy = `${this.focal.y}`;
+        }
+
+        if (this.zzz.elem) {
+            svg.setAttributes(this.zzz.elem, changed);
+        }
+        else {
+            changed.id = this.id;
+            this.zzz.elem = svg.createElement('radialGradient', changed);
+            // gradientUnits
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = {};
+                change.gradientUnits = this.units;
+                svg.setAttributes(this.zzz.elem, change);
+            }));
+            // radius
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = {};
+                change.r = `${this.radius}`;
+                svg.setAttributes(this.zzz.elem, change);
+            }));
+            // spreadMethod
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = {};
+                change.spreadMethod = this.spreadMethod;
+                svg.setAttributes(this.zzz.elem, change);
+            }));
+        }
+
+        if (this.zzz.elem.parentNode === null) {
+            get_dom_element_defs(svgElement).appendChild(this.zzz.elem);
+        }
+
+        if (this._flagStops) {
+
+            const lengthChanged = this.zzz.elem.childNodes.length !== this.stops.length;
+
+            if (lengthChanged) {
+                while (this.zzz.elem.lastChild) {
+                    this.zzz.elem.removeChild(this.zzz.elem.lastChild);
+                }
+            }
+
+            for (let i = 0; i < this.stops.length; i++) {
+
+                const stop = this.stops[i];
+                const attrs: SVGAttributes = {};
+
+                if (stop._flagOffset) {
+                    attrs.offset = 100 * stop.offset + '%';
+                }
+                if (stop._flagColor) {
+                    attrs['stop-color'] = stop._color;
+                }
+                if (stop._flagOpacity) {
+                    attrs['stop-opacity'] = `${stop._opacity}`;
+                }
+
+                if (stop.zzz.elem) {
+                    svg.setAttributes(stop.zzz.elem, attrs);
+                }
+                else {
+                    stop.zzz.elem = svg.createElement('stop', attrs);
+                }
+
+                if (lengthChanged) {
+                    this.zzz.elem.appendChild(stop.zzz.elem);
+                }
+                stop.flagReset();
+            }
+        }
+        return this.flagReset();
+    }
+
     static Stop = Stop;
     static Properties = ['center', 'radius', 'focal'];
 
     update() {
-        if (this._flagRadius || this._flagCenter || this._flagFocal || this._flagSpread || this._flagStops) {
+        if (this._flagCenter || this._flagFocal || this._flagStops) {
             this._change.next(this);
         }
         return this;
     }
 
-    override flagReset(dirtyFlag=false) {
-        this._flagRadius = this._flagCenter = this._flagFocal = false;
+    override flagReset(dirtyFlag = false) {
+        this._flagCenter = this._flagFocal = false;
         super.flagReset(dirtyFlag);
         return this;
     }
@@ -64,12 +152,12 @@ export class RadialGradient extends Gradient {
     }
 
     set center(v) {
-        if (this.#center_change_subscription) {
-            this.#center_change_subscription.dispose();
-            this.#center_change_subscription = null;
+        if (this.#center_change) {
+            this.#center_change.dispose();
+            this.#center_change = null;
         }
         this.#center = v;
-        this.#center_change_subscription = this.#center.change$.subscribe(() => {
+        this.#center_change = this.#center.change$.subscribe(() => {
             this._flagCenter = true;
         });
         this._flagCenter = true;
@@ -80,23 +168,20 @@ export class RadialGradient extends Gradient {
     }
 
     set focal(v) {
-        if (this.#focal_change_subscription) {
-            this.#focal_change_subscription.dispose();
-            this.#focal_change_subscription = null;
+        if (this.#focal_change) {
+            this.#focal_change.dispose();
+            this.#focal_change = null;
         }
         this.#focal = v;
-        this.#focal_change_subscription = this.#focal.change$.subscribe(() => {
+        this.#focal_change = this.#focal.change$.subscribe(() => {
             this._flagFocal = true;
         });
         this._flagFocal = true;
     }
-
-    get radius() {
-        return this.#radius;
+    get radius(): number | null {
+        return this.#radius.get();
     }
-
-    set radius(v) {
-        this.#radius = v;
-        this._flagRadius = true;
+    set radius(radius: number | null) {
+        this.#radius.set(radius);
     }
 }

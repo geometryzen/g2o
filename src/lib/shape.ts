@@ -1,9 +1,7 @@
 import { Signal } from 'signal-polyfill';
 import { Anchor } from './anchor';
 import { Constants } from './constants';
-import { LinearGradient } from './effects/linear-gradient';
-import { RadialGradient } from './effects/radial-gradient';
-import { Texture } from './effects/texture';
+import { Color } from './effects/ColorProvider';
 import { ElementBase } from './element';
 import { Flag } from './Flag';
 import { IBoard } from './IBoard';
@@ -14,7 +12,7 @@ import { Matrix } from './matrix';
 import { Disposable } from './reactive/Disposable';
 import { computed_world_matrix } from './utils/compute_world_matrix';
 
-export type PositionLike = Anchor | G20 | Shape<unknown> | [x: number, y: number];
+export type PositionLike = Anchor | G20 | Shape<unknown, unknown> | [x: number, y: number];
 
 export function position_from_like(like: PositionLike): G20 | null {
     if (like instanceof Shape) {
@@ -55,7 +53,7 @@ function ensure_identifier(attributes: Partial<ShapeAttributes>): string {
     }
 }
 
-export abstract class Shape<P extends Parent> extends ElementBase<P> implements IShape<P>, ShapeAttributes {
+export abstract class Shape<P extends Parent, T> extends ElementBase<P, T> implements IShape<P>, ShapeAttributes {
 
     /**
      * The matrix value of the shape's position, rotation, and scale.
@@ -95,12 +93,12 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     abstract closed: boolean;
     abstract curved: boolean;
     abstract ending: number;
-    abstract fill: string | LinearGradient | RadialGradient | Texture;
+    abstract fill: Color;
     abstract join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round';
     abstract length: number;
     abstract strokeWidth: number;
     abstract miter: number;
-    abstract stroke: string | LinearGradient | RadialGradient | Texture;
+    abstract stroke: Color;
     abstract getBoundingClientRect(shallow?: boolean): { width?: number; height?: number; top?: number; left?: number; right?: number; bottom?: number };
     abstract hasBoundingClientRect(): boolean;
     abstract noFill(): this;

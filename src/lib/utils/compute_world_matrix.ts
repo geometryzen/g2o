@@ -2,10 +2,10 @@ import { Group } from "../group";
 import { Matrix } from "../matrix";
 import { Parent, Shape } from "../shape";
 
-export function computed_world_matrix<P extends Parent>(shape: Shape<P>, matrix: Matrix): void {
+export function computed_world_matrix<P extends Parent>(shape: Shape<P, unknown>, matrix: Matrix): void {
 
     matrix = (matrix && matrix.identity()) || new Matrix();
-    let parent: Shape<P> | Group = shape;
+    let parent: Shape<P, unknown> | Group = shape;
     const matrices: Matrix[] = [];
 
     while (parent && parent.matrix) {

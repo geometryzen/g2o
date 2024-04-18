@@ -82,7 +82,7 @@ export class Sprite extends Rectangle {
      * @param firstFrame The index of the frame to start the animation with.
      * @param lastFrame The index of the frame to end the animation with.
      * @param onLastFrame Optional callback function to be triggered after playing the last frame. This fires multiple times when the sprite is looped.
-     * @description Initiate animation playback of a {@link Sprite}.
+     * Initiate animation playback.
      */
     play(firstFrame = 0, lastFrame?: number, onLastFrame?: () => void): this {
 
@@ -112,7 +112,7 @@ export class Sprite extends Rectangle {
     }
 
     /**
-     * Halt animation playback of a {@link Sprite}.
+     * Halt animation playback.
      */
     pause(): this {
         this._playing = false;
@@ -120,7 +120,7 @@ export class Sprite extends Rectangle {
     }
 
     /**
-     * Halt animation playback of a {@link Sprite} and set the current frame back to the first frame.
+     * Halt animation playback and set the current frame back to the first frame.
      */
     stop(): this {
         this._playing = false;
@@ -222,7 +222,6 @@ export class Sprite extends Rectangle {
     }
 
     override flagReset(dirtyFlag = false) {
-        this.flags[Flag.Texture] = dirtyFlag;
         this.flags[Flag.Columns] = dirtyFlag;
         this.flags[Flag.Rows] = dirtyFlag;
         this.flags[Flag.FrameRate] = dirtyFlag;

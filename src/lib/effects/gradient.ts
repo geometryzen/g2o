@@ -1,4 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
+import { Signal } from "signal-polyfill";
 import { Children } from '../children';
 import { Constants } from '../constants';
 import { ElementBase } from '../element';
@@ -10,21 +11,27 @@ import { Stop } from './stop';
 /**
  *
  */
-export abstract class Gradient extends ElementBase<Group> {
+export abstract class Gradient<T extends 'linear-gradient' | 'radial-gradient'> extends ElementBase<Group, T> {
 
     _flagStops = false;
-    _flagSpread = false;
-    _flagUnits = false;
 
-    _spread: 'pad' | 'reflect' | 'repeat' | null = null;
-    _units: 'userSpaceOnUse' | 'objectBoundingBox' | null = null;
+    /**
+     * Indicates what happens if the gradient starts or ends inside the bounds of the target rectangle.
+     * @see {@link https://www.w3.org/TR/SVG11/pservers.html#LinearGradientElementSpreadMethodAttribute} for more information
+     */
+    readonly #spreadMethod = new Signal.State('pad' as 'pad' | 'reflect' | 'repeat');
+    /**
+     * Indicates how coordinate values are interpreted by the renderer.
+     * @see {@link https://www.w3.org/TR/SVG11/pservers.html#RadialGradientElementGradientUnitsAttribute} for more information
+     */
+    readonly #units = new Signal.State('userSpaceOnUse' as 'userSpaceOnUse' | 'objectBoundingBox');
 
     _stops: Children<Stop> | null = null;
     _stops_insert: Disposable | null = null;
     _stops_remove: Disposable | null = null;
 
-    readonly _change: BehaviorSubject<this>;
-    readonly change$: Observable<this>;
+    readonly _change: BehaviorSubject<this> = new BehaviorSubject(this);
+    readonly change$: Observable<this> = new DisposableObservable(this._change.asObservable());
 
     readonly _stop_subscriptions: { [id: string]: Disposable } = {};
 
@@ -34,24 +41,9 @@ export abstract class Gradient extends ElementBase<Group> {
 
         this.classList = [];
 
-        /**
-         * @name Two.Gradient#spread
-         * @property {String} - Indicates what happens if the gradient starts or ends inside the bounds of the target rectangle. Possible values are `'pad'`, `'reflect'`, and `'repeat'`.
-         * @see {@link https://www.w3.org/TR/SVG11/pservers.html#LinearGradientElementSpreadMethodAttribute} for more information
-         */
-        this.spread = 'pad';
-
-        /**
-         * @name Two.Gradient#units
-         * @property {String} [units='objectBoundingBox'] - Indicates how coordinate values are interpreted by the renderer. Possible values are `'userSpaceOnUse'` and `'objectBoundingBox'`.
-         * @see {@link https://www.w3.org/TR/SVG11/pservers.html#RadialGradientElementGradientUnitsAttribute} for more information
-         */
-        this.units = 'objectBoundingBox';
+        this.spreadMethod = 'pad';
 
         this.#set_children(stops);
-
-        this._change = new BehaviorSubject(this);
-        this.change$ = new DisposableObservable(this._change.asObservable());
     }
 
     override dispose(): void {
@@ -72,7 +64,7 @@ export abstract class Gradient extends ElementBase<Group> {
                 this._stop_subscriptions[stop.id] = stop.change$.subscribe(() => {
                     this._flagStops = true;
                 });
-                stop.parent = this;
+                stop.parent = this as unknown as Gradient<'linear-gradient' | 'radial-gradient'>;
             }
         });
 
@@ -108,25 +100,22 @@ export abstract class Gradient extends ElementBase<Group> {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     update(bubbles = false): this {
-        if (this._flagSpread || this._flagStops) {
+        if (this._flagStops) {
             this._change.next(this);
         }
         return this;
     }
 
     override flagReset(dirtyFlag = false): this {
-        this._flagSpread = dirtyFlag;
-        this._flagUnits = dirtyFlag;
         this._flagStops = dirtyFlag;
         super.flagReset(dirtyFlag);
         return this;
     }
-    get spread(): 'pad' | 'reflect' | 'repeat' | null {
-        return this._spread;
+    get spreadMethod(): 'pad' | 'reflect' | 'repeat' {
+        return this.#spreadMethod.get();
     }
-    set spread(v: 'pad' | 'reflect' | 'repeat' | null) {
-        this._spread = v;
-        this._flagSpread = true;
+    set spreadMethod(spread: 'pad' | 'reflect' | 'repeat') {
+        this.#spreadMethod.set(spread);
     }
     get stops() {
         // TODO: Should we be returning a defensive copy?
@@ -136,11 +125,10 @@ export abstract class Gradient extends ElementBase<Group> {
         this.#unset_children();
         this.#set_children(stops);
     }
-    get units(): 'userSpaceOnUse' | 'objectBoundingBox' | null {
-        return this._units;
+    get units(): 'userSpaceOnUse' | 'objectBoundingBox' {
+        return this.#units.get();
     }
-    set units(v: 'userSpaceOnUse' | 'objectBoundingBox' | null) {
-        this._units = v;
-        this._flagUnits = true;
+    set units(units: 'userSpaceOnUse' | 'objectBoundingBox') {
+        this.#units.set(units);
     }
 }

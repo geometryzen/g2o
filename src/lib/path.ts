@@ -2,9 +2,7 @@ import { BehaviorSubject } from 'rxjs';
 import { Signal } from 'signal-polyfill';
 import { Anchor } from './anchor';
 import { Collection } from './collection';
-import { LinearGradient } from './effects/linear-gradient';
-import { RadialGradient } from './effects/radial-gradient';
-import { Texture } from './effects/texture';
+import { Color, is_color_provider } from './effects/ColorProvider';
 import { Flag } from './Flag';
 import { Group } from './group';
 import { IBoard } from './IBoard';
@@ -41,9 +39,7 @@ export interface PathAttributes {
     visibility: 'visible' | 'hidden' | 'collapse';
 }
 
-type Color = string | LinearGradient | RadialGradient | Texture;
-
-export class Path extends Shape<Group> implements PathAttributes {
+export class Path extends Shape<Group, 'path'> implements PathAttributes {
 
     #length = 0;
 
@@ -81,7 +77,7 @@ export class Path extends Shape<Group> implements PathAttributes {
     #beginning = 0.0;
     #ending = 1.0;
 
-    #mask: Shape<Group> | null = null;
+    #mask: Shape<Group, string> | null = null;
 
     #clip = false;
 
@@ -879,10 +875,10 @@ export class Path extends Shape<Group> implements PathAttributes {
         this.#ending = ending;
         this.flags[Flag.Vertices] = true;
     }
-    get fill(): string | LinearGradient | RadialGradient | Texture {
+    get fill(): Color {
         return this.#fill.get();
     }
-    set fill(fill: string | LinearGradient | RadialGradient | Texture) {
+    set fill(fill: Color) {
         if (this.#fill_change) {
             this.#fill_change.dispose();
             this.#fill_change = null;
@@ -891,26 +887,10 @@ export class Path extends Shape<Group> implements PathAttributes {
         this.#fill.set(fill);
         this.flags[Flag.Fill] = true;
 
-        if (fill instanceof LinearGradient) {
+        if (is_color_provider(fill)) {
             this.#fill_change = fill.change$.subscribe(() => {
                 this.flags[Flag.Fill] = true;
             });
-        }
-        else if (fill instanceof RadialGradient) {
-            this.#fill_change = fill.change$.subscribe(() => {
-                this.flags[Flag.Fill] = true;
-            });
-        }
-        else if (fill instanceof Texture) {
-            this.#fill_change = fill.change$.subscribe(() => {
-                this.flags[Flag.Fill] = true;
-            });
-        }
-        else if (typeof fill === 'string') {
-            // Nothing to see here.
-        }
-        else {
-            // Nothing to see here.
         }
     }
     get fillOpacity(): number {
@@ -946,10 +926,10 @@ export class Path extends Shape<Group> implements PathAttributes {
             }
         }
     }
-    get mask(): Shape<Group> | null {
+    get mask(): Shape<Group, string> | null {
         return this.#mask;
     }
-    set mask(mask: Shape<Group> | null) {
+    set mask(mask: Shape<Group, string> | null) {
         this.#mask = mask;
         this.flags[Flag.Mask] = true;
         if (mask instanceof Shape && !mask.clip) {
@@ -963,10 +943,10 @@ export class Path extends Shape<Group> implements PathAttributes {
         this.#miter = miter;
         this.flags[Flag.Miter] = true;
     }
-    get stroke(): string | LinearGradient | RadialGradient | Texture {
+    get stroke(): Color {
         return this.#stroke.get();
     }
-    set stroke(stroke: string | LinearGradient | RadialGradient | Texture) {
+    set stroke(stroke: Color) {
         if (this.#stroke_change) {
             this.#stroke_change.dispose();
             this.#stroke_change = null;
@@ -975,17 +955,7 @@ export class Path extends Shape<Group> implements PathAttributes {
         this.#stroke.set(stroke);
         this.flags[Flag.Stroke] = true;
 
-        if (stroke instanceof LinearGradient) {
-            this.#stroke_change = stroke.change$.subscribe(() => {
-                this.flags[Flag.Stroke] = true;
-            });
-        }
-        else if (stroke instanceof RadialGradient) {
-            this.#stroke_change = stroke.change$.subscribe(() => {
-                this.flags[Flag.Stroke] = true;
-            });
-        }
-        else if (stroke instanceof Texture) {
+        if (is_color_provider(stroke)) {
             this.#stroke_change = stroke.change$.subscribe(() => {
                 this.flags[Flag.Stroke] = true;
             });

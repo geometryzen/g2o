@@ -1,11 +1,6 @@
 import { BehaviorSubject, debounceTime, fromEvent, Subscription } from 'rxjs';
 import { Anchor } from './anchor';
 import { Constants } from './constants';
-import { LinearGradient } from './effects/linear-gradient';
-import { RadialGradient } from './effects/radial-gradient';
-import { Sprite } from './effects/sprite';
-import { Stop } from './effects/stop';
-import { Texture } from './effects/texture';
 import { Group } from './group';
 import { IBoard } from './IBoard';
 import { G20 } from './math/G20';
@@ -283,13 +278,13 @@ export class Board implements IBoard {
         this.#frameCount.next(this.frameCount++);
     }
 
-    add(...shapes: Shape<Group>[]): this {
+    add(...shapes: Shape<Group, string>[]): this {
         this.#scene.add(...shapes);
         this.update();
         return this;
     }
 
-    remove(...shapes: Shape<Group>[]): this {
+    remove(...shapes: Shape<Group, string>[]): this {
         this.#scene.remove(...shapes);
         this.update();
         return this;
@@ -333,7 +328,7 @@ export class Board implements IBoard {
         return path;
     }
 
-    point(position: PositionLike, attributes: Partial<PointAttributes> = {}): Shape<Group> {
+    point(position: PositionLike, attributes: Partial<PointAttributes> = {}): Shape<Group, string> {
         const [x1, x2, y1, y2] = this.getBoundingBox();
         const sx = this.width / (x2 - x1);
         const sy = this.height / (y2 - y1);
@@ -417,45 +412,9 @@ export class Board implements IBoard {
         return arcSegment;
     }
 
-    makeLinearGradient(x1: number, y1: number, x2: number, y2: number, ...stops: Stop[]): LinearGradient {
-        const gradient = new LinearGradient(x1, y1, x2, y2, stops);
-        // this.add(gradient);
-        return gradient;
-    }
-    makeRadialGradient(x1: number, y1: number, radius: number, ...stops: Stop[]): RadialGradient {
-        const gradient = new RadialGradient(x1, y1, radius, stops);
-        // this.add(gradient);
-        return gradient;
-    }
-
-    makeSprite(pathOrTexture: (string | Texture), x: number, y: number, columns: number, rows: number, frameRate: number, autostart: boolean): Sprite {
-        const sprite = new Sprite(this, pathOrTexture, x, y, columns, rows, frameRate);
-        if (autostart) {
-            sprite.play();
-        }
-        this.add(sprite);
-        return sprite;
-    }
-
-    /*
-    makeImageSequence(pathsOrTextures: (string[] | Texture[]), x: number, y: number, frameRate: number, autostart: boolean): ImageSequence {
-        const imageSequence = new ImageSequence(pathsOrTextures, x, y, frameRate);
-        if (autostart) {
-            imageSequence.play();
-        }
-        this.add(imageSequence);
-        return imageSequence;
-    }
-    */
-
-    makeTexture(pathOrSource: (string | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement), callback: () => void): Texture {
-        const texture = new Texture(pathOrSource, callback);
-        return texture;
-    }
-
-    makeGroup(...shapes: Shape<Group>[]): Group {
+    makeGroup(...shapes: Shape<Group, string>[]): Group {
         const group = new Group(this, shapes);
-        this.#scene.add(group as Shape<Group>);
+        this.#scene.add(group as Shape<Group, string>);
         return group;
     }
 

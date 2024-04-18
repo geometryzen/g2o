@@ -1,9 +1,12 @@
 import { G20 } from '../math/G20';
 import { Disposable } from '../reactive/Disposable';
+import { get_dom_element_defs, svg, SVGAttributes } from '../renderers/SVGView';
+import { effect } from '../utils/effect';
+import { ColorProvider } from './ColorProvider';
 import { Gradient } from './gradient';
 import { Stop } from './stop';
 
-export class LinearGradient extends Gradient {
+export class LinearGradient extends Gradient<'linear-gradient'> implements ColorProvider {
 
     _flagEndPoints = false;
 
@@ -27,10 +30,86 @@ export class LinearGradient extends Gradient {
         this.right = new G20(x2, y2);
     }
 
+    render(svgElement: SVGElement): this {
+        const changed: SVGAttributes = {};
+
+        if (this._flagEndPoints) {
+            changed.x1 = `${this.left.x}`;
+            changed.y1 = `${this.left.y}`;
+            changed.x2 = `${this.right.x}`;
+            changed.y2 = `${this.right.y}`;
+        }
+
+        // If there is no attached DOM element yet,
+        // create it with all necessary attributes.
+        if (this.zzz.elem) {
+            svg.setAttributes(this.zzz.elem, changed);
+        }
+        else {
+            changed.id = this.id;
+            this.zzz.elem = svg.createElement('linearGradient', changed);
+
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = {};
+                change.gradientUnits = this.units;
+                svg.setAttributes(this.zzz.elem, change);
+            }));
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = {};
+                change.spreadMethod = this.spreadMethod;
+                svg.setAttributes(this.zzz.elem, change);
+            }));
+        }
+
+        if (this.zzz.elem.parentNode === null) {
+            get_dom_element_defs(svgElement).appendChild(this.zzz.elem);
+        }
+
+        if (this._flagStops) {
+
+            const lengthChanged = this.zzz.elem.childNodes.length !== this.stops.length;
+
+            if (lengthChanged) {
+                while (this.zzz.elem.lastChild) {
+                    this.zzz.elem.removeChild(this.zzz.elem.lastChild);
+                }
+            }
+
+            for (let i = 0; i < this.stops.length; i++) {
+
+                const stop = this.stops[i];
+                const attrs: SVGAttributes = {};
+
+                if (stop._flagOffset) {
+                    attrs.offset = 100 * stop.offset + '%';
+                }
+                if (stop._flagColor) {
+                    attrs['stop-color'] = stop._color;
+                }
+                if (stop._flagOpacity) {
+                    attrs['stop-opacity'] = `${stop._opacity}`;
+                }
+
+                if (!stop.zzz.elem) {
+                    stop.zzz.elem = svg.createElement('stop', attrs);
+                }
+                else {
+                    svg.setAttributes(stop.zzz.elem, attrs);
+                }
+
+                if (lengthChanged) {
+                    this.zzz.elem.appendChild(stop.zzz.elem);
+                }
+                stop.flagReset();
+            }
+        }
+        return this.flagReset();
+    }
+
     static Properties = ['left', 'right'];
 
     update() {
-        if (this._flagEndPoints || this._flagSpread || this._flagStops) {
+        if (this._flagEndPoints || this._flagStops) {
             this._change.next(this);
         }
         return this;

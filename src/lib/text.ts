@@ -1,9 +1,6 @@
 import { BehaviorSubject } from 'rxjs';
 import { Signal } from 'signal-polyfill';
-import { Gradient } from './effects/gradient';
-import { LinearGradient } from './effects/linear-gradient';
-import { RadialGradient } from './effects/radial-gradient';
-import { Texture } from './effects/texture';
+import { Color, is_color_provider } from './effects/ColorProvider';
 import { Flag } from './Flag';
 import { Group } from './group';
 import { IBoard } from './IBoard';
@@ -24,19 +21,19 @@ export interface TextAttributes {
     dx: number | string;
     dy: number | string;
     fontFamily: string;
-    fill: string | LinearGradient | RadialGradient | Texture;
+    fill: Color;
     id: string;
     strokeWidth: number;
     opacity: number;
     fontSize: number;
-    stroke: string | LinearGradient | RadialGradient | Texture;
+    stroke: Color;
     fontStyle: 'normal' | 'italic' | 'oblique';
     value: string;
     visibility: 'visible' | 'hidden' | 'collapse';
     fontWeight: 'normal' | 'bold' | 'bolder' | 'lighter' | number;
 }
 
-export class Text extends Shape<Group> implements TextAttributes {
+export class Text extends Shape<Group, 'text'> implements TextAttributes {
     automatic: boolean;
     beginning: number;
     cap: 'butt' | 'round' | 'square';
@@ -95,13 +92,13 @@ export class Text extends Shape<Group> implements TextAttributes {
     /**
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
-    #fill: string | LinearGradient | RadialGradient | Texture = '#000';
+    #fill: Color = '#000';
     #fill_change: Disposable | null = null;
 
     /**
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
-    #stroke: string | LinearGradient | RadialGradient | Texture = 'none';
+    #stroke: Color = 'none';
     #stroke_change: Disposable | null = null;
 
     readonly #stroke_width = new Signal.State(1);
@@ -110,7 +107,7 @@ export class Text extends Shape<Group> implements TextAttributes {
      * The shape whose alpha property becomes a clipping area for the text.
      * This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
      */
-    #mask: Shape<Group> | null = null;
+    #mask: Shape<Group, string> | null = null;
 
     /**
      * This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
@@ -412,12 +409,7 @@ export class Text extends Shape<Group> implements TextAttributes {
         }
         this.#fill = f;
         this._flagFill = true;
-        if (this.fill instanceof Gradient) {
-            this.#fill_change = this.fill.change$.subscribe(() => {
-                this._flagFill = true;
-            });
-        }
-        if (this.fill instanceof Texture) {
+        if (is_color_provider(this.fill)) {
             this.#fill_change = this.fill.change$.subscribe(() => {
                 this._flagFill = true;
             });
@@ -433,7 +425,7 @@ export class Text extends Shape<Group> implements TextAttributes {
             }
         }
     }
-    get mask(): Shape<Group> | null {
+    get mask(): Shape<Group, string> | null {
         return this.#mask;
     }
     set mask(mask) {
@@ -464,12 +456,7 @@ export class Text extends Shape<Group> implements TextAttributes {
         }
         this.#stroke = f;
         this._flagStroke = true;
-        if (this.stroke instanceof Gradient) {
-            this.#stroke_change = this.stroke.change$.subscribe(() => {
-                this._flagStroke = true;
-            });
-        }
-        if (this.stroke instanceof Texture) {
+        if (is_color_provider(this.stroke)) {
             this.#stroke_change = this.stroke.change$.subscribe(() => {
                 this._flagStroke = true;
             });

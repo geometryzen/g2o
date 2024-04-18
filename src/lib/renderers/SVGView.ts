@@ -1,8 +1,6 @@
 import { BehaviorSubject } from 'rxjs';
 import { Anchor } from '../anchor';
-import { LinearGradient } from '../effects/linear-gradient';
-import { RadialGradient } from '../effects/radial-gradient';
-import { is_canvas, is_img, is_video, Texture } from '../effects/texture';
+import { is_color_provider, serialize_color } from '../effects/ColorProvider';
 import { Flag } from '../Flag';
 import { Group } from '../group';
 import { IBoard } from '../IBoard';
@@ -28,7 +26,7 @@ function set_dom_element_defs(svgElement: SVGElement, defs: SVGDefsElement): voi
     (svgElement as any).defs = defs;
 }
 
-function get_dom_element_defs(svgElement: SVGElement): SVGDefsElement {
+export function get_dom_element_defs(svgElement: SVGElement): SVGDefsElement {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (svgElement as any).defs;
 }
@@ -44,19 +42,6 @@ function set_defs_flag_update(defs: SVGDefsElement, flagUpdate: boolean): void {
 function get_defs_flag_update(defs: SVGDefsElement): boolean {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (defs as any)._flagUpdate as boolean;
-}
-
-function is_gradient_or_texture(x: string | LinearGradient | RadialGradient | Texture): x is LinearGradient | RadialGradient | Texture {
-    return x instanceof LinearGradient || x instanceof RadialGradient || x instanceof Texture;
-}
-
-function serialize_color(x: string | LinearGradient | RadialGradient | Texture): string {
-    if (is_gradient_or_texture(x)) {
-        return `url(#${x.id})`;
-    }
-    else {
-        return x;
-    }
 }
 
 /**
@@ -168,7 +153,7 @@ export interface SVGProperties {
     'y'?: number;
 }
 
-function serialize_svg_props(props: SVGProperties): SVGAttributes {
+export function serialize_svg_props(props: SVGProperties): SVGAttributes {
     const attrs: SVGAttributes = {};
     attrs.class = props.class;
     if (typeof props.cx === 'number') {
@@ -182,7 +167,7 @@ export type DomContext = {
     elem: HTMLElement | SVGElement;
 };
 
-const svg = {
+export const svg = {
     /**
      * @deprecated
      * @see https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/version
@@ -385,7 +370,7 @@ const svg = {
         return string;
     },
 
-    getClip: function (shape: Shape<Group>, svgElement: SVGElement) {
+    getClip: function (shape: Shape<Group, string>, svgElement: SVGElement) {
         let clip = shape.zzz.clip;
         if (!clip) {
             clip = shape.zzz.clip = svg.createElement('clipPath', {
@@ -424,8 +409,7 @@ const svg = {
     },
 
     'group': {
-
-        appendChild: function (this: DomContext, shape: Shape<Group>) {
+        appendChild: function (this: DomContext, shape: Shape<Group, string>) {
 
             const childNode = shape.zzz.elem;
 
@@ -442,7 +426,7 @@ const svg = {
             this.elem.appendChild(childNode);
         },
 
-        removeChild: function (this: DomContext, shape: Shape<Group>) {
+        removeChild: function (this: DomContext, shape: Shape<Group, string>) {
             const childNode = shape.zzz.elem;
 
             if (!childNode || childNode.parentNode != this.elem) {
@@ -465,7 +449,7 @@ const svg = {
             this.elem.removeChild(childNode);
         },
 
-        orderChild: function (this: DomContext, object: Shape<Group>) {
+        orderChild: function (this: DomContext, object: Shape<Group, string>) {
             this.elem.appendChild(object.zzz.elem);
         },
 
@@ -548,7 +532,7 @@ const svg = {
                         break;
                     }
                     default: {
-                        throw new Error(type);
+                        throw new Error(`${type}`);
                     }
                 }
             }
@@ -608,7 +592,7 @@ const svg = {
     },
 
     'path': {
-        render: function (this: Path, domElement: DOMElement, svgElement: SVGElement) {
+        render: function (this: Path, domElement: DOMElement, svgElement: SVGElement): void {
 
             this.update();
 
@@ -621,27 +605,9 @@ const svg = {
                 changed.transform = transform_value_of_matrix(this.matrix);
             }
 
-            if (this.fill && is_gradient_or_texture(this.fill)) {
+            if (this.fill && is_color_provider(this.fill)) {
                 this.zzz.hasFillEffect = true;
-                // this.fill.update();
-                const type = this.fill.zzz.type as 'linear-gradient' | 'radial-gradient' | 'texture';
-                switch (type) {
-                    case 'linear-gradient': {
-                        svg['linear-gradient'].render.call(this.fill as unknown as LinearGradient, domElement, true, svgElement);
-                        break;
-                    }
-                    case 'radial-gradient': {
-                        svg['radial-gradient'].render.call(this.fill as unknown as RadialGradient, domElement, true, svgElement);
-                        break;
-                    }
-                    case 'texture': {
-                        svg['texture'].render.call(this.fill as unknown as Texture, domElement, true, svgElement);
-                        break;
-                    }
-                    default: {
-                        throw new Error(`${type}`);
-                    }
-                }
+                this.fill.render(svgElement);
             }
 
             if (this.flags[Flag.Fill]) {
@@ -654,27 +620,9 @@ const svg = {
                 }
             }
 
-            if (this.stroke && is_gradient_or_texture(this.stroke)) {
+            if (this.stroke && is_color_provider(this.stroke)) {
                 this.zzz.hasStrokeEffect = true;
-                //this.stroke.update();
-                const type = this.stroke.zzz.type as 'linear-gradient' | 'radial-gradient' | 'texture';
-                switch (type) {
-                    case 'linear-gradient': {
-                        svg['linear-gradient'].render.call(this.fill as unknown as LinearGradient, domElement, true, svgElement);
-                        break;
-                    }
-                    case 'radial-gradient': {
-                        svg['radial-gradient'].render.call(this.fill as unknown as RadialGradient, domElement, true, svgElement);
-                        break;
-                    }
-                    case 'texture': {
-                        svg['texture'].render.call(this.fill as unknown as Texture, domElement, true, svgElement);
-                        break;
-                    }
-                    default: {
-                        throw new Error(`${type}`);
-                    }
-                }
+                this.stroke.render(svgElement);
             }
 
             if (this.flags[Flag.Stroke]) {
@@ -870,12 +818,12 @@ const svg = {
                 }
             }
 
-            return this.flagReset();
+            this.flagReset();
         }
     },
 
     'text': {
-        render: function (this: Text, domElement: DOMElement, svgElement: SVGElement) {
+        render: function (this: Text, domElement: DOMElement, svgElement: SVGElement): void {
 
             this.update();
 
@@ -892,32 +840,36 @@ const svg = {
             if (this.flags[Flag.Size]) {
                 changed['font-size'] = `${this.fontSize}`;
             }
-            const fill = this.fill;
-            if (fill && typeof fill === 'object' && fill.zzz) {
-                this.zzz.hasFillEffect = true;
-                //fill.update();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (svg as any)[fill.zzz.type].render.call(this.fill, domElement, true);
-            }
-            if (this._flagFill) {
-                changed.fill = color_value(fill);
-                if (this.zzz.hasFillEffect && typeof fill === 'string') {
-                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
-                    delete this.zzz.hasFillEffect;
+            {
+                const fill = this.fill;
+                if (fill) {
+                    if (is_color_provider(fill)) {
+                        this.zzz.hasFillEffect = true;
+                        fill.render(svgElement);
+                    }
+                    else {
+                        changed.fill = serialize_color(fill);
+                        if (this.zzz.hasFillEffect) {
+                            set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                            delete this.zzz.hasFillEffect;
+                        }
+                    }
                 }
             }
-            const stroke = this.stroke;
-            if (stroke && typeof stroke === 'object' && stroke.zzz) {
-                this.zzz.hasStrokeEffect = true;
-                //stroke.update();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (svg as any)[stroke.zzz.type].render.call(this.stroke, domElement, true);
-            }
-            if (this._flagStroke) {
-                changed.stroke = color_value(stroke);
-                if (this.zzz.hasStrokeEffect && typeof stroke === 'string') {
-                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
-                    delete this.zzz.hasStrokeEffect;
+            {
+                const stroke = this.stroke;
+                if (stroke) {
+                    if (is_color_provider(stroke)) {
+                        this.zzz.hasStrokeEffect = true;
+                        stroke.render(svgElement);
+                    }
+                    else {
+                        changed.stroke = serialize_color(stroke);
+                        if (this.zzz.hasStrokeEffect) {
+                            set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                            delete this.zzz.hasFillEffect;
+                        }
+                    }
                 }
             }
             if (this.flags[Flag.ClassName]) {
@@ -1159,305 +1111,9 @@ const svg = {
                 this.zzz.elem.textContent = this.value;
             }
 
-            return this.flagReset();
+            this.flagReset();
         }
     },
-
-    'linear-gradient': {
-        render: function (this: LinearGradient, domElement: DOMElement, silent = false, svgElement: SVGElement) {
-
-            if (!silent) {
-                this.update();
-            }
-
-            const changed: SVGAttributes = {};
-
-            if (this._flagEndPoints) {
-                changed.x1 = `${this.left.x}`;
-                changed.y1 = `${this.left.y}`;
-                changed.x2 = `${this.right.x}`;
-                changed.y2 = `${this.right.y}`;
-            }
-
-            if (this._flagSpread) {
-                changed.spreadMethod = this.spread;
-            }
-
-            if (this._flagUnits) {
-                changed.gradientUnits = this._units;
-            }
-
-            // If there is no attached DOM element yet,
-            // create it with all necessary attributes.
-            if (!this.zzz.elem) {
-
-                changed.id = this.id;
-                this.zzz.elem = svg.createElement('linearGradient', changed);
-
-                // Otherwise apply all pending attributes
-            }
-            else {
-
-                svg.setAttributes(this.zzz.elem, changed);
-
-            }
-
-            if (this.zzz.elem.parentNode === null) {
-                get_dom_element_defs(svgElement).appendChild(this.zzz.elem);
-            }
-
-            if (this._flagStops) {
-
-                const lengthChanged = this.zzz.elem.childNodes.length !== this.stops.length;
-
-                if (lengthChanged) {
-                    while (this.zzz.elem.lastChild) {
-                        this.zzz.elem.removeChild(this.zzz.elem.lastChild);
-                    }
-                }
-
-                for (let i = 0; i < this.stops.length; i++) {
-
-                    const stop = this.stops[i];
-                    const attrs: SVGAttributes = {};
-
-                    if (stop._flagOffset) {
-                        attrs.offset = 100 * stop.offset + '%';
-                    }
-                    if (stop._flagColor) {
-                        attrs['stop-color'] = stop._color;
-                    }
-                    if (stop._flagOpacity) {
-                        attrs['stop-opacity'] = `${stop._opacity}`;
-                    }
-
-                    if (!stop.zzz.elem) {
-                        stop.zzz.elem = svg.createElement('stop', attrs);
-                    }
-                    else {
-                        svg.setAttributes(stop.zzz.elem, attrs);
-                    }
-
-                    if (lengthChanged) {
-                        this.zzz.elem.appendChild(stop.zzz.elem);
-                    }
-                    stop.flagReset();
-                }
-            }
-            return this.flagReset();
-        }
-
-    },
-
-    'radial-gradient': {
-        render: function (this: RadialGradient, domElement: DOMElement, silent = false, svgElement: SVGElement) {
-
-            if (!silent) {
-                this.update();
-            }
-
-            const changed: SVGAttributes = {};
-
-            if (this._flagCenter) {
-                changed.cx = `${this.center.x}`;
-                changed.cy = `${this.center.y}`;
-            }
-            if (this._flagFocal) {
-                changed.fx = `${this.focal.x}`;
-                changed.fy = `${this.focal.y}`;
-            }
-            if (this._flagRadius) {
-                changed.r = `${this.radius}`;
-            }
-            if (this._flagSpread) {
-                changed.spreadMethod = this._spread;
-            }
-
-            if (this._flagUnits) {
-                changed.gradientUnits = this._units;
-            }
-
-            if (this.zzz.elem) {
-                svg.setAttributes(this.zzz.elem, changed);
-            }
-            else {
-                changed.id = this.id;
-                this.zzz.elem = svg.createElement('radialGradient', changed);
-            }
-
-            if (this.zzz.elem.parentNode === null) {
-                get_dom_element_defs(svgElement).appendChild(this.zzz.elem);
-            }
-
-            if (this._flagStops) {
-
-                const lengthChanged = this.zzz.elem.childNodes.length !== this.stops.length;
-
-                if (lengthChanged) {
-                    while (this.zzz.elem.lastChild) {
-                        this.zzz.elem.removeChild(this.zzz.elem.lastChild);
-                    }
-                }
-
-                for (let i = 0; i < this.stops.length; i++) {
-
-                    const stop = this.stops[i];
-                    const attrs: SVGAttributes = {};
-
-                    if (stop._flagOffset) {
-                        attrs.offset = 100 * stop.offset + '%';
-                    }
-                    if (stop._flagColor) {
-                        attrs['stop-color'] = stop._color;
-                    }
-                    if (stop._flagOpacity) {
-                        attrs['stop-opacity'] = `${stop._opacity}`;
-                    }
-
-                    if (stop.zzz.elem) {
-                        svg.setAttributes(stop.zzz.elem, attrs);
-                    }
-                    else {
-                        stop.zzz.elem = svg.createElement('stop', attrs);
-                    }
-
-                    if (lengthChanged) {
-                        this.zzz.elem.appendChild(stop.zzz.elem);
-                    }
-                    stop.flagReset();
-
-                }
-
-            }
-
-            return this.flagReset();
-
-        }
-
-    },
-
-    'texture': {
-        render: function (this: Texture, domElement: DOMElement, silent = false, svgElement: SVGElement) {
-            if (!silent) {
-                //this.update();
-            }
-
-            // TODO: Texture rendering will need testing of the conversion to SVGAttributes...
-            const changed: SVGProperties = {};
-
-            const styles: SVGAttributes = { x: '0', y: '0' };
-
-            const image = this.image;
-
-            if (this._flagLoaded && this.loaded) {
-
-                if (is_canvas(image)) {
-                    styles.href = image.toDataURL('image/png');
-                }
-                else if (is_img(image)) {
-                    styles.href = this.src;
-                }
-                else if (is_video(image)) {
-                    styles.href = this.src;
-                }
-                else {
-                    throw new Error();
-                }
-            }
-
-            if (this._flagOffset || this._flagLoaded || this._flagScale) {
-
-                changed.x = this.offset.x;
-                changed.y = this.offset.y;
-
-                if (image) {
-
-                    changed.x -= image.width / 2;
-                    changed.y -= image.height / 2;
-
-                    if (this.scale instanceof G20) {
-                        changed.x *= this.scale.x;
-                        changed.y *= this.scale.y;
-                    }
-                    else {
-                        changed.x *= this.scale;
-                        changed.y *= this.scale;
-                    }
-                }
-
-                if (changed.x > 0) {
-                    changed.x *= - 1;
-                }
-                if (changed.y > 0) {
-                    changed.y *= - 1;
-                }
-
-            }
-
-            if (this._flagScale || this._flagLoaded || this._flagRepeat) {
-
-                changed.width = 0;
-                changed.height = 0;
-
-                if (image) {
-
-                    changed.width = image.width;
-                    styles.width = `${image.width}`;
-                    changed.height = image.height;
-                    styles.height = `${image.height}`;
-
-                    // TODO: Hack / Band-aid
-                    switch (this._repeat) {
-                        case 'no-repeat':
-                            changed.width += 1;
-                            changed.height += 1;
-                            break;
-                    }
-
-                    if (this.scale instanceof G20) {
-                        changed.width *= this.scale.x;
-                        changed.height *= this.scale.y;
-                    }
-                    else {
-                        changed.width *= this.scale;
-                        changed.height *= this.scale;
-                    }
-                }
-
-            }
-
-            if (this._flagScale || this._flagLoaded) {
-                if (!this.zzz.image) {
-                    this.zzz.image = svg.createElement('image', styles) as SVGImageElement;
-                }
-                else {
-                    svg.setAttributes(this.zzz.image, styles);
-                }
-            }
-
-            if (!this.zzz.elem) {
-
-                changed.id = this.id;
-                changed.patternUnits = 'userSpaceOnUse';
-                // TODO: Complete serializwer?
-                this.zzz.elem = svg.createElement('pattern', serialize_svg_props(changed));
-            }
-            else if (Object.keys(changed).length !== 0) {
-                svg.setAttributes(this.zzz.elem, serialize_svg_props(changed));
-            }
-
-            if (this.zzz.elem.parentNode === null) {
-                get_dom_element_defs(svgElement).appendChild(this.zzz.elem);
-            }
-
-            if (this.zzz.elem && this.zzz.image && !this.zzz.appended) {
-                this.zzz.elem.appendChild(this.zzz.image);
-                this.zzz.appended = true;
-            }
-
-            return this.flagReset();
-        }
-    }
 } as const;
 
 export interface SVGViewParams {
@@ -1537,15 +1193,6 @@ function transform_value_of_matrix(m: Matrix): string {
     const e = m.e;
     const f = m.f;
     return `matrix(${[a, b, c, d, e, f].map(toFixed).join(' ')})`;
-}
-
-function color_value(thing: string | LinearGradient | RadialGradient | Texture): string {
-    if (typeof thing === 'object') {
-        return 'url(#' + thing.id + ')';
-    }
-    else {
-        return thing;
-    }
 }
 
 /**
