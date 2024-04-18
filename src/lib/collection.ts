@@ -17,7 +17,6 @@ export class Collection<T> {
 
     #items: T[];
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(items: T[]) {
 
         this.#items = items;
@@ -76,7 +75,6 @@ export class Collection<T> {
         return new_length;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     splice(start: number, deleteCount?: number, ...more: T[]): T[] {
         // TODO: This needs some care because the behavior dependes on ...
         if (typeof deleteCount === 'number') {

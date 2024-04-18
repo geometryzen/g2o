@@ -16,7 +16,7 @@ export class DisposableObservable<T> implements Observable<T> {
             dispose(): void {
                 subscription.unsubscribe();
             }
-        }
+        };
         return disposable;
     }
 }

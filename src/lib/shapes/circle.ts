@@ -49,7 +49,7 @@ export class Circle extends Path implements CircleProperties {
             this.#radius.next(options.radius);
         }
 
-        this.strokeWidth = 2
+        this.strokeWidth = 2;
 
         this.flagReset(true);
 
@@ -120,7 +120,7 @@ export class Circle extends Path implements CircleProperties {
                 // This is critical, but does it violate encapsulation?
                 // By extending Path, it seems I have to know something of the implementation details.
                 this.flags[Flag.Length] = true;
-                this.update()
+                this.update();
             }
         }
     }

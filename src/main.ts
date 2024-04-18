@@ -5,11 +5,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const board = new Board("my-board", {
         boundingBox: [-5, 5, 5, -5],
         // viewFactory: new CanvgViewFactory()
-    })
+    });
 
-    const A = board.point([0.0, 0.0], { id: 'A', visibility: 'hidden' })
-    const B = board.point([8.0, 0.0], { id: 'B', visibility: 'hidden' })
-    const C = board.point([8.0, 4.0], { id: 'C', visibility: 'hidden' })
+    const A = board.point([0.0, 0.0], { id: 'A', visibility: 'hidden' });
+    const B = board.point([8.0, 0.0], { id: 'B', visibility: 'hidden' });
+    const C = board.point([8.0, 4.0], { id: 'C', visibility: 'hidden' });
 
     const AB = B.position.__sub__(A.position);
     const AC = C.position.__sub__(A.position);
@@ -21,8 +21,8 @@ document.addEventListener('DOMContentLoaded', function () {
     ramp.strokeWidth = 2;
     ramp.center();
 
-    const box = board.rectangle({ id: 'box', width: 2, height: 1 })
-    box.attitude.rotorFromDirections(AB, AC)
+    const box = board.rectangle({ id: 'box', width: 2, height: 1 });
+    box.attitude.rotorFromDirections(AB, AC);
     box.fill = 'rgba(255, 128, 0, 0.33)';
     box.stroke = 'rgb(255, 128, 0)';
     box.strokeWidth = 2;
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fontFamily: 'Lato',
         fontSize: 20,
         opacity: 0.4
-    })
+    });
     rescale(textA, board);
 
     const textB = board.text("B", B.position.x, B.position.y, {
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fontFamily: 'Lato',
         fontSize: 20,
         opacity: 0.4
-    })
+    });
     rescale(textB, board);
 
     const textC = board.text("C", C.position.x, C.position.y, {
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fontFamily: 'Lato',
         fontSize: 20,
         opacity: 0.4
-    })
+    });
     rescale(textC, board);
 
     const textD = board.text("Box", box.position.x, box.position.y, {
@@ -67,8 +67,8 @@ document.addEventListener('DOMContentLoaded', function () {
         dominantBaseline: 'middle',
         fontFamily: 'Lato',
         fontSize: 20
-    })
-    textD.attitude.rotorFromDirections(AB, AC)
+    });
+    textD.attitude.rotorFromDirections(AB, AC);
     rescale(textD, board);
 
     const textE = board.text("Ramp", ramp.position.x, ramp.position.y, {
@@ -77,25 +77,25 @@ document.addEventListener('DOMContentLoaded', function () {
         dominantBaseline: 'hanging',
         fontFamily: 'Lato',
         fontSize: 20
-    })
-    textE.attitude.rotorFromDirections(AB, AC)
+    });
+    textE.attitude.rotorFromDirections(AB, AC);
     rescale(textE, board);
-    board.update()
+    board.update();
 
-    board.point([box.position.x, box.position.y], { id: 'D', visibility: 'hidden' })
-    board.update()
+    board.point([box.position.x, box.position.y], { id: 'D', visibility: 'hidden' });
+    board.update();
 
-    box.stroke = "#FFCC00"
-    box.strokeWidth = 4
-    box.strokeOpacity = 0.6
-    box.fill = "#FFFF00"
-    box.fillOpacity = 0.3
+    box.stroke = "#FFCC00";
+    box.strokeWidth = 4;
+    box.strokeOpacity = 0.6;
+    box.fill = "#FFFF00";
+    box.fillOpacity = 0.3;
 
     // board.update()
 
     window.onunload = function () {
         board.dispose();
-    }
+    };
 
     /*
     function animate() {
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function rescale(text: Text, board: Board): void {
-    text.scaleXY.x = 1 / board.scaleXY.x
-    text.scaleXY.y = 1 / board.scaleXY.y
+    text.scaleXY.x = 1 / board.scaleXY.x;
+    text.scaleXY.y = 1 / board.scaleXY.y;
 }
 

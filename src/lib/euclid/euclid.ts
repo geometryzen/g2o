@@ -56,10 +56,10 @@ export function circle_intersection(circleA: Circle, circleB: Circle): G20[] {
     circleA.radius$.subscribe((value) => {
         R = value;
         compute();
-    })
+    });
     circleB.radius$.subscribe((value) => {
         r = value;
         compute();
-    })
+    });
     return points;
 }

@@ -57,19 +57,20 @@ export class Texture extends ElementBase<Group> {
     _offset: G20 | null = null;
     #offset_change: Disposable | null = null;
 
-    readonly #change: BehaviorSubject<this>;
-    readonly change$: Observable<this>;
+    readonly #change: BehaviorSubject<this> = new BehaviorSubject(this);
+    readonly change$: Observable<this> = new DisposableObservable(this.#change.asObservable());
 
-    readonly #loaded: BehaviorSubject<this>;
-    readonly loaded$: Observable<this>;
+    readonly #callback: (texture: Texture) => void;
 
     /**
      * @param src The URL path to an image file or an `<img />` element.
      * @param callback An optional callback function once the image has been loaded.
      */
-    constructor(src?: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement, callback?: () => void) {
+    constructor(src?: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement, callback?: (texture: Texture) => void) {
 
         super(Constants.Identifier + Constants.uniqueId());
+
+        this.#callback = callback;
 
         this.zzz.type = 'texture';
 
@@ -88,17 +89,6 @@ export class Texture extends ElementBase<Group> {
          */
         this.offset = new G20();
 
-        this.#loaded = new BehaviorSubject(this);
-        this.loaded$ = new DisposableObservable(this.#change.asObservable());
-
-        if (typeof callback === 'function') {
-            const loaded = () => {
-                subscription.dispose();
-                callback();
-            };
-            const subscription = this.loaded$.subscribe(loaded);
-        }
-
         if (typeof src === 'string') {
             this.src = src;
         }
@@ -114,15 +104,8 @@ export class Texture extends ElementBase<Group> {
             }
         }
 
-        this.#change = new BehaviorSubject(this);
-        this.change$ = new DisposableObservable(this.#change.asObservable());
-
         this.update();
     }
-
-    static Properties = [
-        'src', 'loaded', 'repeat', 'scale', 'offset', 'image'
-    ];
 
     /**
      * A map of compatible DOM Elements categorized by media format.
@@ -130,7 +113,6 @@ export class Texture extends ElementBase<Group> {
     static RegularExpressions = regex;
 
     /**
-     * A canonical listing of image data used in a single session of Two.js.
      * This object is used to cache image data between different textures.
      */
     static ImageRegistry: Registry<HTMLCanvasElement | HTMLImageElement | HTMLVideoElement> = new Registry();
@@ -327,7 +309,6 @@ export class Texture extends ElementBase<Group> {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     update(bubbles = false): this {
-
         if (this._flagSrc || this._flagImage) {
 
             this.#change.next(this);
@@ -337,7 +318,7 @@ export class Texture extends ElementBase<Group> {
                 Texture.load(this, () => {
                     this.loaded = true;
                     this.#change.next(this);
-                    this.#loaded.next(this);
+                    this.#callback(this);
                 });
             }
         }
@@ -355,7 +336,7 @@ export class Texture extends ElementBase<Group> {
         super.flagReset(dirtyFlag);
         return this;
     }
-    get image() {
+    get image(): HTMLCanvasElement | HTMLImageElement | HTMLVideoElement {
         return this._image;
     }
     set image(image) {
@@ -370,7 +351,6 @@ export class Texture extends ElementBase<Group> {
         else if (is_video(image)) {
             index = image.src;
         }
-
         if (Texture.ImageRegistry.contains(index)) {
             this._image = Texture.ImageRegistry.get(index);
         }
@@ -425,11 +405,11 @@ export class Texture extends ElementBase<Group> {
         }
         this._flagScale = true;
     }
-    get src() {
+    get src(): string {
         return this._src;
     }
-    set src(v) {
-        this._src = v;
+    set src(src: string) {
+        this._src = src;
         this._flagSrc = true;
     }
 }

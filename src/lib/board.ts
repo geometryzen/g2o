@@ -212,7 +212,7 @@ export class Board implements IBoard {
                     container.appendChild(this.#view.domElement);
                 }
                 else {
-                    console.warn("domElement must be an SVGElement or HTMLCanvasElement")
+                    throw new Error("domElement must be an SVGElement or HTMLCanvasElement");
                 }
 
                 if (!this.#fitter.is_target_body()) {
@@ -317,7 +317,7 @@ export class Board implements IBoard {
     line(point1: PositionLike, point2: PositionLike): Line {
         const line = new Line(this, point1, point2);
         line.strokeWidth = 2;
-        line.stroke = "#999999"
+        line.stroke = "#999999";
         this.#scene.add(line);
         return line;
     }
@@ -339,12 +339,12 @@ export class Board implements IBoard {
         const sy = this.height / (y2 - y1);
         const rx = 4 / sx;
         const ry = 4 / sy;
-        const options: Partial<EllipseAttributes> = { position, rx, ry, id: attributes.id, visibility: attributes.visibility }
+        const options: Partial<EllipseAttributes> = { position, rx, ry, id: attributes.id, visibility: attributes.visibility };
         const ellipse = new Ellipse(this, options);
-        ellipse.stroke = "#ff0000"
-        ellipse.fill = "#ff0000"
+        ellipse.stroke = "#ff0000";
+        ellipse.fill = "#ff0000";
         // ellipse.noFill();
-        ellipse.strokeWidth = 2
+        ellipse.strokeWidth = 2;
         this.add(ellipse);
         return ellipse;
     }
@@ -359,7 +359,7 @@ export class Board implements IBoard {
         const rect = new Rectangle(this, attributes);
         this.#scene.add(rect);
         rect.strokeWidth = 2;
-        rect.stroke = "#999999"
+        rect.stroke = "#999999";
         return rect;
     }
 

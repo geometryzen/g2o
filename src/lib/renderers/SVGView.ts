@@ -398,7 +398,7 @@ const svg = {
                 defs.appendChild(clip);
             }
             else {
-                console.warn("No defs found for element");
+                throw new Error("No defs found for element");
             }
         }
         return clip;
@@ -495,7 +495,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // visibility
@@ -515,7 +515,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
             }
 
@@ -551,7 +551,6 @@ const svg = {
                         throw new Error(type);
                     }
                 }
-                (svg as any)[type].render.call(child, domElement);
             }
 
             if (this.flags[Flag.ClassName]) {
@@ -624,7 +623,7 @@ const svg = {
 
             if (this.fill && is_gradient_or_texture(this.fill)) {
                 this.zzz.hasFillEffect = true;
-                this.fill.update();
+                // this.fill.update();
                 const type = this.fill.zzz.type as 'linear-gradient' | 'radial-gradient' | 'texture';
                 switch (type) {
                     case 'linear-gradient': {
@@ -657,7 +656,7 @@ const svg = {
 
             if (this.stroke && is_gradient_or_texture(this.stroke)) {
                 this.zzz.hasStrokeEffect = true;
-                this.stroke.update();
+                //this.stroke.update();
                 const type = this.stroke.zzz.type as 'linear-gradient' | 'radial-gradient' | 'texture';
                 switch (type) {
                     case 'linear-gradient': {
@@ -727,14 +726,13 @@ const svg = {
                 domElement.appendChild(this.zzz.elem);
 
                 // The matrix is in the Shape.
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 this.zzz.disposables.push(this.matrix.change$.subscribe((matrix) => {
                     const change: SVGAttributes = {};
                     change.transform = transform_value_of_matrix(matrix);
                     svg.setAttributes(this.zzz.elem, change);
                 }));
 
-                this.zzz.disposables.push(this.zzz.vertices$.subscribe((revision) => {
+                this.zzz.disposables.push(this.zzz.vertices$.subscribe(() => {
                     const change: SVGAttributes = {};
                     change.d = svg.path_from_anchors(this.board, this.position, this.attitude, this.zzz.vertices, this.closed);
                     svg.setAttributes(this.zzz.elem, change);
@@ -753,7 +751,7 @@ const svg = {
 
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // fillOpacity
@@ -763,7 +761,7 @@ const svg = {
                     svg.setAttributes(this.zzz.elem, change);
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // opacity
@@ -778,7 +776,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // stroke
@@ -794,7 +792,7 @@ const svg = {
 
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // strokeOpacity
@@ -804,7 +802,7 @@ const svg = {
                     svg.setAttributes(this.zzz.elem, change);
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // strokeWidth
@@ -814,7 +812,7 @@ const svg = {
                     svg.setAttributes(this.zzz.elem, change);
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // visibility
@@ -834,7 +832,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
             }
 
@@ -897,7 +895,7 @@ const svg = {
             const fill = this.fill;
             if (fill && typeof fill === 'object' && fill.zzz) {
                 this.zzz.hasFillEffect = true;
-                fill.update();
+                //fill.update();
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (svg as any)[fill.zzz.type].render.call(this.fill, domElement, true);
             }
@@ -911,7 +909,7 @@ const svg = {
             const stroke = this.stroke;
             if (stroke && typeof stroke === 'object' && stroke.zzz) {
                 this.zzz.hasStrokeEffect = true;
-                stroke.update();
+                //stroke.update();
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (svg as any)[stroke.zzz.type].render.call(this.stroke, domElement, true);
             }
@@ -945,7 +943,7 @@ const svg = {
                     svg.setAttributes(this.zzz.elem, change);
                     return function () {
                         // Nothing to do here...
-                    }
+                    };
                 }));
 
                 // anchor
@@ -964,7 +962,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // decoration
@@ -974,7 +972,7 @@ const svg = {
                     svg.setAttributes(this.zzz.elem, change);
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // direction
@@ -988,7 +986,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // dominant-baseline
@@ -1006,7 +1004,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // dx
@@ -1020,7 +1018,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // dy
@@ -1034,7 +1032,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // font-family
@@ -1058,7 +1056,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // font-weight
@@ -1072,7 +1070,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // opacity
@@ -1087,7 +1085,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // stroke-width
@@ -1097,7 +1095,7 @@ const svg = {
                     svg.setAttributes(this.zzz.elem, change);
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
 
                 // textContent
@@ -1122,7 +1120,7 @@ const svg = {
                     }
                     return function () {
                         // No cleanup to be done.
-                    }
+                    };
                 }));
             }
 
@@ -1340,9 +1338,8 @@ const svg = {
 
     'texture': {
         render: function (this: Texture, domElement: DOMElement, silent = false, svgElement: SVGElement) {
-
             if (!silent) {
-                this.update();
+                //this.update();
             }
 
             // TODO: Texture rendering will need testing of the conversion to SVGAttributes...
@@ -1442,13 +1439,11 @@ const svg = {
 
                 changed.id = this.id;
                 changed.patternUnits = 'userSpaceOnUse';
+                // TODO: Complete serializwer?
                 this.zzz.elem = svg.createElement('pattern', serialize_svg_props(changed));
-
             }
             else if (Object.keys(changed).length !== 0) {
-
                 svg.setAttributes(this.zzz.elem, serialize_svg_props(changed));
-
             }
 
             if (this.zzz.elem.parentNode === null) {
@@ -1559,9 +1554,11 @@ function color_value(thing: string | LinearGradient | RadialGradient | Texture):
  */
 function screen_functions(board: IBoard) {
     if (board.goofy) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         return [(x: number, y: number): number => x, (x: number, y: number): number => y];
     }
     else {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         return [(x: number, y: number): number => y, (x: number, y: number): number => x];
     }
 }

@@ -907,10 +907,10 @@ export class Path extends Shape<Group> implements PathAttributes {
             });
         }
         else if (typeof fill === 'string') {
-
+            // Nothing to see here.
         }
         else {
-            fill
+            // Nothing to see here.
         }
     }
     get fillOpacity(): number {

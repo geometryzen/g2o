@@ -52,7 +52,7 @@ export class Ellipse extends Path {
             this.height = 1;
         }
 
-        this.flagReset(true)
+        this.flagReset(true);
 
         this.update();
     }

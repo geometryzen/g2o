@@ -675,7 +675,6 @@ export class G20 {
             return this;
         }
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     /*
     rotorFromFrameToFrame(es: Vector[], fs: Vector[]): G20 {
         throw new Error(notImplemented('rotorFromFrameToFrame').message);

@@ -21,8 +21,8 @@ export class CanvgView implements View {
     }
     render(): void {
         this.#svgView.render();
-        const v = Canvg.fromString(this.#ctx, this.#svgView.domElement.outerHTML)
-        v.start()
+        const v = Canvg.fromString(this.#ctx, this.#svgView.domElement.outerHTML);
+        v.start();
     }
     setSize(size: { width: number; height: number; }, ratio: number): void {
         this.#svgView.setSize(size, ratio);
