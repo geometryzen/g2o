@@ -181,4 +181,8 @@ describe("G20", function () {
         expect(mv.isLocked()).toBe(true);
         expect(mv.isMutable()).toBe(false);
     });
+    it("quaditude", function () {
+        const mv = new G20(0, 0, 0, 0);
+        expect(mv.quaditude()).toBe(0);
+    });
 });

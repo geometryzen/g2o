@@ -1,7 +1,6 @@
 import { atomic } from '@geometryzen/reactive';
-import { BehaviorSubject } from 'rxjs';
-import { DisposableObservable, Observable } from '../reactive/Observable';
 import { State } from '../reactive/types';
+import { variable } from '../reactive/variable';
 import { Bivector } from './Bivector';
 import { gauss } from './gauss';
 import { rotorFromDirections } from './rotorFromDirections';
@@ -50,29 +49,29 @@ function isScalar(m: G20): boolean {
     return m.x === 0 && m.y === 0 && m.b === 0;
 }
 
+function equals(P: [a: number, x: number, y: number, b: number], Q: [a: number, x: number, y: number, b: number]): boolean {
+    return P[0] === Q[0] && P[1] === Q[1] && P[2] === Q[2] && P[3] === Q[3];
+}
+
+const COORD_A = 0;
+const COORD_X = 1;
+const COORD_Y = 2;
+const COORD_B = 3;
+
 /**
  * A multivector for two dimensions with a Euclidean metric.
  */
 export class G20 {
 
-    #a: State<number>;
-    #x: State<number>;
-    #y: State<number>;
-    #b: State<number>;
+    readonly #coords: State<[a: number, x: number, y: number, b: number]>;
 
     #lock = UNLOCKED;
 
-    readonly #change: BehaviorSubject<this>;
-    readonly change$: Observable<this>;
+    readonly #change = variable(this);
+    readonly change$ = this.#change.asObservable();
 
     constructor(x = 0, y = 0, a = 0, b = 0) {
-        this.#x = atomic(x);
-        this.#y = atomic(y);
-        this.#a = atomic(a);
-        this.#b = atomic(b);
-
-        this.#change = new BehaviorSubject(this);
-        this.change$ = new DisposableObservable(this.#change.asObservable());
+        this.#coords = atomic([a, x, y, b], equals);
     }
 
     static scalar(a: number): G20 {
@@ -136,53 +135,61 @@ export class G20 {
     }
 
     get a(): number {
-        return this.#a.get();
+        return this.#coords.get()[COORD_A];
     }
 
     set a(a: number) {
         if (typeof a === 'number') {
             if (this.a !== a) {
-                this.#a.set(a);
-                this.#change.next(this);
+                const coords = this.#coords.get();
+                coords[COORD_A] = a;
+                this.#coords.set(coords);
+                this.#change.set(this);
             }
         }
     }
 
     get x(): number {
-        return this.#x.get();
+        return this.#coords.get()[COORD_X];
     }
 
     set x(x: number) {
         if (typeof x === 'number') {
             if (this.x !== x) {
-                this.#x.set(x);
-                this.#change.next(this);
+                const coords = this.#coords.get();
+                coords[COORD_X] = x;
+                this.#coords.set(coords);
+                this.#change.set(this);
             }
         }
     }
 
     get y(): number {
-        return this.#y.get();
+        return this.#coords.get()[COORD_Y];
     }
 
     set y(y: number) {
         if (typeof y === 'number') {
             if (this.y !== y) {
-                this.#y.set(y);
-                this.#change.next(this);
+                const coords = this.#coords.get();
+                coords[COORD_Y] = y;
+                this.#coords.set(coords);
+                this.#change.set(this);
             }
         }
     }
 
     get b(): number {
-        return this.#b.get();
+        return this.#coords.get()[COORD_B];
     }
 
     set b(b: number) {
         if (typeof b === 'number') {
             if (this.b !== b) {
-                this.#b.set(b);
-                this.#change.next(this);
+                const coords = this.#coords.get();
+                coords[COORD_B] = b;
+                this.#coords.set(coords);
+                this.#change.set(this);
             }
         }
     }
@@ -765,11 +772,13 @@ export class G20 {
         // Take special care to only fire changed event if necessary.
         const changed = (this.x !== x || this.y !== y || this.a !== a || this.b != b);
         if (changed) {
-            this.#x.set(x);
-            this.#y.set(y);
-            this.#a.set(a);
-            this.#b.set(b);
-            this.#change.next(this);
+            const coords = this.#coords.get();
+            coords[COORD_A] = a;
+            coords[COORD_X] = x;
+            coords[COORD_Y] = y;
+            coords[COORD_B] = b;
+            this.#coords.set(coords);
+            this.#change.set(this);
         }
         return this;
     }

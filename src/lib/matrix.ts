@@ -1,5 +1,4 @@
-import { BehaviorSubject } from 'rxjs';
-import { DisposableObservable, Observable } from './reactive/Observable.js';
+import { variable } from './reactive/variable.js';
 import { NumArray } from './utils/math.js';
 
 const cos = Math.cos;
@@ -11,8 +10,8 @@ const tan = Math.tan;
  */
 export class Matrix {
 
-    readonly #change: BehaviorSubject<this>;
-    readonly change$: Observable<this>;
+    readonly #change = variable(this);
+    readonly change$ = this.#change.asObservable();
 
     /**
      * 1st row is [0,1,2], 2nd row is [3,4,5], 3rd row is [6,7,8]
@@ -36,9 +35,6 @@ export class Matrix {
         this.#elements[6] = a31;
         this.#elements[7] = a32;
         this.#elements[8] = a33;
-
-        this.#change = new BehaviorSubject(this);
-        this.change$ = new DisposableObservable(this.#change.asObservable());
     }
     get a(): number {
         return this.#elements[0];
@@ -324,7 +320,7 @@ export class Matrix {
 
     #broadcast(): this {
         if (this.#verbose) {
-            this.#change.next(this);
+            this.#change.set(this);
         }
         return this;
     }

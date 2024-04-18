@@ -1,8 +1,8 @@
-import { BehaviorSubject } from "rxjs";
 import { Anchor } from "../anchor";
 import { G20 } from "../math/G20";
 import { Disposable, dispose } from "../reactive/Disposable";
 import { Observable } from "../reactive/Observable";
+import { Variable } from '../reactive/variable';
 
 /**
  * Information that is shared between the model and the view.
@@ -41,7 +41,7 @@ export class ZZZ<T> implements Disposable {
     type?: T;
 
     vertices?: Anchor[];
-    vertices_subject?: BehaviorSubject<number>;
+    vertices_subject?: Variable<number>;
     vertices$?: Observable<number>;
 
     dispose(): void {

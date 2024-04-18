@@ -1,5 +1,4 @@
 import { effect } from '@geometryzen/reactive';
-import { BehaviorSubject } from 'rxjs';
 import { Anchor } from '../anchor';
 import { is_color_provider, serialize_color } from '../effects/ColorProvider';
 import { Flag } from '../Flag';
@@ -10,7 +9,7 @@ import { G20 } from '../math/G20';
 import { Matrix } from '../matrix';
 import { get_dashes_offset, Path } from '../path';
 import { dispose } from '../reactive/Disposable';
-import { DisposableObservable, Observable } from '../reactive/Observable';
+import { variable } from '../reactive/variable';
 import { Shape } from '../shape';
 import { Text } from '../text';
 import { mod, toFixed } from '../utils/math';
@@ -1129,8 +1128,8 @@ export class SVGView implements View {
     width?: number;
     height?: number;
 
-    readonly #size: BehaviorSubject<{ width: number; height: number }>;
-    readonly size$: Observable<{ width: number; height: number }>;
+    readonly #size = variable({ width: 0, height: 0 });
+    readonly size$ = this.#size.asObservable();
 
     constructor(viewBox: Group, containerId: string, params: SVGViewParams = {}) {
         if (viewBox instanceof Group) {
@@ -1152,9 +1151,6 @@ export class SVGView implements View {
         this.domElement.appendChild(this.defs);
         set_dom_element_defs(this.domElement, this.defs);
         this.domElement.style.overflow = 'hidden';
-
-        this.#size = new BehaviorSubject({ width: this.width, height: this.height });
-        this.size$ = new DisposableObservable(this.#size.asObservable());
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1162,7 +1158,7 @@ export class SVGView implements View {
         this.width = size.width;
         this.height = size.height;
         svg.setAttributes(this.domElement, { width: `${size.width}px`, height: `${size.height}px` });
-        this.#size.next(size);
+        this.#size.set(size);
         return this;
     }
 

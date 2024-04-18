@@ -26,7 +26,7 @@ export class Anchor {
     #largeArcFlag: number;
     #sweepFlag: number;
 
-    readonly #change = variable(this)
+    readonly #change = variable(this);
     readonly change$: Observable<this> = this.#change.asObservable();
 
     #t: number;

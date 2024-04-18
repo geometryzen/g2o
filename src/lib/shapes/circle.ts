@@ -1,10 +1,9 @@
-import { BehaviorSubject } from 'rxjs';
 import { Anchor } from '../anchor';
 import { Flag } from '../Flag';
 import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
 import { Path, PathAttributes } from '../path';
-import { DisposableObservable, Observable } from '../reactive/Observable';
+import { variable } from '../reactive/variable';
 import { PositionLike } from '../shape';
 import { HALF_PI, TWO_PI } from '../utils/math';
 import { Commands } from '../utils/path-commands';
@@ -30,8 +29,8 @@ export interface CircleProperties extends CircleAPI<G20> {
 
 export class Circle extends Path implements CircleProperties {
 
-    readonly #radius: BehaviorSubject<number> = new BehaviorSubject(1);
-    readonly radius$: Observable<number> = new DisposableObservable(this.#radius.asObservable());
+    readonly #radius = variable(1);
+    readonly radius$ = this.#radius.asObservable();
 
     constructor(board: IBoard, options: CircleAttributes = {}) {
 
@@ -46,7 +45,7 @@ export class Circle extends Path implements CircleProperties {
         super(board, points, true, true, true, path_attributes(options));
 
         if (typeof options.radius === 'number') {
-            this.#radius.next(options.radius);
+            this.#radius.set(options.radius);
         }
 
         this.strokeWidth = 2;
@@ -110,12 +109,12 @@ export class Circle extends Path implements CircleProperties {
     }
 
     get radius(): number {
-        return this.#radius.value;
+        return this.#radius.get();
     }
     set radius(radius: number) {
         if (typeof radius === 'number') {
             if (this.radius !== radius) {
-                this.#radius.next(radius);
+                this.#radius.set(radius);
                 this.flags[Flag.Radius] = true;
                 // This is critical, but does it violate encapsulation?
                 // By extending Path, it seems I have to know something of the implementation details.

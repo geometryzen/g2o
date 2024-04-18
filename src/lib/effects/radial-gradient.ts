@@ -135,7 +135,7 @@ export class RadialGradient extends Gradient<'radial-gradient'> implements Color
 
     update() {
         if (this._flagCenter || this._flagFocal || this._flagStops) {
-            this._change.next(this);
+            this._change.set(this);
         }
         return this;
     }

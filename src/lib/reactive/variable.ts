@@ -1,14 +1,14 @@
 import { BehaviorSubject } from "rxjs";
-import { State } from "./types";
 import { DisposableObservable, Observable } from "./Observable";
+import { State } from "./types";
 
-class Variable<T> implements State<T> {
+export class Variable<T> implements State<T> {
     readonly #bs: BehaviorSubject<T>;
     constructor(bs: BehaviorSubject<T>) {
         this.#bs = bs;
     }
     get(): T {
-        return this.#bs.getValue()
+        return this.#bs.getValue();
     }
     set(newValue: T): void {
         this.#bs.next(newValue);

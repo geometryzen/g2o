@@ -1,12 +1,12 @@
 import { atomic } from '@geometryzen/reactive';
-import { BehaviorSubject } from 'rxjs';
 import { Color, is_color_provider } from './effects/ColorProvider';
 import { Flag } from './Flag';
 import { Group } from './group';
 import { IBoard } from './IBoard';
 import { get_dashes_offset, set_dashes_offset } from './path';
 import { Disposable } from './reactive/Disposable';
-import { DisposableObservable, Observable } from './reactive/Observable';
+import { Observable } from './reactive/Observable';
+import { variable } from './reactive/variable';
 import { Shape, ShapeAttributes } from './shape';
 
 const min = Math.min, max = Math.max;
@@ -61,14 +61,14 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
      */
     _flagClip = false;
 
-    readonly #value: BehaviorSubject<string> = new BehaviorSubject('');
-    readonly value$: Observable<string> = new DisposableObservable(this.#value.asObservable());
+    readonly #value = variable('');
+    readonly value$: Observable<string> = this.#value.asObservable();
 
-    readonly #fontFamily: BehaviorSubject<string> = new BehaviorSubject('sans-serif');
-    readonly fontFamily$: Observable<string> = new DisposableObservable(this.#fontFamily.asObservable());
+    readonly #fontFamily = variable('sans-serif');
+    readonly fontFamily$: Observable<string> = this.#fontFamily.asObservable();
 
-    readonly #fontSize: BehaviorSubject<number> = new BehaviorSubject(13);
-    readonly fontSize$: Observable<number> = new DisposableObservable(this.#fontSize.asObservable());
+    readonly #fontSize = variable(13);
+    readonly fontSize$: Observable<number> = this.#fontSize.asObservable();
 
     readonly #anchor = atomic('start' as 'start' | 'middle' | 'end');
 
@@ -390,12 +390,12 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
         }
     }
     get fontFamily(): string {
-        return this.#fontFamily.value;
+        return this.#fontFamily.get();
     }
     set fontFamily(family: string) {
         if (typeof family === 'string') {
             if (this.fontFamily !== family) {
-                this.#fontFamily.next(family);
+                this.#fontFamily.set(family);
             }
         }
     }
@@ -436,12 +436,12 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
         }
     }
     get fontSize(): number {
-        return this.#fontSize.value;
+        return this.#fontSize.get();
     }
     set fontSize(size: number) {
         if (typeof size === 'number') {
             if (this.fontSize !== size) {
-                this.#fontSize.next(size);
+                this.#fontSize.set(size);
                 this.flags[Flag.Size] = true;
             }
         }
@@ -471,12 +471,12 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
         }
     }
     get value(): string {
-        return this.#value.value;
+        return this.#value.get();
     }
     set value(value: string) {
         if (typeof value === 'string') {
             if (this.value !== value) {
-                this.#value.next(value);
+                this.#value.set(value);
                 this.flags[Flag.Value] = true;
             }
         }

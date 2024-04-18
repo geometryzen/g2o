@@ -1,10 +1,9 @@
-import { BehaviorSubject } from 'rxjs';
 import { Constants } from '../constants';
 import { ElementBase } from '../element';
 import { Group } from '../group';
 import { G20 } from '../math/G20';
 import { Disposable } from '../reactive/Disposable';
-import { DisposableObservable, Observable } from '../reactive/Observable';
+import { variable } from '../reactive/variable';
 import { Registry } from '../registry.js';
 import { get_dom_element_defs, serialize_svg_props, svg, SVGAttributes, SVGProperties } from '../renderers/SVGView';
 import { root } from '../utils/root';
@@ -59,8 +58,8 @@ export class Texture extends ElementBase<Group, 'texture'> implements ColorProvi
     _offset: G20 | null = null;
     #offset_change: Disposable | null = null;
 
-    readonly #change: BehaviorSubject<this> = new BehaviorSubject(this);
-    readonly change$: Observable<this> = new DisposableObservable(this.#change.asObservable());
+    readonly #change = variable(this);
+    readonly change$ = this.#change.asObservable();
 
     readonly #callback: (texture: Texture) => void;
 
@@ -430,13 +429,13 @@ export class Texture extends ElementBase<Group, 'texture'> implements ColorProvi
     update(bubbles = false): this {
         if (this._flagSrc || this._flagImage) {
 
-            this.#change.next(this);
+            this.#change.set(this);
 
             if (this._flagSrc || this._flagImage) {
                 this.loaded = false;
                 Texture.load(this, () => {
                     this.loaded = true;
-                    this.#change.next(this);
+                    this.#change.set(this);
                     this.#callback(this);
                 });
             }

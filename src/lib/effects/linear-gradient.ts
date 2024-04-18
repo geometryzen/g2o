@@ -110,7 +110,7 @@ export class LinearGradient extends Gradient<'linear-gradient'> implements Color
 
     update() {
         if (this._flagEndPoints || this._flagStops) {
-            this._change.next(this);
+            this._change.set(this);
         }
         return this;
     }

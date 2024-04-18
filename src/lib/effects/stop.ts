@@ -1,7 +1,6 @@
-import { BehaviorSubject } from 'rxjs';
 import { Constants } from '../constants';
 import { ElementBase } from '../element';
-import { DisposableObservable, Observable } from '../reactive/Observable';
+import { variable } from '../reactive/variable';
 import { Gradient } from './gradient';
 
 export class Stop extends ElementBase<Gradient<'linear-gradient' | 'radial-gradient'>, 'stop'> {
@@ -14,8 +13,8 @@ export class Stop extends ElementBase<Gradient<'linear-gradient' | 'radial-gradi
     _opacity = 1;
     _color = '#fff';
 
-    readonly #change: BehaviorSubject<this> = new BehaviorSubject(this);
-    readonly change$: Observable<this> = new DisposableObservable(this.#change.asObservable());
+    readonly #change = variable(this);
+    readonly change$ = this.#change.asObservable();
 
     /**
      * @param offset The offset percentage of the stop represented as a zero-to-one value. Default value flip flops from zero-to-one as new stops are created.
@@ -54,7 +53,7 @@ export class Stop extends ElementBase<Gradient<'linear-gradient' | 'radial-gradi
         if (this.parent) {
             this.parent._flagStops = true;
         }
-        this.#change.next(this);
+        this.#change.set(this);
     }
     get offset(): number {
         return this._offset;
@@ -65,7 +64,7 @@ export class Stop extends ElementBase<Gradient<'linear-gradient' | 'radial-gradi
         if (this.parent) {
             this.parent._flagStops = true;
         }
-        this.#change.next(this);
+        this.#change.set(this);
     }
     get opacity(): number {
         return this._opacity;
@@ -76,6 +75,6 @@ export class Stop extends ElementBase<Gradient<'linear-gradient' | 'radial-gradi
         if (this.parent) {
             this.parent._flagStops = true;
         }
-        this.#change.next(this);
+        this.#change.set(this);
     }
 }

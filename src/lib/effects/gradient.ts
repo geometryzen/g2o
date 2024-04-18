@@ -1,11 +1,10 @@
 import { atomic } from '@geometryzen/reactive';
-import { BehaviorSubject } from 'rxjs';
 import { Children } from '../children';
 import { Constants } from '../constants';
 import { ElementBase } from '../element';
 import { Group } from '../group';
 import { Disposable } from '../reactive/Disposable';
-import { DisposableObservable, Observable } from '../reactive/Observable';
+import { variable } from '../reactive/variable';
 import { Stop } from './stop';
 
 /**
@@ -30,8 +29,8 @@ export abstract class Gradient<T extends 'linear-gradient' | 'radial-gradient'> 
     _stops_insert: Disposable | null = null;
     _stops_remove: Disposable | null = null;
 
-    readonly _change: BehaviorSubject<this> = new BehaviorSubject(this);
-    readonly change$: Observable<this> = new DisposableObservable(this._change.asObservable());
+    readonly _change = variable(this);
+    readonly change$ = this._change.asObservable();
 
     readonly _stop_subscriptions: { [id: string]: Disposable } = {};
 
@@ -101,7 +100,7 @@ export abstract class Gradient<T extends 'linear-gradient' | 'radial-gradient'> 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     update(bubbles = false): this {
         if (this._flagStops) {
-            this._change.next(this);
+            this._change.set(this);
         }
         return this;
     }

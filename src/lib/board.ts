@@ -1,4 +1,4 @@
-import { BehaviorSubject, debounceTime, fromEvent, Subscription } from 'rxjs';
+import { debounceTime, fromEvent, Subscription } from 'rxjs';
 import { Anchor } from './anchor';
 import { Constants } from './constants';
 import { Group } from './group';
@@ -6,7 +6,7 @@ import { IBoard } from './IBoard';
 import { G20 } from './math/G20';
 import { Path } from './path';
 import { Disposable } from './reactive/Disposable';
-import { DisposableObservable, Observable } from './reactive/Observable';
+import { variable } from './reactive/variable';
 import { SVGViewFactory } from './renderers/SVGViewFactory';
 import { View } from './renderers/View';
 import { ViewFactory } from './renderers/ViewFactory';
@@ -58,8 +58,8 @@ export class Board implements IBoard {
      */
     height = 0;
 
-    readonly #size = new BehaviorSubject({ width: this.width, height: this.height });
-    readonly size$: Observable<{ width: number; height: number }> = new DisposableObservable(this.#size.asObservable());
+    readonly #size = variable({ width: this.width, height: this.height });
+    readonly size$ = this.#size.asObservable();
 
     /**
      * 
@@ -71,14 +71,8 @@ export class Board implements IBoard {
      */
     readonly #fitter: Fitter;
 
-    /**
-     * An integer representing how many frames have elapsed.
-     */
-    frameCount = 0;
-
-    // DGH: Do I need to keep the separate variable of does next() do the updating?
-    readonly #frameCount: BehaviorSubject<number>;
-    readonly frameCount$: Observable<number>;
+    readonly #frameCount = variable(0);
+    readonly frameCount$ = this.#frameCount.asObservable();
 
     playing = false;
 
@@ -131,10 +125,6 @@ export class Board implements IBoard {
         this.#fitter = new Fitter(this, this.#view);
 
 
-        this.frameCount = 0;
-        this.#frameCount = new BehaviorSubject(this.frameCount);
-        this.frameCount$ = new DisposableObservable(this.#frameCount.asObservable());
-
         if (container instanceof HTMLElement) {
             this.#fitter.set_target(container as HTMLElement);
             this.#fitter.subscribe();
@@ -155,7 +145,7 @@ export class Board implements IBoard {
                 this.width = width;
                 this.height = height;
                 this.#update_view_box();
-                this.#size.next({ width, height });
+                this.#size.set({ width, height });
             });
         }
         else {
@@ -274,7 +264,7 @@ export class Board implements IBoard {
 
         this.#view.render();
 
-        this.#frameCount.next(this.frameCount++);
+        this.#frameCount.set(this.#frameCount.get() + 1);
     }
 
     add(...shapes: Shape<Group, string>[]): this {
@@ -481,13 +471,13 @@ export class Board implements IBoard {
 }
 
 class Fitter {
-    readonly #two: Board;
+    readonly #board: Board;
     readonly #view: View;
     readonly #domElement: HTMLElement | SVGElement;
     #target: Element | null = null;
     #target_resize: Subscription | null = null;
-    constructor(two: Board, view: View) {
-        this.#two = two;
+    constructor(board: Board, view: View) {
+        this.#board = board;
         this.#view = view;
         this.#domElement = view.domElement;
     }
@@ -547,13 +537,13 @@ class Fitter {
         return this.#target === document.body;
     }
     resize(): void {
-        const two = this.#two;
+        const board = this.#board;
         const size = this.#target.getBoundingClientRect();
 
-        two.width = size.width;
-        two.height = size.height;
+        board.width = size.width;
+        board.height = size.height;
 
-        this.#view.setSize(size, two.ratio);
+        this.#view.setSize(size, board.ratio);
     }
 }
 

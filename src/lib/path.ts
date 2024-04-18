@@ -1,5 +1,4 @@
 import { atomic } from '@geometryzen/reactive';
-import { BehaviorSubject } from 'rxjs';
 import { Anchor } from './anchor';
 import { Collection } from './collection';
 import { Color, is_color_provider } from './effects/ColorProvider';
@@ -9,7 +8,7 @@ import { IBoard } from './IBoard';
 import { decompose_2d_3x3_matrix } from './math/decompose_2d_3x3_matrix';
 import { G20 } from './math/G20.js';
 import { Disposable } from './reactive/Disposable';
-import { DisposableObservable } from './reactive/Observable';
+import { variable } from './reactive/variable';
 import { PositionLike, Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
 import { lerp, mod } from './utils/math';
@@ -114,8 +113,8 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
 
         this.zzz.type = 'path';
         this.zzz.vertices = [];
-        this.zzz.vertices_subject = new BehaviorSubject(0);
-        this.zzz.vertices$ = new DisposableObservable(this.zzz.vertices_subject.asObservable());
+        this.zzz.vertices_subject = variable(0);
+        this.zzz.vertices$ = this.zzz.vertices_subject.asObservable();
 
         /**
          * Determines whether a final line is drawn between the final point in the `vertices` array and the first point.
@@ -778,7 +777,7 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
                     }
                 }
             }
-            this.zzz.vertices_subject.next(this.zzz.vertices_subject.value + 1);
+            this.zzz.vertices_subject.set(this.zzz.vertices_subject.get() + 1);
         }
         super.update();
         return this;

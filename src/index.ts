@@ -8,7 +8,7 @@ export { LinearGradient } from './lib/effects/linear-gradient';
 export { RadialGradient } from './lib/effects/radial-gradient';
 export { Stop } from './lib/effects/stop';
 export { ElementBase } from './lib/element';
-export { circle_intersection } from './lib/euclid/euclid';
+export { CircleIntersection, circle_intersection } from './lib/euclid/euclid';
 export { Group, GroupAttributes } from './lib/group';
 export { IBoard } from './lib/IBoard';
 export { IShape } from './lib/IShape';
