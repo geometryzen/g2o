@@ -22,7 +22,6 @@ export { Path, PathAttributes } from './lib/path';
 export { Player } from './lib/player';
 export { Disposable } from './lib/reactive/Disposable';
 export { Observable } from './lib/reactive/Observable';
-export { Registry } from './lib/registry';
 export { ZZZ } from './lib/renderers/SharedInfo';
 export { SVGViewParams } from './lib/renderers/SVGView';
 export { SVGViewFactory } from './lib/renderers/SVGViewFactory';

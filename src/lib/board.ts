@@ -20,7 +20,6 @@ import { Rectangle, RectangleAttributes } from './shapes/rectangle';
 import { Text, TextAttributes } from './text';
 import { Commands } from './utils/path-commands';
 import { dateTime } from './utils/performance';
-import { xhr } from './utils/xhr';
 
 export interface BoardAttributes {
     boundingBox?: [x1: number, y1: number, x2: number, y2: number];
@@ -290,13 +289,6 @@ export class Board implements IBoard {
         return this;
     }
 
-    /*
-    clear() {
-        this.scene.remove(this.scene.children);
-        return this;
-    }
-    */
-
     circle(options: CircleAttributes = {}): Circle {
         const circle = new Circle(this, options);
         this.add(circle);
@@ -305,7 +297,7 @@ export class Board implements IBoard {
 
     ellipse(options: Partial<EllipseAttributes> = {}): Ellipse {
         const ellipse = new Ellipse(this, options);
-        this.#scene.add(ellipse);
+        this.add(ellipse);
         return ellipse;
     }
 
@@ -313,7 +305,7 @@ export class Board implements IBoard {
         const line = new Line(this, point1, point2);
         line.strokeWidth = 2;
         line.stroke = "#999999";
-        this.#scene.add(line);
+        this.add(line);
         return line;
     }
 
@@ -324,7 +316,7 @@ export class Board implements IBoard {
             typeof rect.right === 'number' && typeof rect.bottom === 'number') {
             path.center().position.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
         }
-        this.#scene.add(path);
+        this.add(path);
         return path;
     }
 
@@ -352,7 +344,7 @@ export class Board implements IBoard {
 
     rectangle(attributes: RectangleAttributes): Rectangle {
         const rect = new Rectangle(this, attributes);
-        this.#scene.add(rect);
+        this.add(rect);
         rect.strokeWidth = 2;
         rect.stroke = "#999999";
         return rect;
@@ -364,14 +356,13 @@ export class Board implements IBoard {
         return text;
     }
 
-    makeArrow(x1: number, y1: number, x2: number, y2: number, size?: number): Path {
+    arrow(x1: number, y1: number, x2: number, y2: number, size?: number): Path {
 
         const headlen = typeof size === 'number' ? size : 10;
 
         const angle = Math.atan2(y2 - y1, x2 - x1);
 
         const vertices = [
-
             new Anchor(G20.vector(x1, y1), undefined, undefined, undefined, undefined, Commands.move),
             new Anchor(G20.vector(x2, y2), undefined, undefined, undefined, undefined, Commands.line),
             new Anchor(
@@ -384,7 +375,6 @@ export class Board implements IBoard {
                 G20.vector(x2 - headlen * Math.cos(angle + Math.PI / 4), y2 - headlen * Math.sin(angle + Math.PI / 4)),
                 undefined, undefined, undefined, undefined, Commands.line
             )
-
         ];
 
         const path = new Path(this, vertices, false, false, true);
@@ -392,29 +382,29 @@ export class Board implements IBoard {
         path.cap = 'round';
         path.join = 'round';
 
-        this.#scene.add(path);
+        this.add(path);
 
         return path;
     }
 
-    makeCurve(closed: boolean, ...anchors: Anchor[]): Path {
+    curve(closed: boolean, ...anchors: Anchor[]): Path {
         const curved = true;
         const curve = new Path(this, anchors, closed, curved);
         const rect = curve.getBoundingClientRect();
         curve.center().position.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
-        this.#scene.add(curve);
+        this.add(curve);
         return curve;
     }
 
-    makeArcSegment(x: number, y: number, innerRadius: number, outerRadius: number, startAngle: number, endAngle: number, resolution: number = Constants.Resolution): ArcSegment {
+    arc(x: number, y: number, innerRadius: number, outerRadius: number, startAngle: number, endAngle: number, resolution: number = Constants.Resolution): ArcSegment {
         const arcSegment = new ArcSegment(this, x, y, innerRadius, outerRadius, startAngle, endAngle, resolution);
-        this.#scene.add(arcSegment);
+        this.add(arcSegment);
         return arcSegment;
     }
 
-    makeGroup(...shapes: Shape<Group, string>[]): Group {
+    group(...shapes: Shape<Group, string>[]): Group {
         const group = new Group(this, shapes);
-        this.#scene.add(group as Shape<Group, string>);
+        this.add(group as Shape<Group, string>);
         return group;
     }
 
@@ -446,10 +436,7 @@ export class Board implements IBoard {
     }
     */
 
-
-    /**
-     * Load an SVG file or SVG text and interpret it into Two.js legible objects.
-     */
+    /*
     load(url: string): Promise<Group> {
         return new Promise<Group>((resolve, reject) => {
             const group = new Group(this);
@@ -458,7 +445,6 @@ export class Board implements IBoard {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const attach = (responseText: string) => {
                 // TODO
-                /*
                 dom.temp.innerHTML = responseText;
 
                 for (i = 0; i < dom.temp.children.length; i++) {
@@ -474,7 +460,6 @@ export class Board implements IBoard {
                         ? dom.temp.children[0] : dom.temp.children;
                     callback(group, svg);
                 }
-                */
             };
 
             if (/\.svg$/i.test(url)) {
@@ -492,6 +477,7 @@ export class Board implements IBoard {
             }
         });
     }
+    */
 }
 
 class Fitter {
