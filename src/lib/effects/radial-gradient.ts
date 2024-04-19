@@ -1,4 +1,4 @@
-import { atomic, effect } from '@geometryzen/reactive';
+import { effect, state } from '@geometryzen/reactive';
 import { G20 } from '../math/G20';
 import { Disposable } from '../reactive/Disposable';
 import { get_dom_element_defs, svg, SVGAttributes } from '../renderers/SVGView';
@@ -11,7 +11,7 @@ export class RadialGradient extends Gradient<'radial-gradient'> implements Color
     _flagCenter = false;
     _flagFocal = false;
 
-    readonly #radius = atomic(null as number | null);
+    readonly #radius = state(null as number | null);
 
     #center: G20 | null = null;
     #center_change: Disposable | null = null;

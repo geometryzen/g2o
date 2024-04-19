@@ -1,4 +1,4 @@
-import { atomic, effect } from '@geometryzen/reactive';
+import { effect, state } from '@geometryzen/reactive';
 import { Anchor } from '../anchor';
 import { Collection } from '../collection';
 import { Flag } from '../Flag';
@@ -42,8 +42,8 @@ export class Rectangle extends Path implements RectangleProperties, Disposable {
 
     readonly #disposables: Disposable[] = [];
 
-    readonly #width = atomic(1);
-    readonly #height = atomic(1);
+    readonly #width = state(1);
+    readonly #height = state(1);
 
     readonly #origin = G20.zero.clone();
 

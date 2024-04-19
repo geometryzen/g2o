@@ -1,4 +1,4 @@
-import { atomic } from '@geometryzen/reactive';
+import { state } from '@geometryzen/reactive';
 import { Anchor } from './anchor';
 import { Collection } from './collection';
 import { Color, is_color_provider } from './effects/ColorProvider';
@@ -44,14 +44,14 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
 
     readonly #lengths: number[] = [];
 
-    #fill = atomic('#fff' as Color);
+    #fill = state('#fff' as Color);
     #fill_change: Disposable | null = null;
-    #fill_opacity = atomic(1.0);
+    #fill_opacity = state(1.0);
 
-    #stroke = atomic('#000' as Color);
+    #stroke = state('#000' as Color);
     #stroke_change: Disposable | null = null;
-    #stroke_width = atomic(1);
-    #stroke_opacity = atomic(1.0);
+    #stroke_width = state(1);
+    #stroke_opacity = state(1.0);
 
     #vectorEffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position' = 'non-scaling-stroke';
 

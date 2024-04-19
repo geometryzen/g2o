@@ -1,4 +1,4 @@
-import { atomic } from '@geometryzen/reactive';
+import { state } from '@geometryzen/reactive';
 import { State } from '../reactive/types';
 import { variable } from '../reactive/variable';
 import { Bivector } from './Bivector';
@@ -71,7 +71,7 @@ export class G20 {
     readonly change$ = this.#change.asObservable();
 
     constructor(x = 0, y = 0, a = 0, b = 0) {
-        this.#coords = atomic([a, x, y, b], equals);
+        this.#coords = state([a, x, y, b], { equals });
     }
 
     static scalar(a: number): G20 {

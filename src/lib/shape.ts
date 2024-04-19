@@ -1,4 +1,4 @@
-import { atomic } from '@geometryzen/reactive';
+import { state } from '@geometryzen/reactive';
 import { Anchor } from './anchor';
 import { Constants } from './constants';
 import { Color } from './effects/ColorProvider';
@@ -83,8 +83,8 @@ export abstract class Shape<P extends Parent, T> extends ElementBase<P, T> imple
 
     #skewY = 0;
 
-    readonly #opacity = atomic(1);
-    readonly #visibility = atomic('visible' as 'visible' | 'hidden' | 'collapse');
+    readonly #opacity = state(1);
+    readonly #visibility = state('visible' as 'visible' | 'hidden' | 'collapse');
 
     abstract automatic: boolean;
     abstract beginning: number;

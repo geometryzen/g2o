@@ -30,7 +30,6 @@ export enum Flag {
     Subtractions,
     Units,
     Vertices,
-    Value,
     VectorEffect,
     Width
 }

@@ -1050,8 +1050,8 @@ export const svg = {
                 }));
 
                 // textContent
-                this.zzz.disposables.push(this.value$.subscribe((value) => {
-                    this.zzz.elem.textContent = value;
+                this.zzz.disposables.push(effect(() => {
+                    this.zzz.elem.textContent = this.value;
                 }));
 
                 // visibility
@@ -1104,10 +1104,6 @@ export const svg = {
                 else {
                     this.zzz.elem.removeAttribute('clip-path');
                 }
-            }
-
-            if (this.flags[Flag.Value]) {
-                this.zzz.elem.textContent = this.value;
             }
 
             this.flagReset();

@@ -1,4 +1,4 @@
-import { atomic } from '@geometryzen/reactive';
+import { state } from '@geometryzen/reactive';
 import { Color, is_color_provider } from './effects/ColorProvider';
 import { Flag } from './Flag';
 import { Group } from './group';
@@ -61,8 +61,7 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
      */
     _flagClip = false;
 
-    readonly #value = variable('');
-    readonly value$: Observable<string> = this.#value.asObservable();
+    readonly #value = state('');
 
     readonly #fontFamily = variable('sans-serif');
     readonly fontFamily$: Observable<string> = this.#fontFamily.asObservable();
@@ -70,24 +69,24 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
     readonly #fontSize = variable(13);
     readonly fontSize$: Observable<number> = this.#fontSize.asObservable();
 
-    readonly #anchor = atomic('start' as 'start' | 'middle' | 'end');
+    readonly #anchor = state('start' as 'start' | 'middle' | 'end');
 
-    readonly #dominant_baseline = atomic('auto' as 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top');
+    readonly #dominant_baseline = state('auto' as 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top');
 
-    readonly #fontStyle = atomic('normal' as 'normal' | 'italic' | 'oblique');
+    readonly #fontStyle = state('normal' as 'normal' | 'italic' | 'oblique');
 
-    readonly #fontWeight = atomic('normal' as 'normal' | 'bold' | 'bolder' | 'lighter' | number);
+    readonly #fontWeight = state('normal' as 'normal' | 'bold' | 'bolder' | 'lighter' | number);
 
-    readonly #decoration = atomic(['none' as TextDecoration]);
+    readonly #decoration = state(['none' as TextDecoration]);
 
     /**
      * determine what direction the text should run.
      * Possibly values are `'ltr'` for left-to-right and `'rtl'` for right-to-left. Defaults to `'ltr'`.
      */
-    readonly #direction = atomic('ltr' as 'ltr' | 'rtl');
+    readonly #direction = state('ltr' as 'ltr' | 'rtl');
 
-    readonly #dx = atomic(0 as number | string);
-    readonly #dy = atomic(0 as number | string);
+    readonly #dx = state(0 as number | string);
+    readonly #dy = state(0 as number | string);
 
     /**
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
@@ -101,7 +100,7 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
     #stroke: Color = 'none';
     #stroke_change: Disposable | null = null;
 
-    readonly #stroke_width = atomic(1);
+    readonly #stroke_width = state(1);
 
     /**
      * The shape whose alpha property becomes a clipping area for the text.
@@ -291,8 +290,6 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
 
     override flagReset(dirtyFlag = false) {
         super.flagReset(dirtyFlag);
-
-        this.flags[Flag.Value] = dirtyFlag;
         this.flags[Flag.Size] = dirtyFlag;
         this._flagFill = dirtyFlag;
         this._flagStroke = dirtyFlag;
@@ -477,7 +474,6 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
         if (typeof value === 'string') {
             if (this.value !== value) {
                 this.#value.set(value);
-                this.flags[Flag.Value] = true;
             }
         }
     }

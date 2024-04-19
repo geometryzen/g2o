@@ -1,9 +1,9 @@
+import { effect, state } from '@geometryzen/reactive';
 import { Anchor } from '../anchor';
 import { Flag } from '../Flag';
 import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
 import { Path, PathAttributes } from '../path';
-import { variable } from '../reactive/variable';
 import { PositionLike } from '../shape';
 import { HALF_PI, TWO_PI } from '../utils/math';
 import { Commands } from '../utils/path-commands';
@@ -29,8 +29,7 @@ export interface CircleProperties extends CircleAPI<G20> {
 
 export class Circle extends Path implements CircleProperties {
 
-    readonly #radius = variable(1);
-    readonly radius$ = this.#radius.asObservable();
+    readonly #radius = state(1);
 
     constructor(board: IBoard, options: CircleAttributes = {}) {
 
@@ -50,6 +49,10 @@ export class Circle extends Path implements CircleProperties {
 
         this.strokeWidth = 2;
 
+        effect(()=>{
+            this.update()
+        })
+
         this.flagReset(true);
 
         this.update();
@@ -60,6 +63,7 @@ export class Circle extends Path implements CircleProperties {
     }
 
     override update(): this {
+        // console.log("Circle.update", this.radius)
         if (this.flags[Flag.Vertices] || this.flags[Flag.Radius]) {
 
             let length = this.vertices.length;
