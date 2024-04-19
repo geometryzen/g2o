@@ -63,7 +63,6 @@ export class Circle extends Path implements CircleProperties {
     }
 
     override update(): this {
-        // console.log("Circle.update", this.radius)
         if (this.flags[Flag.Vertices] || this.flags[Flag.Radius]) {
 
             let length = this.vertices.length;

@@ -37,7 +37,7 @@ if (root.document) {
     anchor = document.createElement('a');
 }
 
-export class Texture extends ElementBase<Group, 'texture'> implements ColorProvider {
+export class Texture extends ElementBase<Group> implements ColorProvider {
 
     _flagSrc = false;
     _flagImage = false;
@@ -72,8 +72,6 @@ export class Texture extends ElementBase<Group, 'texture'> implements ColorProvi
         super(Constants.Identifier + Constants.uniqueId());
 
         this.#callback = callback;
-
-        this.zzz.type = 'texture';
 
         this.classList = [];
 

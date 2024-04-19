@@ -12,7 +12,7 @@ import { Matrix } from './matrix';
 import { Disposable } from './reactive/Disposable';
 import { computed_world_matrix } from './utils/compute_world_matrix';
 
-export type PositionLike = Anchor | G20 | Shape<unknown, unknown> | [x: number, y: number];
+export type PositionLike = Anchor | G20 | Shape<unknown> | [x: number, y: number];
 
 export function position_from_like(like: PositionLike): G20 | null {
     if (like instanceof Shape) {
@@ -49,11 +49,11 @@ function ensure_identifier(attributes: Partial<ShapeAttributes>): string {
         return attributes.id;
     }
     else {
-        return Constants.Identifier + Constants.uniqueId();
+        return `${Constants.Identifier}${Constants.uniqueId()}`;
     }
 }
 
-export abstract class Shape<P extends Parent, T> extends ElementBase<P, T> implements IShape<P>, ShapeAttributes {
+export abstract class Shape<P extends Parent> extends ElementBase<P> implements IShape<P>, ShapeAttributes {
 
     /**
      * The matrix value of the shape's position, rotation, and scale.
@@ -99,11 +99,12 @@ export abstract class Shape<P extends Parent, T> extends ElementBase<P, T> imple
     abstract strokeWidth: number;
     abstract miter: number;
     abstract stroke: Color;
-    abstract getBoundingClientRect(shallow?: boolean): { width?: number; height?: number; top?: number; left?: number; right?: number; bottom?: number };
-    abstract hasBoundingClientRect(): boolean;
+    abstract getBoundingBox(shallow?: boolean): { top?: number; left?: number; right?: number; bottom?: number };
+    abstract hasBoundingBox(): boolean;
     abstract noFill(): this;
     abstract noStroke(): this;
     abstract subdivide(limit: number): this;
+    abstract render(domElement: HTMLElement | SVGElement, svgElement: SVGElement): void;
 
     constructor(readonly board: IBoard, attributes: Partial<ShapeAttributes> = {}) {
 

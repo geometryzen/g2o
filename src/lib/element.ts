@@ -6,7 +6,7 @@ import { ZZZ } from './renderers/SharedInfo';
 /**
  * The foundational object for the scenegraph.
  */
-export abstract class ElementBase<P, T> implements Child, Disposable {
+export abstract class ElementBase<P> implements Child, Disposable {
     /**
      * ColorProvider(s), Shape, and Stop all extend Element.
      */
@@ -21,7 +21,7 @@ export abstract class ElementBase<P, T> implements Child, Disposable {
     /**
      * 
      */
-    readonly zzz: ZZZ<T> = new ZZZ();
+    readonly zzz: ZZZ = new ZZZ();
 
     readonly #id: string;
 

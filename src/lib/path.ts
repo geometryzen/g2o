@@ -1,7 +1,7 @@
-import { state } from '@geometryzen/reactive';
+import { effect, state } from '@geometryzen/reactive';
 import { Anchor } from './anchor';
 import { Collection } from './collection';
-import { Color, is_color_provider } from './effects/ColorProvider';
+import { Color, is_color_provider, serialize_color } from './effects/ColorProvider';
 import { Flag } from './Flag';
 import { Group } from './group';
 import { IBoard } from './IBoard';
@@ -9,6 +9,7 @@ import { decompose_2d_3x3_matrix } from './math/decompose_2d_3x3_matrix';
 import { G20 } from './math/G20.js';
 import { Disposable } from './reactive/Disposable';
 import { variable } from './reactive/variable';
+import { get_dom_element_defs, set_defs_flag_update, svg, SVGAttributes, transform_value_of_matrix } from './renderers/SVGView';
 import { PositionLike, Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
 import { lerp, mod } from './utils/math';
@@ -38,7 +39,7 @@ export interface PathAttributes {
     visibility: 'visible' | 'hidden' | 'collapse';
 }
 
-export class Path extends Shape<Group, 'path'> implements PathAttributes {
+export class Path extends Shape<Group> implements PathAttributes {
 
     #length = 0;
 
@@ -76,7 +77,7 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
     #beginning = 0.0;
     #ending = 1.0;
 
-    #mask: Shape<Group, string> | null = null;
+    #mask: Shape<Group> | null = null;
 
     #clip = false;
 
@@ -111,7 +112,6 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
         this.flags[Flag.Mask] = false;
         this.flags[Flag.Clip] = false;
 
-        this.zzz.type = 'path';
         this.zzz.vertices = [];
         this.zzz.vertices_subject = variable(0);
         this.zzz.vertices$ = this.zzz.vertices_subject.asObservable();
@@ -189,6 +189,237 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
         set_dashes_offset(this.dashes, 0);
     }
 
+    render(domElement: HTMLElement | SVGElement, svgElement: SVGElement): void {
+
+        this.update();
+
+        // Collect any attribute that needs to be changed here
+        const changed: SVGAttributes = {};
+
+        const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
+
+        if (flagMatrix) {
+            changed.transform = transform_value_of_matrix(this.matrix);
+        }
+
+        if (this.fill && is_color_provider(this.fill)) {
+            this.zzz.hasFillEffect = true;
+            this.fill.render(svgElement);
+        }
+
+        if (this.flags[Flag.Fill]) {
+            if (this.fill) {
+                changed.fill = serialize_color(this.fill);
+            }
+            if (this.zzz.hasFillEffect && typeof this.fill === 'string') {
+                set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                delete this.zzz.hasFillEffect;
+            }
+        }
+
+        if (this.stroke && is_color_provider(this.stroke)) {
+            this.zzz.hasStrokeEffect = true;
+            this.stroke.render(svgElement);
+        }
+
+        if (this.flags[Flag.Stroke]) {
+            if (this.stroke) {
+                changed.stroke = serialize_color(this.stroke);
+            }
+            if (this.zzz.hasStrokeEffect && typeof this.stroke === 'string') {
+                set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                delete this.zzz.hasStrokeEffect;
+            }
+        }
+
+        if (this.flags[Flag.Linewidth]) {
+            changed['stroke-width'] = `${this.strokeWidth}`;
+        }
+
+        if (this.flags[Flag.ClassName]) {
+            changed['class'] = this.classList.join(' ');
+        }
+
+        if (this.flags[Flag.VectorEffect]) {
+            changed['vector-effect'] = this.vectorEffect;
+        }
+
+        if (this.flags[Flag.Cap]) {
+            changed['stroke-linecap'] = this.cap;
+        }
+
+        if (this.flags[Flag.Join]) {
+            changed['stroke-linejoin'] = this.join;
+        }
+
+        if (this.flags[Flag.Miter]) {
+            changed['stroke-miterlimit'] = `${this.miter}`;
+        }
+
+        if (this.dashes && this.dashes.length > 0) {
+            changed['stroke-dasharray'] = this.dashes.join(' ');
+            changed['stroke-dashoffset'] = `${get_dashes_offset(this.dashes) || 0}`;
+        }
+
+        if (this.zzz.elem) {
+            // When completely reactive, this will not be needed
+            svg.setAttributes(this.zzz.elem, changed);
+        }
+        else {
+            changed.id = this.id;
+            this.zzz.elem = svg.createElement('path', changed);
+            domElement.appendChild(this.zzz.elem);
+
+            // The matrix is in the Shape.
+            this.zzz.disposables.push(this.matrix.change$.subscribe((matrix) => {
+                const change: SVGAttributes = {};
+                change.transform = transform_value_of_matrix(matrix);
+                svg.setAttributes(this.zzz.elem, change);
+            }));
+
+            this.zzz.disposables.push(this.zzz.vertices$.subscribe(() => {
+                const change: SVGAttributes = {};
+                change.d = svg.path_from_anchors(this.board, this.position, this.attitude, this.zzz.vertices, this.closed);
+                svg.setAttributes(this.zzz.elem, change);
+            }));
+
+            // fill
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = {};
+                change.fill = serialize_color(this.fill);
+                svg.setAttributes(this.zzz.elem, change);
+
+                if (this.zzz.hasFillEffect && typeof this.fill === 'string') {
+                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                    delete this.zzz.hasFillEffect;
+                }
+
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // fillOpacity
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = {};
+                change['fill-opacity'] = `${this.fillOpacity}`;
+                svg.setAttributes(this.zzz.elem, change);
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // opacity
+            this.zzz.disposables.push(effect(() => {
+                const opacity = this.opacity;
+                const change: SVGAttributes = { opacity: `${opacity}` };
+                if (opacity === 1) {
+                    svg.removeAttributes(this.zzz.elem, change);
+                }
+                else {
+                    svg.setAttributes(this.zzz.elem, change);
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // stroke
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = {};
+                change.stroke = serialize_color(this.stroke);
+                svg.setAttributes(this.zzz.elem, change);
+
+                if (this.zzz.hasStrokeEffect && typeof this.stroke === 'string') {
+                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                    delete this.zzz.hasStrokeEffect;
+                }
+
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // strokeOpacity
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = {};
+                change['stroke-opacity'] = `${this.strokeOpacity}`;
+                svg.setAttributes(this.zzz.elem, change);
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // strokeWidth
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = {};
+                change['stroke-width'] = `${this.strokeWidth}`;
+                svg.setAttributes(this.zzz.elem, change);
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // visibility
+            this.zzz.disposables.push(effect(() => {
+                const visibility = this.visibility;
+                switch (visibility) {
+                    case 'visible': {
+                        const change: SVGAttributes = { visibility };
+                        svg.removeAttributes(this.zzz.elem, change);
+                        break;
+                    }
+                    default: {
+                        const change: SVGAttributes = { visibility };
+                        svg.setAttributes(this.zzz.elem, change);
+                        break;
+                    }
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+        }
+
+        if (this.flags[Flag.Clip]) {
+
+            const clip = svg.getClip(this, svgElement);
+            const elem = this.zzz.elem;
+
+            if (this.clip) {
+                elem.removeAttribute('id');
+                clip.setAttribute('id', this.id);
+                clip.appendChild(elem);
+            }
+            else {
+                clip.removeAttribute('id');
+                elem.setAttribute('id', this.id);
+                if (this.parent) {
+                    this.parent.zzz.elem.appendChild(elem); // TODO: should be insertBefore
+                }
+            }
+        }
+
+        // Commented two-way functionality of clips / masks with groups and
+        // polygons. Uncomment when this bug is fixed:
+        // https://code.google.com/p/chromium/issues/detail?id=370951
+
+        if (this.flags[Flag.Mask]) {
+            if (this.mask) {
+                // this.mask.render(domElement)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // (svg as any)[this.mask.zzz.type].render.call(this.mask, domElement);
+                this.zzz.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
+                throw new Error("TODO");
+            }
+            else {
+                this.zzz.elem.removeAttribute('clip-path');
+            }
+        }
+
+        this.flagReset();
+    }
+
     /**
      * A convenience method for setting the `fill` attribute to "none".
      */
@@ -206,11 +437,11 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
     }
 
     corner(): this {
-        const rect = this.getBoundingClientRect(true);
-        const hw = rect.width / 2;
-        const hh = rect.height / 2;
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
+        const bbox = this.getBoundingBox(true);
+        const hw = (bbox.right - bbox.left) / 2;
+        const hh = (bbox.bottom - bbox.top) / 2;
+        const cx = (bbox.left + bbox.right) / 2;
+        const cy = (bbox.top + bbox.bottom) / 2;
 
         for (let i = 0; i < this.vertices.length; i++) {
             const v = this.vertices.getAt(i);
@@ -230,10 +461,10 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
     }
 
     center(): this {
-        const rect = this.getBoundingClientRect(true);
+        const bbox = this.getBoundingBox(true);
 
-        const cx = rect.left + rect.width / 2 - this.position.x;
-        const cy = rect.top + rect.height / 2 - this.position.y;
+        const cx = (bbox.left + bbox.right) / 2 - this.position.x;
+        const cy = (bbox.top + bbox.bottom) / 2 - this.position.y;
 
         for (let i = 0; i < this.vertices.length; i++) {
             const v = this.vertices.getAt(i);
@@ -250,7 +481,7 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
 
     }
 
-    getBoundingClientRect(shallow?: boolean): { width: number; height: number; top?: number; left?: number; right?: number; bottom?: number } {
+    getBoundingBox(shallow?: boolean): { top?: number; left?: number; right?: number; bottom?: number } {
 
         let left = Infinity;
         let right = -Infinity;
@@ -276,10 +507,7 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
         }
 
         if (l <= 0) {
-            return {
-                width: 0,
-                height: 0
-            };
+            return {};
         }
 
         for (let i = 0; i < l; i++) {
@@ -340,17 +568,10 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
             }
         }
 
-        return {
-            top: top,
-            left: left,
-            right: right,
-            bottom: bottom,
-            width: right - left,
-            height: bottom - top
-        };
+        return { top, left, right, bottom, };
     }
 
-    hasBoundingClientRect(): boolean {
+    hasBoundingBox(): boolean {
         return true;
     }
 
@@ -925,10 +1146,10 @@ export class Path extends Shape<Group, 'path'> implements PathAttributes {
             }
         }
     }
-    get mask(): Shape<Group, string> | null {
+    get mask(): Shape<Group> | null {
         return this.#mask;
     }
-    set mask(mask: Shape<Group, string> | null) {
+    set mask(mask: Shape<Group> | null) {
         this.#mask = mask;
         this.flags[Flag.Mask] = true;
         if (mask instanceof Shape && !mask.clip) {

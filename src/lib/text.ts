@@ -1,12 +1,14 @@
-import { state } from '@geometryzen/reactive';
-import { Color, is_color_provider } from './effects/ColorProvider';
+import { effect, state } from '@geometryzen/reactive';
+import { Color, is_color_provider, serialize_color } from './effects/ColorProvider';
 import { Flag } from './Flag';
 import { Group } from './group';
 import { IBoard } from './IBoard';
+import { compose_2d_3x3_transform } from './math/compose_2d_3x3_transform';
 import { get_dashes_offset, set_dashes_offset } from './path';
 import { Disposable } from './reactive/Disposable';
 import { Observable } from './reactive/Observable';
 import { variable } from './reactive/variable';
+import { get_dom_element_defs, set_defs_flag_update, svg, SVGAttributes, transform_value_of_matrix } from './renderers/SVGView';
 import { Shape, ShapeAttributes } from './shape';
 
 const min = Math.min, max = Math.max;
@@ -33,7 +35,7 @@ export interface TextAttributes {
     fontWeight: 'normal' | 'bold' | 'bolder' | 'lighter' | number;
 }
 
-export class Text extends Shape<Group, 'text'> implements TextAttributes {
+export class Text extends Shape<Group> implements TextAttributes {
     automatic: boolean;
     beginning: number;
     cap: 'butt' | 'round' | 'square';
@@ -106,7 +108,7 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
      * The shape whose alpha property becomes a clipping area for the text.
      * This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
      */
-    #mask: Shape<Group, string> | null = null;
+    #mask: Shape<Group> | null = null;
 
     /**
      * This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
@@ -118,8 +120,6 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
     constructor(board: IBoard, message: string, x: number = 0, y: number = 0, attributes: Partial<TextAttributes> = {}) {
 
         super(board, shape_attributes_from_text_attributes(attributes));
-
-        this.zzz.type = 'text';
 
         this.value = message;
 
@@ -189,6 +189,294 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
         this.flagReset(true);
     }
 
+    render(domElement: HTMLElement | SVGElement, svgElement: SVGElement): void {
+
+        this.update();
+
+        // The styles that will be applied to an SVG
+        const changed: SVGAttributes = {};
+
+        const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
+
+        if (flagMatrix) {
+            update_text_matrix(this);
+            changed.transform = transform_value_of_matrix(this.matrix);
+        }
+
+        if (this.flags[Flag.Size]) {
+            changed['font-size'] = `${this.fontSize}`;
+        }
+        {
+            const fill = this.fill;
+            if (fill) {
+                if (is_color_provider(fill)) {
+                    this.zzz.hasFillEffect = true;
+                    fill.render(svgElement);
+                }
+                else {
+                    changed.fill = serialize_color(fill);
+                    if (this.zzz.hasFillEffect) {
+                        set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                        delete this.zzz.hasFillEffect;
+                    }
+                }
+            }
+        }
+        {
+            const stroke = this.stroke;
+            if (stroke) {
+                if (is_color_provider(stroke)) {
+                    this.zzz.hasStrokeEffect = true;
+                    stroke.render(svgElement);
+                }
+                else {
+                    changed.stroke = serialize_color(stroke);
+                    if (this.zzz.hasStrokeEffect) {
+                        set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                        delete this.zzz.hasFillEffect;
+                    }
+                }
+            }
+        }
+        if (this.flags[Flag.ClassName]) {
+            changed['class'] = this.classList.join(' ');
+        }
+        if (this.dashes && this.dashes.length > 0) {
+            changed['stroke-dasharray'] = this.dashes.join(' ');
+            changed['stroke-dashoffset'] = `${get_dashes_offset(this.dashes) || 0}`;
+        }
+
+        if (this.zzz.elem) {
+            svg.setAttributes(this.zzz.elem, changed);
+        }
+        else {
+            changed.id = this.id;
+            this.zzz.elem = svg.createElement('text', changed);
+            domElement.appendChild(this.zzz.elem);
+
+            this.zzz.disposables.push(effect(() => {
+                update_text_matrix(this);
+                const change: SVGAttributes = {};
+                change.transform = transform_value_of_matrix(this.matrix);
+                svg.setAttributes(this.zzz.elem, change);
+                return function () {
+                    // Nothing to do here...
+                };
+            }));
+
+            // anchor
+            this.zzz.disposables.push(effect(() => {
+                const anchor = this.anchor;
+                switch (anchor) {
+                    case 'start': {
+                        svg.removeAttributes(this.zzz.elem, { 'text-anchor': anchor });
+                        break;
+                    }
+                    case 'middle':
+                    case 'end': {
+                        svg.setAttributes(this.zzz.elem, { 'text-anchor': anchor });
+                        break;
+                    }
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // decoration
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = {};
+                change['text-decoration'] = this.decoration.join(' ');
+                svg.setAttributes(this.zzz.elem, change);
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // direction
+            this.zzz.disposables.push(effect(() => {
+                const direction = this.direction;
+                if (direction === 'rtl') {
+                    svg.setAttributes(this.zzz.elem, { direction });
+                }
+                else {
+                    svg.removeAttributes(this.zzz.elem, { direction });
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // dominant-baseline
+            this.zzz.disposables.push(effect(() => {
+                const dominantBaseline = this.dominantBaseline;
+                switch (dominantBaseline) {
+                    case 'auto': {
+                        svg.removeAttributes(this.zzz.elem, { 'dominant-baseline': dominantBaseline });
+                        break;
+                    }
+                    default: {
+                        svg.setAttributes(this.zzz.elem, { 'dominant-baseline': dominantBaseline });
+                        break;
+                    }
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // dx
+            this.zzz.disposables.push(effect(() => {
+                const dx = this.dx;
+                if (typeof dx === 'number' && dx === 0) {
+                    svg.removeAttributes(this.zzz.elem, { dx: "" });
+                }
+                else {
+                    svg.setAttributes(this.zzz.elem, { dx: `${dx}` });
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // dy
+            this.zzz.disposables.push(effect(() => {
+                const dy = this.dy;
+                if (typeof dy === 'number' && dy === 0) {
+                    svg.removeAttributes(this.zzz.elem, { dy: "" });
+                }
+                else {
+                    svg.setAttributes(this.zzz.elem, { dy: `${dy}` });
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // font-family
+            this.zzz.disposables.push(this.fontFamily$.subscribe((family) => {
+                svg.setAttributes(this.zzz.elem, { 'font-family': family });
+            }));
+
+            // font-size
+            this.zzz.disposables.push(this.fontSize$.subscribe((size) => {
+                svg.setAttributes(this.zzz.elem, { 'font-size': `${size}` });
+            }));
+
+            // font-style
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = { 'font-style': this.fontStyle };
+                if (change['font-style'] === 'normal') {
+                    svg.removeAttributes(this.zzz.elem, change);
+                }
+                else {
+                    svg.setAttributes(this.zzz.elem, change);
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // font-weight
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = { 'font-weight': `${this.fontWeight}` };
+                if (change['font-weight'] === 'normal') {
+                    svg.removeAttributes(this.zzz.elem, change);
+                }
+                else {
+                    svg.setAttributes(this.zzz.elem, change);
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // opacity
+            this.zzz.disposables.push(effect(() => {
+                const opacity = this.opacity;
+                const change: SVGAttributes = { opacity: `${opacity}` };
+                if (opacity === 1) {
+                    svg.removeAttributes(this.zzz.elem, change);
+                }
+                else {
+                    svg.setAttributes(this.zzz.elem, change);
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // stroke-width
+            this.zzz.disposables.push(effect(() => {
+                const change: SVGAttributes = {};
+                change['stroke-width'] = `${this.strokeWidth}`;
+                svg.setAttributes(this.zzz.elem, change);
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // textContent
+            this.zzz.disposables.push(effect(() => {
+                this.zzz.elem.textContent = this.value;
+            }));
+
+            // visibility
+            this.zzz.disposables.push(effect(() => {
+                const visibility = this.visibility;
+                switch (visibility) {
+                    case 'visible': {
+                        const change: SVGAttributes = { visibility };
+                        svg.removeAttributes(this.zzz.elem, change);
+                        break;
+                    }
+                    default: {
+                        const change: SVGAttributes = { visibility };
+                        svg.setAttributes(this.zzz.elem, change);
+                        break;
+                    }
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+        }
+
+        if (this._flagClip) {
+            const clip = svg.getClip(this, svgElement);
+            const elem = this.zzz.elem;
+
+            if (this.clip) {
+                elem.removeAttribute('id');
+                clip.setAttribute('id', this.id);
+                clip.appendChild(elem);
+            }
+            else {
+                clip.removeAttribute('id');
+                elem.setAttribute('id', this.id);
+                this.parent.zzz.elem.appendChild(elem); // TODO: should be insertBefore
+            }
+        }
+
+        // Commented two-way functionality of clips / masks with groups and
+        // polygons. Uncomment when this bug is fixed:
+        // https://code.google.com/p/chromium/issues/detail?id=370951
+
+        if (this._flagMask) {
+            if (this.mask) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // (svg as any)[this.mask.zzz.type].render.call(this.mask, domElement);
+                this.zzz.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
+                throw new Error("TODO");
+            }
+            else {
+                this.zzz.elem.removeAttribute('clip-path');
+            }
+        }
+
+        this.flagReset();
+    }
+
     static Measure(text: Text): { width: number; height: number } {
         // 0.6 is approximate aspect ratio of a typeface's character width to height.
         const width = text.value.length * text.fontSize * 0.6;
@@ -216,7 +504,7 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
         return this;
     }
 
-    getBoundingClientRect(shallow = false): { top: number; left: number; right: number; bottom: number; width: number; height: number } {
+    getBoundingBox(shallow = false): { top: number; left: number; right: number; bottom: number; } {
 
         let left: number;
         let right: number;
@@ -269,17 +557,10 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
         right = max(ax, bx, cx, dx);
         bottom = max(ay, by, cy, dy);
 
-        return {
-            top,
-            left,
-            right,
-            bottom,
-            width: right - left,
-            height: bottom - top
-        };
+        return { top, left, right, bottom };
     }
 
-    hasBoundingClientRect(): boolean {
+    hasBoundingBox(): boolean {
         return true;
     }
 
@@ -422,7 +703,7 @@ export class Text extends Shape<Group, 'text'> implements TextAttributes {
             }
         }
     }
-    get mask(): Shape<Group, string> | null {
+    get mask(): Shape<Group> | null {
         return this.#mask;
     }
     set mask(mask) {
@@ -490,4 +771,32 @@ function shape_attributes_from_text_attributes(attributes: Partial<TextAttribute
         id: attributes.id
     };
     return retval;
+}
+
+function update_text_matrix(text: Text) {
+    // Text and Images, unlike Path(s), are not compensated (yet) for the 90 degree rotation that makes the  
+    const goofy = text.board.goofy;
+    const position = text.position;
+    const x = position.x;
+    const y = position.y;
+    const attitude = text.attitude;
+    const scale = text.scaleXY;
+    const sx = scale.x;
+    const sy = scale.y;
+    if (goofy) {
+        const cos_φ = attitude.a;
+        const sin_φ = attitude.b;
+        compose_2d_3x3_transform(x, y, sx, sy, cos_φ, sin_φ, text.skewX, text.skewY, text.matrix);
+    }
+    else {
+        // Text needs an additional rotation of -π/2 (i.e. clockwise 90 degrees) to compensate for 
+        // the use of a right-handed coordinate frame. The rotor for this is cos(π/4)+sin(π/4)*I.
+        // Here we compute the effective rotator (which is obtained by multiplying the two rotors),
+        // and use that to compose the transformation matrix.
+        const a = attitude.a;
+        const b = attitude.b;
+        const cos_φ = (a - b) / Math.SQRT2;
+        const sin_φ = (a + b) / Math.SQRT2;
+        compose_2d_3x3_transform(y, x, sy, sx, cos_φ, sin_φ, text.skewY, text.skewX, text.matrix);
+    }
 }

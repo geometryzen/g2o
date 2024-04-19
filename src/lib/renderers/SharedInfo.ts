@@ -7,7 +7,7 @@ import { Variable } from '../reactive/variable';
 /**
  * Information that is shared between the model and the view.
  */
-export class ZZZ<T> implements Disposable {
+export class ZZZ implements Disposable {
     /**
      * 
      */
@@ -38,7 +38,6 @@ export class ZZZ<T> implements Disposable {
     offset?: G20;
     opacity?: number;
     scale?: G20;
-    type?: T;
 
     vertices?: Anchor[];
     vertices_subject?: Variable<number>;

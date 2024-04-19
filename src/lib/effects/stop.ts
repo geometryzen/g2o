@@ -3,7 +3,7 @@ import { ElementBase } from '../element';
 import { variable } from '../reactive/variable';
 import { Gradient } from './gradient';
 
-export class Stop extends ElementBase<Gradient<'linear-gradient' | 'radial-gradient'>, 'stop'> {
+export class Stop extends ElementBase<Gradient> {
 
     _flagOffset = true;
     _flagOpacity = true;

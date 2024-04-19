@@ -6,7 +6,7 @@ import { ColorProvider } from './ColorProvider';
 import { Gradient } from './gradient';
 import { Stop } from './stop';
 
-export class RadialGradient extends Gradient<'radial-gradient'> implements ColorProvider {
+export class RadialGradient extends Gradient implements ColorProvider {
 
     _flagCenter = false;
     _flagFocal = false;
@@ -30,8 +30,6 @@ export class RadialGradient extends Gradient<'radial-gradient'> implements Color
     constructor(cx: number = 0, cy: number = 0, r: number = 1, stops: Stop[] = [], fx?: number, fy?: number) {
 
         super(stops);
-
-        this.zzz.type = 'radial-gradient';
 
         this.center = new G20(cx, cy);
 

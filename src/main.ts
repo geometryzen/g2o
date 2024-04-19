@@ -3,7 +3,7 @@ import { Board, G20, Text } from './index';
 document.addEventListener('DOMContentLoaded', function () {
 
     const board = new Board("my-board", {
-        boundingBox: [-5, 5, 5, -5],
+        boundingBox: { left: -5, top: 5, right: 5, bottom: -5 },
         // viewFactory: new CanvgViewFactory()
     });
 

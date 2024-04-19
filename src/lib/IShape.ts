@@ -24,10 +24,10 @@ export interface IShape<P> extends Child {
     position: G20;
     stroke: Color;
     visibility: 'visible' | 'hidden' | 'collapse';
-    getBoundingClientRect(shallow?: boolean): { width?: number; height?: number; top?: number; left?: number; right?: number; bottom?: number };
+    getBoundingBox(shallow?: boolean): { top?: number; left?: number; right?: number; bottom?: number };
     // const regex = /texture|gradient/i;
     // regex.test(child._renderer.type)
-    hasBoundingClientRect(): boolean;
+    hasBoundingBox(): boolean;
     noFill(): this;
     noStroke(): this;
     subdivide(limit: number): this;

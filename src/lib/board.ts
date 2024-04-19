@@ -22,7 +22,7 @@ import { Commands } from './utils/path-commands';
 import { dateTime } from './utils/performance';
 
 export interface BoardAttributes {
-    boundingBox?: [x1: number, y1: number, x2: number, y2: number];
+    boundingBox?: { left: number, top: number, right: number, bottom: number };
     resizeTo?: Element;
     scene?: Group;
     size?: { width: number; height: number };
@@ -80,7 +80,7 @@ export class Board implements IBoard {
     #curr_now: number | null = null;
     #prev_now: number | null = null;
 
-    readonly #boundingBox: [x1: number, y1: number, x2: number, y2: number] = [-5, 5, 5, -5];
+    readonly #boundingBox: { left: number, top: number, right: number, bottom: number } = { left: -5, top: 5, right: 5, bottom: -5 };
     readonly goofy: boolean;
 
     constructor(elementOrId: string | HTMLElement, options: BoardAttributes = {}) {
@@ -90,16 +90,16 @@ export class Board implements IBoard {
 
         this.#viewBox = new Group(this, [], { id: `${container_id}-viewbox` });
 
-        if (Array.isArray(options.boundingBox)) {
-            const x1 = options.boundingBox[0];
-            const y1 = options.boundingBox[1];
-            const x2 = options.boundingBox[2];
-            const y2 = options.boundingBox[3];
-            this.#boundingBox[0] = x1;
-            this.#boundingBox[1] = y1;
-            this.#boundingBox[2] = x2;
-            this.#boundingBox[3] = y2;
-            this.goofy = y2 > y1;
+        if (typeof options.boundingBox === 'object') {
+            const left = options.boundingBox.left;
+            const top = options.boundingBox.top;
+            const right = options.boundingBox.right;
+            const bottom = options.boundingBox.bottom;
+            this.#boundingBox.left = left;
+            this.#boundingBox.top = top;
+            this.#boundingBox.right = right;
+            this.#boundingBox.bottom = bottom;
+            this.goofy = bottom > top;
         }
         else {
             this.goofy = false;
@@ -166,13 +166,15 @@ export class Board implements IBoard {
      * introducing a 90 degree rotation if the coordinate system is right-handed (a.k.a regular or not goofy).
      */
     #update_view_box(): void {
-        const [x1, y1, x2, y2] = this.getBoundingBox();
+        const { left, top, right, bottom } = this.getBoundingBox();
         const Δx = this.width;
         const Δy = this.height;
-        const sx = Δx / (x2 - x1);
-        const sy = Δy / (y1 - y2);
-        const x = (x1 * Δx) / (x1 - x2);
-        const y = (y2 * Δy) / (y2 - y1);
+        const RL = right - left;
+        const TB = top - bottom;
+        const sx = Δx / RL;
+        const sy = Δy / TB;
+        const x = -left * Δx / RL;
+        const y = -bottom * Δy / TB;
         this.#viewBox.position.set(x, y);
         if (!this.goofy) {
             this.#viewBox.attitude.rotorFromAngle(Math.PI / 2);
@@ -210,7 +212,7 @@ export class Board implements IBoard {
         return this;
     }
 
-    getBoundingBox(): readonly [x1: number, y1: number, x2: number, y2: number] {
+    getBoundingBox(): { left: number, top: number, right: number, bottom: number } {
         return this.#boundingBox;
     }
 
@@ -267,13 +269,13 @@ export class Board implements IBoard {
         this.#frameCount.set(this.#frameCount.get() + 1);
     }
 
-    add(...shapes: Shape<Group, string>[]): this {
+    add(...shapes: Shape<Group>[]): this {
         this.#scene.add(...shapes);
         this.update();
         return this;
     }
 
-    remove(...shapes: Shape<Group, string>[]): this {
+    remove(...shapes: Shape<Group>[]): this {
         this.#scene.remove(...shapes);
         this.update();
         return this;
@@ -301,19 +303,19 @@ export class Board implements IBoard {
 
     path(closed: boolean, ...points: Anchor[]): Path {
         const path = new Path(this, points, closed);
-        const rect = path.getBoundingClientRect();
-        if (typeof rect.top === 'number' && typeof rect.left === 'number' &&
-            typeof rect.right === 'number' && typeof rect.bottom === 'number') {
-            path.center().position.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        const bbox = path.getBoundingBox();
+        if (typeof bbox.top === 'number' && typeof bbox.left === 'number' &&
+            typeof bbox.right === 'number' && typeof bbox.bottom === 'number') {
+            path.center().position.set((bbox.left + bbox.right) / 2, (bbox.top + bbox.bottom) / 2);
         }
         this.add(path);
         return path;
     }
 
-    point(position: PositionLike, attributes: Partial<PointAttributes> = {}): Shape<Group, string> {
-        const [x1, x2, y1, y2] = this.getBoundingBox();
-        const sx = this.width / (x2 - x1);
-        const sy = this.height / (y2 - y1);
+    point(position: PositionLike, attributes: Partial<PointAttributes> = {}): Shape<Group> {
+        const { left, top, right, bottom } = this.getBoundingBox();
+        const sx = this.width / (top - left);
+        const sy = this.height / (bottom - right);
         const rx = 4 / sx;
         const ry = 4 / sy;
         const options: Partial<EllipseAttributes> = { position, rx, ry, id: attributes.id, visibility: attributes.visibility };
@@ -380,8 +382,8 @@ export class Board implements IBoard {
     curve(closed: boolean, ...anchors: Anchor[]): Path {
         const curved = true;
         const curve = new Path(this, anchors, closed, curved);
-        const rect = curve.getBoundingClientRect();
-        curve.center().position.set(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        const bbox = curve.getBoundingBox();
+        curve.center().position.set((bbox.left + bbox.right) / 2, (bbox.top + bbox.bottom) / 2);
         this.add(curve);
         return curve;
     }
@@ -392,9 +394,9 @@ export class Board implements IBoard {
         return arcSegment;
     }
 
-    group(...shapes: Shape<Group, string>[]): Group {
+    group(...shapes: Shape<Group>[]): Group {
         const group = new Group(this, shapes);
-        this.add(group as Shape<Group, string>);
+        this.add(group as Shape<Group>);
         return group;
     }
 

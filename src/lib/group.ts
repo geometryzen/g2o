@@ -1,20 +1,22 @@
+import { effect } from '@geometryzen/reactive';
 import { Children } from './children';
 import { Color } from './effects/ColorProvider';
 import { Flag } from './Flag';
 import { IBoard } from './IBoard';
 import { IShape } from './IShape';
-import { Disposable } from './reactive/Disposable';
+import { Disposable, dispose } from './reactive/Disposable';
+import { DomContext, svg, SVGAttributes, transform_value_of_matrix } from './renderers/SVGView';
 import { Parent, Shape, ShapeAttributes } from './shape';
 
 export interface IGroup extends Parent {
-    remove(...shapes: Shape<IGroup, unknown>[]): void;
+    remove(...shapes: Shape<IGroup>[]): void;
 }
 
 export interface GroupAttributes {
     id: string;
 }
 
-export class Group extends Shape<Group, 'group'> {
+export class Group extends Shape<Group> {
 
     #fill: Color = '#fff';
     #stroke: Color = '#000';
@@ -47,9 +49,9 @@ export class Group extends Shape<Group, 'group'> {
     /**
      * The shape to clip from a group's rendering.
      */
-    #mask: Shape<Group, string> = null;
+    #mask: Shape<Group> = null;
 
-    #shapes: Children<Shape<Group, string>>;
+    #shapes: Children<Shape<Group>>;
     #shapes_insert: Disposable | null = null;
     #shapes_remove: Disposable | null = null;
     #shapes_order: Disposable | null = null;
@@ -59,13 +61,13 @@ export class Group extends Shape<Group, 'group'> {
     /**
      * An automatically updated list of shapes that need to be appended to the renderer's scenegraph.
      */
-    readonly additions: Shape<Group, string>[] = [];
+    readonly additions: Shape<Group>[] = [];
     /**
      * An automatically updated list of children that need to be removed from the renderer's scenegraph.
      */
-    readonly subtractions: Shape<Group, string>[] = [];
+    readonly subtractions: Shape<Group>[] = [];
 
-    constructor(board: IBoard, shapes: Shape<Group, string>[] = [], attributes: Partial<GroupAttributes> = {}) {
+    constructor(board: IBoard, shapes: Shape<Group>[] = [], attributes: Partial<GroupAttributes> = {}) {
 
         super(board, shape_attributes(attributes));
 
@@ -81,12 +83,6 @@ export class Group extends Shape<Group, 'group'> {
         this.#shapes = new Children(shapes);
 
         this.#subscribe_to_shapes();
-
-        this.zzz.type = 'group';
-    }
-
-    hasBoundingClientRect(): boolean {
-        return false;
     }
 
     override dispose() {
@@ -95,14 +91,168 @@ export class Group extends Shape<Group, 'group'> {
         super.dispose();
     }
 
+    hasBoundingBox(): boolean {
+        return false;
+    }
+
+    render(domElement: HTMLElement | SVGElement, svgElement: SVGElement): void {
+
+        this.update();
+
+        if (this.zzz.elem) {
+            // It's already defined.
+        }
+        else {
+            this.zzz.elem = svg.createElement('g', { id: this.id });
+            domElement.appendChild(this.zzz.elem);
+            this.zzz.disposables.push(this.matrix.change$.subscribe(() => {
+                this.zzz.elem.setAttribute('transform', transform_value_of_matrix(this.matrix));
+            }));
+
+            // opacity
+            this.zzz.disposables.push(effect(() => {
+                const opacity = this.opacity;
+                const change: SVGAttributes = { opacity: `${opacity}` };
+                if (opacity === 1) {
+                    svg.removeAttributes(this.zzz.elem, change);
+                }
+                else {
+                    svg.setAttributes(this.zzz.elem, change);
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+
+            // visibility
+            this.zzz.disposables.push(effect(() => {
+                const visibility = this.visibility;
+                switch (visibility) {
+                    case 'visible': {
+                        const change: SVGAttributes = { visibility };
+                        svg.removeAttributes(this.zzz.elem, change);
+                        break;
+                    }
+                    default: {
+                        const change: SVGAttributes = { visibility };
+                        svg.setAttributes(this.zzz.elem, change);
+                        break;
+                    }
+                }
+                return function () {
+                    // No cleanup to be done.
+                };
+            }));
+        }
+
+        // _Update styles for the <g>
+        const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
+        const dom_context: DomContext = {
+            domElement: domElement,
+            elem: this.zzz.elem
+        };
+
+        if (flagMatrix) {
+            this.zzz.elem.setAttribute('transform', transform_value_of_matrix(this.matrix));
+        }
+
+        for (let i = 0; i < this.children.length; i++) {
+            const child = this.children.getAt(i);
+            const elem = this.zzz.elem;
+            child.render(elem, svgElement);
+        }
+
+        if (this.flags[Flag.ClassName]) {
+            this.zzz.elem.setAttribute('class', this.classList.join(' '));
+        }
+
+        if (this.flags[Flag.Additions]) {
+            //            this.additions.forEach(svg.group.appendChild, dom_context);
+            this.additions.forEach((shape) => {
+                const childNode = shape.zzz.elem;
+                if (!childNode) {
+                    return;
+                }
+                const tag = childNode.nodeName;
+                if (!tag || /(radial|linear)gradient/i.test(tag) || shape.clip) {
+                    return;
+                }
+                dom_context.elem.appendChild(childNode);
+            });
+        }
+
+        if (this.flags[Flag.Subtractions]) {
+            this.subtractions.forEach((shape) => {
+                const childNode = shape.zzz.elem;
+                if (!childNode || childNode.parentNode != dom_context.elem) {
+                    return;
+                }
+                const tag = childNode.nodeName;
+                if (!tag) {
+                    return;
+                }
+                // Defer subtractions while clipping.
+                if (shape.clip) {
+                    return;
+                }
+                dispose(shape.zzz.disposables);
+                dom_context.elem.removeChild(childNode);
+            });
+        }
+
+        if (this.flags[Flag.Order]) {
+            this.children.forEach((child) => {
+                dom_context.elem.appendChild(child.zzz.elem);
+            })
+        }
+
+        // Commented two-way functionality of clips / masks with groups and
+        // polygons. Uncomment when this bug is fixed:
+        // https://code.google.com/p/chromium/issues/detail?id=370951
+
+        // if (this._flagClip) {
+
+        //   clip = svg.getClip(this, domElement);
+        //   elem = this._renderer.elem;
+
+        //   if (this.clip) {
+        //     elem.removeAttribute('id');
+        //     clip.setAttribute('id', this.id);
+        //     clip.appendChild(elem);
+        //   }
+        else {
+            //     clip.removeAttribute('id');
+            //     elem.setAttribute('id', this.id);
+            //     this.parent._renderer.elem.appendChild(elem); // TODO: should be insertBefore
+            //   }
+
+            // }
+
+            if (this.flags[Flag.Mask]) {
+                if (this.mask) {
+                    // this.mask.render(domElement,domElement);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    // (svg as any)[this.mask.zzz.type].render.call(this.mask, domElement);
+                    this.zzz.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
+                    throw new Error("TODO");
+                }
+                else {
+                    this.zzz.elem.removeAttribute('clip-path');
+                }
+            }
+
+            this.flagReset();
+        }
+    }
+
     #subscribe_to_shapes(): void {
-        this.#shapes_insert = this.#shapes.insert$.subscribe((inserts: Shape<Group, string>[]) => {
+        this.#shapes_insert = this.#shapes.insert$.subscribe((inserts: Shape<Group>[]) => {
             for (const shape of inserts) {
                 update_shape_group(shape, this);
             }
         });
 
-        this.#shapes_remove = this.#shapes.remove$.subscribe((removes: Shape<Group, string>[]) => {
+        this.#shapes_remove = this.#shapes.remove$.subscribe((removes: Shape<Group>[]) => {
             for (const shape of removes) {
                 update_shape_group(shape, null);
             }
@@ -132,17 +282,17 @@ export class Group extends Shape<Group, 'group'> {
      * Orient the children of the group to the upper left-hand corner of that group.
      */
     corner(): this {
-        const rect = this.getBoundingClientRect(true);
+        const bbox = this.getBoundingBox(true);
 
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
-            child.position.x -= rect.left;
-            child.position.y -= rect.top;
+            child.position.x -= bbox.left;
+            child.position.y -= bbox.top;
         }
 
         if (this.mask) {
-            this.mask.position.x -= rect.left;
-            this.mask.position.y -= rect.top;
+            this.mask.position.x -= bbox.left;
+            this.mask.position.y -= bbox.top;
         }
 
         return this;
@@ -152,9 +302,9 @@ export class Group extends Shape<Group, 'group'> {
      * Orient the children of the group to the center of that group.
      */
     center(): this {
-        const rect = this.getBoundingClientRect(true);
-        const cx = rect.left + rect.width / 2 - this.position.x;
-        const cy = rect.top + rect.height / 2 - this.position.y;
+        const bbox = this.getBoundingBox(true);
+        const cx = (bbox.left + bbox.right) / 2 - this.position.x;
+        const cy = (bbox.top + bbox.bottom) / 2 - this.position.y;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             if (child.isShape) {
@@ -223,7 +373,7 @@ export class Group extends Shape<Group, 'group'> {
         return search(this);
     }
 
-    add(...shapes: Shape<Group, string>[]) {
+    add(...shapes: Shape<Group>[]) {
         for (let i = 0; i < shapes.length; i++) {
             const child = shapes[i];
             if (!(child && child.id)) {
@@ -238,7 +388,7 @@ export class Group extends Shape<Group, 'group'> {
         return this;
     }
 
-    remove(...shapes: Shape<Group, string>[]) {
+    remove(...shapes: Shape<Group>[]) {
         for (let i = 0; i < shapes.length; i++) {
             const shape = shapes[i];
             shape.dispose();
@@ -250,7 +400,7 @@ export class Group extends Shape<Group, 'group'> {
         return this;
     }
 
-    getBoundingClientRect(shallow = false): { top: number; left: number; right: number; bottom: number; width?: number; height?: number } {
+    getBoundingBox(shallow = false): { top: number; left: number; right: number; bottom: number; } {
 
         this.update();
 
@@ -264,11 +414,11 @@ export class Group extends Shape<Group, 'group'> {
 
             const child = this.children.getAt(i);
 
-            if (!(child.visibility === 'visible') || child.hasBoundingClientRect()) {
+            if (!(child.visibility === 'visible') || child.hasBoundingBox()) {
                 continue;
             }
 
-            const rect = child.getBoundingClientRect(shallow);
+            const rect = child.getBoundingBox(shallow);
 
             const tc = typeof rect.top !== 'number' || isNaN(rect.top) || !isFinite(rect.top);
             const lc = typeof rect.left !== 'number' || isNaN(rect.left) || !isFinite(rect.left);
@@ -298,14 +448,7 @@ export class Group extends Shape<Group, 'group'> {
             }
         }
 
-        return {
-            top: top,
-            left: left,
-            right: right,
-            bottom: bottom,
-            width: right - left,
-            height: bottom - top
-        };
+        return { top, left, right, bottom };
     }
 
     /**
@@ -435,7 +578,7 @@ export class Group extends Shape<Group, 'group'> {
     /**
      * A list of all the children in the scenegraph.
      */
-    get children(): Children<Shape<Group, string>> {
+    get children(): Children<Shape<Group>> {
         return this.#shapes;
     }
     set children(children) {
@@ -525,10 +668,10 @@ export class Group extends Shape<Group, 'group'> {
             child.strokeWidth = strokeWidth;
         }
     }
-    get mask(): Shape<Group, string> {
+    get mask(): Shape<Group> {
         return this.#mask;
     }
-    set mask(mask: Shape<Group, string>) {
+    set mask(mask: Shape<Group>) {
         this.#mask = mask;
         this.flags[Flag.Mask] = true;
         if (!mask.clip) {
@@ -565,7 +708,7 @@ export class Group extends Shape<Group, 'group'> {
 //  * and updates parent-child relationships
 //  * Calling with one arguments will simply remove the parenting
 //  */
-export function update_shape_group(child: Shape<Group, string>, parent?: Group) {
+export function update_shape_group(child: Shape<Group>, parent?: Group) {
 
     const previous_parent = child.parent;
 

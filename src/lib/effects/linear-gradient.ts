@@ -6,7 +6,7 @@ import { ColorProvider } from './ColorProvider';
 import { Gradient } from './gradient';
 import { Stop } from './stop';
 
-export class LinearGradient extends Gradient<'linear-gradient'> implements ColorProvider {
+export class LinearGradient extends Gradient implements ColorProvider {
 
     _flagEndPoints = false;
 
@@ -25,7 +25,6 @@ export class LinearGradient extends Gradient<'linear-gradient'> implements Color
      */
     constructor(x1 = 0, y1 = 0, x2 = 0, y2 = 0, stops: Stop[] = []) {
         super(stops);
-        this.zzz.type = 'linear-gradient';
         this.left = new G20(x1, y1);
         this.right = new G20(x2, y2);
     }

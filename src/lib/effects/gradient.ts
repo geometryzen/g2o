@@ -10,7 +10,7 @@ import { Stop } from './stop';
 /**
  *
  */
-export abstract class Gradient<T extends 'linear-gradient' | 'radial-gradient'> extends ElementBase<Group, T> {
+export abstract class Gradient extends ElementBase<Group> {
 
     _flagStops = false;
 
@@ -63,7 +63,7 @@ export abstract class Gradient<T extends 'linear-gradient' | 'radial-gradient'> 
                 this._stop_subscriptions[stop.id] = stop.change$.subscribe(() => {
                     this._flagStops = true;
                 });
-                stop.parent = this as unknown as Gradient<'linear-gradient' | 'radial-gradient'>;
+                stop.parent = this;
             }
         });
 
