@@ -42,8 +42,6 @@ const reservedAttributesToRemove = ['id', 'class', 'transform', 'xmlns', 'viewBo
 const overwriteAttrs = ['x', 'y', 'width', 'height', 'href', 'xlink:href'] as const;
 
 /**
- * @name Two.Utils.getAlignment
- * @function
  * @param {AlignmentString}
  * @see {@link https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/text-anchor}
  */
@@ -138,7 +136,7 @@ function get_svg_element_non_reserved_attribute_names(element: SVGElement): stri
 }
 
 /**
- * @param node The Two.js object to apply viewbox matrix to
+ * @param node The group to apply viewbox matrix to
  * @param value The viewBox value from the SVG attribute
  * @description Applies the transform of the SVG Viewbox on a given node.
  */
@@ -195,9 +193,9 @@ function applySvgViewBox(node: Group, viewBox: string): void {
 /**
  * Iterates through an SVG Node's properties and stores ones of interest on the shape.
  * It tries to resolve styles applied via CSS as well.
- * @TODO Reverse calculate {@link Two.Gradient}s for fill / stroke of any given path.
+ * @TODO Reverse calculate {@link Gradient}s for fill / stroke of any given path.
  */
-function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyles: ParentStyles) {
+function applySvgAttributes(this: Board, node: SVGElement, elem: Shape, parentStyles: ParentStyles) {
 
     const styles = {}, attributes = {}, extracted = {};
     let i, m, key, value, prop, attr;
@@ -302,7 +300,7 @@ function applySvgAttributes(this: Two, node: SVGElement, elem: Shape, parentStyl
 
                 if (Constants.AutoCalculateImportedMatrices) {
 
-                    // Decompose and infer Two.js related properties.
+                    // Decompose and infer model related properties.
                     transforms = decomposeMatrix(m.a, m.b, m.c, m.d, m.e, m.f);
 
                     elem.translation.set(transforms.translateX, transforms.translateY);
@@ -544,7 +542,7 @@ function delete_defs_current(): void {
 export type ParentStyles = { [name: string]: string };
 
 /**
- * A map of functions to read any number of SVG node types and create Two.js equivalents of them.
+ * A map of functions to read any number of SVG node types and create model equivalents of them.
  *  Primarily used by the {@link Two#interpret} method.
  */
 export const read = {
@@ -1058,7 +1056,7 @@ export const read = {
         const rect = path.getBoundingClientRect(true);
 
         // Center objects to stay consistent
-        // with the rest of the Two.js API.
+        // with the rest of the API.
         rect.centroid = {
             x: rect.left + rect.width / 2,
             y: rect.top + rect.height / 2

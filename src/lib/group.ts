@@ -167,7 +167,6 @@ export class Group extends Shape<Group> {
         }
 
         if (this.flags[Flag.Additions]) {
-            //            this.additions.forEach(svg.group.appendChild, dom_context);
             this.additions.forEach((shape) => {
                 const childNode = shape.zzz.elem;
                 if (!childNode) {
@@ -700,14 +699,6 @@ export class Group extends Shape<Group> {
     }
 }
 
-// /**
-//  * Helper function used to sync parent-child relationship within the
-//  * `Two.Group.children` object.
-//  *
-//  * Set the parent of the passed object to another object
-//  * and updates parent-child relationships
-//  * Calling with one arguments will simply remove the parenting
-//  */
 export function update_shape_group(child: Shape<Group>, parent?: Group) {
 
     const previous_parent = child.parent;

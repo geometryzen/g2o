@@ -9,97 +9,97 @@ import { Texture } from './texture.js';
 export class ImageSequence extends Rectangle {
 
     /**
-     * @name Two.ImageSequence#_flagTextures
+     * @name ImageSequence#_flagTextures
      * @private
-     * @property {Boolean} - Determines whether the {@link Two.ImageSequence#textures} need updating.
+     * @property {Boolean} - Determines whether the {@link ImageSequence#textures} need updating.
      */
     _flagTextures = false;
 
     /**
-     * @name Two.ImageSequence#_flagFrameRate
+     * @name ImageSequence#_flagFrameRate
      * @private
-     * @property {Boolean} - Determines whether the {@link Two.ImageSequence#frameRate} needs updating.
+     * @property {Boolean} - Determines whether the {@link ImageSequence#frameRate} needs updating.
      */
     _flagFrameRate = false;
 
     /**
-     * @name Two.ImageSequence#_flagIndex
+     * @name ImageSequence#_flagIndex
      * @private
-     * @property {Boolean} - Determines whether the {@link Two.ImageSequence#index} needs updating.
+     * @property {Boolean} - Determines whether the {@link ImageSequence#index} needs updating.
      */
     _flagIndex = false;
 
     // Private variables
 
     /**
-     * @name Two.ImageSequence#_amount
+     * @name ImageSequence#_amount
      * @private
-     * @property {Number} - Number of frames for a given {@link Two.ImageSequence}.
+     * @property {Number} - Number of frames for a given {@link ImageSequence}.
      */
     _amount = 1;
 
     /**
-     * @name Two.ImageSequence#_duration
+     * @name ImageSequence#_duration
      * @private
-     * @property {Number} - Number of milliseconds a {@link Two.ImageSequence}.
+     * @property {Number} - Number of milliseconds a {@link ImageSequence}.
      */
     _duration = 0;
 
     /**
-     * @name Two.ImageSequence#_index
+     * @name ImageSequence#_index
      * @private
-     * @property {Number} - The current frame the {@link Two.ImageSequence} is currently displaying.
+     * @property {Number} - The current frame the {@link ImageSequence} is currently displaying.
      */
     _index = 0;
 
     /**
-     * @name Two.ImageSequence#_startTime
+     * @name ImageSequence#_startTime
      * @private
-     * @property {Milliseconds} - Epoch time in milliseconds of when the {@link Two.ImageSequence} started.
+     * @property {Milliseconds} - Epoch time in milliseconds of when the {@link ImageSequence} started.
      */
     _startTime = 0;
 
     /**
-     * @name Two.ImageSequence#_playing
+     * @name ImageSequence#_playing
      * @private
-     * @property {Boolean} - Dictates whether the {@link Two.ImageSequence} is animating or not.
+     * @property {Boolean} - Dictates whether the {@link ImageSequence} is animating or not.
      */
     _playing = false;
 
     /**
-     * @name Two.ImageSequence#_firstFrame
+     * @name ImageSequence#_firstFrame
      * @private
-     * @property {Number} - The frame the {@link Two.ImageSequence} should start with.
+     * @property {Number} - The frame the {@link ImageSequence} should start with.
      */
     _firstFrame = 0;
 
     /**
-     * @name Two.ImageSequence#_lastFrame
+     * @name ImageSequence#_lastFrame
      * @private
-     * @property {Number} - The frame the {@link Two.ImageSequence} should end with.
+     * @property {Number} - The frame the {@link ImageSequence} should end with.
      */
     _lastFrame = 0;
 
     /**
-     * @name Two.ImageSequence#_playing
+     * @name ImageSequence#_playing
      * @private
-     * @property {Boolean} - Dictates whether the {@link Two.ImageSequence} should loop or not.
+     * @property {Boolean} - Dictates whether the {@link ImageSequence} should loop or not.
      */
     _loop = true;
 
     // Exposed through getter-setter
 
     /**
-     * @name Two.ImageSequence#_textures
+     * @name ImageSequence#_textures
      * @private
-     * @see {@link Two.ImageSequence#textures}
+     * @see {@link ImageSequence#textures}
      */
     _textures: Texture[] = null;
 
     /**
-     * @name Two.ImageSequence#_frameRate
+     * @name ImageSequence#_frameRate
      * @private
-     * @see {@link Two.ImageSequence#frameRate}
+     * @see {@link ImageSequence#frameRate}
      */
     _frameRate = 0;
 
@@ -111,8 +111,8 @@ export class ImageSequence extends Rectangle {
         this.noFill();
 
         /**
-         * @name Two.ImageSequence#textures
-         * @property {Texture[]} - A list of textures to be used as frames for animating the {@link Two.ImageSequence}.
+         * @name ImageSequence#textures
+         * @property {Texture[]} - A list of textures to be used as frames for animating the {@link ImageSequence}.
          */
         if (Array.isArray(paths)) {
             this.textures = paths.map((path) => ensure_texture(path));
@@ -127,7 +127,7 @@ export class ImageSequence extends Rectangle {
         this.update();
 
         /**
-         * @name Two.ImageSequence#frameRate
+         * @name ImageSequence#frameRate
          * @property {Number} - The number of frames to animate against per second.
          */
         if (typeof frameRate === 'number') {
@@ -138,7 +138,7 @@ export class ImageSequence extends Rectangle {
         }
 
         /**
-         * @name Two.ImageSequence#index
+         * @name ImageSequence#index
          * @property {Number} - The index of the current tile of the sprite to display. Defaults to `0`.
          */
         this.index = 0;
@@ -146,8 +146,8 @@ export class ImageSequence extends Rectangle {
     }
 
     /**
-     * @name Two.ImageSequence.Properties
-     * @property {String[]} - A list of properties that are on every {@link Two.ImageSequence}.
+     * @name ImageSequence.Properties
+     * @property {String[]} - A list of properties that are on every {@link ImageSequence}.
      */
     static Properties = [
         'textures',
@@ -156,8 +156,8 @@ export class ImageSequence extends Rectangle {
     ];
 
     /**
-     * @name Two.ImageSequence.DefaultFrameRate
-     * @property The default frame rate that {@link Two.ImageSequence#frameRate} is set to when instantiated.
+     * @name ImageSequence.DefaultFrameRate
+     * @property The default frame rate that {@link ImageSequence#frameRate} is set to when instantiated.
      */
     static DefaultFrameRate = 30;
 
@@ -298,7 +298,7 @@ export class ImageSequence extends Rectangle {
     }
 
     /**
-     * @name Two.ImageSequence#flagReset
+     * @name ImageSequence#flagReset
      * @function
      * @private
      * @description Called internally to reset all flags. Ensures that only properties that change are updated before being sent to the renderer.
@@ -355,7 +355,7 @@ export class ImageSequence extends Rectangle {
  * @name FlagTextures
  * @private
  * @function
- * @description Cached method to let renderers know textures have been updated on a {@link Two.ImageSequence}.
+ * @description Cached method to let renderers know textures have been updated on a {@link ImageSequence}.
  */
 function FlagTextures() {
     this._flagTextures = true;
@@ -365,7 +365,7 @@ function FlagTextures() {
  * @name BindTextures
  * @private
  * @function
- * @description Cached method to let {@link Two.ImageSequence} know textures have been added to the instance.
+ * @description Cached method to let {@link ImageSequence} know textures have been added to the instance.
  */
 function BindTextures(items) {
 
@@ -382,7 +382,7 @@ function BindTextures(items) {
  * @name UnbindTextures
  * @private
  * @function
- * @description Cached method to let {@link Two.ImageSequence} know textures have been removed from the instance.
+ * @description Cached method to let {@link ImageSequence} know textures have been removed from the instance.
  */
 function UnbindTextures(items) {
 

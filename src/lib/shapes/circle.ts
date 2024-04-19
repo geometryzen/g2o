@@ -96,8 +96,8 @@ export class Circle extends Path implements CircleProperties {
 
                 v.command = i === 0 ? Commands.move : Commands.curve;
                 v.origin.set(x, y);
-                v.controls.left.set(lx, ly);
-                v.controls.right.set(rx, ry);
+                v.controls.a.set(lx, ly);
+                v.controls.b.set(rx, ry);
             }
         }
 

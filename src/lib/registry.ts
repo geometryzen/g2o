@@ -1,7 +1,3 @@
-/**
- * An arbitrary class to manage a directory of things. Mainly used for keeping tabs of textures in Two.js.
- * TODO: This could be replaced by a map
- */
 export class Registry<T> {
 
     map: { [id: string]: T } = {};

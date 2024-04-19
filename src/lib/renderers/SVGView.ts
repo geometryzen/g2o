@@ -161,20 +161,13 @@ export type DomContext = {
 };
 
 export const svg = {
-    /**
-     * @deprecated
-     * @see https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/version
-     */
-    version: 1.1,
-
     ns: 'http://www.w3.org/2000/svg',
 
     xlink: 'http://www.w3.org/1999/xlink',
 
     // Create an svg namespaced element.
-    createElement: function (name: string, attrs: SVGAttributes = {}) {
-        const tag = name;
-        const elem = document.createElementNS(svg.ns, tag);
+    createElement: function (qualifiedName: string, attrs: SVGAttributes = {}) {
+        const elem = document.createElementNS(svg.ns, qualifiedName);
         if (attrs && Object.keys(attrs).length > 0) {
             svg.setAttributes(elem, attrs);
         }
@@ -210,20 +203,7 @@ export const svg = {
     path_from_anchors: function (board: IBoard, position: G20, attitude: G20, anchors: Anchor[], closed: boolean): string {
 
         // The anchors are user coordinates and don't include the position and attitude of the body.
-        /* 
-        const [x1, y1, x2, y2] = board.getBoundingBox();
-        const sx = board.width / (x2 - x1);
-        const sy = board.height / (y2 - y1);
-        const cx = board.width / 2;
-        const cy = board.width / 2;
-        const a = attitude.a;
-        const b = attitude.b;
-        const alpha = a * a - b * b;
-        const beta = 2 * a * b;
-        const screenX = (x: number, y: number): number => (position.x + (alpha * x + beta * y)) * sx + cx;
-        const screenY = (x: number, y: number): number => (position.y + (alpha * y - beta * x)) * sy + cy;
-        */
-        // EXPERIMENTAL: By switching x amd y here we handle a 90 degree coordinate rotation?
+        // By switching x amd y here we handle a 90 degree coordinate rotation.
         // We are not completely done because Text and Images are rotated.
         const [screenX, screenY] = screen_functions(board);
 
@@ -268,8 +248,8 @@ export const svg = {
 
                 case Commands.curve:
 
-                    ar = (a.controls && a.controls.right) || G20.zero;
-                    bl = (b.controls && b.controls.left) || G20.zero;
+                    ar = (a.controls && a.controls.b) || G20.zero;
+                    bl = (b.controls && b.controls.a) || G20.zero;
 
                     if (a.relative) {
                         vx = toFixed(screenX(ar.x + a.x, ar.y + a.y));
@@ -312,8 +292,8 @@ export const svg = {
                     // Make sure we close to the most previous Commands.move
                     c = d;
 
-                    br = (b.controls && b.controls.right) || b;
-                    cl = (c.controls && c.controls.left) || c;
+                    br = (b.controls && b.controls.b) || b;
+                    cl = (c.controls && c.controls.a) || c;
 
                     if (b.relative) {
                         vx = toFixed(screenX(br.x + b.x, br.y + b.y));
@@ -337,7 +317,6 @@ export const svg = {
                     y = toFixed(screenY(c.x, c.y));
 
                     command += ' C ' + vx + ' ' + vy + ' ' + ux + ' ' + uy + ' ' + x + ' ' + y;
-
                 }
 
                 if (b.command !== Commands.close) {
@@ -349,18 +328,6 @@ export const svg = {
 
         return string;
 
-    },
-
-    pointsToPathDefinition: function (points: { x: number; y: number }[], size: number): string {
-        let string = '';
-        const r = size * 0.5;
-        for (let i = 0; i < points.length; i++) {
-            const x = points[i].x;
-            const y = points[i].y - r;
-            string += Commands.move + ' ' + x + ' ' + y + ' ';
-            string += 'a ' + r + ' ' + r + ' 0 1 0 0.001 0 Z';
-        }
-        return string;
     },
 
     getClip: function (shape: Shape<Group>, svgElement: SVGElement) {

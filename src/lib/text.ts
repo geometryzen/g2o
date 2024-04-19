@@ -481,11 +481,7 @@ export class Text extends Shape<Group> implements TextAttributes {
         // 0.6 is approximate aspect ratio of a typeface's character width to height.
         const width = text.value.length * text.fontSize * 0.6;
         const height = text.fontSize;
-        // eslint-disable-next-line no-console
-        console.warn('Two.Text: unable to accurately measure text, so using an approximation.');
-        return {
-            width, height
-        };
+        return { width, height };
     }
 
     /**

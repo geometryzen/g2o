@@ -289,8 +289,8 @@ export function getControlPoints(a: Anchor, b: Anchor, c: Anchor): Anchor {
     // TODO: Issue 73
     if (d1 < 0.0001 || d2 < 0.0001) {
         if (typeof b.relative === 'boolean' && !b.relative) {
-            b.controls.left.copy(b.origin);
-            b.controls.right.copy(b.origin);
+            b.controls.a.copy(b.origin);
+            b.controls.b.copy(b.origin);
         }
         return b;
     }
@@ -305,19 +305,19 @@ export function getControlPoints(a: Anchor, b: Anchor, c: Anchor): Anchor {
         mid -= HALF_PI;
     }
 
-    b.controls.left.x = Math.cos(mid) * d1;
-    b.controls.left.y = Math.sin(mid) * d1;
+    b.controls.a.x = Math.cos(mid) * d1;
+    b.controls.a.y = Math.sin(mid) * d1;
 
     mid -= Math.PI;
 
-    b.controls.right.x = Math.cos(mid) * d2;
-    b.controls.right.y = Math.sin(mid) * d2;
+    b.controls.b.x = Math.cos(mid) * d2;
+    b.controls.b.y = Math.sin(mid) * d2;
 
     if (typeof b.relative === 'boolean' && !b.relative) {
-        b.controls.left.x += b.x;
-        b.controls.left.y += b.y;
-        b.controls.right.x += b.x;
-        b.controls.right.y += b.y;
+        b.controls.a.x += b.x;
+        b.controls.a.y += b.y;
+        b.controls.b.x += b.x;
+        b.controls.b.y += b.y;
     }
 
     return b;

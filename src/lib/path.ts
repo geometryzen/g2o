@@ -102,7 +102,7 @@ export class Path extends Shape<Group> implements PathAttributes {
      * @param vertices A list of {@link Anchor}s that represent the order and coordinates to construct the rendered shape.
      * @param closed Describes whether the path is closed or open.
      * @param curved Describes whether the path automatically calculates bezier handles for each vertex.
-     * @param manual Describes whether the developer controls how vertices are plotted or if Two.js automatically plots coordinates based on closed and curved booleans.
+     * @param manual Describes whether the developer controls how vertices are plotted.
      */
     constructor(board: IBoard, vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean, attributes: Partial<PathAttributes> = {}) {
 
@@ -522,8 +522,8 @@ export class Path extends Shape<Group> implements PathAttributes {
 
             if (v0.controls && v1.controls) {
 
-                let rx = v0.controls.right.x;
-                let ry = v0.controls.right.y;
+                let rx = v0.controls.b.x;
+                let ry = v0.controls.b.y;
 
                 if (v0.relative) {
                     rx += v0.x;
@@ -532,8 +532,8 @@ export class Path extends Shape<Group> implements PathAttributes {
 
                 const [c0x, c0y] = M.multiply_vector(rx, ry);
 
-                let lx = v1.controls.left.x;
-                let ly = v1.controls.left.y;
+                let lx = v1.controls.a.x;
+                let ly = v1.controls.a.y;
 
                 if (v1.relative) {
                     lx += v1.x;
@@ -658,8 +658,8 @@ export class Path extends Shape<Group> implements PathAttributes {
             return a;
         }
 
-        const right = b.controls && b.controls.right;
-        const left = a.controls && a.controls.left;
+        const right = b.controls && b.controls.b;
+        const left = a.controls && a.controls.a;
 
         const x1 = b.x;
         const y1 = b.y;
@@ -700,16 +700,16 @@ export class Path extends Shape<Group> implements PathAttributes {
         ank.x = x;
         ank.y = y;
 
-        ank.controls.left.x = brx;
-        ank.controls.left.y = bry;
-        ank.controls.right.x = alx;
-        ank.controls.right.y = aly;
+        ank.controls.a.x = brx;
+        ank.controls.a.y = bry;
+        ank.controls.b.x = alx;
+        ank.controls.b.y = aly;
 
         if (!(typeof ank.relative === 'boolean') || ank.relative) {
-            ank.controls.left.x -= x;
-            ank.controls.left.y -= y;
-            ank.controls.right.x -= x;
-            ank.controls.right.y -= y;
+            ank.controls.a.x -= x;
+            ank.controls.a.y -= y;
+            ank.controls.b.x -= x;
+            ank.controls.b.y -= y;
         }
 
         ank.t = t;
@@ -916,20 +916,20 @@ export class Path extends Shape<Group> implements PathAttributes {
                             if (prev && prev.controls) {
 
                                 if (v.relative) {
-                                    v.controls.right.clear();
+                                    v.controls.b.clear();
                                 }
                                 else {
-                                    v.controls.right.copy(v.origin);
+                                    v.controls.b.copy(v.origin);
                                 }
 
                                 if (prev.relative) {
-                                    this.#anchors[i - 1].controls.right
-                                        .copy(prev.controls.right)
+                                    this.#anchors[i - 1].controls.b
+                                        .copy(prev.controls.b)
                                         .lerp(G20.zero, 1 - v.t);
                                 }
                                 else {
-                                    this.#anchors[i - 1].controls.right
-                                        .copy(prev.controls.right)
+                                    this.#anchors[i - 1].controls.b
+                                        .copy(prev.controls.b)
                                         .lerp(prev.origin, 1 - v.t);
                                 }
                             }
@@ -943,10 +943,10 @@ export class Path extends Shape<Group> implements PathAttributes {
                                 right = v;
                                 if (!closed && right.controls) {
                                     if (right.relative) {
-                                        right.controls.right.clear();
+                                        right.controls.b.clear();
                                     }
                                     else {
-                                        right.controls.right.copy(right.origin);
+                                        right.controls.b.copy(right.origin);
                                     }
                                 }
                             }
@@ -955,10 +955,10 @@ export class Path extends Shape<Group> implements PathAttributes {
                                 left.command = Commands.move;
                                 if (!closed && left.controls) {
                                     if (left.relative) {
-                                        left.controls.left.clear();
+                                        left.controls.a.clear();
                                     }
                                     else {
-                                        left.controls.left.copy(left.origin);
+                                        left.controls.a.copy(left.origin);
                                     }
                                 }
                             }
@@ -982,17 +982,17 @@ export class Path extends Shape<Group> implements PathAttributes {
                     // of the in-between point
                     if (next && next.controls) {
 
-                        v.controls.left.clear();
+                        v.controls.a.clear();
 
                         if (next.relative) {
-                            this.#anchors[i + 1].controls.left
-                                .copy(next.controls.left)
+                            this.#anchors[i + 1].controls.a
+                                .copy(next.controls.a)
                                 .lerp(G20.zero, v.t);
                         }
                         else {
                             vector.copy(next.origin);
-                            this.#anchors[i + 1].controls.left
-                                .copy(next.controls.left)
+                            this.#anchors[i + 1].controls.a
+                                .copy(next.controls.a)
                                 .lerp(next.origin, v.t);
                         }
                     }

@@ -74,8 +74,6 @@ export class Board implements IBoard {
     readonly #frameCount = variable(0);
     readonly frameCount$ = this.#frameCount.asObservable();
 
-    playing = false;
-
     // Used to compute the elapsed time between frames.
     #curr_now: number | null = null;
     #prev_now: number | null = null;
@@ -216,22 +214,6 @@ export class Board implements IBoard {
         return this.#boundingBox;
     }
 
-    play(): this {
-        this.playing = true;
-        // raf.init();
-        // return this.trigger(Events.Types.play);
-        return this;
-    }
-
-    pause() {
-        this.playing = false;
-        // return this.trigger(Events.Types.pause);
-    }
-
-    setPlaying(p: boolean): void {
-        this.playing = p;
-    }
-
     /**
      * A number representing how much time has elapsed since the last frame in milliseconds.
      */
@@ -247,7 +229,7 @@ export class Board implements IBoard {
     /**
      * Update positions and calculations in one pass before rendering.
      */
-    update() {
+    update(): void {
         this.#prev_now = this.#curr_now;
         this.#curr_now = dateTime.now();
 

@@ -233,11 +233,6 @@ export class Texture extends ElementBase<Group> implements ColorProvider {
      */
     static ImageRegistry: Registry<HTMLCanvasElement | HTMLImageElement | HTMLVideoElement> = new Registry();
 
-    /**
-     * @property {Function} - Serializes a URL as an absolute path for canonical attribution in {@link Two.ImageRegistry}.
-     * @param {String} path
-     * @returns {String} - The serialized absolute path.
-     */
     static getAbsoluteURL(path: string): string {
         if (!anchor) {
             // TODO: Fix for headless environments
@@ -290,8 +285,6 @@ export class Texture extends ElementBase<Group> implements ColorProvider {
     }
 
     /**
-     * @name Two.Register
-     * @interface
      * @description A collection of functions to register different types of textures. Used internally by a {@link Texture}.
      */
     static Register = {

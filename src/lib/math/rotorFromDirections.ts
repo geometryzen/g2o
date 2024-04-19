@@ -24,10 +24,10 @@ export function rotorFromDirections(a: Readonly<Vector>, b: Readonly<Vector>, m:
     const bb = quad(b);
     const absB = sqrt(bb);
     const BA = absB * absA;
-    const dotBA = dot(b, a);
+    const dotBA = dot(b, a);    // inline?
     const denom = sqrt(2 * (bb * aa + BA * dotBA));
     if (denom !== 0) {
-        const A = a.x * b.x + a.y * b.y;
+        const A = a.x * b.x + a.y * b.y;    // Looks like dotBA again.
         const B = a.y * b.x - a.x * b.y;
         m.set(0, 0, (BA + A) / denom, B / denom);
     }

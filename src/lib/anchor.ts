@@ -9,13 +9,13 @@ export class Anchor {
      * default is zero.
      */
     readonly origin: G20;
-    #origin_change: Disposable | null = null;
+    readonly #origin_change: Disposable;
     readonly controls = {
-        left: new G20(),
-        right: new G20()
+        a: new G20(),
+        b: new G20()
     };
-    #a_change: Disposable | null = null;
-    #b_change: Disposable | null = null;
+    readonly #a_change: Disposable;
+    readonly #b_change: Disposable;
 
     #command: 'M' | 'L' | 'C' | 'A' | 'Z';
     #relative: boolean;
@@ -42,8 +42,8 @@ export class Anchor {
     constructor(origin: G20, ax = 0, ay = 0, bx = 0, by = 0, command: 'M' | 'L' | 'C' | 'A' | 'Z' = Commands.move) {
 
         this.origin = origin;
-        this.controls.left.set(ax, ay);
-        this.controls.right.set(bx, by);
+        this.controls.a.set(ax, ay);
+        this.controls.b.set(bx, by);
 
         this.#command = command;
         this.#relative = true;
@@ -58,10 +58,10 @@ export class Anchor {
         this.#origin_change = this.origin.change$.subscribe(() => {
             this.#change.set(this);
         });
-        this.#a_change = this.controls.left.change$.subscribe(() => {
+        this.#a_change = this.controls.a.change$.subscribe(() => {
             this.#change.set(this);
         });
-        this.#b_change = this.controls.right.change$.subscribe(() => {
+        this.#b_change = this.controls.b.change$.subscribe(() => {
             this.#change.set(this);
         });
     }
@@ -69,15 +69,12 @@ export class Anchor {
     dispose(): void {
         if (this.#origin_change) {
             this.#origin_change.dispose();
-            this.#origin_change = null;
         }
         if (this.#a_change) {
             this.#a_change.dispose();
-            this.#a_change = null;
         }
         if (this.#b_change) {
             this.#b_change.dispose();
-            this.#b_change = null;
         }
     }
 
@@ -110,8 +107,8 @@ export class Anchor {
 
         this.origin.copy(v.origin);
         this.command = v.command;
-        this.controls.left.copy(v.controls.left);
-        this.controls.right.copy(v.controls.right);
+        this.controls.a.copy(v.controls.a);
+        this.controls.b.copy(v.controls.b);
         this.relative = v.relative;
         this.rx = v.rx;
         this.ry = v.ry;

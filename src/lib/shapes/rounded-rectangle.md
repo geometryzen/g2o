@@ -37,7 +37,7 @@ export class RoundedRectangle extends Path {
             points.push(new Anchor(G20.vector(0, 0), 0, 0, 0, 0, i === 0 ? Commands.move : Commands.curve));
         }
 
-        // points[points.length - 1].command = Two.Commands.close;
+        // points[points.length - 1].command = Commands.close;
 
         super(board, points);
 
@@ -45,7 +45,7 @@ export class RoundedRectangle extends Path {
         this.automatic = false;
 
         /**
-         * @name Two.RoundedRectangle#width
+         * @name RoundedRectangle#width
          * @property {Number} - The width of the rounded rectangle.
          */
         if (typeof width === 'number') {
@@ -53,7 +53,7 @@ export class RoundedRectangle extends Path {
         }
 
         /**
-         * @name Two.RoundedRectangle#height
+         * @name RoundedRectangle#height
          * @property {Number} - The height of the rounded rectangle.
          */
         if (typeof height === 'number') {
@@ -61,7 +61,7 @@ export class RoundedRectangle extends Path {
         }
 
         /**
-         * @name Two.RoundedRectangle#radius
+         * @name RoundedRectangle#radius
          * @property {Number} - The size of the radius of the rounded rectangle.
          */
         if (typeof radius === 'number') {

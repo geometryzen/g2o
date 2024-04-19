@@ -19,52 +19,52 @@ import { Commands } from '../utils/path-commands.js';
 export class ArcSegment extends Path {
 
     /**
-     * @name Two.ArcSegment#_flagStartAngle
+     * @name ArcSegment#_flagStartAngle
      * @private
-     * @property {Boolean} - Determines whether the {@link Two.ArcSegment#startAngle} needs updating.
+     * @property {Boolean} - Determines whether the {@link ArcSegment#startAngle} needs updating.
      */
     _flagStartAngle = false;
     /**
-     * @name Two.ArcSegment#_flagEndAngle
+     * @name ArcSegment#_flagEndAngle
      * @private
-     * @property {Boolean} - Determines whether the {@link Two.ArcSegment#endAngle} needs updating.
+     * @property {Boolean} - Determines whether the {@link ArcSegment#endAngle} needs updating.
      */
     _flagEndAngle = false;
     /**
-     * @name Two.ArcSegment#_flagInnerRadius
+     * @name ArcSegment#_flagInnerRadius
      * @private
-     * @property {Boolean} - Determines whether the {@link Two.ArcSegment#innerRadius} needs updating.
+     * @property {Boolean} - Determines whether the {@link ArcSegment#innerRadius} needs updating.
      */
     _flagInnerRadius = false;
     /**
-     * @name Two.ArcSegment#_flagOuterRadius
+     * @name ArcSegment#_flagOuterRadius
      * @private
-     * @property {Boolean} - Determines whether the {@link Two.ArcSegment#outerRadius} needs updating.
+     * @property {Boolean} - Determines whether the {@link ArcSegment#outerRadius} needs updating.
      */
     _flagOuterRadius = false;
 
     /**
-     * @name Two.ArcSegment#_startAngle
+     * @name ArcSegment#_startAngle
      * @private
-     * @see {@link Two.ArcSegment#startAngle}
+     * @see {@link ArcSegment#startAngle}
      */
     _startAngle = 0;
     /**
-     * @name Two.ArcSegment#_endAngle
+     * @name ArcSegment#_endAngle
      * @private
-     * @see {@link Two.ArcSegment#endAngle}
+     * @see {@link ArcSegment#endAngle}
      */
     _endAngle = TWO_PI;
     /**
-     * @name Two.ArcSegment#_innerRadius
+     * @name ArcSegment#_innerRadius
      * @private
-     * @see {@link Two.ArcSegment#innerRadius}
+     * @see {@link ArcSegment#innerRadius}
      */
     _innerRadius = 0;
     /**
-     * @name Two.ArcSegment#_outerRadius
+     * @name ArcSegment#_outerRadius
      * @private
-     * @see {@link Two.ArcSegment#outerRadius}
+     * @see {@link ArcSegment#outerRadius}
      */
     _outerRadius = 0;
 
@@ -79,7 +79,7 @@ export class ArcSegment extends Path {
         super(board, points, true, false, true);
 
         /**
-         * @name Two.ArcSegment#innerRadius
+         * @name ArcSegment#innerRadius
          * @property {Number} - The size of the inner radius of the arc segment.
          */
         if (typeof ir === 'number') {
@@ -87,7 +87,7 @@ export class ArcSegment extends Path {
         }
 
         /**
-         * @name Two.ArcSegment#outerRadius
+         * @name ArcSegment#outerRadius
          * @property {Number} - The size of the outer radius of the arc segment.
          */
         if (typeof or === 'number') {
@@ -95,7 +95,7 @@ export class ArcSegment extends Path {
         }
 
         /**
-         * @name Two.ArcSegment#startAngle
+         * @name ArcSegment#startAngle
          * @property {Number} - The angle of one side for the arc segment.
          */
         if (typeof sa === 'number') {
@@ -103,7 +103,7 @@ export class ArcSegment extends Path {
         }
 
         /**
-         * @name Two.ArcSegment#endAngle
+         * @name ArcSegment#endAngle
          * @property {Number} - The angle of the other side for the arc segment.
          */
         if (typeof ea === 'number') {
@@ -173,20 +173,20 @@ export class ArcSegment extends Path {
                 v.command = command;
                 v.x = x;
                 v.y = y;
-                v.controls.left.clear();
-                v.controls.right.clear();
+                v.controls.a.clear();
+                v.controls.b.clear();
 
                 if (v.command === Commands.curve) {
                     amp = or * step / Math.PI;
-                    v.controls.left.x = amp * Math.cos(theta - HALF_PI);
-                    v.controls.left.y = amp * Math.sin(theta - HALF_PI);
-                    v.controls.right.x = amp * Math.cos(theta + HALF_PI);
-                    v.controls.right.y = amp * Math.sin(theta + HALF_PI);
+                    v.controls.a.x = amp * Math.cos(theta - HALF_PI);
+                    v.controls.a.y = amp * Math.sin(theta - HALF_PI);
+                    v.controls.b.x = amp * Math.cos(theta + HALF_PI);
+                    v.controls.b.y = amp * Math.sin(theta + HALF_PI);
                     if (i === 1) {
-                        v.controls.left.mulByNumber(2);
+                        v.controls.a.mulByNumber(2);
                     }
                     if (i === last) {
-                        v.controls.right.mulByNumber(2);
+                        v.controls.b.mulByNumber(2);
                     }
                 }
 
@@ -225,20 +225,20 @@ export class ArcSegment extends Path {
                     v.command = command;
                     v.x = x;
                     v.y = y;
-                    v.controls.left.clear();
-                    v.controls.right.clear();
+                    v.controls.a.clear();
+                    v.controls.b.clear();
 
                     if (v.command === Commands.curve) {
                         amp = ir * step / Math.PI;
-                        v.controls.left.x = amp * Math.cos(theta + HALF_PI);
-                        v.controls.left.y = amp * Math.sin(theta + HALF_PI);
-                        v.controls.right.x = amp * Math.cos(theta - HALF_PI);
-                        v.controls.right.y = amp * Math.sin(theta - HALF_PI);
+                        v.controls.a.x = amp * Math.cos(theta + HALF_PI);
+                        v.controls.a.y = amp * Math.sin(theta + HALF_PI);
+                        v.controls.b.x = amp * Math.cos(theta - HALF_PI);
+                        v.controls.b.y = amp * Math.sin(theta - HALF_PI);
                         if (i === 1) {
-                            v.controls.left.mulByNumber(2);
+                            v.controls.a.mulByNumber(2);
                         }
                         if (i === last) {
-                            v.controls.right.mulByNumber(2);
+                            v.controls.b.mulByNumber(2);
                         }
                     }
 

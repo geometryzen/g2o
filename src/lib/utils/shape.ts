@@ -65,8 +65,8 @@ export function getCurveLength(a: Anchor, b: Anchor, limit: number): number {
     // TODO: DRYness
     let x2, x3, y2, y3;
 
-    const right = b.controls && b.controls.right;
-    const left = a.controls && a.controls.left;
+    const right = b.controls && b.controls.b;
+    const left = a.controls && a.controls.a;
 
     const x1 = b.x;
     const y1 = b.y;
@@ -93,8 +93,8 @@ export function getCurveLength(a: Anchor, b: Anchor, limit: number): number {
 
 export function getSubdivisions(a: Anchor, b: Anchor, limit: number): Anchor[] {
 
-    const br = b.controls.right;
-    const al = a.controls.left;
+    const br = b.controls.b;
+    const al = a.controls.a;
 
     const bx = b.x;
     const by = b.y;

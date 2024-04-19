@@ -113,9 +113,7 @@ export class Matrix {
     }
 
     /**
-     * @name Two.Matrix#copy
-     * @function
-     * @description Copy the matrix of one to the current instance.
+     * Copy the matrix of one to the current instance.
      */
     copy(m: Matrix): this {
 
@@ -204,10 +202,8 @@ export class Matrix {
     }
 
     /**
-     * @name Two.Matrix#inverse
-     * @function
-     * @param {Two.Matrix} [out] - The optional matrix to apply the inversion to.
-     * @description Return an inverted version of the matrix. If no optional one is passed a new matrix is created and returned.
+     * @param out The optional matrix to apply the inversion to.
+     * Return an inverted version of the matrix. If no optional one is passed a new matrix is created and returned.
      */
     inverse(out?: Matrix): Matrix {
 
