@@ -9,7 +9,7 @@ import { Disposable } from './reactive/Disposable';
 import { Observable } from './reactive/Observable';
 import { variable } from './reactive/variable';
 import { get_svg_element_defs, set_defs_dirty_flag, svg, SVGAttributes, transform_value_of_matrix } from './renderers/SVGView';
-import { Shape, ShapeAttributes } from './shape';
+import { PositionLike, position_from_like, Shape, ShapeAttributes } from './shape';
 
 const min = Math.min, max = Math.max;
 
@@ -89,20 +89,15 @@ export class Text extends Shape<Group> implements TextAttributes {
 
     #dashes: number[] | null = null;
 
-    constructor(board: IBoard, message: string, x: number = 0, y: number = 0, attributes: Partial<TextAttributes> = {}) {
+    constructor(board: IBoard, value: string, position: PositionLike, attributes: Partial<TextAttributes> = {}) {
 
         super(board, shape_attributes_from_text_attributes(attributes));
 
         this.zzz.flags[Flag.Stroke] = true;
 
-        this.value = message;
+        this.value = value;
 
-        if (typeof x === 'number') {
-            this.position.x = x;
-        }
-        if (typeof y === 'number') {
-            this.position.y = y;
-        }
+        this.position = position_from_like(position);
 
         /**
          * @see {@link https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray} for more information on the SVG stroke-dasharray attribute.

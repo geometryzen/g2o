@@ -324,8 +324,8 @@ export class Board implements IBoard {
         return rect;
     }
 
-    text(message: string, x: number, y: number, attributes?: Partial<TextAttributes>): Text {
-        const text = new Text(this, message, x, y, attributes);
+    text(message: string, position: PositionLike, attributes?: Partial<TextAttributes>): Text {
+        const text = new Text(this, message, position, attributes);
         this.add(text);
         return text;
     }

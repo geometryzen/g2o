@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
     box.strokeWidth = 2;
     box.position.copyVector(A.position).add(AC.__mul__(0.75)).add(N.__mul__(box.height / 2));
 
-    const textA = board.text("A", A.position.x, A.position.y, {
+    const textA = board.text("A", A.position, {
         id: 'text-A',
         anchor: 'end',
         dominantBaseline: 'middle',
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     rescale(textA, board);
 
-    const textB = board.text("B", B.position.x, B.position.y, {
+    const textB = board.text("B", B.position, {
         id: 'text-B',
         anchor: 'start',
         dominantBaseline: 'middle',
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     rescale(textB, board);
 
-    const textC = board.text("C", C.position.x, C.position.y, {
+    const textC = board.text("C", C.position, {
         id: 'text-C',
         anchor: 'start',
         dominantBaseline: 'middle',
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     rescale(textC, board);
 
-    const textD = board.text("Box", box.position.x, box.position.y, {
+    const textD = board.text("Box", box.position, {
         id: 'text-D',
         anchor: 'middle',
         dominantBaseline: 'middle',
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
     textD.attitude.rotorFromDirections(AB, AC);
     rescale(textD, board);
 
-    const textE = board.text("Ramp", ramp.position.x, ramp.position.y, {
+    const textE = board.text("Ramp", ramp.position, {
         id: 'text-E',
         anchor: 'middle',
         dominantBaseline: 'hanging',

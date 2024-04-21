@@ -50,12 +50,12 @@ export interface ShapeProperties {
     /**
      * alias for the position property.
      */
-    pos: G20;
+    X: G20;
     position: G20;
     /**
      * alias for the attitude property.
      */
-    rotor: G20;
+    R: G20;
     attitude: G20;
     visibility: 'visible' | 'hidden' | 'collapse';
 }
@@ -269,10 +269,10 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
             this.#position_change = null;
         }
     }
-    get pos(): G20 {
+    get X(): G20 {
         return this.#position;
     }
-    set pos(pos: G20) {
+    set X(pos: G20) {
         if (pos instanceof G20) {
             this.#position.copyVector(pos);
         }
@@ -285,10 +285,10 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
             this.#position.copyVector(position);
         }
     }
-    get rotor(): G20 {
+    get R(): G20 {
         return this.#attitude;
     }
-    set rotor(attitude: G20) {
+    set R(attitude: G20) {
         if (attitude instanceof G20) {
             this.#attitude.copySpinor(attitude);
         }
