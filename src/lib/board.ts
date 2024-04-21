@@ -10,15 +10,15 @@ import { variable } from './reactive/variable';
 import { SVGViewFactory } from './renderers/SVGViewFactory';
 import { View } from './renderers/View';
 import { ViewFactory } from './renderers/ViewFactory';
-import { PositionLike, position_from_like, Shape } from './shape';
+import { PositionLike, Shape } from './shape';
 import { ArcSegment } from './shapes/arc-segment';
+import { Arrow } from './shapes/Arrow';
 import { Circle, CircleAttributes } from './shapes/circle';
 import { Ellipse, EllipseAttributes } from './shapes/ellipse';
 import { Line } from './shapes/line';
 import { Polygon, PolygonAttributes } from './shapes/Polygon';
 import { Rectangle, RectangleAttributes } from './shapes/rectangle';
 import { Text, TextAttributes } from './text';
-import { Commands } from './utils/path-commands';
 import { dateTime } from './utils/performance';
 
 export interface BoardAttributes {
@@ -328,47 +328,10 @@ export class Board implements IBoard {
         return text;
     }
 
-    arrow(tail: PositionLike, head: PositionLike, size?: number): Path {
-
-        const X1 = position_from_like(tail);
-        const x1 = X1.x;
-        const y1 = X1.y;
-
-        const X2 = position_from_like(head);
-        const x2 = X2.x;
-        const y2 = X2.y;
-
-        const headlen = typeof size === 'number' ? size : 10;
-
-        /**
-         * The angle that the vector makes to the horizontal axis
-         */
-        const θ = Math.atan2(y2 - y1, x2 - x1);
-        const φ = Math.PI / 6;
-
-        const vertices = [
-            new Anchor(X1, undefined, undefined, undefined, undefined, Commands.move),
-            new Anchor(X2, undefined, undefined, undefined, undefined, Commands.line),
-            new Anchor(
-                G20.vector(x2 - headlen * Math.cos(θ - φ), y2 - headlen * Math.sin(θ - φ)),
-                undefined, undefined, undefined, undefined, Commands.line
-            ),
-
-            new Anchor(X2, undefined, undefined, undefined, undefined, Commands.move),
-            new Anchor(
-                G20.vector(x2 - headlen * Math.cos(θ + φ), y2 - headlen * Math.sin(θ + φ)),
-                undefined, undefined, undefined, undefined, Commands.line
-            )
-        ];
-
-        const path = new Path(this, vertices, false, false, true);
-        path.noFill();
-        path.cap = 'round';
-        path.join = 'round';
-
-        this.add(path);
-
-        return path;
+    arrow(tail: PositionLike, axis: PositionLike, size?: number): Path {
+        const arrow = new Arrow(this, tail, axis, size);
+        this.add(arrow);
+        return arrow;
     }
 
     curve(closed: boolean, ...anchors: Anchor[]): Path {

@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     box.fill = 'rgba(255, 128, 0, 0.33)';
     box.stroke = 'rgb(255, 128, 0)';
     box.strokeWidth = 2;
-    box.position.copyVector(A.position).add(AC.__mul__(0.75)).add(N.__mul__(box.height / 2));
+    box.position.copyVector(A.position).add(AC.__mul__(0.25)).add(N.__mul__(box.height / 2));
 
     const textA = board.text("A", A.position, {
         id: 'text-A',
@@ -92,17 +92,20 @@ document.addEventListener('DOMContentLoaded', function () {
     box.fill = "#FFFF00";
     box.fillOpacity = 0.3;
 
-    const gravity = board.arrow(box.X, box.X.clone().sub(G20.ey.mulByNumber(2)), 0.25);
+    const gravity = board.arrow(box.X, G20.ey.mulByNumber(-2), 0.25);
     gravity.strokeOpacity = 0.4;
     gravity.strokeWidth = 2;
 
-    const reaction = board.arrow(box.X, box.X.clone().add(N.mulByNumber(1.5)), 0.25);
+    const reaction = board.arrow(box.X, N.mulByNumber(1.5), 0.25);
     reaction.strokeOpacity = 0.4;
     reaction.strokeWidth = 2;
 
-    const friction = board.arrow(box.X, box.X.clone().add(S.mulByNumber(1.5)), 0.25);
+    const friction = board.arrow(box.X, S.mulByNumber(1.5), 0.25);
     friction.strokeOpacity = 0.4;
     friction.strokeWidth = 2;
+
+    // Now move the box
+    box.position.copyVector(A.position).add(AC.__mul__(0.75)).add(N.__mul__(box.height / 2));
 
     // board.update()
 

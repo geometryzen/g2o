@@ -97,7 +97,7 @@ export class Text extends Shape<Group> implements TextAttributes {
 
         this.value = value;
 
-        this.position = position_from_like(position);
+        this.usePosition(position_from_like(position));
 
         /**
          * @see {@link https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray} for more information on the SVG stroke-dasharray attribute.
@@ -222,6 +222,14 @@ export class Text extends Shape<Group> implements TextAttributes {
             changed.id = this.id;
             this.zzz.elem = svg.createElement('text', changed);
             domElement.appendChild(this.zzz.elem);
+
+            this.zzz.disposables.push(this.matrix.change$.subscribe((matrix) => {
+                const change: SVGAttributes = {};
+                // FIXME: This is a bit funky. How do we get the correct transform for text (add 90 degree rotation)
+                update_text_matrix(this);
+                change.transform = transform_value_of_matrix(matrix);
+                svg.setAttributes(this.zzz.elem, change);
+            }));
 
             this.zzz.disposables.push(effect(() => {
                 update_text_matrix(this);
