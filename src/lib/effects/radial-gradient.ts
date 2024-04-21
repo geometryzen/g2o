@@ -1,7 +1,7 @@
 import { effect, state } from '@geometryzen/reactive';
 import { G20 } from '../math/G20';
 import { Disposable } from '../reactive/Disposable';
-import { get_dom_element_defs, svg, SVGAttributes } from '../renderers/SVGView';
+import { get_svg_element_defs, svg, SVGAttributes } from '../renderers/SVGView';
 import { ColorProvider } from './ColorProvider';
 import { Gradient } from './gradient';
 import { Stop } from './stop';
@@ -84,7 +84,7 @@ export class RadialGradient extends Gradient implements ColorProvider {
         }
 
         if (this.zzz.elem.parentNode === null) {
-            get_dom_element_defs(svgElement).appendChild(this.zzz.elem);
+            get_svg_element_defs(svgElement).appendChild(this.zzz.elem);
         }
 
         if (this._flagStops) {

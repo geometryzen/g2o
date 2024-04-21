@@ -10,11 +10,11 @@ export interface ColorProvider {
 
 export type Color = string | ColorProvider;
 
-export function is_color_provider(x: string | ColorProvider): x is ColorProvider {
+export function is_color_provider(x: Color): x is ColorProvider {
     return x instanceof LinearGradient || x instanceof RadialGradient;
 }
 
-export function serialize_color(x: string | ColorProvider): string {
+export function serialize_color(x: Color): string {
     if (is_color_provider(x)) {
         return `url(#${x.id})`;
     }

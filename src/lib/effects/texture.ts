@@ -5,7 +5,7 @@ import { G20 } from '../math/G20';
 import { Disposable } from '../reactive/Disposable';
 import { variable } from '../reactive/variable';
 import { Registry } from '../registry.js';
-import { get_dom_element_defs, serialize_svg_props, svg, SVGAttributes, SVGProperties } from '../renderers/SVGView';
+import { get_svg_element_defs, serialize_svg_props, svg, SVGAttributes, SVGProperties } from '../renderers/SVGView';
 import { root } from '../utils/root';
 import { ColorProvider } from './ColorProvider';
 
@@ -212,7 +212,7 @@ export class Texture extends ElementBase<Group> implements ColorProvider {
         }
 
         if (this.zzz.elem.parentNode === null) {
-            get_dom_element_defs(svgElement).appendChild(this.zzz.elem);
+            get_svg_element_defs(svgElement).appendChild(this.zzz.elem);
         }
 
         if (this.zzz.elem && this.zzz.image && !this.zzz.appended) {

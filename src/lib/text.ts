@@ -8,7 +8,7 @@ import { get_dashes_offset, set_dashes_offset } from './path';
 import { Disposable } from './reactive/Disposable';
 import { Observable } from './reactive/Observable';
 import { variable } from './reactive/variable';
-import { get_dom_element_defs, set_defs_flag_update, svg, SVGAttributes, transform_value_of_matrix } from './renderers/SVGView';
+import { get_svg_element_defs, set_defs_dirty_flag, svg, SVGAttributes, transform_value_of_matrix } from './renderers/SVGView';
 import { Shape, ShapeAttributes } from './shape';
 
 const min = Math.min, max = Math.max;
@@ -216,7 +216,7 @@ export class Text extends Shape<Group> implements TextAttributes {
                 else {
                     changed.fill = serialize_color(fill);
                     if (this.zzz.hasFillEffect) {
-                        set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                        set_defs_dirty_flag(get_svg_element_defs(svgElement), true);
                         delete this.zzz.hasFillEffect;
                     }
                 }
@@ -232,7 +232,7 @@ export class Text extends Shape<Group> implements TextAttributes {
                 else {
                     changed.stroke = serialize_color(stroke);
                     if (this.zzz.hasStrokeEffect) {
-                        set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                        set_defs_dirty_flag(get_svg_element_defs(svgElement), true);
                         delete this.zzz.hasFillEffect;
                     }
                 }
@@ -464,7 +464,6 @@ export class Text extends Shape<Group> implements TextAttributes {
 
         if (this._flagMask) {
             if (this.mask) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 // (svg as any)[this.mask.zzz.type].render.call(this.mask, domElement);
                 this.zzz.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
                 throw new Error("TODO");
@@ -507,7 +506,6 @@ export class Text extends Shape<Group> implements TextAttributes {
         let top: number;
         let bottom: number;
 
-        // TODO: Update this to not __always__ update. Just when it needs to.
         this.update(true);
 
         const matrix = shallow ? this.matrix : this.worldMatrix;

@@ -49,7 +49,7 @@ export class Group extends Shape<Group> {
     /**
      * The shape to clip from a group's rendering.
      */
-    #mask: Shape<Group> = null;
+    #mask: Shape<Group> | null = null;
 
     #shapes: Children<Shape<Group>>;
     #shapes_insert: Disposable | null = null;
@@ -202,7 +202,7 @@ export class Group extends Shape<Group> {
         if (this.flags[Flag.Order]) {
             this.children.forEach((child) => {
                 dom_context.elem.appendChild(child.zzz.elem);
-            })
+            });
         }
 
         // Commented two-way functionality of clips / masks with groups and
@@ -230,7 +230,6 @@ export class Group extends Shape<Group> {
             if (this.flags[Flag.Mask]) {
                 if (this.mask) {
                     // this.mask.render(domElement,domElement);
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     // (svg as any)[this.mask.zzz.type].render.call(this.mask, domElement);
                     this.zzz.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
                     throw new Error("TODO");

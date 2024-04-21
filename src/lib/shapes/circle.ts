@@ -1,4 +1,4 @@
-import { effect, state } from '@geometryzen/reactive';
+import { state } from '@geometryzen/reactive';
 import { Anchor } from '../anchor';
 import { Flag } from '../Flag';
 import { IBoard } from '../IBoard';
@@ -48,10 +48,6 @@ export class Circle extends Path implements CircleProperties {
         }
 
         this.strokeWidth = 2;
-
-        effect(()=>{
-            this.update()
-        })
 
         this.flagReset(true);
 

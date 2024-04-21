@@ -11,28 +11,31 @@ import { View } from './View';
 
 type DOMElement = HTMLElement | SVGElement;
 
-function set_dom_element_defs(svgElement: SVGElement, defs: SVGDefsElement): void {
+/**
+ * FIXME; This is a bit unnecessary considering the defs are a child of the svg element.
+ */
+function set_svg_element_defs(svg: SVGElement, defs: SVGDefsElement): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (svgElement as any).defs = defs;
+    (svg as any).defs = defs;
 }
 
-export function get_dom_element_defs(svgElement: SVGElement): SVGDefsElement {
+export function get_svg_element_defs(svg: SVGElement): SVGDefsElement {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (svgElement as any).defs;
+    return (svg as any).defs;
 }
 
 /**
  * sets the "hidden" _flagUpdate property.
  */
-export function set_defs_flag_update(defs: SVGDefsElement, flagUpdate: boolean): void {
+export function set_defs_dirty_flag(defs: SVGDefsElement, dirtyFlag: boolean): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (defs as any)._flagUpdate = flagUpdate;
+    (defs as any)._flagUpdate = dirtyFlag;
 }
 
 /**
  * gets the "hidden" _flagUpdate property.
  */
-function get_defs_flag_update(defs: SVGDefsElement): boolean {
+function get_defs_dirty_flag(defs: SVGDefsElement): boolean {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (defs as any)._flagUpdate as boolean;
 }
@@ -330,29 +333,27 @@ export const svg = {
 
     },
 
-    getClip: function (shape: Shape<Group>, svgElement: SVGElement) {
+    /**
+     * https://developer.mozilla.org/en-US/docs/Web/SVG/Element/clipPath
+     * @param shape 
+     * @param svgElement 
+     * @returns 
+     */
+    getClip: function (shape: Shape<Group>, svgElement: SVGElement): SVGClipPathElement {
         let clip = shape.zzz.clip;
         if (!clip) {
-            clip = shape.zzz.clip = svg.createElement('clipPath', {
-                'clip-rule': 'nonzero'
-            }) as SVGClipPathElement;
+            clip = shape.zzz.clip = svg.createElement('clipPath', { 'clip-rule': 'nonzero' }) as SVGClipPathElement;
         }
         if (clip.parentNode === null) {
-            const defs = get_dom_element_defs(svgElement);
-            if (defs) {
-                defs.appendChild(clip);
-            }
-            else {
-                throw new Error("No defs found for element");
-            }
+            get_svg_element_defs(svgElement).appendChild(clip);
         }
         return clip;
     },
 
     defs: {
         update: function (svgElement: SVGElement) {
-            const defs = get_dom_element_defs(svgElement);
-            if (get_defs_flag_update(defs)) {
+            const defs = get_svg_element_defs(svgElement);
+            if (get_defs_dirty_flag(defs)) {
                 const children = Array.prototype.slice.call(defs.children, 0);
                 for (let i = 0; i < children.length; i++) {
                     const child = children[i];
@@ -363,7 +364,7 @@ export const svg = {
                         defs.removeChild(child);
                     }
                 }
-                set_defs_flag_update(defs, false);
+                set_defs_dirty_flag(defs, false);
             }
         }
     },
@@ -374,7 +375,9 @@ export interface SVGViewParams {
 }
 
 export class SVGView implements View {
-
+    /**
+     * The topmost svg element.
+     */
     readonly domElement: SVGElement;
     readonly viewBox: Group;
     readonly defs: SVGDefsElement;
@@ -401,9 +404,9 @@ export class SVGView implements View {
         }
 
         this.defs = svg.createElement('defs') as SVGDefsElement;
-        set_defs_flag_update(this.defs, false);
+        set_defs_dirty_flag(this.defs, false);
         this.domElement.appendChild(this.defs);
-        set_dom_element_defs(this.domElement, this.defs);
+        set_svg_element_defs(this.domElement, this.defs);
         this.domElement.style.overflow = 'hidden';
     }
 

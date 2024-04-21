@@ -20,10 +20,10 @@ describe("Anchor", function () {
         const anchor = new Anchor(G20.vector(x, y), ax, ay, bx, by, command);
         expect(anchor.x).toBe(x);
         expect(anchor.y).toBe(y);
-        expect(anchor.controls.left.x).toBe(ax);
-        expect(anchor.controls.left.y).toBe(ay);
-        expect(anchor.controls.right.x).toBe(bx);
-        expect(anchor.controls.right.y).toBe(by);
+        expect(anchor.controls.a.x).toBe(ax);
+        expect(anchor.controls.a.y).toBe(ay);
+        expect(anchor.controls.b.x).toBe(bx);
+        expect(anchor.controls.b.y).toBe(by);
         expect(anchor.command).toBe(command);
         expect(anchor.largeArcFlag).toBe(0);
         expect(anchor.sweepFlag).toBe(1);
@@ -33,10 +33,10 @@ describe("Anchor", function () {
         const anchor = new Anchor(G20.vector(0, 0));
         expect(anchor.x).toBe(0);
         expect(anchor.y).toBe(0);
-        expect(anchor.controls.left.x).toBe(0);
-        expect(anchor.controls.left.y).toBe(0);
-        expect(anchor.controls.right.x).toBe(0);
-        expect(anchor.controls.right.y).toBe(0);
+        expect(anchor.controls.a.x).toBe(0);
+        expect(anchor.controls.a.y).toBe(0);
+        expect(anchor.controls.b.x).toBe(0);
+        expect(anchor.controls.b.y).toBe(0);
         expect(anchor.command).toBe('M');
         expect(anchor.largeArcFlag).toBe(0);
         expect(anchor.relative).toBe(true);
@@ -58,10 +58,10 @@ describe("Anchor", function () {
         anchor.copy(original);
         expect(anchor.x).toBe(x);
         expect(anchor.y).toBe(y);
-        expect(anchor.controls.left.x).toBe(ax);
-        expect(anchor.controls.left.y).toBe(ay);
-        expect(anchor.controls.right.x).toBe(bx);
-        expect(anchor.controls.right.y).toBe(by);
+        expect(anchor.controls.a.x).toBe(ax);
+        expect(anchor.controls.a.y).toBe(ay);
+        expect(anchor.controls.b.x).toBe(bx);
+        expect(anchor.controls.b.y).toBe(by);
         expect(anchor.command).toBe(command);
     });
     it("setters", function () {
@@ -81,8 +81,8 @@ describe("Anchor", function () {
 
         const anchor = new Anchor(G20.vector(0, 0));
         anchor.origin.set(x, y);
-        anchor.controls.left.set(ax, ay);
-        anchor.controls.right.set(bx, by);
+        anchor.controls.a.set(ax, ay);
+        anchor.controls.b.set(bx, by);
         anchor.command = command;
         anchor.relative = relative;
         anchor.rx = rx;
@@ -93,10 +93,10 @@ describe("Anchor", function () {
 
         expect(anchor.x).toBe(x);
         expect(anchor.y).toBe(y);
-        expect(anchor.controls.left.x).toBe(ax);
-        expect(anchor.controls.left.y).toBe(ay);
-        expect(anchor.controls.right.x).toBe(bx);
-        expect(anchor.controls.right.y).toBe(by);
+        expect(anchor.controls.a.x).toBe(ax);
+        expect(anchor.controls.a.y).toBe(ay);
+        expect(anchor.controls.b.x).toBe(bx);
+        expect(anchor.controls.b.y).toBe(by);
         expect(anchor.command).toBe(command);
         expect(anchor.relative).toBe(relative);
         expect(anchor.rx).toBe(rx);
@@ -118,8 +118,8 @@ describe("Anchor", function () {
         const anchor = new Anchor(G20.vector(x, y), ax, ay, bx, by, command);
         const ditto = new Anchor(G20.vector(x, y), ax, ay, bx, by, command);
         anchor.origin.set(ditto.x, ditto.y);
-        anchor.controls.left.set(ax, ay);
-        anchor.controls.right.set(bx, by);
+        anchor.controls.a.set(ax, ay);
+        anchor.controls.b.set(bx, by);
         anchor.command = command;
         anchor.relative = relative;
         anchor.rx = ditto.rx;
@@ -134,10 +134,10 @@ describe("Anchor", function () {
 
         expect(anchor.x).toBe(x);
         expect(anchor.y).toBe(y);
-        expect(anchor.controls.left.x).toBe(ax);
-        expect(anchor.controls.left.y).toBe(ay);
-        expect(anchor.controls.right.x).toBe(bx);
-        expect(anchor.controls.right.y).toBe(by);
+        expect(anchor.controls.a.x).toBe(ax);
+        expect(anchor.controls.a.y).toBe(ay);
+        expect(anchor.controls.b.x).toBe(bx);
+        expect(anchor.controls.b.y).toBe(by);
         expect(anchor.command).toBe(command);
         expect(anchor.relative).toBe(relative);
     });

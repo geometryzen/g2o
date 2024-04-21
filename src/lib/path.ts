@@ -9,7 +9,7 @@ import { decompose_2d_3x3_matrix } from './math/decompose_2d_3x3_matrix';
 import { G20 } from './math/G20.js';
 import { Disposable } from './reactive/Disposable';
 import { variable } from './reactive/variable';
-import { get_dom_element_defs, set_defs_flag_update, svg, SVGAttributes, transform_value_of_matrix } from './renderers/SVGView';
+import { get_svg_element_defs, set_defs_dirty_flag, svg, SVGAttributes, transform_value_of_matrix } from './renderers/SVGView';
 import { PositionLike, Shape } from './shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
 import { lerp, mod } from './utils/math';
@@ -77,8 +77,14 @@ export class Path extends Shape<Group> implements PathAttributes {
     #beginning = 0.0;
     #ending = 1.0;
 
+    /**
+     * The mask property is better named as the cliiPath
+     */
     #mask: Shape<Group> | null = null;
 
+    /**
+     * The clip property indicates that this path is being used as the clipPath for some other shape.
+     */
     #clip = false;
 
     #dashes: number[] = null;
@@ -212,7 +218,7 @@ export class Path extends Shape<Group> implements PathAttributes {
                 changed.fill = serialize_color(this.fill);
             }
             if (this.zzz.hasFillEffect && typeof this.fill === 'string') {
-                set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                set_defs_dirty_flag(get_svg_element_defs(svgElement), true);
                 delete this.zzz.hasFillEffect;
             }
         }
@@ -227,7 +233,7 @@ export class Path extends Shape<Group> implements PathAttributes {
                 changed.stroke = serialize_color(this.stroke);
             }
             if (this.zzz.hasStrokeEffect && typeof this.stroke === 'string') {
-                set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                set_defs_dirty_flag(get_svg_element_defs(svgElement), true);
                 delete this.zzz.hasStrokeEffect;
             }
         }
@@ -290,7 +296,7 @@ export class Path extends Shape<Group> implements PathAttributes {
                 svg.setAttributes(this.zzz.elem, change);
 
                 if (this.zzz.hasFillEffect && typeof this.fill === 'string') {
-                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                    set_defs_dirty_flag(get_svg_element_defs(svgElement), true);
                     delete this.zzz.hasFillEffect;
                 }
 
@@ -331,7 +337,7 @@ export class Path extends Shape<Group> implements PathAttributes {
                 svg.setAttributes(this.zzz.elem, change);
 
                 if (this.zzz.hasStrokeEffect && typeof this.stroke === 'string') {
-                    set_defs_flag_update(get_dom_element_defs(svgElement), true);
+                    set_defs_dirty_flag(get_svg_element_defs(svgElement), true);
                     delete this.zzz.hasStrokeEffect;
                 }
 
@@ -382,7 +388,6 @@ export class Path extends Shape<Group> implements PathAttributes {
         }
 
         if (this.flags[Flag.Clip]) {
-
             const clip = svg.getClip(this, svgElement);
             const elem = this.zzz.elem;
 
@@ -404,10 +409,10 @@ export class Path extends Shape<Group> implements PathAttributes {
         // polygons. Uncomment when this bug is fixed:
         // https://code.google.com/p/chromium/issues/detail?id=370951
 
+        // https://developer.mozilla.org/en-US/docs/Web/SVG/Element/mask
         if (this.flags[Flag.Mask]) {
             if (this.mask) {
                 // this.mask.render(domElement)
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 // (svg as any)[this.mask.zzz.type].render.call(this.mask, domElement);
                 this.zzz.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
                 throw new Error("TODO");
@@ -488,7 +493,6 @@ export class Path extends Shape<Group> implements PathAttributes {
         let top = Infinity;
         let bottom = -Infinity;
 
-        // TODO: Update this to not __always__ update. Just when it needs to.
         this.update();
 
         const M = shallow ? this.matrix : this.worldMatrix;
@@ -658,24 +662,24 @@ export class Path extends Shape<Group> implements PathAttributes {
             return a;
         }
 
-        const right = b.controls && b.controls.b;
-        const left = a.controls && a.controls.a;
+        const bb = b.controls && b.controls.b;
+        const aa = a.controls && a.controls.a;
 
         const x1 = b.x;
         const y1 = b.y;
-        let x2 = (right || b).x;
-        let y2 = (right || b).y;
-        let x3 = (left || a).x;
-        let y3 = (left || a).y;
+        let x2 = (bb || b).x;
+        let y2 = (bb || b).y;
+        let x3 = (aa || a).x;
+        let y3 = (aa || a).y;
         const x4 = a.x;
         const y4 = a.y;
 
-        if (right && b.relative) {
+        if (bb && b.relative) {
             x2 += b.x;
             y2 += b.y;
         }
 
-        if (left && a.relative) {
+        if (aa && a.relative) {
             x3 += a.x;
             y3 += a.y;
         }
@@ -726,7 +730,7 @@ export class Path extends Shape<Group> implements PathAttributes {
             return this;
         }
         for (let i = 0; i < this.#vertices.length; i++) {
-            this.#vertices.getAt(i).command = i === 0 ? Commands.move : Commands.line;
+            this.#vertices.getAt(i).command = (i === 0) ? Commands.move : Commands.line;
         }
         return this;
     }
@@ -804,7 +808,6 @@ export class Path extends Shape<Group> implements PathAttributes {
             }
 
             b = a;
-
         });
 
         this.automatic = false;
@@ -1061,8 +1064,8 @@ export class Path extends Shape<Group> implements PathAttributes {
     get clip(): boolean {
         return this.#clip;
     }
-    set clip(v: boolean) {
-        this.#clip = v;
+    set clip(clip: boolean) {
+        this.#clip = clip;
         this.flags[Flag.Clip] = true;
     }
     get closed(): boolean {
