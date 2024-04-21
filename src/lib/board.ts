@@ -10,7 +10,7 @@ import { variable } from './reactive/variable';
 import { SVGViewFactory } from './renderers/SVGViewFactory';
 import { View } from './renderers/View';
 import { ViewFactory } from './renderers/ViewFactory';
-import { PositionLike, Shape } from './shape';
+import { PositionLike, position_from_like, Shape } from './shape';
 import { ArcSegment } from './shapes/arc-segment';
 import { Circle, CircleAttributes } from './shapes/circle';
 import { Ellipse, EllipseAttributes } from './shapes/ellipse';
@@ -319,8 +319,6 @@ export class Board implements IBoard {
     rectangle(attributes: RectangleAttributes): Rectangle {
         const rect = new Rectangle(this, attributes);
         this.add(rect);
-        rect.strokeWidth = 2;
-        rect.stroke = "#999999";
         return rect;
     }
 
@@ -330,23 +328,35 @@ export class Board implements IBoard {
         return text;
     }
 
-    arrow(x1: number, y1: number, x2: number, y2: number, size?: number): Path {
+    arrow(tail: PositionLike, head: PositionLike, size?: number): Path {
+
+        const X1 = position_from_like(tail);
+        const x1 = X1.x;
+        const y1 = X1.y;
+
+        const X2 = position_from_like(head);
+        const x2 = X2.x;
+        const y2 = X2.y;
 
         const headlen = typeof size === 'number' ? size : 10;
 
-        const angle = Math.atan2(y2 - y1, x2 - x1);
+        /**
+         * The angle that the vector makes to the horizontal axis
+         */
+        const θ = Math.atan2(y2 - y1, x2 - x1);
+        const φ = Math.PI / 6;
 
         const vertices = [
-            new Anchor(G20.vector(x1, y1), undefined, undefined, undefined, undefined, Commands.move),
-            new Anchor(G20.vector(x2, y2), undefined, undefined, undefined, undefined, Commands.line),
+            new Anchor(X1, undefined, undefined, undefined, undefined, Commands.move),
+            new Anchor(X2, undefined, undefined, undefined, undefined, Commands.line),
             new Anchor(
-                G20.vector(x2 - headlen * Math.cos(angle - Math.PI / 4), y2 - headlen * Math.sin(angle - Math.PI / 4)),
+                G20.vector(x2 - headlen * Math.cos(θ - φ), y2 - headlen * Math.sin(θ - φ)),
                 undefined, undefined, undefined, undefined, Commands.line
             ),
 
-            new Anchor(G20.vector(x2, y2), undefined, undefined, undefined, undefined, Commands.move),
+            new Anchor(X2, undefined, undefined, undefined, undefined, Commands.move),
             new Anchor(
-                G20.vector(x2 - headlen * Math.cos(angle + Math.PI / 4), y2 - headlen * Math.sin(angle + Math.PI / 4)),
+                G20.vector(x2 - headlen * Math.cos(θ + φ), y2 - headlen * Math.sin(θ + φ)),
                 undefined, undefined, undefined, undefined, Commands.line
             )
         ];

@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const AB = B.position.__sub__(A.position);
     const AC = C.position.__sub__(A.position);
-    const N = AC.normalize().__mul__(G20.I);
+    const S = AC.normalize();
+    const N = S.__mul__(G20.I);
 
     const ramp = board.polygon([A, B, C], { id: 'ramp', opacity: 0.8 });
     ramp.fill = 'rgba(0, 191, 168, 0.33)';
@@ -90,6 +91,18 @@ document.addEventListener('DOMContentLoaded', function () {
     box.strokeOpacity = 0.6;
     box.fill = "#FFFF00";
     box.fillOpacity = 0.3;
+
+    const gravity = board.arrow(box.X, box.X.clone().sub(G20.ey.mulByNumber(2)), 0.25);
+    gravity.strokeOpacity = 0.4;
+    gravity.strokeWidth = 2;
+
+    const reaction = board.arrow(box.X, box.X.clone().add(N.mulByNumber(1.5)), 0.25);
+    reaction.strokeOpacity = 0.4;
+    reaction.strokeWidth = 2;
+
+    const friction = board.arrow(box.X, box.X.clone().add(S.mulByNumber(1.5)), 0.25);
+    friction.strokeOpacity = 0.4;
+    friction.strokeWidth = 2;
 
     // board.update()
 
