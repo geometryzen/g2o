@@ -125,7 +125,7 @@ export class ArcSegment extends Path {
 
     update() {
 
-        if (this.flags[Flag.Vertices] || this._flagStartAngle || this._flagEndAngle
+        if (this.zzz.flags[Flag.Vertices] || this._flagStartAngle || this._flagEndAngle
             || this._flagInnerRadius || this._flagOuterRadius) {
 
             const sa = this._startAngle;

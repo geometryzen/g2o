@@ -58,7 +58,7 @@ export class Star extends Path {
 
     update() {
 
-        if (this.flags[Flag.Vertices] || this._flagInnerRadius || this._flagOuterRadius || this._flagSides) {
+        if (this.zzz.flags[Flag.Vertices] || this._flagInnerRadius || this._flagOuterRadius || this._flagSides) {
 
             const sides = this._sides * 2;
             const amount = sides + 1;

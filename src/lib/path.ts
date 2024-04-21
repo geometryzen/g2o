@@ -37,6 +37,19 @@ export interface PathAttributes {
     opacity: number;
     position: PositionLike;
     visibility: 'visible' | 'hidden' | 'collapse';
+    /**
+     * The value of what the path should be filled in with.
+     * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
+     */
+    fill: Color;
+    fillOpacity: number;
+    /**
+     * The value of what the path should be outlined in with.
+     * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
+     */
+    stroke: Color;
+    strokeWidth: number;
+    strokeOpacity: number;
 }
 
 export class Path extends Shape<Group> implements PathAttributes {
@@ -77,16 +90,6 @@ export class Path extends Shape<Group> implements PathAttributes {
     #beginning = 0.0;
     #ending = 1.0;
 
-    /**
-     * The mask property is better named as the cliiPath
-     */
-    #mask: Shape<Group> | null = null;
-
-    /**
-     * The clip property indicates that this path is being used as the clipPath for some other shape.
-     */
-    #clip = false;
-
     #dashes: number[] = null;
 
     /**
@@ -115,8 +118,8 @@ export class Path extends Shape<Group> implements PathAttributes {
         super(board, attributes);
 
         this.flagReset(true);
-        this.flags[Flag.Mask] = false;
-        this.flags[Flag.Clip] = false;
+        this.zzz.flags[Flag.Mask] = false;
+        this.zzz.flags[Flag.Clip] = false;
 
         this.zzz.vertices = [];
         this.zzz.vertices_subject = variable(0);
@@ -145,21 +148,41 @@ export class Path extends Shape<Group> implements PathAttributes {
 
         // Style properties
 
-        /**
-         * The value of what the path should be filled in with.
-         * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
-         */
-        this.fill = '#fff';
+        if (attributes.fill) {
+            this.fill = attributes.fill;
+        }
+        else {
+            this.fill = '#fff';
+        }
 
-        /**
-         * The value of what the path should be outlined in with.
-         * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
-         */
-        this.stroke = '#000';
+        if (typeof attributes.fillOpacity === 'number') {
+            this.fillOpacity = attributes.fillOpacity;
+        }
+        else {
+            this.fillOpacity = 1.0;
+        }
 
-        this.strokeWidth = 1;
+        if (attributes.stroke) {
+            this.stroke = attributes.stroke;
+        }
+        else {
+            this.stroke = '#000';
+        }
 
-        this.strokeOpacity = 1.0;
+        if (typeof attributes.strokeWidth === 'number') {
+            this.strokeWidth = attributes.strokeWidth;
+        }
+        else {
+            this.strokeWidth = 1;
+        }
+
+        if (typeof attributes.strokeOpacity === 'number') {
+            this.strokeOpacity = attributes.strokeOpacity;
+        }
+        else {
+            this.strokeOpacity = 1.0;
+        }
+
 
         /**
          * A class to be applied to the element to be compatible with CSS styling.
@@ -202,7 +225,7 @@ export class Path extends Shape<Group> implements PathAttributes {
         // Collect any attribute that needs to be changed here
         const changed: SVGAttributes = {};
 
-        const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
+        const flagMatrix = this.matrix.manual || this.zzz.flags[Flag.Matrix];
 
         if (flagMatrix) {
             changed.transform = transform_value_of_matrix(this.matrix);
@@ -213,7 +236,7 @@ export class Path extends Shape<Group> implements PathAttributes {
             this.fill.render(svgElement);
         }
 
-        if (this.flags[Flag.Fill]) {
+        if (this.zzz.flags[Flag.Fill]) {
             if (this.fill) {
                 changed.fill = serialize_color(this.fill);
             }
@@ -228,7 +251,7 @@ export class Path extends Shape<Group> implements PathAttributes {
             this.stroke.render(svgElement);
         }
 
-        if (this.flags[Flag.Stroke]) {
+        if (this.zzz.flags[Flag.Stroke]) {
             if (this.stroke) {
                 changed.stroke = serialize_color(this.stroke);
             }
@@ -238,27 +261,27 @@ export class Path extends Shape<Group> implements PathAttributes {
             }
         }
 
-        if (this.flags[Flag.Linewidth]) {
+        if (this.zzz.flags[Flag.Linewidth]) {
             changed['stroke-width'] = `${this.strokeWidth}`;
         }
 
-        if (this.flags[Flag.ClassName]) {
+        if (this.zzz.flags[Flag.ClassName]) {
             changed['class'] = this.classList.join(' ');
         }
 
-        if (this.flags[Flag.VectorEffect]) {
+        if (this.zzz.flags[Flag.VectorEffect]) {
             changed['vector-effect'] = this.vectorEffect;
         }
 
-        if (this.flags[Flag.Cap]) {
+        if (this.zzz.flags[Flag.Cap]) {
             changed['stroke-linecap'] = this.cap;
         }
 
-        if (this.flags[Flag.Join]) {
+        if (this.zzz.flags[Flag.Join]) {
             changed['stroke-linejoin'] = this.join;
         }
 
-        if (this.flags[Flag.Miter]) {
+        if (this.zzz.flags[Flag.Miter]) {
             changed['stroke-miterlimit'] = `${this.miter}`;
         }
 
@@ -387,11 +410,11 @@ export class Path extends Shape<Group> implements PathAttributes {
             }));
         }
 
-        if (this.flags[Flag.Clip]) {
+        if (this.zzz.flags[Flag.Clip]) {
             const clip = svg.getClip(this, svgElement);
             const elem = this.zzz.elem;
 
-            if (this.clip) {
+            if (this.zzz.clip) {
                 elem.removeAttribute('id');
                 clip.setAttribute('id', this.id);
                 clip.appendChild(elem);
@@ -410,12 +433,10 @@ export class Path extends Shape<Group> implements PathAttributes {
         // https://code.google.com/p/chromium/issues/detail?id=370951
 
         // https://developer.mozilla.org/en-US/docs/Web/SVG/Element/mask
-        if (this.flags[Flag.Mask]) {
+        if (this.zzz.flags[Flag.Mask]) {
             if (this.mask) {
-                // this.mask.render(domElement)
-                // (svg as any)[this.mask.zzz.type].render.call(this.mask, domElement);
+                this.mask.render(domElement, svgElement)
                 this.zzz.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
-                throw new Error("TODO");
             }
             else {
                 this.zzz.elem.removeAttribute('clip-path');
@@ -854,19 +875,19 @@ export class Path extends Shape<Group> implements PathAttributes {
         });
 
         this.#length = sum;
-        this.flags[Flag.Length] = false;
+        this.zzz.flags[Flag.Length] = false;
 
         return this;
     }
 
     override update(): this {
-        if (this.flags[Flag.Vertices]) {
+        if (this.zzz.flags[Flag.Vertices]) {
 
             if (this.automatic) {
                 this.plot();
             }
 
-            if (this.flags[Flag.Length]) {
+            if (this.zzz.flags[Flag.Length]) {
                 this.#updateLength(undefined, true);
             }
 
@@ -1009,17 +1030,17 @@ export class Path extends Shape<Group> implements PathAttributes {
 
     override flagReset(dirtyFlag = false): this {
 
-        this.flags[Flag.Cap] = dirtyFlag;
-        this.flags[Flag.Clip] = dirtyFlag;
-        this.flags[Flag.Fill] = dirtyFlag;
-        this.flags[Flag.Join] = dirtyFlag;
-        this.flags[Flag.Length] = dirtyFlag;
-        this.flags[Flag.Linewidth] = dirtyFlag;
-        this.flags[Flag.Mask] = dirtyFlag;
-        this.flags[Flag.Miter] = dirtyFlag;
-        this.flags[Flag.Stroke] = dirtyFlag;
-        this.flags[Flag.VectorEffect] = dirtyFlag;
-        this.flags[Flag.Vertices] = dirtyFlag;
+        this.zzz.flags[Flag.Cap] = dirtyFlag;
+        this.zzz.flags[Flag.Clip] = dirtyFlag;
+        this.zzz.flags[Flag.Fill] = dirtyFlag;
+        this.zzz.flags[Flag.Join] = dirtyFlag;
+        this.zzz.flags[Flag.Length] = dirtyFlag;
+        this.zzz.flags[Flag.Linewidth] = dirtyFlag;
+        this.zzz.flags[Flag.Mask] = dirtyFlag;
+        this.zzz.flags[Flag.Miter] = dirtyFlag;
+        this.zzz.flags[Flag.Stroke] = dirtyFlag;
+        this.zzz.flags[Flag.VectorEffect] = dirtyFlag;
+        this.zzz.flags[Flag.Vertices] = dirtyFlag;
 
         super.flagReset(dirtyFlag);
 
@@ -1048,7 +1069,7 @@ export class Path extends Shape<Group> implements PathAttributes {
     }
     set beginning(beginning: number) {
         this.#beginning = beginning;
-        this.flags[Flag.Vertices] = true;
+        this.zzz.flags[Flag.Vertices] = true;
     }
     /**
      * Defines the shape to be used at the end of open subpaths when they are stroked.
@@ -1059,28 +1080,21 @@ export class Path extends Shape<Group> implements PathAttributes {
     }
     set cap(cap: 'butt' | 'round' | 'square') {
         this.#cap = cap;
-        this.flags[Flag.Cap] = true;
-    }
-    get clip(): boolean {
-        return this.#clip;
-    }
-    set clip(clip: boolean) {
-        this.#clip = clip;
-        this.flags[Flag.Clip] = true;
+        this.zzz.flags[Flag.Cap] = true;
     }
     get closed(): boolean {
         return this.#closed;
     }
     set closed(closed: boolean) {
         this.#closed = !!closed;
-        this.flags[Flag.Vertices] = true;
+        this.zzz.flags[Flag.Vertices] = true;
     }
     get curved(): boolean {
         return this.#curved;
     }
     set curved(curved: boolean) {
         this.#curved = !!curved;
-        this.flags[Flag.Vertices] = true;
+        this.zzz.flags[Flag.Vertices] = true;
     }
     get dashes(): number[] {
         return this.#dashes;
@@ -1096,7 +1110,7 @@ export class Path extends Shape<Group> implements PathAttributes {
     }
     set ending(ending: number) {
         this.#ending = ending;
-        this.flags[Flag.Vertices] = true;
+        this.zzz.flags[Flag.Vertices] = true;
     }
     get fill(): Color {
         return this.#fill.get();
@@ -1108,11 +1122,11 @@ export class Path extends Shape<Group> implements PathAttributes {
         }
 
         this.#fill.set(fill);
-        this.flags[Flag.Fill] = true;
+        this.zzz.flags[Flag.Fill] = true;
 
         if (is_color_provider(fill)) {
             this.#fill_change = fill.change$.subscribe(() => {
-                this.flags[Flag.Fill] = true;
+                this.zzz.flags[Flag.Fill] = true;
             });
         }
     }
@@ -1127,10 +1141,10 @@ export class Path extends Shape<Group> implements PathAttributes {
     }
     set join(join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round') {
         this.#join = join;
-        this.flags[Flag.Join] = true;
+        this.zzz.flags[Flag.Join] = true;
     }
     get length(): number {
-        if (this.flags[Flag.Length]) {
+        if (this.zzz.flags[Flag.Length]) {
             this.#updateLength();
         }
         return this.#length;
@@ -1145,18 +1159,8 @@ export class Path extends Shape<Group> implements PathAttributes {
         if (typeof stroeWidth === 'number') {
             if (this.strokeWidth !== stroeWidth) {
                 this.#stroke_width.set(stroeWidth);
-                this.flags[Flag.Linewidth] = true;
+                this.zzz.flags[Flag.Linewidth] = true;
             }
-        }
-    }
-    get mask(): Shape<Group> | null {
-        return this.#mask;
-    }
-    set mask(mask: Shape<Group> | null) {
-        this.#mask = mask;
-        this.flags[Flag.Mask] = true;
-        if (mask instanceof Shape && !mask.clip) {
-            mask.clip = true;
         }
     }
     get miter(): number {
@@ -1164,7 +1168,7 @@ export class Path extends Shape<Group> implements PathAttributes {
     }
     set miter(miter: number) {
         this.#miter = miter;
-        this.flags[Flag.Miter] = true;
+        this.zzz.flags[Flag.Miter] = true;
     }
     get stroke(): Color {
         return this.#stroke.get();
@@ -1176,11 +1180,11 @@ export class Path extends Shape<Group> implements PathAttributes {
         }
 
         this.#stroke.set(stroke);
-        this.flags[Flag.Stroke] = true;
+        this.zzz.flags[Flag.Stroke] = true;
 
         if (is_color_provider(stroke)) {
             this.#stroke_change = stroke.change$.subscribe(() => {
-                this.flags[Flag.Stroke] = true;
+                this.zzz.flags[Flag.Stroke] = true;
             });
         }
     }
@@ -1219,12 +1223,12 @@ export class Path extends Shape<Group> implements PathAttributes {
             while (i--) {
                 const anchor = inserts[i];
                 const subscription = anchor.change$.subscribe(() => {
-                    this.flags[Flag.Vertices] = true;
+                    this.zzz.flags[Flag.Vertices] = true;
                 });
                 // TODO: Check that we are not already mapped?
                 this.#anchor_change_map.set(anchor, subscription);
             }
-            this.flags[Flag.Vertices] = true;
+            this.zzz.flags[Flag.Vertices] = true;
         });
 
         this.#vertices_remove = this.vertices.remove$.subscribe((removes: Anchor[]) => {
@@ -1235,12 +1239,12 @@ export class Path extends Shape<Group> implements PathAttributes {
                 subscription.dispose();
                 this.#anchor_change_map.delete(anchor);
             }
-            this.flags[Flag.Vertices] = true;
+            this.zzz.flags[Flag.Vertices] = true;
         });
 
         this.vertices.forEach((anchor: Anchor) => {
             const subscription = anchor.change$.subscribe(() => {
-                this.flags[Flag.Vertices] = true;
+                this.zzz.flags[Flag.Vertices] = true;
             });
             this.#anchor_change_map.set(anchor, subscription);
         });
@@ -1250,6 +1254,6 @@ export class Path extends Shape<Group> implements PathAttributes {
     }
     set vectorEffect(vectorEffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position') {
         this.#vectorEffect = vectorEffect;
-        this.flags[Flag.VectorEffect] = true;
+        this.zzz.flags[Flag.VectorEffect] = true;
     }
 }

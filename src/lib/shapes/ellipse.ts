@@ -60,7 +60,7 @@ export class Ellipse extends Path {
     static Properties = ['width', 'height'];
 
     override update(): this {
-        if (this.flags[Flag.Vertices] || this._flagWidth || this._flagHeight) {
+        if (this.zzz.flags[Flag.Vertices] || this._flagWidth || this._flagHeight) {
 
             let length = this.vertices.length;
 

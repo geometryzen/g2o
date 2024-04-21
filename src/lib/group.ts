@@ -46,17 +46,10 @@ export class Group extends Shape<Group> {
 
     #length = 0;
 
-    /**
-     * The shape to clip from a group's rendering.
-     */
-    #mask: Shape<Group> | null = null;
-
     #shapes: Children<Shape<Group>>;
     #shapes_insert: Disposable | null = null;
     #shapes_remove: Disposable | null = null;
     #shapes_order: Disposable | null = null;
-
-    clip: boolean;
 
     /**
      * An automatically updated list of shapes that need to be appended to the renderer's scenegraph.
@@ -72,13 +65,13 @@ export class Group extends Shape<Group> {
         super(board, shape_attributes(attributes));
 
         this.flagReset(true);
-        this.flags[Flag.Additions] = false;
-        this.flags[Flag.Subtractions] = false;
-        this.flags[Flag.Beginning] = false;
-        this.flags[Flag.Ending] = false;
-        this.flags[Flag.Length] = false;
-        this.flags[Flag.Order] = false;
-        this.flags[Flag.Mask] = false;
+        this.zzz.flags[Flag.Additions] = false;
+        this.zzz.flags[Flag.Subtractions] = false;
+        this.zzz.flags[Flag.Beginning] = false;
+        this.zzz.flags[Flag.Ending] = false;
+        this.zzz.flags[Flag.Length] = false;
+        this.zzz.flags[Flag.Order] = false;
+        this.zzz.flags[Flag.Mask] = false;
 
         this.#shapes = new Children(shapes);
 
@@ -146,7 +139,7 @@ export class Group extends Shape<Group> {
         }
 
         // _Update styles for the <g>
-        const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
+        const flagMatrix = this.matrix.manual || this.zzz.flags[Flag.Matrix];
         const dom_context: DomContext = {
             domElement: domElement,
             elem: this.zzz.elem
@@ -162,25 +155,25 @@ export class Group extends Shape<Group> {
             child.render(elem, svgElement);
         }
 
-        if (this.flags[Flag.ClassName]) {
+        if (this.zzz.flags[Flag.ClassName]) {
             this.zzz.elem.setAttribute('class', this.classList.join(' '));
         }
 
-        if (this.flags[Flag.Additions]) {
+        if (this.zzz.flags[Flag.Additions]) {
             this.additions.forEach((shape) => {
                 const childNode = shape.zzz.elem;
                 if (!childNode) {
                     return;
                 }
                 const tag = childNode.nodeName;
-                if (!tag || /(radial|linear)gradient/i.test(tag) || shape.clip) {
+                if (!tag || /(radial|linear)gradient/i.test(tag) || shape.zzz.clip) {
                     return;
                 }
                 dom_context.elem.appendChild(childNode);
             });
         }
 
-        if (this.flags[Flag.Subtractions]) {
+        if (this.zzz.flags[Flag.Subtractions]) {
             this.subtractions.forEach((shape) => {
                 const childNode = shape.zzz.elem;
                 if (!childNode || childNode.parentNode != dom_context.elem) {
@@ -191,7 +184,7 @@ export class Group extends Shape<Group> {
                     return;
                 }
                 // Defer subtractions while clipping.
-                if (shape.clip) {
+                if (shape.zzz.clip) {
                     return;
                 }
                 dispose(shape.zzz.disposables);
@@ -199,7 +192,7 @@ export class Group extends Shape<Group> {
             });
         }
 
-        if (this.flags[Flag.Order]) {
+        if (this.zzz.flags[Flag.Order]) {
             this.children.forEach((child) => {
                 dom_context.elem.appendChild(child.zzz.elem);
             });
@@ -227,12 +220,10 @@ export class Group extends Shape<Group> {
 
             // }
 
-            if (this.flags[Flag.Mask]) {
+            if (this.zzz.flags[Flag.Mask]) {
                 if (this.mask) {
-                    // this.mask.render(domElement,domElement);
-                    // (svg as any)[this.mask.zzz.type].render.call(this.mask, domElement);
+                    this.mask.render(domElement, svgElement);
                     this.zzz.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
-                    throw new Error("TODO");
                 }
                 else {
                     this.zzz.elem.removeAttribute('clip-path');
@@ -257,7 +248,7 @@ export class Group extends Shape<Group> {
         });
 
         this.#shapes_order = this.#shapes.order$.subscribe(() => {
-            this.flags[Flag.Order] = true;
+            this.zzz.flags[Flag.Order] = true;
         });
     }
 
@@ -305,10 +296,8 @@ export class Group extends Shape<Group> {
         const cy = (bbox.top + bbox.bottom) / 2 - this.position.y;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
-            if (child.isShape) {
-                child.position.x -= cx;
-                child.position.y -= cy;
-            }
+            child.position.x -= cx;
+            child.position.y -= cy;
         }
         if (this.mask) {
             this.mask.position.x -= cx;
@@ -480,7 +469,7 @@ export class Group extends Shape<Group> {
     }
 
     update(): this {
-        if (this.flags[Flag.Beginning] || this.flags[Flag.Ending]) {
+        if (this.zzz.flags[Flag.Beginning] || this.zzz.flags[Flag.Ending]) {
 
             const beginning = Math.min(this.beginning, this.ending);
             const ending = Math.max(this.beginning, this.ending);
@@ -521,21 +510,21 @@ export class Group extends Shape<Group> {
     }
 
     override flagReset(dirtyFlag = false) {
-        if (this.flags[Flag.Additions]) {
+        if (this.zzz.flags[Flag.Additions]) {
             this.additions.length = 0;
-            this.flags[Flag.Additions] = dirtyFlag;
+            this.zzz.flags[Flag.Additions] = dirtyFlag;
         }
 
-        if (this.flags[Flag.Subtractions]) {
+        if (this.zzz.flags[Flag.Subtractions]) {
             this.subtractions.length = 0;
-            this.flags[Flag.Subtractions] = false;
+            this.zzz.flags[Flag.Subtractions] = false;
         }
 
-        this.flags[Flag.Order] = dirtyFlag;
-        this.flags[Flag.Mask] = dirtyFlag;
+        this.zzz.flags[Flag.Order] = dirtyFlag;
+        this.zzz.flags[Flag.Mask] = dirtyFlag;
 
-        this.flags[Flag.Beginning] = dirtyFlag;
-        this.flags[Flag.Ending] = dirtyFlag;
+        this.zzz.flags[Flag.Beginning] = dirtyFlag;
+        this.zzz.flags[Flag.Ending] = dirtyFlag;
 
         super.flagReset(dirtyFlag);
 
@@ -559,7 +548,7 @@ export class Group extends Shape<Group> {
         if (typeof beginning === 'number') {
             if (this.beginning !== beginning) {
                 this.#beginning = beginning;
-                this.flags[Flag.Beginning] = true;
+                this.zzz.flags[Flag.Beginning] = true;
             }
         }
     }
@@ -619,7 +608,7 @@ export class Group extends Shape<Group> {
         if (typeof ending === 'number') {
             if (this.ending !== ending) {
                 this.#ending = ending;
-                this.flags[Flag.Ending] = true;
+                this.zzz.flags[Flag.Ending] = true;
             }
         }
     }
@@ -644,7 +633,7 @@ export class Group extends Shape<Group> {
         }
     }
     get length(): number {
-        if (this.flags[Flag.Length] || this.#length <= 0) {
+        if (this.zzz.flags[Flag.Length] || this.#length <= 0) {
             this.#length = 0;
             if (!this.children) {
                 return this.#length;
@@ -664,16 +653,6 @@ export class Group extends Shape<Group> {
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             child.strokeWidth = strokeWidth;
-        }
-    }
-    get mask(): Shape<Group> {
-        return this.#mask;
-    }
-    set mask(mask: Shape<Group>) {
-        this.#mask = mask;
-        this.flags[Flag.Mask] = true;
-        if (!mask.clip) {
-            mask.clip = true;
         }
     }
     get miter(): number {
@@ -720,11 +699,11 @@ export function update_shape_group(child: Shape<Group>, parent?: Group) {
 
     splice();
 
-    if (previous_parent.flags[Flag.Additions] && previous_parent.additions.length === 0) {
-        previous_parent.flags[Flag.Additions] = false;
+    if (previous_parent.zzz.flags[Flag.Additions] && previous_parent.additions.length === 0) {
+        previous_parent.zzz.flags[Flag.Additions] = false;
     }
-    if (previous_parent.flags[Flag.Subtractions] && previous_parent.subtractions.length === 0) {
-        previous_parent.flags[Flag.Subtractions] = false;
+    if (previous_parent.zzz.flags[Flag.Subtractions] && previous_parent.subtractions.length === 0) {
+        previous_parent.zzz.flags[Flag.Subtractions] = false;
     }
 
     delete child.parent;
@@ -747,7 +726,7 @@ export function update_shape_group(child: Shape<Group>, parent?: Group) {
 
         child.parent = parent;
         parent.additions.push(child);
-        parent.flags[Flag.Additions] = true;
+        parent.zzz.flags[Flag.Additions] = true;
     }
 
     function splice() {
@@ -760,7 +739,7 @@ export function update_shape_group(child: Shape<Group>, parent?: Group) {
         const indexSub = previous_parent.subtractions.indexOf(child);
         if (indexSub < 0) {
             previous_parent.subtractions.push(child);
-            previous_parent.flags[Flag.Subtractions] = true;
+            previous_parent.zzz.flags[Flag.Subtractions] = true;
         }
     }
 }

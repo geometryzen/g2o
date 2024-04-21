@@ -340,14 +340,14 @@ export const svg = {
      * @returns 
      */
     getClip: function (shape: Shape<Group>, svgElement: SVGElement): SVGClipPathElement {
-        let clip = shape.zzz.clip;
-        if (!clip) {
-            clip = shape.zzz.clip = svg.createElement('clipPath', { 'clip-rule': 'nonzero' }) as SVGClipPathElement;
+        let clipPath = shape.zzz.clipPath;
+        if (!clipPath) {
+            clipPath = shape.zzz.clipPath = svg.createElement('clipPath', { 'clip-rule': 'nonzero' }) as SVGClipPathElement;
         }
-        if (clip.parentNode === null) {
-            get_svg_element_defs(svgElement).appendChild(clip);
+        if (clipPath.parentNode === null) {
+            get_svg_element_defs(svgElement).appendChild(clipPath);
         }
-        return clip;
+        return clipPath;
     },
 
     defs: {

@@ -57,7 +57,7 @@ export class RegularPolygon extends Path {
 
     update(): this {
 
-        if (this.flags[Flag.Vertices] || this._flagWidth || this._flagHeight || this._flagSides) {
+        if (this.zzz.flags[Flag.Vertices] || this._flagWidth || this._flagHeight || this._flagSides) {
 
             const sides = this._sides;
             const amount = sides + 1;

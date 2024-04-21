@@ -1,5 +1,6 @@
 import { state } from '@geometryzen/reactive';
 import { Anchor } from '../anchor';
+import { Color } from '../effects/ColorProvider';
 import { Flag } from '../Flag';
 import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
@@ -12,6 +13,11 @@ export interface CircleAPI<X> {
     position: X;
     attitude: G20;
     radius: number;
+    fill: Color;
+    fillOpacity: number;
+    stroke: Color;
+    strokeOpacity: number;
+    strokeWidth: number;
 }
 
 export interface CircleAttributes extends Partial<CircleAPI<PositionLike>> {
@@ -47,8 +53,6 @@ export class Circle extends Path implements CircleProperties {
             this.#radius.set(options.radius);
         }
 
-        this.strokeWidth = 2;
-
         this.flagReset(true);
 
         this.update();
@@ -59,7 +63,7 @@ export class Circle extends Path implements CircleProperties {
     }
 
     override update(): this {
-        if (this.flags[Flag.Vertices] || this.flags[Flag.Radius]) {
+        if (this.zzz.flags[Flag.Vertices] || this.zzz.flags[Flag.Radius]) {
 
             let length = this.vertices.length;
 
@@ -102,7 +106,7 @@ export class Circle extends Path implements CircleProperties {
     }
 
     flagReset(dirtyFlag = false): this {
-        this.flags[Flag.Radius] = dirtyFlag;
+        this.zzz.flags[Flag.Radius] = dirtyFlag;
         super.flagReset(dirtyFlag);
         return this;
     }
@@ -114,10 +118,10 @@ export class Circle extends Path implements CircleProperties {
         if (typeof radius === 'number') {
             if (this.radius !== radius) {
                 this.#radius.set(radius);
-                this.flags[Flag.Radius] = true;
+                this.zzz.flags[Flag.Radius] = true;
                 // This is critical, but does it violate encapsulation?
                 // By extending Path, it seems I have to know something of the implementation details.
-                this.flags[Flag.Length] = true;
+                this.zzz.flags[Flag.Length] = true;
                 this.update();
             }
         }
@@ -127,7 +131,12 @@ export class Circle extends Path implements CircleProperties {
 function path_attributes(attributes: CircleAttributes): Partial<PathAttributes> {
     const retval: Partial<PathAttributes> = {
         attitude: attributes.attitude,
-        position: attributes.position
+        position: attributes.position,
+        fill: attributes.fill,
+        fillOpacity: attributes.fillOpacity,
+        stroke: attributes.stroke,
+        strokeOpacity: attributes.strokeOpacity,
+        strokeWidth: attributes.strokeWidth
     };
     return retval;
 }

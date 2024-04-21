@@ -222,9 +222,9 @@ export class Sprite extends Rectangle {
     }
 
     override flagReset(dirtyFlag = false) {
-        this.flags[Flag.Columns] = dirtyFlag;
-        this.flags[Flag.Rows] = dirtyFlag;
-        this.flags[Flag.FrameRate] = dirtyFlag;
+        this.zzz.flags[Flag.Columns] = dirtyFlag;
+        this.zzz.flags[Flag.Rows] = dirtyFlag;
+        this.zzz.flags[Flag.FrameRate] = dirtyFlag;
         super.flagReset(dirtyFlag);
         return this;
     }

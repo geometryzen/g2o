@@ -8,15 +8,9 @@ import { ZZZ } from './renderers/SharedInfo';
  */
 export abstract class ElementBase<P> implements Child, Disposable {
     /**
-     * ColorProvider(s), Shape, and Stop all extend Element.
-     */
-    isShape: boolean;
-    /**
      * 
      */
     parent: P;
-
-    readonly flags: { [flag: number]: boolean } = {};
 
     /**
      * 
@@ -39,7 +33,7 @@ export abstract class ElementBase<P> implements Child, Disposable {
     }
 
     flagReset(dirtyFlag = false): this {
-        this.flags[Flag.ClassName] = dirtyFlag;
+        this.zzz.flags[Flag.ClassName] = dirtyFlag;
         return this;
     }
     get id(): string {
@@ -50,7 +44,7 @@ export abstract class ElementBase<P> implements Child, Disposable {
     }
     set className(className: string) {
         if (this.className !== className) {
-            this.flags[Flag.ClassName] = true;
+            this.zzz.flags[Flag.ClassName] = true;
             this.classList = className.split(/\s+?/);
             this.#className = className;
         }

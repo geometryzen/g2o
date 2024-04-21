@@ -46,23 +46,6 @@ export class Text extends Shape<Group> implements TextAttributes {
     length: number;
     miter: number;
 
-    /**
-     * @deprecated
-     */
-    _flagFill = true;
-    /**
-     * @deprecated
-     */
-    _flagStroke = true;
-    /**
-     * @deprecated
-     */
-    _flagMask = false;
-    /**
-     * @deprecated
-     */
-    _flagClip = false;
-
     readonly #value = state('');
 
     readonly #fontFamily = variable('sans-serif');
@@ -104,22 +87,13 @@ export class Text extends Shape<Group> implements TextAttributes {
 
     readonly #stroke_width = state(1);
 
-    /**
-     * The shape whose alpha property becomes a clipping area for the text.
-     * This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
-     */
-    #mask: Shape<Group> | null = null;
-
-    /**
-     * This property is currently not working because of SVG spec issues found here {@link https://code.google.com/p/chromium/issues/detail?id=370951}.
-     */
-    #clip = false;
-
     #dashes: number[] | null = null;
 
     constructor(board: IBoard, message: string, x: number = 0, y: number = 0, attributes: Partial<TextAttributes> = {}) {
 
         super(board, shape_attributes_from_text_attributes(attributes));
+
+        this.zzz.flags[Flag.Stroke] = true;
 
         this.value = message;
 
@@ -196,14 +170,14 @@ export class Text extends Shape<Group> implements TextAttributes {
         // The styles that will be applied to an SVG
         const changed: SVGAttributes = {};
 
-        const flagMatrix = this.matrix.manual || this.flags[Flag.Matrix];
+        const flagMatrix = this.matrix.manual || this.zzz.flags[Flag.Matrix];
 
         if (flagMatrix) {
             update_text_matrix(this);
             changed.transform = transform_value_of_matrix(this.matrix);
         }
 
-        if (this.flags[Flag.Size]) {
+        if (this.zzz.flags[Flag.Size]) {
             changed['font-size'] = `${this.fontSize}`;
         }
         {
@@ -238,7 +212,7 @@ export class Text extends Shape<Group> implements TextAttributes {
                 }
             }
         }
-        if (this.flags[Flag.ClassName]) {
+        if (this.zzz.flags[Flag.ClassName]) {
             changed['class'] = this.classList.join(' ');
         }
         if (this.dashes && this.dashes.length > 0) {
@@ -442,11 +416,11 @@ export class Text extends Shape<Group> implements TextAttributes {
             }));
         }
 
-        if (this._flagClip) {
+        if (this.zzz.flags[Flag.Clip]) {
             const clip = svg.getClip(this, svgElement);
             const elem = this.zzz.elem;
 
-            if (this.clip) {
+            if (this.zzz.clip) {
                 elem.removeAttribute('id');
                 clip.setAttribute('id', this.id);
                 clip.appendChild(elem);
@@ -462,11 +436,10 @@ export class Text extends Shape<Group> implements TextAttributes {
         // polygons. Uncomment when this bug is fixed:
         // https://code.google.com/p/chromium/issues/detail?id=370951
 
-        if (this._flagMask) {
+        if (this.zzz.flags[Flag.Mask]) {
             if (this.mask) {
-                // (svg as any)[this.mask.zzz.type].render.call(this.mask, domElement);
+                this.mask.render(domElement, svgElement);
                 this.zzz.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
-                throw new Error("TODO");
             }
             else {
                 this.zzz.elem.removeAttribute('clip-path');
@@ -565,11 +538,11 @@ export class Text extends Shape<Group> implements TextAttributes {
 
     override flagReset(dirtyFlag = false) {
         super.flagReset(dirtyFlag);
-        this.flags[Flag.Size] = dirtyFlag;
-        this._flagFill = dirtyFlag;
-        this._flagStroke = dirtyFlag;
-        this._flagClip = dirtyFlag;
-        this.flags[Flag.ClassName] = dirtyFlag;
+        this.zzz.flags[Flag.Size] = dirtyFlag;
+        this.zzz.flags[Flag.Fill] = dirtyFlag;
+        this.zzz.flags[Flag.Stroke] = dirtyFlag;
+        this.zzz.flags[Flag.Clip] = dirtyFlag;
+        this.zzz.flags[Flag.ClassName] = dirtyFlag;
         return this;
     }
     get anchor(): 'start' | 'middle' | 'end' {
@@ -606,13 +579,6 @@ export class Text extends Shape<Group> implements TextAttributes {
                 }
             }
         }
-    }
-    get clip(): boolean {
-        return this.#clip;
-    }
-    set clip(clip: boolean) {
-        this.#clip = clip;
-        this._flagClip = true;
     }
     get dashes() {
         return this.#dashes;
@@ -680,10 +646,10 @@ export class Text extends Shape<Group> implements TextAttributes {
             this.#fill_change = null;
         }
         this.#fill = f;
-        this._flagFill = true;
+        this.zzz.flags[Flag.Fill] = true;
         if (is_color_provider(this.fill)) {
             this.#fill_change = this.fill.change$.subscribe(() => {
-                this._flagFill = true;
+                this.zzz.flags[Flag.Fill] = true;
             });
         }
     }
@@ -697,16 +663,6 @@ export class Text extends Shape<Group> implements TextAttributes {
             }
         }
     }
-    get mask(): Shape<Group> | null {
-        return this.#mask;
-    }
-    set mask(mask) {
-        this.#mask = mask;
-        this._flagMask = true;
-        if (mask instanceof Shape && !mask.clip) {
-            mask.clip = true;
-        }
-    }
     get fontSize(): number {
         return this.#fontSize.get();
     }
@@ -714,7 +670,7 @@ export class Text extends Shape<Group> implements TextAttributes {
         if (typeof size === 'number') {
             if (this.fontSize !== size) {
                 this.#fontSize.set(size);
-                this.flags[Flag.Size] = true;
+                this.zzz.flags[Flag.Size] = true;
             }
         }
     }
@@ -727,10 +683,10 @@ export class Text extends Shape<Group> implements TextAttributes {
             this.#stroke_change = null;
         }
         this.#stroke = f;
-        this._flagStroke = true;
+        this.zzz.flags[Flag.Stroke] = true;
         if (is_color_provider(this.stroke)) {
             this.#stroke_change = this.stroke.change$.subscribe(() => {
-                this._flagStroke = true;
+                this.zzz.flags[Flag.Stroke] = true;
             });
         }
     }

@@ -1,6 +1,7 @@
 import { effect, state } from '@geometryzen/reactive';
 import { Anchor } from '../anchor';
 import { Collection } from '../collection';
+import { Color } from '../effects/ColorProvider';
 import { Flag } from '../Flag';
 import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
@@ -16,6 +17,11 @@ export interface RectangleAPI<X> {
     width: number;
     height: number;
     visibility: 'visible' | 'hidden' | 'collapse';
+    fill: Color;
+    fillOpacity: number;
+    stroke: Color;
+    strokeOpacity: number;
+    strokeWidth: number;
 }
 
 export interface RectangleAttributes extends Partial<RectangleAPI<PositionLike>> {
@@ -67,14 +73,14 @@ export class Rectangle extends Path implements RectangleProperties, Disposable {
         }
 
         this.#disposables.push(this.#origin.change$.subscribe(() => {
-            this.flags[Flag.Vertices] = true;
+            this.zzz.flags[Flag.Vertices] = true;
         }));
 
         this.#disposables.push(effect(() => {
             update_rectangle_vertices(this.width, this.height, this.origin, this.closed, this.vertices);
             // Nothing will happen if the Flag.Vertices is not set.
-            this.flags[Flag.Vertices] = true;
-            this.flags[Flag.Matrix] = true;
+            this.zzz.flags[Flag.Vertices] = true;
+            this.zzz.flags[Flag.Matrix] = true;
             super.update();
         }));
 
@@ -88,7 +94,7 @@ export class Rectangle extends Path implements RectangleProperties, Disposable {
     }
 
     override update(): this {
-        if (this.flags[Flag.Vertices] || this.flags[Flag.Width] || this.flags[Flag.Height]) {
+        if (this.zzz.flags[Flag.Vertices] || this.zzz.flags[Flag.Width] || this.zzz.flags[Flag.Height]) {
             update_rectangle_vertices(this.width, this.height, this.origin, this.closed, this.vertices);
         }
 
@@ -98,8 +104,8 @@ export class Rectangle extends Path implements RectangleProperties, Disposable {
     }
 
     override flagReset(dirtyFlag = false): this {
-        this.flags[Flag.Width] = dirtyFlag;
-        this.flags[Flag.Height] = dirtyFlag;
+        this.zzz.flags[Flag.Width] = dirtyFlag;
+        this.zzz.flags[Flag.Height] = dirtyFlag;
         super.flagReset(dirtyFlag);
         return this;
     }
@@ -109,7 +115,7 @@ export class Rectangle extends Path implements RectangleProperties, Disposable {
     set height(height: number) {
         if (typeof height === 'number') {
             this.#height.set(height);
-            this.flags[Flag.Height] = true;
+            this.zzz.flags[Flag.Height] = true;
         }
     }
     get origin(): G20 {
@@ -117,7 +123,7 @@ export class Rectangle extends Path implements RectangleProperties, Disposable {
     }
     set origin(origin: G20) {
         this.#origin.copyVector(origin);
-        this.flags[Flag.Vertices] = true;
+        this.zzz.flags[Flag.Vertices] = true;
     }
     get width(): number {
         return this.#width.get();
@@ -125,7 +131,7 @@ export class Rectangle extends Path implements RectangleProperties, Disposable {
     set width(width: number) {
         if (typeof width === 'number') {
             this.#width.set(width);
-            this.flags[Flag.Width] = true;
+            this.zzz.flags[Flag.Width] = true;
         }
     }
 }
@@ -136,7 +142,12 @@ function path_options_from_rectangle_options(attributes: RectangleAttributes): P
         attitude: attributes.attitude,
         opacity: attributes.opacity,
         position: attributes.position,
-        visibility: attributes.visibility
+        visibility: attributes.visibility,
+        fill: attributes.fill,
+        fillOpacity: attributes.fillOpacity,
+        stroke: attributes.stroke,
+        strokeOpacity: attributes.strokeOpacity,
+        strokeWidth: attributes.strokeWidth
     };
     return retval;
 }

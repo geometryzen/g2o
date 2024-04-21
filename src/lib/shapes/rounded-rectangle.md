@@ -83,7 +83,7 @@ export class RoundedRectangle extends Path {
 
     update() {
 
-        if (this.flags[Flag.Vertices] || this._flagWidth || this._flagHeight || this._flagRadius) {
+        if (this.zzz.flags[Flag.Vertices] || this._flagWidth || this._flagHeight || this._flagRadius) {
 
             const width = this._width;
             const height = this._height;

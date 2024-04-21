@@ -86,10 +86,14 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     readonly #opacity = state(1);
     readonly #visibility = state('visible' as 'visible' | 'hidden' | 'collapse');
 
+    /**
+     * The mask property is better named as the cliiPath
+     */
+    #mask: Shape<unknown> | null = null;
+
     abstract automatic: boolean;
     abstract beginning: number;
     abstract cap: 'butt' | 'round' | 'square';
-    abstract clip: boolean;
     abstract closed: boolean;
     abstract curved: boolean;
     abstract ending: number;
@@ -111,8 +115,6 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         super(ensure_identifier(attributes));
 
         this.flagReset(true);
-
-        this.isShape = true;
 
         /**
          * The transformation matrix of the shape.
@@ -193,7 +195,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     }
 
     update(bubbles?: boolean): this {
-        if (!this.matrix.manual && this.flags[Flag.Matrix]) {
+        if (!this.matrix.manual && this.zzz.flags[Flag.Matrix]) {
             this.#update_matrix();
         }
 
@@ -211,9 +213,9 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     }
 
     flagReset(dirtyFlag = false): this {
-        this.flags[Flag.Vertices] = dirtyFlag;
-        this.flags[Flag.Matrix] = dirtyFlag;
-        this.flags[Flag.Scale] = dirtyFlag;
+        this.zzz.flags[Flag.Vertices] = dirtyFlag;
+        this.zzz.flags[Flag.Matrix] = dirtyFlag;
+        this.zzz.flags[Flag.Scale] = dirtyFlag;
         super.flagReset(dirtyFlag);
         return this;
     }
@@ -225,7 +227,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     #attitude_change_bind(): Disposable {
         return this.#attitude.change$.subscribe(() => {
             this.#update_matrix();
-            this.flags[Flag.Matrix] = true;
+            this.zzz.flags[Flag.Matrix] = true;
         });
     }
     #attitude_change_unbind(): void {
@@ -242,7 +244,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     #position_change_bind(): Disposable {
         return this.#position.change$.subscribe(() => {
             this.#update_matrix();
-            this.flags[Flag.Matrix] = true;
+            this.zzz.flags[Flag.Matrix] = true;
         });
     }
     #position_change_unbind(): void {
@@ -286,12 +288,12 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         this.#scale.y = scale;
         if (this.#scale instanceof G20) {
             this.#scale_change = this.#scale.change$.subscribe(() => {
-                this.flags[Flag.Matrix] = true;
+                this.zzz.flags[Flag.Matrix] = true;
             });
         }
         this.#update_matrix();
-        this.flags[Flag.Matrix] = true;
-        this.flags[Flag.Scale] = true;
+        this.zzz.flags[Flag.Matrix] = true;
+        this.zzz.flags[Flag.Scale] = true;
     }
     get scaleXY(): G20 {
         return this.#scale;
@@ -306,32 +308,42 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         this.#scale.set(scale.x, scale.y, 0, 0);
         if (this.#scale instanceof G20) {
             this.#scale_change = this.#scale.change$.subscribe(() => {
-                this.flags[Flag.Matrix] = true;
+                this.zzz.flags[Flag.Matrix] = true;
             });
         }
-        this.flags[Flag.Matrix] = true;
-        this.flags[Flag.Scale] = true;
+        this.zzz.flags[Flag.Matrix] = true;
+        this.zzz.flags[Flag.Scale] = true;
     }
     get skewX(): number {
         return this.#skewX;
     }
     set skewX(v: number) {
         this.#skewX = v;
-        this.flags[Flag.Matrix] = true;
+        this.zzz.flags[Flag.Matrix] = true;
     }
     get skewY(): number {
         return this.#skewY;
     }
     set skewY(v: number) {
         this.#skewY = v;
-        this.flags[Flag.Matrix] = true;
+        this.zzz.flags[Flag.Matrix] = true;
+    }
+    get mask(): Shape<unknown> | null {
+        return this.#mask;
+    }
+    set mask(mask: Shape<unknown> | null) {
+        this.#mask = mask;
+        this.zzz.flags[Flag.Mask] = true;
+        if (mask instanceof Shape && !mask.zzz.clip) {
+            mask.zzz.clip = true;
+        }
     }
     get matrix(): Matrix {
         return this.#matrix;
     }
     set matrix(matrix: Matrix) {
         this.#matrix = matrix;
-        this.flags[Flag.Matrix] = true;
+        this.zzz.flags[Flag.Matrix] = true;
     }
     get opacity(): number {
         return this.#opacity.get();
