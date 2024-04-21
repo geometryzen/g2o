@@ -44,6 +44,22 @@ export interface ShapeAttributes {
     visibility: 'visible' | 'hidden' | 'collapse';
 }
 
+export interface ShapeProperties {
+    id: string;
+    opacity: number;
+    /**
+     * alias for the position property.
+     */
+    pos: G20;
+    position: G20;
+    /**
+     * alias for the attitude property.
+     */
+    rotor: G20;
+    attitude: G20;
+    visibility: 'visible' | 'hidden' | 'collapse';
+}
+
 function ensure_identifier(attributes: Partial<ShapeAttributes>): string {
     if (typeof attributes.id === 'string') {
         return attributes.id;
@@ -53,7 +69,7 @@ function ensure_identifier(attributes: Partial<ShapeAttributes>): string {
     }
 }
 
-export abstract class Shape<P extends Parent> extends ElementBase<P> implements IShape<P>, ShapeAttributes {
+export abstract class Shape<P extends Parent> extends ElementBase<P> implements IShape<P>, ShapeProperties {
 
     /**
      * The matrix value of the shape's position, rotation, and scale.
@@ -253,12 +269,28 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
             this.#position_change = null;
         }
     }
+    get pos(): G20 {
+        return this.#position;
+    }
+    set pos(pos: G20) {
+        if (pos instanceof G20) {
+            this.#position.copyVector(pos);
+        }
+    }
     get position(): G20 {
         return this.#position;
     }
     set position(position: G20) {
         if (position instanceof G20) {
             this.#position.copyVector(position);
+        }
+    }
+    get rotor(): G20 {
+        return this.#attitude;
+    }
+    set rotor(attitude: G20) {
+        if (attitude instanceof G20) {
+            this.#attitude.copySpinor(attitude);
         }
     }
     get attitude(): G20 {

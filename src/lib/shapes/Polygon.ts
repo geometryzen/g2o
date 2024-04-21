@@ -1,4 +1,5 @@
 import { Anchor } from "../anchor";
+import { Color } from "../effects/ColorProvider";
 import { IBoard } from "../IBoard";
 import { Path, PathAttributes } from "../path";
 import { PositionLike, position_from_like } from "../shape";
@@ -6,6 +7,11 @@ import { PositionLike, position_from_like } from "../shape";
 export interface PolygonAttributes {
     id: string;
     opacity: number;
+    fill: Color,
+    fillOpacity: number,
+    stroke: Color,
+    strokeOpacity: number,
+    strokeWidth: number
 }
 
 export class Polygon extends Path implements PolygonAttributes {
@@ -25,7 +31,12 @@ export class Polygon extends Path implements PolygonAttributes {
 function path_attributes(attributes: Partial<PolygonAttributes>): Partial<PathAttributes> {
     const retval: Partial<PathAttributes> = {
         id: attributes.id,
-        opacity: attributes.opacity
+        opacity: attributes.opacity,
+        fill: attributes.fill,
+        fillOpacity: attributes.fillOpacity,
+        stroke: attributes.stroke,
+        strokeOpacity: attributes.strokeOpacity,
+        strokeWidth: attributes.strokeWidth
     };
     return retval;
 }
