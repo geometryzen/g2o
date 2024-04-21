@@ -118,8 +118,8 @@ export class Path extends Shape<Group> implements PathAttributes {
         super(board, attributes);
 
         this.flagReset(true);
-        this.zzz.flags[Flag.Mask] = false;
-        this.zzz.flags[Flag.Clip] = false;
+        this.zzz.flags[Flag.ClipPath] = false;
+        this.zzz.flags[Flag.ClipFlag] = false;
 
         this.zzz.vertices = [];
         this.zzz.vertices_subject = variable(0);
@@ -410,7 +410,7 @@ export class Path extends Shape<Group> implements PathAttributes {
             }));
         }
 
-        if (this.zzz.flags[Flag.Clip]) {
+        if (this.zzz.flags[Flag.ClipFlag]) {
             const clip = svg.getClip(this, svgElement);
             const elem = this.zzz.elem;
 
@@ -433,10 +433,10 @@ export class Path extends Shape<Group> implements PathAttributes {
         // https://code.google.com/p/chromium/issues/detail?id=370951
 
         // https://developer.mozilla.org/en-US/docs/Web/SVG/Element/mask
-        if (this.zzz.flags[Flag.Mask]) {
-            if (this.mask) {
-                this.mask.render(domElement, svgElement)
-                this.zzz.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
+        if (this.zzz.flags[Flag.ClipPath]) {
+            if (this.clipPath) {
+                this.clipPath.render(domElement, svgElement);
+                this.zzz.elem.setAttribute('clip-path', 'url(#' + this.clipPath.id + ')');
             }
             else {
                 this.zzz.elem.removeAttribute('clip-path');
@@ -477,11 +477,11 @@ export class Path extends Shape<Group> implements PathAttributes {
             v.y += hh;
         }
 
-        if (this.mask) {
-            this.mask.position.x -= cx;
-            this.mask.position.x += hw;
-            this.mask.position.y -= cy;
-            this.mask.position.y += hh;
+        if (this.clipPath) {
+            this.clipPath.position.x -= cx;
+            this.clipPath.position.x += hw;
+            this.clipPath.position.y -= cy;
+            this.clipPath.position.y += hh;
         }
         return this;
     }
@@ -498,9 +498,9 @@ export class Path extends Shape<Group> implements PathAttributes {
             v.y -= cy;
         }
 
-        if (this.mask) {
-            this.mask.position.x -= cx;
-            this.mask.position.y -= cy;
+        if (this.clipPath) {
+            this.clipPath.position.x -= cx;
+            this.clipPath.position.y -= cy;
         }
 
         return this;
@@ -1031,12 +1031,12 @@ export class Path extends Shape<Group> implements PathAttributes {
     override flagReset(dirtyFlag = false): this {
 
         this.zzz.flags[Flag.Cap] = dirtyFlag;
-        this.zzz.flags[Flag.Clip] = dirtyFlag;
+        this.zzz.flags[Flag.ClipFlag] = dirtyFlag;
         this.zzz.flags[Flag.Fill] = dirtyFlag;
         this.zzz.flags[Flag.Join] = dirtyFlag;
         this.zzz.flags[Flag.Length] = dirtyFlag;
         this.zzz.flags[Flag.Linewidth] = dirtyFlag;
-        this.zzz.flags[Flag.Mask] = dirtyFlag;
+        this.zzz.flags[Flag.ClipPath] = dirtyFlag;
         this.zzz.flags[Flag.Miter] = dirtyFlag;
         this.zzz.flags[Flag.Stroke] = dirtyFlag;
         this.zzz.flags[Flag.VectorEffect] = dirtyFlag;

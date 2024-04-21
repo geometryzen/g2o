@@ -71,7 +71,7 @@ export class Group extends Shape<Group> {
         this.zzz.flags[Flag.Ending] = false;
         this.zzz.flags[Flag.Length] = false;
         this.zzz.flags[Flag.Order] = false;
-        this.zzz.flags[Flag.Mask] = false;
+        this.zzz.flags[Flag.ClipPath] = false;
 
         this.#shapes = new Children(shapes);
 
@@ -220,10 +220,10 @@ export class Group extends Shape<Group> {
 
             // }
 
-            if (this.zzz.flags[Flag.Mask]) {
-                if (this.mask) {
-                    this.mask.render(domElement, svgElement);
-                    this.zzz.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
+            if (this.zzz.flags[Flag.ClipPath]) {
+                if (this.clipPath) {
+                    this.clipPath.render(domElement, svgElement);
+                    this.zzz.elem.setAttribute('clip-path', 'url(#' + this.clipPath.id + ')');
                 }
                 else {
                     this.zzz.elem.removeAttribute('clip-path');
@@ -279,9 +279,9 @@ export class Group extends Shape<Group> {
             child.position.y -= bbox.top;
         }
 
-        if (this.mask) {
-            this.mask.position.x -= bbox.left;
-            this.mask.position.y -= bbox.top;
+        if (this.clipPath) {
+            this.clipPath.position.x -= bbox.left;
+            this.clipPath.position.y -= bbox.top;
         }
 
         return this;
@@ -299,9 +299,9 @@ export class Group extends Shape<Group> {
             child.position.x -= cx;
             child.position.y -= cy;
         }
-        if (this.mask) {
-            this.mask.position.x -= cx;
-            this.mask.position.y -= cy;
+        if (this.clipPath) {
+            this.clipPath.position.x -= cx;
+            this.clipPath.position.y -= cy;
         }
         return this;
     }
@@ -521,7 +521,7 @@ export class Group extends Shape<Group> {
         }
 
         this.zzz.flags[Flag.Order] = dirtyFlag;
-        this.zzz.flags[Flag.Mask] = dirtyFlag;
+        this.zzz.flags[Flag.ClipPath] = dirtyFlag;
 
         this.zzz.flags[Flag.Beginning] = dirtyFlag;
         this.zzz.flags[Flag.Ending] = dirtyFlag;

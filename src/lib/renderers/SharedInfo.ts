@@ -63,6 +63,6 @@ export class ZZZ implements Disposable {
     }
     set clip(clip: boolean) {
         this.#clip.set(clip);
-        this.flags[Flag.Clip] = true;
+        this.flags[Flag.ClipFlag] = true;
     }
 }

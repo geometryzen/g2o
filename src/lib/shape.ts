@@ -89,7 +89,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     /**
      * The mask property is better named as the cliiPath
      */
-    #mask: Shape<unknown> | null = null;
+    #clipPath: Shape<unknown> | null = null;
 
     abstract automatic: boolean;
     abstract beginning: number;
@@ -328,14 +328,14 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         this.#skewY = v;
         this.zzz.flags[Flag.Matrix] = true;
     }
-    get mask(): Shape<unknown> | null {
-        return this.#mask;
+    get clipPath(): Shape<unknown> | null {
+        return this.#clipPath;
     }
-    set mask(mask: Shape<unknown> | null) {
-        this.#mask = mask;
-        this.zzz.flags[Flag.Mask] = true;
-        if (mask instanceof Shape && !mask.zzz.clip) {
-            mask.zzz.clip = true;
+    set clipPath(clipPath: Shape<unknown> | null) {
+        this.#clipPath = clipPath;
+        this.zzz.flags[Flag.ClipPath] = true;
+        if (clipPath instanceof Shape && !clipPath.zzz.clip) {
+            clipPath.zzz.clip = true;
         }
     }
     get matrix(): Matrix {

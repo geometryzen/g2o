@@ -416,7 +416,7 @@ export class Text extends Shape<Group> implements TextAttributes {
             }));
         }
 
-        if (this.zzz.flags[Flag.Clip]) {
+        if (this.zzz.flags[Flag.ClipFlag]) {
             const clip = svg.getClip(this, svgElement);
             const elem = this.zzz.elem;
 
@@ -436,10 +436,10 @@ export class Text extends Shape<Group> implements TextAttributes {
         // polygons. Uncomment when this bug is fixed:
         // https://code.google.com/p/chromium/issues/detail?id=370951
 
-        if (this.zzz.flags[Flag.Mask]) {
-            if (this.mask) {
-                this.mask.render(domElement, svgElement);
-                this.zzz.elem.setAttribute('clip-path', 'url(#' + this.mask.id + ')');
+        if (this.zzz.flags[Flag.ClipPath]) {
+            if (this.clipPath) {
+                this.clipPath.render(domElement, svgElement);
+                this.zzz.elem.setAttribute('clip-path', 'url(#' + this.clipPath.id + ')');
             }
             else {
                 this.zzz.elem.removeAttribute('clip-path');
@@ -541,7 +541,7 @@ export class Text extends Shape<Group> implements TextAttributes {
         this.zzz.flags[Flag.Size] = dirtyFlag;
         this.zzz.flags[Flag.Fill] = dirtyFlag;
         this.zzz.flags[Flag.Stroke] = dirtyFlag;
-        this.zzz.flags[Flag.Clip] = dirtyFlag;
+        this.zzz.flags[Flag.ClipFlag] = dirtyFlag;
         this.zzz.flags[Flag.ClassName] = dirtyFlag;
         return this;
     }
