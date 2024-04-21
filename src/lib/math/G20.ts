@@ -200,7 +200,7 @@ export class G20 {
     static readonly ey = lock(new G20(0, 1, 0, 0));
     static readonly I = lock(new G20(0, 0, 0, 1));
 
-    static add(v1: G20, v2: G20): G20 {
+    static add(v1: Readonly<G20>, v2: Readonly<G20>): G20 {
         const x = v1.x + v2.x;
         const y = v1.y + v2.y;
         const a = v1.a + v2.a;
@@ -208,22 +208,23 @@ export class G20 {
         return new G20(x, y, a, b);
     }
 
-    static copy(mv: G20): G20 {
+    static copy(mv: Readonly<G20>): G20 {
         return new G20(mv.x, mv.y, mv.a, mv.b);
     }
-    static fromBivector(B: Bivector): G20 {
+
+    static fromBivector(B: Readonly<Bivector>): G20 {
         return G20.bivector(B.b);
     }
 
-    static fromScalar(alpha: Scalar): G20 {
+    static fromScalar(alpha: Readonly<Scalar>): G20 {
         return G20.scalar(alpha.a);
     }
 
-    static fromSpinor(R: Spinor): G20 {
+    static fromSpinor(R: Readonly<Spinor>): G20 {
         return G20.spinor(R.a, R.b);
     }
 
-    static fromVector(v: Vector): G20 {
+    static fromVector(v: Readonly<Vector>): G20 {
         return G20.vector(v.x, v.y);
     }
 
@@ -247,29 +248,25 @@ export class G20 {
         return G20.sub(v1, v2);
     }
 
-    static ratioBetween(v1: G20, v2: G20): number {
+    static ratioBetween(v1: Readonly<G20>, v2: Readonly<G20>): number {
         return (v1.x * v2.x + v1.y * v2.y) / (v1.magnitude() * v2.magnitude());
     }
 
-    static angleBetween(v1: G20, v2: G20): number {
-
+    static angleBetween(v1: Readonly<Vector>, v2: Readonly<Vector>): number {
         const dx = v1.x - v2.x;
         const dy = v1.y - v2.y;
-
         return Math.atan2(dy, dx);
     }
 
-    static distanceBetween(v1: G20, v2: G20): number {
+    static distanceBetween(v1: Readonly<Vector>, v2: Readonly<Vector>): number {
 
         return Math.sqrt(G20.distanceBetweenSquared(v1, v2));
 
     }
 
-    static distanceBetweenSquared(v1: G20, v2: G20): number {
-
+    static distanceBetweenSquared(v1: Readonly<Vector>, v2: Readonly<Vector>): number {
         const dx = v1.x - v2.x;
         const dy = v1.y - v2.y;
-
         return dx * dx + dy * dy;
     }
     /**
@@ -335,19 +332,39 @@ export class G20 {
     }
 
     copy(v: G20): this {
-        return this.set(v.x, v.y, v.a, v.b);
+        if (this.isMutable()) {
+            return this.set(v.x, v.y, v.a, v.b);
+        }
+        else {
+            throw new Error();
+        }
     }
 
     copySpinor(spinor: Spinor): this {
-        return this.set(0, 0, spinor.a, spinor.b);
+        if (this.isMutable) {
+            return this.set(0, 0, spinor.a, spinor.b);
+        }
+        else {
+            throw new Error();
+        }
     }
 
     copyVector(vector: Vector): this {
-        return this.set(vector.x, vector.y, 0, 0);
+        if (this.isMutable()) {
+            return this.set(vector.x, vector.y, 0, 0);
+        }
+        else {
+            throw new Error();
+        }
     }
 
     clear(): this {
-        return this.set(0, 0, 0, 0);
+        if (this.isMutable()) {
+            return this.set(0, 0, 0, 0);
+        }
+        else {
+            throw new Error();
+        }
     }
 
     clone(): G20 {
@@ -456,28 +473,43 @@ export class G20 {
         return this.set(x, y, a, b);
     }
 
-    add(rhs: G20): this {
-        const x = this.x + rhs.x;
-        const y = this.y + rhs.y;
-        const a = this.a + rhs.a;
-        const b = this.b + rhs.b;
-        return this.set(x, y, a, b);
+    add(rhs: G20): G20 {
+        if (this.isLocked()) {
+            return lock(this.clone().add(rhs));
+        }
+        else {
+            const x = this.x + rhs.x;
+            const y = this.y + rhs.y;
+            const a = this.a + rhs.a;
+            const b = this.b + rhs.b;
+            return this.set(x, y, a, b);
+        }
     }
 
-    sub(rhs: G20): this {
-        const x = this.x - rhs.x;
-        const y = this.y - rhs.y;
-        const a = this.a - rhs.a;
-        const b = this.b - rhs.b;
-        return this.set(x, y, a, b);
+    sub(rhs: G20): G20 {
+        if (this.isLocked()) {
+            return lock(this.clone().sub(rhs));
+        }
+        else {
+            const x = this.x - rhs.x;
+            const y = this.y - rhs.y;
+            const a = this.a - rhs.a;
+            const b = this.b - rhs.b;
+            return this.set(x, y, a, b);
+        }
     }
 
-    mulByNumber(s: number): this {
-        const x = this.x * s;
-        const y = this.y * s;
-        const a = this.a * s;
-        const b = this.b * s;
-        return this.set(x, y, a, b);
+    mulByNumber(s: number): G20 {
+        if (this.isLocked()) {
+            return lock(this.clone().mulByNumber(s));
+        }
+        else {
+            const x = this.x * s;
+            const y = this.y * s;
+            const a = this.a * s;
+            const b = this.b * s;
+            return this.set(x, y, a, b);
+        }
     }
 
     /**
@@ -512,15 +544,20 @@ export class G20 {
         return this.set(x, y, a, b);
     }
 
-    divByNumber(s: number): this {
-        const x = this.x / s;
-        const y = this.y / s;
-        const a = this.a / s;
-        const b = this.b / s;
-        return this.set(x, y, a, b);
+    divByNumber(s: number): G20 {
+        if (this.isLocked()) {
+            return lock(this.clone().divByNumber(s));
+        }
+        else {
+            const x = this.x / s;
+            const y = this.y / s;
+            const a = this.a / s;
+            const b = this.b / s;
+            return this.set(x, y, a, b);
+        }
     }
 
-    negate(): this {
+    negate(): G20 {
         return this.mulByNumber(-1);
     }
 
@@ -544,17 +581,22 @@ export class G20 {
         return this.x * v.x + this.y * v.y;
     }
 
-    exp(): this {
-        const w = this.a;
-        const z = this.b;
-        const expW = Math.exp(w);
-        // φ is actually the absolute value of one half the rotation angle.
-        // The orientation of the rotation gets carried in the bivector components.
-        const φ = Math.sqrt(z * z);
-        const s = expW * (φ !== 0 ? Math.sin(φ) / φ : 1);
-        const a = expW * Math.cos(φ);
-        const b = z * s;
-        return this.set(0, 0, a, b);
+    exp(): G20 {
+        if (this.isLocked()) {
+            return lock(this.clone().exp());
+        }
+        else {
+            const w = this.a;
+            const z = this.b;
+            const expW = Math.exp(w);
+            // φ is actually the absolute value of one half the rotation angle.
+            // The orientation of the rotation gets carried in the bivector components.
+            const φ = Math.sqrt(z * z);
+            const s = expW * (φ !== 0 ? Math.sin(φ) / φ : 1);
+            const a = expW * Math.cos(φ);
+            const b = z * s;
+            return this.set(0, 0, a, b);
+        }
     }
 
     magnitude(): number {
@@ -693,9 +735,14 @@ export class G20 {
      *
      * @param θ The rotation angle in radians when the rotor is applied on both sides as R * M * ~R
      */
-    rotorFromAngle(θ: number): this {
-        const φ = θ / 2;
-        return this.set(0, 0, Math.cos(φ), -Math.sin(φ));
+    rotorFromAngle(θ: number): G20 {
+        if (this.isLocked()) {
+            return lock(this.clone().rotorFromAngle(θ));
+        }
+        else {
+            const φ = θ / 2;
+            return this.set(0, 0, Math.cos(φ), -Math.sin(φ));
+        }
     }
     /**
      * R = sqrt(|b|/|a|) * (|b||a| + b * a) / sqrt(2 * |b||a|(|b||a| + b << a))
@@ -742,14 +789,14 @@ export class G20 {
             return lock(this.clone().scp(m));
         }
         else {
-            return this.scp2(this, m);
+            return this.#scp2(this, m);
         }
     }
 
     /**
      * 
      */
-    scp2(lhs: G20, rhs: G20): this {
+    #scp2(lhs: G20, rhs: G20): this {
         const La = lhs.a;
         const Lx = lhs.x;
         const Ly = lhs.y;
@@ -769,18 +816,23 @@ export class G20 {
     }
 
     set(x: number, y: number, a = 0, b = 0): this {
-        // Take special care to only fire changed event if necessary.
-        const changed = (this.x !== x || this.y !== y || this.a !== a || this.b != b);
-        if (changed) {
-            const coords = this.#coords.get();
-            coords[COORD_A] = a;
-            coords[COORD_X] = x;
-            coords[COORD_Y] = y;
-            coords[COORD_B] = b;
-            this.#coords.set(coords);
-            this.#change.set(this);
+        if (this.isMutable()) {
+            // Take special care to only fire changed event if necessary.
+            const changed = (this.x !== x || this.y !== y || this.a !== a || this.b != b);
+            if (changed) {
+                const coords = this.#coords.get();
+                coords[COORD_A] = a;
+                coords[COORD_X] = x;
+                coords[COORD_Y] = y;
+                coords[COORD_B] = b;
+                this.#coords.set(coords);
+                this.#change.set(this);
+            }
+            return this;
         }
-        return this;
+        else {
+            throw new Error();
+        }
     }
 
     equals(v: G20, eps?: number): boolean {
@@ -788,12 +840,17 @@ export class G20 {
         return (this.distanceTo(v) < eps);
     }
 
-    lerp(v: G20, t: number): this {
-        const x = (v.x - this.x) * t + this.x;
-        const y = (v.y - this.y) * t + this.y;
-        const a = (v.a - this.a) * t + this.a;
-        const b = (v.b - this.b) * t + this.b;
-        return this.set(x, y, a, b);
+    lerp(v: G20, t: number): G20 {
+        if (this.isLocked()) {
+            return lock(this.clone().lerp(v, t));
+        }
+        else {
+            const x = (v.x - this.x) * t + this.x;
+            const y = (v.y - this.y) * t + this.y;
+            const a = (v.a - this.a) * t + this.a;
+            const b = (v.b - this.b) * t + this.b;
+            return this.set(x, y, a, b);
+        }
     }
     /**
      * Determines whether this multivector is exactly 0 (zero).
@@ -831,14 +888,19 @@ export class G20 {
         }
     }
 
-    rotate(radians: number): this {
-        const x0 = this.x;
-        const y0 = this.y;
-        const cos = Math.cos(radians);
-        const sin = Math.sin(radians);
-        const x = x0 * cos - y0 * sin;
-        const y = x0 * sin + y0 * cos;
-        return this.set(x, y, this.a, this.b);
+    rotate(radians: number): G20 {
+        if (this.isMutable()) {
+            const x0 = this.x;
+            const y0 = this.y;
+            const cos = Math.cos(radians);
+            const sin = Math.sin(radians);
+            const x = x0 * cos - y0 * sin;
+            const y = x0 * sin + y0 * cos;
+            return this.set(x, y, this.a, this.b);
+        }
+        else {
+            return lock(this.clone().rotate(radians));
+        }
     }
     /**
      * Subtracts a multiple of a scalar from this multivector.
@@ -871,12 +933,17 @@ export class G20 {
      * </p>
      * Sets this Geometric2 to the geometric product a * b of the vector arguments.
      */
-    versor(a: Vector, b: Vector): this {
-        const A = a.x * b.x + a.y * b.y;
-        const X = 0;
-        const Y = 0;
-        const B = a.x * b.y - a.y * b.x;
-        return this.set(X, Y, A, B);
+    versor(a: Vector, b: Vector): G20 {
+        if (this.isMutable()) {
+            const A = a.x * b.x + a.y * b.y;
+            const X = 0;
+            const Y = 0;
+            const B = a.x * b.y - a.y * b.x;
+            return this.set(X, Y, A, B);
+        }
+        else {
+            throw new Error();
+        }
     }
 
     /**
