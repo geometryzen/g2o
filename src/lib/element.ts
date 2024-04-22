@@ -1,7 +1,7 @@
 import { Child } from './children';
 import { Flag } from './Flag';
 import { Disposable } from './reactive/Disposable';
-import { ZZZ } from './renderers/SharedInfo';
+import { ZZZ } from './renderers/ZZZ';
 
 /**
  * The foundational object for the scenegraph.

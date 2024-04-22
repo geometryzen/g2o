@@ -49,7 +49,10 @@ export class ZZZ implements Disposable {
     image?: SVGImageElement;
     offset?: G20;
     opacity?: number;
+    radius$?: Observable<number>;
     scale?: G20;
+    spreadMethod$: Observable<'pad' | 'reflect' | 'repeat'>;
+    units$?: Observable<'userSpaceOnUse' | 'objectBoundingBox'>;
 
     vertices?: Anchor[];
     vertices_subject?: Variable<number>;

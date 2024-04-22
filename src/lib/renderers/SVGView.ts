@@ -11,17 +11,16 @@ import { View } from './View';
 
 type DOMElement = HTMLElement | SVGElement;
 
-/**
- * FIXME; This is a bit unnecessary considering the defs are a child of the svg element.
- */
-function set_svg_element_defs(svg: SVGElement, defs: SVGDefsElement): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (svg as any).defs = defs;
-}
-
 export function get_svg_element_defs(svg: SVGElement): SVGDefsElement {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (svg as any).defs;
+    const children = svg.children;
+    const N = children.length;
+    for (let i = 0; i < N; i++) {
+        const child = children.item(i);
+        if (child instanceof SVGDefsElement) {
+            return child;
+        }
+    }
+    throw new Error();
 }
 
 /**
@@ -351,8 +350,7 @@ export const svg = {
     },
 
     defs: {
-        update: function (svgElement: SVGElement) {
-            const defs = get_svg_element_defs(svgElement);
+        update: function (svgElement: SVGElement, defs: SVGDefsElement) {
             if (get_defs_dirty_flag(defs)) {
                 const children = Array.prototype.slice.call(defs.children, 0);
                 for (let i = 0; i < children.length; i++) {
@@ -406,7 +404,6 @@ export class SVGView implements View {
         this.defs = svg.createElement('defs') as SVGDefsElement;
         set_defs_dirty_flag(this.defs, false);
         this.domElement.appendChild(this.defs);
-        set_svg_element_defs(this.domElement, this.defs);
         this.domElement.style.overflow = 'hidden';
     }
 
@@ -422,7 +419,7 @@ export class SVGView implements View {
     render(): this {
         const svgElement = this.domElement;
         this.viewBox.render(this.domElement, svgElement);
-        svg.defs.update(svgElement);
+        svg.defs.update(svgElement, this.defs);
         return this;
     }
 }

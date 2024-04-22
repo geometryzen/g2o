@@ -1,4 +1,3 @@
-import { effect } from '@geometryzen/reactive';
 import { G20 } from '../math/G20';
 import { Disposable } from '../reactive/Disposable';
 import { get_svg_element_defs, svg, SVGAttributes } from '../renderers/SVGView';
@@ -48,14 +47,14 @@ export class LinearGradient extends Gradient implements ColorProvider {
             changed.id = this.id;
             this.zzz.elem = svg.createElement('linearGradient', changed);
 
-            this.zzz.disposables.push(effect(() => {
+            this.zzz.disposables.push(this.zzz.units$.subscribe((units) => {
                 const change: SVGAttributes = {};
-                change.gradientUnits = this.units;
+                change.gradientUnits = units;
                 svg.setAttributes(this.zzz.elem, change);
             }));
-            this.zzz.disposables.push(effect(() => {
+            this.zzz.disposables.push(this.zzz.spreadMethod$.subscribe((spreadMethod) => {
                 const change: SVGAttributes = {};
-                change.spreadMethod = this.spreadMethod;
+                change.spreadMethod = spreadMethod;
                 svg.setAttributes(this.zzz.elem, change);
             }));
         }

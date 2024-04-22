@@ -1,6 +1,6 @@
-import { effect, state } from '@geometryzen/reactive';
 import { G20 } from '../math/G20';
 import { Disposable } from '../reactive/Disposable';
+import { variable } from '../reactive/variable';
 import { get_svg_element_defs, svg, SVGAttributes } from '../renderers/SVGView';
 import { ColorProvider } from './ColorProvider';
 import { Gradient } from './gradient';
@@ -11,7 +11,7 @@ export class RadialGradient extends Gradient implements ColorProvider {
     _flagCenter = false;
     _flagFocal = false;
 
-    readonly #radius = state(null as number | null);
+    readonly #radius = variable(null as number | null);
 
     #center: G20 | null = null;
     #center_change: Disposable | null = null;
@@ -30,6 +30,8 @@ export class RadialGradient extends Gradient implements ColorProvider {
     constructor(cx: number = 0, cy: number = 0, r: number = 1, stops: Stop[] = [], fx?: number, fy?: number) {
 
         super(stops);
+
+        this.zzz.radius$ = this.#radius.asObservable();
 
         this.center = new G20(cx, cy);
 
@@ -64,21 +66,21 @@ export class RadialGradient extends Gradient implements ColorProvider {
             changed.id = this.id;
             this.zzz.elem = svg.createElement('radialGradient', changed);
             // gradientUnits
-            this.zzz.disposables.push(effect(() => {
+            this.zzz.disposables.push(this.zzz.units$.subscribe((units) => {
                 const change: SVGAttributes = {};
-                change.gradientUnits = this.units;
+                change.gradientUnits = units;
                 svg.setAttributes(this.zzz.elem, change);
             }));
             // radius
-            this.zzz.disposables.push(effect(() => {
+            this.zzz.disposables.push(this.zzz.radius$.subscribe((radius) => {
                 const change: SVGAttributes = {};
-                change.r = `${this.radius}`;
+                change.r = `${radius}`;
                 svg.setAttributes(this.zzz.elem, change);
             }));
             // spreadMethod
-            this.zzz.disposables.push(effect(() => {
+            this.zzz.disposables.push(this.zzz.spreadMethod$.subscribe((spreadMethod) => {
                 const change: SVGAttributes = {};
-                change.spreadMethod = this.spreadMethod;
+                change.spreadMethod = spreadMethod;
                 svg.setAttributes(this.zzz.elem, change);
             }));
         }

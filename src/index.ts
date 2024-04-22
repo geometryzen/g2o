@@ -23,7 +23,7 @@ export { Disposable, dispose } from './lib/reactive/Disposable';
 export { Observable } from './lib/reactive/Observable';
 export { State } from './lib/reactive/types';
 export { Variable, variable } from './lib/reactive/variable';
-export { ZZZ } from './lib/renderers/SharedInfo';
+export { ZZZ } from './lib/renderers/ZZZ';
 export { SVGViewParams } from './lib/renderers/SVGView';
 export { SVGViewFactory } from './lib/renderers/SVGViewFactory';
 export { View } from './lib/renderers/View';
