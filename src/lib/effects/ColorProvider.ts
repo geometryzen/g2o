@@ -1,6 +1,4 @@
 import { Observable } from '../reactive/Observable';
-import { LinearGradient } from './linear-gradient';
-import { RadialGradient } from './radial-gradient';
 
 export interface ColorProvider {
     readonly id: string;
@@ -11,7 +9,15 @@ export interface ColorProvider {
 export type Color = string | ColorProvider;
 
 export function is_color_provider(x: Color): x is ColorProvider {
-    return x instanceof LinearGradient || x instanceof RadialGradient;
+    if (typeof x === 'string') {
+        return false;
+    }
+    else if (typeof x === 'object') {
+        return true;
+    }
+    else {
+        throw new Error();
+    }
 }
 
 export function serialize_color(x: Color): string {
