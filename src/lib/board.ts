@@ -251,13 +251,13 @@ export class Board implements IBoard {
         this.#frameCount.set(this.#frameCount.get() + 1);
     }
 
-    add(...shapes: Shape<Group>[]): this {
+    add(...shapes: Shape[]): this {
         this.#scene.add(...shapes);
         this.update();
         return this;
     }
 
-    remove(...shapes: Shape<Group>[]): this {
+    remove(...shapes: Shape[]): this {
         this.#scene.remove(...shapes);
         this.update();
         return this;
@@ -294,7 +294,7 @@ export class Board implements IBoard {
         return path;
     }
 
-    point(position: PositionLike, attributes: Partial<PointAttributes> = {}): Shape<Group> {
+    point(position: PositionLike, attributes: Partial<PointAttributes> = {}): Shape {
         const { left, top, right, bottom } = this.getBoundingBox();
         const sx = this.width / (top - left);
         const sy = this.height / (bottom - right);
@@ -322,8 +322,8 @@ export class Board implements IBoard {
         return rect;
     }
 
-    text(message: string, position: PositionLike, attributes?: Partial<TextAttributes>): Text {
-        const text = new Text(this, message, position, attributes);
+    text(message: string, attributes?: Partial<TextAttributes>): Text {
+        const text = new Text(this, message, attributes);
         this.add(text);
         return text;
     }
@@ -349,9 +349,9 @@ export class Board implements IBoard {
         return arcSegment;
     }
 
-    group(...shapes: Shape<Group>[]): Group {
+    group(...shapes: Shape[]): Group {
         const group = new Group(this, shapes);
-        this.add(group as Shape<Group>);
+        this.add(group);
         return group;
     }
 

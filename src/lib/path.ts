@@ -2,8 +2,8 @@ import { effect, state } from '@geometryzen/reactive';
 import { Anchor } from './anchor';
 import { Collection } from './collection';
 import { Color, is_color_provider, serialize_color } from './effects/ColorProvider';
+import { ElementBase } from './element';
 import { Flag } from './Flag';
-import { Group } from './group';
 import { IBoard } from './IBoard';
 import { decompose_2d_3x3_matrix } from './math/decompose_2d_3x3_matrix';
 import { G20 } from './math/G20.js';
@@ -52,7 +52,7 @@ export interface PathAttributes {
     strokeOpacity: number;
 }
 
-export class Path extends Shape<Group> implements PathAttributes {
+export class Path extends Shape implements PathAttributes {
 
     #length = 0;
 
@@ -422,7 +422,7 @@ export class Path extends Shape<Group> implements PathAttributes {
             else {
                 clip.removeAttribute('id');
                 elem.setAttribute('id', this.id);
-                if (this.parent) {
+                if (this.parent && this.parent instanceof ElementBase) {
                     this.parent.zzz.elem.appendChild(elem); // TODO: should be insertBefore
                 }
             }

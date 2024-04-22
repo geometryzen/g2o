@@ -338,7 +338,7 @@ export const svg = {
      * @param svgElement 
      * @returns 
      */
-    getClip: function (shape: Shape<Group>, svgElement: SVGElement): SVGClipPathElement {
+    getClip: function (shape: Shape, svgElement: SVGElement): SVGClipPathElement {
         let clipPath = shape.zzz.clipPath;
         if (!clipPath) {
             clipPath = shape.zzz.clipPath = svg.createElement('clipPath', { 'clip-rule': 'nonzero' }) as SVGClipPathElement;

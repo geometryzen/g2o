@@ -1,20 +1,41 @@
 import { effect, state } from '@geometryzen/reactive';
 import { Color, is_color_provider, serialize_color } from './effects/ColorProvider';
+import { ElementBase } from './element';
 import { Flag } from './Flag';
-import { Group } from './group';
 import { IBoard } from './IBoard';
 import { get_dashes_offset, set_dashes_offset } from './path';
 import { Disposable } from './reactive/Disposable';
 import { Observable } from './reactive/Observable';
 import { variable } from './reactive/variable';
 import { get_svg_element_defs, set_defs_dirty_flag, svg, SVGAttributes, transform_value_of_matrix } from './renderers/SVGView';
-import { PositionLike, position_from_like, Shape, ShapeAttributes } from './shape';
+import { PositionLike, Shape, ShapeAttributes } from './shape';
 
 const min = Math.min, max = Math.max;
 
 export type TextDecoration = 'none' | 'underline' | 'overline' | 'line-through';
 
 export interface TextAttributes {
+    anchor: 'start' | 'middle' | 'end';
+    dominantBaseline: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top';
+    decoration: TextDecoration[];
+    direction: 'ltr' | 'rtl';
+    dx: number | string;
+    dy: number | string;
+    fontFamily: string;
+    fill: Color;
+    id: string;
+    strokeWidth: number;
+    opacity: number;
+    position: PositionLike;
+    fontSize: number;
+    stroke: Color;
+    fontStyle: 'normal' | 'italic' | 'oblique';
+    value: string;
+    visibility: 'visible' | 'hidden' | 'collapse';
+    fontWeight: 'normal' | 'bold' | 'bolder' | 'lighter' | number;
+}
+
+export interface TextProperties {
     anchor: 'start' | 'middle' | 'end';
     dominantBaseline: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top';
     decoration: TextDecoration[];
@@ -34,7 +55,7 @@ export interface TextAttributes {
     fontWeight: 'normal' | 'bold' | 'bolder' | 'lighter' | number;
 }
 
-export class Text extends Shape<Group> implements TextAttributes {
+export class Text extends Shape implements TextProperties {
     automatic: boolean;
     beginning: number;
     cap: 'butt' | 'round' | 'square';
@@ -88,15 +109,13 @@ export class Text extends Shape<Group> implements TextAttributes {
 
     #dashes: number[] | null = null;
 
-    constructor(board: IBoard, value: string, position: PositionLike, attributes: Partial<TextAttributes> = {}) {
+    constructor(board: IBoard, value: string, attributes: Partial<TextAttributes> = {}) {
 
         super(board, shape_attributes_from_text_attributes(attributes));
 
         this.zzz.flags[Flag.Stroke] = true;
 
         this.value = value;
-
-        this.usePosition(position_from_like(position));
 
         /**
          * @see {@link https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray} for more information on the SVG stroke-dasharray attribute.
@@ -417,7 +436,9 @@ export class Text extends Shape<Group> implements TextAttributes {
             else {
                 clip.removeAttribute('id');
                 elem.setAttribute('id', this.id);
-                this.parent.zzz.elem.appendChild(elem); // TODO: should be insertBefore
+                if (this.parent instanceof ElementBase) {
+                    this.parent.zzz.elem.appendChild(elem); // TODO: should be insertBefore
+                }
             }
         }
 
@@ -708,7 +729,8 @@ export class Text extends Shape<Group> implements TextAttributes {
 function shape_attributes_from_text_attributes(attributes: Partial<TextAttributes>): Partial<ShapeAttributes> {
     const retval: Partial<ShapeAttributes> = {
         id: attributes.id,
-        compensate: true
+        compensate: true,
+        position: attributes.position
     };
     return retval;
 }

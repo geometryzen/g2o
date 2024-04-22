@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const board = new Board("my-board", {
         boundingBox: { left: -5, top: 5, right: 5, bottom: -5 },
-        // viewFactory: new CanvgViewFactory()
     });
 
     const A = board.point([0.0, 0.0], { id: 'A', visibility: 'hidden' });
@@ -29,55 +28,60 @@ document.addEventListener('DOMContentLoaded', function () {
     box.strokeWidth = 2;
     box.position.copyVector(A.position).add(AC.__mul__(0.25)).add(N.__mul__(box.height / 2));
 
-    const textA = board.text("A", A.position, {
+    const textA = board.text("A", {
         id: 'text-A',
         anchor: 'end',
         dominantBaseline: 'middle',
         dx: -5,
         fontFamily: 'Lato',
         fontSize: 20,
-        opacity: 0.4
+        opacity: 0.4,
+        position: A.X
     });
     rescale(textA, board);
 
-    const textB = board.text("B", B.position, {
+    const textB = board.text("B", {
         id: 'text-B',
         anchor: 'start',
         dominantBaseline: 'middle',
         dx: 5,
         fontFamily: 'Lato',
         fontSize: 20,
-        opacity: 0.4
+        opacity: 0.4,
+        position: B.X
     });
     rescale(textB, board);
 
-    const textC = board.text("C", C.position, {
+    const textC = board.text("C", {
         id: 'text-C',
         anchor: 'start',
         dominantBaseline: 'middle',
         dx: 5,
         fontFamily: 'Lato',
         fontSize: 20,
-        opacity: 0.4
+        opacity: 0.4,
+        position: C.X
     });
     rescale(textC, board);
 
-    const textD = board.text("Box", box.position, {
+    const textD = board.text("Box", {
         id: 'text-D',
         anchor: 'middle',
         dominantBaseline: 'middle',
         fontFamily: 'Lato',
-        fontSize: 20
+        fontSize: 20,
+        position: box.X
     });
     textD.attitude.rotorFromDirections(AB, AC);
     rescale(textD, board);
 
-    const textE = board.text("Ramp", ramp.position, {
+    const textE = board.text("Ramp", {
         id: 'text-E',
         anchor: 'middle',
         dominantBaseline: 'hanging',
         fontFamily: 'Lato',
-        fontSize: 20
+        fontSize: 20,
+        position: ramp.X
     });
     textE.attitude.rotorFromDirections(AB, AC);
     rescale(textE, board);

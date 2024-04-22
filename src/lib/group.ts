@@ -9,14 +9,14 @@ import { DomContext, svg, SVGAttributes, transform_value_of_matrix } from './ren
 import { Parent, Shape, ShapeAttributes } from './shape';
 
 export interface IGroup extends Parent {
-    remove(...shapes: Shape<IGroup>[]): void;
+    remove(...shapes: Shape[]): void;
 }
 
 export interface GroupAttributes {
     id: string;
 }
 
-export class Group extends Shape<Group> {
+export class Group extends Shape {
 
     #fill: Color = '#fff';
     #stroke: Color = '#000';
@@ -46,7 +46,7 @@ export class Group extends Shape<Group> {
 
     #length = 0;
 
-    #shapes: Children<Shape<Group>>;
+    #shapes: Children<Shape>;
     #shapes_insert: Disposable | null = null;
     #shapes_remove: Disposable | null = null;
     #shapes_order: Disposable | null = null;
@@ -54,13 +54,13 @@ export class Group extends Shape<Group> {
     /**
      * An automatically updated list of shapes that need to be appended to the renderer's scenegraph.
      */
-    readonly additions: Shape<Group>[] = [];
+    readonly additions: Shape[] = [];
     /**
      * An automatically updated list of children that need to be removed from the renderer's scenegraph.
      */
-    readonly subtractions: Shape<Group>[] = [];
+    readonly subtractions: Shape[] = [];
 
-    constructor(board: IBoard, shapes: Shape<Group>[] = [], attributes: Partial<GroupAttributes> = {}) {
+    constructor(board: IBoard, shapes: Shape[] = [], attributes: Partial<GroupAttributes> = {}) {
 
         super(board, shape_attributes(attributes));
 
@@ -235,13 +235,13 @@ export class Group extends Shape<Group> {
     }
 
     #subscribe_to_shapes(): void {
-        this.#shapes_insert = this.#shapes.insert$.subscribe((inserts: Shape<Group>[]) => {
+        this.#shapes_insert = this.#shapes.insert$.subscribe((inserts: Shape[]) => {
             for (const shape of inserts) {
                 update_shape_group(shape, this);
             }
         });
 
-        this.#shapes_remove = this.#shapes.remove$.subscribe((removes: Shape<Group>[]) => {
+        this.#shapes_remove = this.#shapes.remove$.subscribe((removes: Shape[]) => {
             for (const shape of removes) {
                 update_shape_group(shape, null);
             }
@@ -360,7 +360,7 @@ export class Group extends Shape<Group> {
         return search(this);
     }
 
-    add(...shapes: Shape<Group>[]) {
+    add(...shapes: Shape[]) {
         for (let i = 0; i < shapes.length; i++) {
             const child = shapes[i];
             if (!(child && child.id)) {
@@ -375,7 +375,7 @@ export class Group extends Shape<Group> {
         return this;
     }
 
-    remove(...shapes: Shape<Group>[]) {
+    remove(...shapes: Shape[]) {
         for (let i = 0; i < shapes.length; i++) {
             const shape = shapes[i];
             shape.dispose();
@@ -565,7 +565,7 @@ export class Group extends Shape<Group> {
     /**
      * A list of all the children in the scenegraph.
      */
-    get children(): Children<Shape<Group>> {
+    get children(): Children<Shape> {
         return this.#shapes;
     }
     set children(children) {
@@ -677,7 +677,7 @@ export class Group extends Shape<Group> {
     }
 }
 
-export function update_shape_group(child: Shape<Group>, parent?: Group) {
+export function update_shape_group(child: Shape, parent?: Group) {
 
     const previous_parent = child.parent;
 
@@ -686,7 +686,7 @@ export function update_shape_group(child: Shape<Group>, parent?: Group) {
         return;
     }
 
-    if (previous_parent && previous_parent.children.ids[child.id]) {
+    if (previous_parent && previous_parent instanceof Group && previous_parent.children.ids[child.id]) {
         const index = Array.prototype.indexOf.call(previous_parent.children, child);
         previous_parent.children.splice(index, 1);
         splice();
@@ -699,11 +699,13 @@ export function update_shape_group(child: Shape<Group>, parent?: Group) {
 
     splice();
 
-    if (previous_parent.zzz.flags[Flag.Additions] && previous_parent.additions.length === 0) {
-        previous_parent.zzz.flags[Flag.Additions] = false;
-    }
-    if (previous_parent.zzz.flags[Flag.Subtractions] && previous_parent.subtractions.length === 0) {
-        previous_parent.zzz.flags[Flag.Subtractions] = false;
+    if (previous_parent && previous_parent instanceof Group) {
+        if (previous_parent.zzz.flags[Flag.Additions] && previous_parent.additions.length === 0) {
+            previous_parent.zzz.flags[Flag.Additions] = false;
+        }
+        if (previous_parent.zzz.flags[Flag.Subtractions] && previous_parent.subtractions.length === 0) {
+            previous_parent.zzz.flags[Flag.Subtractions] = false;
+        }
     }
 
     delete child.parent;
@@ -731,15 +733,17 @@ export function update_shape_group(child: Shape<Group>, parent?: Group) {
 
     function splice() {
 
-        const indexAdd = previous_parent.additions.indexOf(child);
-        if (indexAdd >= 0) {
-            previous_parent.additions.splice(indexAdd, 1);
-        }
+        if (previous_parent && previous_parent instanceof Group) {
+            const indexAdd = previous_parent.additions.indexOf(child);
+            if (indexAdd >= 0) {
+                previous_parent.additions.splice(indexAdd, 1);
+            }
 
-        const indexSub = previous_parent.subtractions.indexOf(child);
-        if (indexSub < 0) {
-            previous_parent.subtractions.push(child);
-            previous_parent.zzz.flags[Flag.Subtractions] = true;
+            const indexSub = previous_parent.subtractions.indexOf(child);
+            if (indexSub < 0) {
+                previous_parent.subtractions.push(child);
+                previous_parent.zzz.flags[Flag.Subtractions] = true;
+            }
         }
     }
 }

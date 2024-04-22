@@ -12,7 +12,7 @@ import { Matrix } from './matrix';
 import { Disposable } from './reactive/Disposable';
 import { computed_world_matrix } from './utils/compute_world_matrix';
 
-export type PositionLike = Anchor | G20 | Shape<unknown> | [x: number, y: number];
+export type PositionLike = Anchor | G20 | Shape | [x: number, y: number];
 
 function ensure_mutable(mv: G20): G20 {
     if (mv.isMutable()) {
@@ -79,7 +79,7 @@ function ensure_identifier(attributes: Partial<ShapeAttributes>): string {
     }
 }
 
-export abstract class Shape<P extends Parent> extends ElementBase<P> implements IShape<P>, ShapeProperties {
+export abstract class Shape extends ElementBase<unknown> implements IShape<unknown>, ShapeProperties {
 
     /**
      * The matrix value of the shape's position, rotation, and scale.
@@ -117,7 +117,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     /**
      * The mask property is better named as the cliiPath
      */
-    #clipPath: Shape<unknown> | null = null;
+    #clipPath: Shape | null = null;
 
     abstract automatic: boolean;
     abstract beginning: number;
@@ -254,8 +254,8 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
             // The current design allows a Group to be parented by a View.
             // The view will not support the update() method.
             const parent = this.parent;
-            if (typeof parent.update === 'function') {
-                parent.update();
+            if (typeof (parent as any).update === 'function') {
+                (parent as any).update();
             }
         }
         // There's no update on the super type.
@@ -394,10 +394,10 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         this.#skewY = v;
         this.zzz.flags[Flag.Matrix] = true;
     }
-    get clipPath(): Shape<unknown> | null {
+    get clipPath(): Shape | null {
         return this.#clipPath;
     }
-    set clipPath(clipPath: Shape<unknown> | null) {
+    set clipPath(clipPath: Shape | null) {
         this.#clipPath = clipPath;
         this.zzz.flags[Flag.ClipPath] = true;
         if (clipPath instanceof Shape && !clipPath.zzz.clip) {

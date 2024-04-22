@@ -32,5 +32,5 @@ export { Ellipse, EllipseAttributes } from './lib/shapes/ellipse';
 export { Line } from './lib/shapes/line';
 export { Polygon, PolygonAttributes } from './lib/shapes/Polygon';
 export { Rectangle, RectangleAttributes, RectangleProperties } from './lib/shapes/rectangle';
-export { Text, TextAttributes, TextDecoration } from './lib/text';
+export { Text, TextAttributes, TextDecoration, TextProperties } from './lib/text';
 
