@@ -92,17 +92,31 @@ document.addEventListener('DOMContentLoaded', function () {
     box.fill = "#FFFF00";
     box.fillOpacity = 0.3;
 
-    const gravity = board.arrow(box.X, G20.ey.mulByNumber(-2), 0.25);
-    gravity.strokeOpacity = 0.4;
-    gravity.strokeWidth = 2;
+    const Fg = board.arrow(G20.ey.mulByNumber(-2), {
+        position: box.X,
+        strokeWidth: 2
+    });
+    Fg.strokeOpacity = 0.4;
 
-    const reaction = board.arrow(box.X, N.mulByNumber(1.5), 0.25);
-    reaction.strokeOpacity = 0.4;
-    reaction.strokeWidth = 2;
+    const Fn = board.arrow(N.mulByNumber(1.5), {
+        position: box.X,
+        strokeOpacity: 0.4
+    });
+    Fn.strokeWidth = 2;
 
-    const friction = board.arrow(box.X, S.mulByNumber(1.5), 0.25);
-    friction.strokeOpacity = 0.4;
-    friction.strokeWidth = 2;
+    const Fs = board.arrow(S.mulByNumber(1.5), {
+        position: box.X
+    });
+    Fs.strokeOpacity = 0.4;
+    Fs.strokeWidth = 2;
+
+    const arrow = board.arrow(G20.ex.mulByNumber(1), {
+        id: 'arrow',
+        strokeWidth: 4
+    });
+    arrow.axis = G20.ey;
+    arrow.headLength = 0.25;
+    arrow.origin = G20.ey.mulByNumber(1 / 2);
 
     // Now move the box
     box.position.copyVector(A.position).add(AC.__mul__(0.75)).add(N.__mul__(box.height / 2));

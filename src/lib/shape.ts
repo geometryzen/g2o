@@ -14,15 +14,24 @@ import { computed_world_matrix } from './utils/compute_world_matrix';
 
 export type PositionLike = Anchor | G20 | Shape<unknown> | [x: number, y: number];
 
+function ensure_mutable(mv: G20): G20 {
+    if (mv.isMutable()) {
+        return mv;
+    }
+    else {
+        return mv.clone();
+    }
+}
+
 export function position_from_like(like: PositionLike): G20 | null {
     if (like instanceof Shape) {
-        return like.position;
+        return ensure_mutable(like.position);
     }
     if (like instanceof G20) {
-        return like;
+        return ensure_mutable(like);
     }
     else if (like instanceof Anchor) {
-        return like.origin;
+        return ensure_mutable(like.origin);
     }
     else if (Array.isArray(like)) {
         return G20.vector(like[0], like[1]);
@@ -42,6 +51,7 @@ export interface ShapeAttributes {
     position: PositionLike;
     attitude: G20;
     visibility: 'visible' | 'hidden' | 'collapse';
+    compensate: boolean;
 }
 
 export interface ShapeProperties {
@@ -102,6 +112,8 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     readonly #opacity = state(1);
     readonly #visibility = state('visible' as 'visible' | 'hidden' | 'collapse');
 
+    readonly #compensate: boolean;
+
     /**
      * The mask property is better named as the cliiPath
      */
@@ -156,6 +168,13 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
             this.#attitude = new G20(0, 0, 1, 0);
         }
 
+        if (attributes.compensate) {
+            this.#compensate = attributes.compensate;
+        }
+        else {
+            this.#compensate = false;
+        }
+
         if (typeof attributes.opacity === 'number') {
             this.#opacity.set(attributes.opacity);
         }
@@ -190,29 +209,44 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
         super.dispose();
     }
 
-    #update_matrix(): void {
+    #update_matrix(compensate: boolean): void {
         // For performance, the matrix product has been pre-computed.
         // M = T * S * R * skewX * skewY
         const position = this.position;
         const x = position.x;
         const y = position.y;
         const attitude = this.attitude;
-        const cos_φ = attitude.a;
-        const sin_φ = attitude.b;
         const scale = this.scaleXY;
         const sx = scale.x;
         const sy = scale.y;
         if (this.board.goofy) {
+            const cos_φ = attitude.a;
+            const sin_φ = attitude.b;
             compose_2d_3x3_transform(x, y, sx, sy, cos_φ, sin_φ, this.skewX, this.skewY, this.matrix);
         }
         else {
-            compose_2d_3x3_transform(y, x, sy, sx, cos_φ, sin_φ, this.skewY, this.skewX, this.matrix);
+            if (compensate) {
+                // Text needs an additional rotation of -π/2 (i.e. clockwise 90 degrees) to compensate for 
+                // the use of a right-handed coordinate frame. The rotor for this is cos(π/4)+sin(π/4)*I.
+                // Here we compute the effective rotator (which is obtained by multiplying the two rotors),
+                // and use that to compose the transformation matrix.
+                const a = attitude.a;
+                const b = attitude.b;
+                const cos_φ = (a - b) / Math.SQRT2;
+                const sin_φ = (a + b) / Math.SQRT2;
+                compose_2d_3x3_transform(y, x, sy, sx, cos_φ, sin_φ, this.skewY, this.skewX, this.matrix);
+            }
+            else {
+                const cos_φ = attitude.a;
+                const sin_φ = attitude.b;
+                compose_2d_3x3_transform(y, x, sy, sx, cos_φ, sin_φ, this.skewY, this.skewX, this.matrix);
+            }
         }
     }
 
     update(bubbles?: boolean): this {
         if (!this.matrix.manual && this.zzz.flags[Flag.Matrix]) {
-            this.#update_matrix();
+            this.#update_matrix(this.#compensate);
         }
 
         if (bubbles) {
@@ -242,7 +276,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     }
     #attitude_change_bind(): Disposable {
         return this.#attitude.change$.subscribe(() => {
-            this.#update_matrix();
+            this.#update_matrix(this.#compensate);
             this.zzz.flags[Flag.Matrix] = true;
         });
     }
@@ -259,7 +293,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
     }
     #position_change_bind(): Disposable {
         return this.#position.change$.subscribe(() => {
-            this.#update_matrix();
+            this.#update_matrix(this.#compensate);
             this.zzz.flags[Flag.Matrix] = true;
         });
     }
@@ -323,7 +357,7 @@ export abstract class Shape<P extends Parent> extends ElementBase<P> implements 
                 this.zzz.flags[Flag.Matrix] = true;
             });
         }
-        this.#update_matrix();
+        this.#update_matrix(this.#compensate);
         this.zzz.flags[Flag.Matrix] = true;
         this.zzz.flags[Flag.Scale] = true;
     }

@@ -11,7 +11,6 @@ export interface Child {
 export class Children<T extends Child> extends Collection<T> {
 
     readonly ids: { [id: string]: T } = {};
-    readonly #child_subscriptions: { [id: string]: Disposable } = {};
 
     readonly #insert_subscription: Disposable;
     readonly #remove_subscription: Disposable;
@@ -48,8 +47,6 @@ export class Children<T extends Child> extends Collection<T> {
     #detach(children: T[]): this {
         for (let i = 0; i < children.length; i++) {
             const child = children[i];
-            this.#child_subscriptions[child.id].dispose();
-            delete this.#child_subscriptions[child.id];
             delete this.ids[child.id];
         }
         return this;

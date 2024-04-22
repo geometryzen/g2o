@@ -53,23 +53,23 @@ export class Rectangle extends Path implements RectangleProperties, Disposable {
 
     readonly #origin = G20.zero.clone();
 
-    constructor(board: IBoard, options: RectangleAttributes = {}) {
+    constructor(board: IBoard, attributes: RectangleAttributes = {}) {
 
         const points = [
-            new Anchor(G20.vector(0, 0), 0, 0, 0, 0, 'M'),
-            new Anchor(G20.vector(0, 0), 0, 0, 0, 0, 'L'),
-            new Anchor(G20.vector(0, 0), 0, 0, 0, 0, 'L'),
-            new Anchor(G20.vector(0, 0), 0, 0, 0, 0, 'L')
+            new Anchor(G20.vector(0, 0), 'M'),
+            new Anchor(G20.vector(0, 0), 'L'),
+            new Anchor(G20.vector(0, 0), 'L'),
+            new Anchor(G20.vector(0, 0), 'L')
         ];
 
-        super(board, points, true, false, true, path_options_from_rectangle_options(options));
+        super(board, points, true, false, true, path_options_from_rectangle_options(attributes));
 
-        if (typeof options.width === 'number') {
-            this.width = options.width;
+        if (typeof attributes.width === 'number') {
+            this.width = attributes.width;
         }
 
-        if (typeof options.height === 'number') {
-            this.height = options.height;
+        if (typeof attributes.height === 'number') {
+            this.height = attributes.height;
         }
 
         this.#disposables.push(this.#origin.change$.subscribe(() => {

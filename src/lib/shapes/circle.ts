@@ -44,7 +44,7 @@ export class Circle extends Path implements CircleProperties {
         // These anchors will be placed on the circle during the update phase.
         const points: Anchor[] = [];
         for (let i = 0; i < amount; i++) {
-            points.push(new Anchor(G20.vector(0, 0), 0, 0, 0, 0));
+            points.push(new Anchor(G20.vector(0, 0)));
         }
 
         super(board, points, true, true, true, path_attributes(options));

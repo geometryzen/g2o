@@ -331,40 +331,36 @@ export class G20 {
         }
     }
 
-    copy(v: G20): this {
-        if (this.isMutable()) {
-            return this.set(v.x, v.y, v.a, v.b);
-        }
-        else {
-            throw new Error();
-        }
+    /**
+     * A convenience function for set(mv.x, mv.y, mv.a, mv.b).
+     * Requires `this` multivector to be mutable.
+     */
+    copy(mv: G20): this {
+        return this.set(mv.x, mv.y, mv.a, mv.b);
     }
 
+    /**
+     * A convenience function for set(0, 0, spinor.a, spinor.b).
+     * Requires `this` multivector to be mutable.
+     */
     copySpinor(spinor: Spinor): this {
-        if (this.isMutable) {
-            return this.set(0, 0, spinor.a, spinor.b);
-        }
-        else {
-            throw new Error();
-        }
+        return this.set(0, 0, spinor.a, spinor.b);
     }
 
+    /**
+     * A convenience function for set(vector.x, vector.y, 0, 0).
+     * Requires `this` multivector to be mutable.
+     */
     copyVector(vector: Vector): this {
-        if (this.isMutable()) {
-            return this.set(vector.x, vector.y, 0, 0);
-        }
-        else {
-            throw new Error();
-        }
+        return this.set(vector.x, vector.y, 0, 0);
     }
 
+    /**
+     * A convenience function for set(0, 0, 0, 0).
+     * Requires `this` multivector to be mutable.
+     */
     clear(): this {
-        if (this.isMutable()) {
-            return this.set(0, 0, 0, 0);
-        }
-        else {
-            throw new Error();
-        }
+        return this.set(0, 0, 0, 0);
     }
 
     clone(): G20 {
@@ -815,6 +811,14 @@ export class G20 {
         return this.set(x, y, a, b);
     }
 
+    /**
+     * Sets the coordinates of `this` multivector.
+     * Requires `this` multivector to be mutable.
+     * @param x The coordinate along the x-axis.
+     * @param y The coordinate along the y-axis.
+     * @param a The scalar coordinate.
+     * @param b The bivector coordinate.
+     */
     set(x: number, y: number, a = 0, b = 0): this {
         if (this.isMutable()) {
             // Take special care to only fire changed event if necessary.

@@ -7,8 +7,8 @@ export class Line extends Path {
     constructor(board: IBoard, point1: PositionLike, point2: PositionLike) {
         const path_options: Partial<PathAttributes> = {};
         super(board, [
-            new Anchor(position_from_like(point1), 0, 0, 0, 0, 'M'),
-            new Anchor(position_from_like(point2), 0, 0, 0, 0, 'L')],
+            new Anchor(position_from_like(point1), 'M'),
+            new Anchor(position_from_like(point2), 'L')],
             false,
             false,
             false,

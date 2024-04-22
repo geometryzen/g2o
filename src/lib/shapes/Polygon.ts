@@ -19,7 +19,7 @@ export class Polygon extends Path implements PolygonAttributes {
 
         const vertices = points
             .map((point) => position_from_like(point))
-            .map((position, index) => new Anchor(position, 0, 0, 0, 0, index === 0 ? 'M' : 'L'));
+            .map((position, index) => new Anchor(position, index === 0 ? 'M' : 'L'));
 
         super(board, vertices, true, false, false, path_attributes(attributes));
 

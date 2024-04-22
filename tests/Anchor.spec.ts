@@ -17,7 +17,7 @@ describe("Anchor", function () {
         const bx = Math.random();
         const by = Math.random();
         const command = random(commands);
-        const anchor = new Anchor(G20.vector(x, y), ax, ay, bx, by, command);
+        const anchor = new Anchor(G20.vector(x, y), command, ax, ay, bx, by);
         expect(anchor.x).toBe(x);
         expect(anchor.y).toBe(y);
         expect(anchor.controls.a.x).toBe(ax);
@@ -53,7 +53,7 @@ describe("Anchor", function () {
         const bx = Math.random();
         const by = Math.random();
         const command = random(commands);
-        const original = new Anchor(G20.vector(x, y), ax, ay, bx, by, command);
+        const original = new Anchor(G20.vector(x, y), command, ax, ay, bx, by);
         const anchor = new Anchor(G20.vector(0, 0));
         anchor.copy(original);
         expect(anchor.x).toBe(x);
@@ -115,8 +115,8 @@ describe("Anchor", function () {
         const command = random(commands);
         const relative = random(booleans);
 
-        const anchor = new Anchor(G20.vector(x, y), ax, ay, bx, by, command);
-        const ditto = new Anchor(G20.vector(x, y), ax, ay, bx, by, command);
+        const anchor = new Anchor(G20.vector(x, y), command, ax, ay, bx, by);
+        const ditto = new Anchor(G20.vector(x, y), command, ax, ay, bx, by);
         anchor.origin.set(ditto.x, ditto.y);
         anchor.controls.a.set(ax, ay);
         anchor.controls.b.set(bx, by);

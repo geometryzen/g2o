@@ -3,7 +3,6 @@ import { Color, is_color_provider, serialize_color } from './effects/ColorProvid
 import { Flag } from './Flag';
 import { Group } from './group';
 import { IBoard } from './IBoard';
-import { compose_2d_3x3_transform } from './math/compose_2d_3x3_transform';
 import { get_dashes_offset, set_dashes_offset } from './path';
 import { Disposable } from './reactive/Disposable';
 import { Observable } from './reactive/Observable';
@@ -168,7 +167,6 @@ export class Text extends Shape<Group> implements TextAttributes {
         const flagMatrix = this.matrix.manual || this.zzz.flags[Flag.Matrix];
 
         if (flagMatrix) {
-            update_text_matrix(this);
             changed.transform = transform_value_of_matrix(this.matrix);
         }
 
@@ -225,20 +223,8 @@ export class Text extends Shape<Group> implements TextAttributes {
 
             this.zzz.disposables.push(this.matrix.change$.subscribe((matrix) => {
                 const change: SVGAttributes = {};
-                // FIXME: This is a bit funky. How do we get the correct transform for text (add 90 degree rotation)
-                update_text_matrix(this);
                 change.transform = transform_value_of_matrix(matrix);
                 svg.setAttributes(this.zzz.elem, change);
-            }));
-
-            this.zzz.disposables.push(effect(() => {
-                update_text_matrix(this);
-                const change: SVGAttributes = {};
-                change.transform = transform_value_of_matrix(this.matrix);
-                svg.setAttributes(this.zzz.elem, change);
-                return function () {
-                    // Nothing to do here...
-                };
             }));
 
             // anchor
@@ -721,35 +707,8 @@ export class Text extends Shape<Group> implements TextAttributes {
 
 function shape_attributes_from_text_attributes(attributes: Partial<TextAttributes>): Partial<ShapeAttributes> {
     const retval: Partial<ShapeAttributes> = {
-        id: attributes.id
+        id: attributes.id,
+        compensate: true
     };
     return retval;
-}
-
-function update_text_matrix(text: Text) {
-    // Text and Images, unlike Path(s), are not compensated (yet) for the 90 degree rotation that makes the  
-    const goofy = text.board.goofy;
-    const position = text.position;
-    const x = position.x;
-    const y = position.y;
-    const attitude = text.attitude;
-    const scale = text.scaleXY;
-    const sx = scale.x;
-    const sy = scale.y;
-    if (goofy) {
-        const cos_φ = attitude.a;
-        const sin_φ = attitude.b;
-        compose_2d_3x3_transform(x, y, sx, sy, cos_φ, sin_φ, text.skewX, text.skewY, text.matrix);
-    }
-    else {
-        // Text needs an additional rotation of -π/2 (i.e. clockwise 90 degrees) to compensate for 
-        // the use of a right-handed coordinate frame. The rotor for this is cos(π/4)+sin(π/4)*I.
-        // Here we compute the effective rotator (which is obtained by multiplying the two rotors),
-        // and use that to compose the transformation matrix.
-        const a = attitude.a;
-        const b = attitude.b;
-        const cos_φ = (a - b) / Math.SQRT2;
-        const sin_φ = (a + b) / Math.SQRT2;
-        compose_2d_3x3_transform(y, x, sy, sx, cos_φ, sin_φ, text.skewY, text.skewX, text.matrix);
-    }
 }

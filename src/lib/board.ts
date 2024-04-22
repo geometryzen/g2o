@@ -12,7 +12,7 @@ import { View } from './renderers/View';
 import { ViewFactory } from './renderers/ViewFactory';
 import { PositionLike, Shape } from './shape';
 import { ArcSegment } from './shapes/arc-segment';
-import { Arrow } from './shapes/Arrow';
+import { Arrow, ArrowAttributes } from './shapes/Arrow';
 import { Circle, CircleAttributes } from './shapes/circle';
 import { Ellipse, EllipseAttributes } from './shapes/ellipse';
 import { Line } from './shapes/line';
@@ -328,8 +328,8 @@ export class Board implements IBoard {
         return text;
     }
 
-    arrow(tail: PositionLike, axis: PositionLike, size?: number): Path {
-        const arrow = new Arrow(this, tail, axis, size);
+    arrow(axis: PositionLike, attributes: ArrowAttributes = {}): Arrow {
+        const arrow = new Arrow(this, axis, attributes);
         this.add(arrow);
         return arrow;
     }
