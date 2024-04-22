@@ -58,11 +58,11 @@ export class Path extends Shape implements PathAttributes {
 
     readonly #lengths: number[] = [];
 
-    #fill = state('#fff' as Color);
+    #fill = state('none' as Color);
     #fill_change: Disposable | null = null;
     #fill_opacity = state(1.0);
 
-    #stroke = state('#000' as Color);
+    #stroke = state('#000000' as Color);
     #stroke_change: Disposable | null = null;
     #stroke_width = state(1);
     #stroke_opacity = state(1.0);
@@ -72,12 +72,12 @@ export class Path extends Shape implements PathAttributes {
     /**
      * stroke-linecap
      */
-    #cap: 'butt' | 'round' | 'square' = 'round';
+    readonly #cap = variable('round' as 'butt' | 'round' | 'square');
 
     /**
      * stroke-linejoin
      */
-    #join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' = 'round';
+    readonly #join = variable('round' as 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round');
 
     /**
      * stroke-miterlimit
@@ -1076,10 +1076,10 @@ export class Path extends Shape implements PathAttributes {
      * @see https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-linecap
      */
     get cap(): 'butt' | 'round' | 'square' {
-        return this.#cap;
+        return this.#cap.get();
     }
     set cap(cap: 'butt' | 'round' | 'square') {
-        this.#cap = cap;
+        this.#cap.set(cap);
         this.zzz.flags[Flag.Cap] = true;
     }
     get closed(): boolean {
@@ -1137,10 +1137,10 @@ export class Path extends Shape implements PathAttributes {
         this.#fill_opacity.set(fillOpacity);
     }
     get join(): 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' {
-        return this.#join;
+        return this.#join.get();
     }
     set join(join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round') {
-        this.#join = join;
+        this.#join.set(join);
         this.zzz.flags[Flag.Join] = true;
     }
     get length(): number {

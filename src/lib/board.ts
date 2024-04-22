@@ -15,7 +15,7 @@ import { ArcSegment } from './shapes/arc-segment';
 import { Arrow, ArrowAttributes } from './shapes/Arrow';
 import { Circle, CircleAttributes } from './shapes/circle';
 import { Ellipse, EllipseAttributes } from './shapes/ellipse';
-import { Line } from './shapes/line';
+import { Line, LineAttributes } from './shapes/line';
 import { Polygon, PolygonAttributes } from './shapes/Polygon';
 import { Rectangle, RectangleAttributes } from './shapes/rectangle';
 import { Text, TextAttributes } from './text';
@@ -275,10 +275,8 @@ export class Board implements IBoard {
         return ellipse;
     }
 
-    line(point1: PositionLike, point2: PositionLike): Line {
-        const line = new Line(this, point1, point2);
-        line.strokeWidth = 2;
-        line.stroke = "#999999";
+    line(point1: PositionLike, point2: PositionLike, attributes: LineAttributes = {}): Line {
+        const line = new Line(this, point1, point2, attributes);
         this.add(line);
         return line;
     }
@@ -302,10 +300,6 @@ export class Board implements IBoard {
         const ry = 4 / sy;
         const options: Partial<EllipseAttributes> = { position, rx, ry, id: attributes.id, visibility: attributes.visibility };
         const ellipse = new Ellipse(this, options);
-        ellipse.stroke = "#ff0000";
-        ellipse.fill = "#ff0000";
-        // ellipse.noFill();
-        ellipse.strokeWidth = 2;
         this.add(ellipse);
         return ellipse;
     }

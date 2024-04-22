@@ -1,19 +1,34 @@
 import { Anchor } from '../anchor';
+import { Color } from '../effects/ColorProvider';
 import { IBoard } from '../IBoard';
 import { Path, PathAttributes } from '../path';
 import { PositionLike, position_from_like } from '../shape';
 
-export class Line extends Path {
-    constructor(board: IBoard, point1: PositionLike, point2: PositionLike) {
-        const path_options: Partial<PathAttributes> = {};
+export interface LineAttributes {
+    id?: string,
+    stroke?: Color;
+    strokeOpacity?: number;
+    strokeWidth?: number;
+    visibility?: 'visible' | 'hidden' | 'collapse';
+}
+
+export interface LineProperties {
+    id?: string,
+    stroke?: Color;
+    strokeOpacity?: number;
+    strokeWidth?: number;
+    visibility?: 'visible' | 'hidden' | 'collapse';
+}
+
+export class Line extends Path implements LineProperties {
+    constructor(board: IBoard, point1: PositionLike, point2: PositionLike, attributes: LineAttributes = {}) {
         super(board, [
             new Anchor(position_from_like(point1), 'M'),
             new Anchor(position_from_like(point2), 'L')],
             false,
             false,
             false,
-            path_options);
-        // this.automatic = false;
+            path_attribs_from_line_attribs(attributes));
     }
     get point1(): Anchor {
         return this.vertices.getAt(0);
@@ -41,4 +56,15 @@ export class Line extends Path {
             console.warn(error.name, error.message);
         }
     }
+}
+
+function path_attribs_from_line_attribs(attributes: LineAttributes): Partial<PathAttributes> {
+    const retval: Partial<PathAttributes> = {
+        id: attributes.id,
+        visibility: attributes.visibility,
+        stroke: attributes.stroke,
+        strokeOpacity: attributes.strokeOpacity,
+        strokeWidth: attributes.strokeWidth
+    };
+    return retval;
 }
