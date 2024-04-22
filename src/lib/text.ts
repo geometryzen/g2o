@@ -489,7 +489,7 @@ export class Text extends Shape implements TextProperties {
         let top: number;
         let bottom: number;
 
-        this.update(true);
+        this.update();
 
         const matrix = shallow ? this.matrix : this.worldMatrix;
 

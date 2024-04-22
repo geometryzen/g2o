@@ -244,20 +244,11 @@ export abstract class Shape extends ElementBase<unknown> implements IShape<unkno
         }
     }
 
-    update(bubbles?: boolean): this {
+    update(): this {
         if (!this.matrix.manual && this.zzz.flags[Flag.Matrix]) {
             this.#update_matrix(this.#compensate);
         }
 
-        if (bubbles) {
-            // Ultimately we get to the top of the hierarchy of components.
-            // The current design allows a Group to be parented by a View.
-            // The view will not support the update() method.
-            const parent = this.parent;
-            if (typeof (parent as any).update === 'function') {
-                (parent as any).update();
-            }
-        }
         // There's no update on the super type.
         return this;
     }

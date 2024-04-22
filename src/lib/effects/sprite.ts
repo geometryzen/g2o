@@ -215,7 +215,7 @@ export class Sprite extends Rectangle {
 
         }
 
-        super.update.call(this);
+        super.update();
 
         return this;
 

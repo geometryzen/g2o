@@ -95,7 +95,7 @@ export class Ellipse extends Path {
             }
         }
 
-        super.update.call(this);
+        super.update();
         return this;
 
     }

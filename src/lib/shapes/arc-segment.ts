@@ -266,7 +266,7 @@ export class ArcSegment extends Path {
 
         }
 
-        super.update.call(this);
+        super.update();
 
         return this;
 
