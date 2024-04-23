@@ -1,4 +1,4 @@
-import { Variable, variable } from '../reactive/variable';
+import { variable } from '../reactive/variable';
 import { Bivector } from './Bivector';
 import { gauss } from './gauss';
 import { rotorFromDirections } from './rotorFromDirections';
@@ -62,7 +62,7 @@ const COORD_B = 3;
  */
 export class G20 {
 
-    readonly #coords: Variable<[a: number, x: number, y: number, b: number]>;
+    readonly #coords: [a: number, x: number, y: number, b: number];
 
     #lock = UNLOCKED;
 
@@ -70,7 +70,7 @@ export class G20 {
     readonly change$ = this.#change.asObservable();
 
     constructor(x = 0, y = 0, a = 0, b = 0) {
-        this.#coords = variable([a, x, y, b]/*, { equals }*/);
+        this.#coords = [a, x, y, b];
     }
 
     static scalar(a: number): G20 {
@@ -134,60 +134,52 @@ export class G20 {
     }
 
     get a(): number {
-        return this.#coords.get()[COORD_A];
+        return this.#coords[COORD_A];
     }
 
     set a(a: number) {
         if (typeof a === 'number') {
             if (this.a !== a) {
-                const coords = this.#coords.get();
-                coords[COORD_A] = a;
-                this.#coords.set(coords);
+                this.#coords[COORD_A] = a;
                 this.#change.set(this);
             }
         }
     }
 
     get x(): number {
-        return this.#coords.get()[COORD_X];
+        return this.#coords[COORD_X];
     }
 
     set x(x: number) {
         if (typeof x === 'number') {
             if (this.x !== x) {
-                const coords = this.#coords.get();
-                coords[COORD_X] = x;
-                this.#coords.set(coords);
+                this.#coords[COORD_X] = x;
                 this.#change.set(this);
             }
         }
     }
 
     get y(): number {
-        return this.#coords.get()[COORD_Y];
+        return this.#coords[COORD_Y];
     }
 
     set y(y: number) {
         if (typeof y === 'number') {
             if (this.y !== y) {
-                const coords = this.#coords.get();
-                coords[COORD_Y] = y;
-                this.#coords.set(coords);
+                this.#coords[COORD_Y] = y;
                 this.#change.set(this);
             }
         }
     }
 
     get b(): number {
-        return this.#coords.get()[COORD_B];
+        return this.#coords[COORD_B];
     }
 
     set b(b: number) {
         if (typeof b === 'number') {
             if (this.b !== b) {
-                const coords = this.#coords.get();
-                coords[COORD_B] = b;
-                this.#coords.set(coords);
+                this.#coords[COORD_B] = b;
                 this.#change.set(this);
             }
         }
@@ -271,7 +263,7 @@ export class G20 {
     /**
      * 
      */
-    add2(a: G20, b: G20): G20 {
+    add2(a: Readonly<G20>, b: Readonly<G20>): G20 {
         if (is_zero_multivector(a)) {
             return this.set(b.x, b.y, b.a, b.b);
         }
@@ -282,6 +274,7 @@ export class G20 {
             return this.set(a.x + b.x, a.y + b.y, a.a + b.a, a.b + b.b);
         }
     }
+
     addPseudo(β: number): G20 {
         if (this.isLocked()) {
             return lock(this.clone().addPseudo(β));
@@ -334,7 +327,7 @@ export class G20 {
      * A convenience function for set(mv.x, mv.y, mv.a, mv.b).
      * Requires `this` multivector to be mutable.
      */
-    copy(mv: G20): this {
+    copy(mv: Readonly<G20>): this {
         return this.set(mv.x, mv.y, mv.a, mv.b);
     }
 
@@ -342,7 +335,7 @@ export class G20 {
      * A convenience function for set(0, 0, spinor.a, spinor.b).
      * Requires `this` multivector to be mutable.
      */
-    copySpinor(spinor: Spinor): this {
+    copySpinor(spinor: Readonly<Spinor>): this {
         return this.set(0, 0, spinor.a, spinor.b);
     }
 
@@ -350,7 +343,7 @@ export class G20 {
      * A convenience function for set(vector.x, vector.y, 0, 0).
      * Requires `this` multivector to be mutable.
      */
-    copyVector(vector: Vector): this {
+    copyVector(vector: Readonly<Vector>): this {
         return this.set(vector.x, vector.y, 0, 0);
     }
 
@@ -375,7 +368,7 @@ export class G20 {
         }
         else {
             if (isScalar(rhs)) {
-                return this.divByNumber(rhs.a);
+                return this.scale(1 / rhs.a);
             }
             else {
                 return this.mul(G20.copy(rhs).inv());
@@ -494,19 +487,6 @@ export class G20 {
         }
     }
 
-    mulByNumber(s: number): G20 {
-        if (this.isLocked()) {
-            return lock(this.clone().mulByNumber(s));
-        }
-        else {
-            const x = this.x * s;
-            const y = this.y * s;
-            const a = this.a * s;
-            const b = this.b * s;
-            return this.set(x, y, a, b);
-        }
-    }
-
     /**
      * @param rhs
      * @returns this * m
@@ -539,37 +519,8 @@ export class G20 {
         return this.set(x, y, a, b);
     }
 
-    divByNumber(s: number): G20 {
-        if (this.isLocked()) {
-            return lock(this.clone().divByNumber(s));
-        }
-        else {
-            const x = this.x / s;
-            const y = this.y / s;
-            const a = this.a / s;
-            const b = this.b / s;
-            return this.set(x, y, a, b);
-        }
-    }
-
-    negate(): G20 {
-        return this.mulByNumber(-1);
-    }
-
-    /**
-     * @returns this * -1
-     */
     neg(): G20 {
-        if (this.isLocked()) {
-            return lock(this.clone().neg());
-        }
-        else {
-            const a = -this.a;
-            const x = -this.x;
-            const y = -this.y;
-            const b = -this.b;
-            return this.set(x, y, a, b);
-        }
+        return this.scale(-1);
     }
 
     dot(v: G20): number {
@@ -611,7 +562,7 @@ export class G20 {
             return lock(this.clone().normalize());
         }
         else {
-            return this.divByNumber(this.magnitude());
+            return this.scale(1 / this.magnitude());
         }
     }
 
@@ -711,7 +662,7 @@ export class G20 {
      * @param b The ending vector
      * @returns The rotor representing a rotation from a to b.
      */
-    rotorFromDirections(a: Vector, b: Vector): G20 {
+    rotorFromDirections(a: Readonly<Vector>, b: Readonly<Vector>): G20 {
         if (this.isLocked()) {
             return lock(this.clone().rotorFromDirections(a, b));
         }
@@ -744,7 +695,7 @@ export class G20 {
      *
      * The result is depends  on the magnitudes of a and b. 
      */
-    rotorFromVectorToVector(a: Vector, b: Vector): G20 {
+    rotorFromVectorToVector(a: Readonly<Vector>, b: Readonly<Vector>): G20 {
         if (this.isLocked()) {
             return lock(this.clone().rotorFromVectorToVector(a, b));
         }
@@ -772,7 +723,16 @@ export class G20 {
     }
 
     scale(α: number): G20 {
-        return this.mulByNumber(α);
+        if (this.isLocked()) {
+            return lock(this.clone().scale(α));
+        }
+        else {
+            const x = this.x * α;
+            const y = this.y * α;
+            const a = this.a * α;
+            const b = this.b * α;
+            return this.set(x, y, a, b);
+        }
     }
 
     /**
@@ -823,12 +783,11 @@ export class G20 {
             // Take special care to only fire changed event if necessary.
             const changed = (this.x !== x || this.y !== y || this.a !== a || this.b != b);
             if (changed) {
-                const coords = this.#coords.get();
+                const coords = this.#coords;
                 coords[COORD_A] = a;
                 coords[COORD_X] = x;
                 coords[COORD_Y] = y;
                 coords[COORD_B] = b;
-                this.#coords.set(coords);
                 this.#change.set(this);
             }
             return this;
@@ -957,7 +916,7 @@ export class G20 {
             return lock(this.clone().div(rhs));
         }
         else if (typeof rhs === 'number') {
-            return lock(this.clone().divByNumber(rhs));
+            return lock(this.clone().scale(1 / rhs));
         }
         else {
             return void 0;
@@ -1018,7 +977,7 @@ export class G20 {
         }
         else if (typeof rhs === 'number') {
             // The outer product with a scalar is scalar multiplication.
-            return lock(G20.copy(this).mulByNumber(rhs));
+            return lock(G20.copy(this).scale(rhs));
         }
         else {
             return void 0;
@@ -1034,7 +993,7 @@ export class G20 {
         }
         else if (typeof lhs === 'number') {
             // The outer product with a scalar is scalar multiplication, and commutes.
-            return lock(G20.copy(this).mulByNumber(lhs));
+            return lock(G20.copy(this).scale(lhs));
         }
         else {
             return void 0;
@@ -1228,7 +1187,7 @@ export class G20 {
             return lock(this.clone().mul(rhs));
         }
         else if (typeof rhs === 'number') {
-            return lock(this.clone().mulByNumber(rhs));
+            return lock(this.clone().scale(rhs));
         }
         else {
             return void 0;
@@ -1244,7 +1203,7 @@ export class G20 {
         }
         else if (typeof lhs === 'number') {
             // The ordering of operands is not important for scalar multiplication.
-            return lock(G20.copy(this).mulByNumber(lhs));
+            return lock(G20.copy(this).scale(lhs));
         }
         else {
             return void 0;

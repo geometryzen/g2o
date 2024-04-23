@@ -168,7 +168,7 @@ export function getCurveLength(x1: number, y1: number, x2: number, y2: number, x
  */
 export function getCurveBoundingBox(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, x4: number, y4: number): { min: { x: number; y: number }; max: { x: number; y: number } } {
 
-    const tvalues = [];
+    const tvalues: number[] = [];
     const bounds: [number[], number[]] = [[], []];
     let a, b, c, t, t1, t2, b2ac, sqrtb2ac;
 
@@ -210,7 +210,7 @@ export function getCurveBoundingBox(x1: number, y1: number, x2: number, y2: numb
 
     const jlen = tvalues.length;
     let j = jlen;
-    let mt;
+    let mt: number;
 
     while (j--) {
         t = tvalues[j];
@@ -289,8 +289,8 @@ export function getControlPoints(a: Anchor, b: Anchor, c: Anchor): Anchor {
     // TODO: Issue 73
     if (d1 < 0.0001 || d2 < 0.0001) {
         if (typeof b.relative === 'boolean' && !b.relative) {
-            b.controls.a.copy(b.origin);
-            b.controls.b.copy(b.origin);
+            b.controls.a.copyVector(b.origin);
+            b.controls.b.copyVector(b.origin);
         }
         return b;
     }

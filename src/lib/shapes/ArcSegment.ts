@@ -183,10 +183,10 @@ export class ArcSegment extends Path {
                     v.controls.b.x = amp * Math.cos(theta + HALF_PI);
                     v.controls.b.y = amp * Math.sin(theta + HALF_PI);
                     if (i === 1) {
-                        v.controls.a.mulByNumber(2);
+                        v.controls.a.scale(2);
                     }
                     if (i === last) {
-                        v.controls.b.mulByNumber(2);
+                        v.controls.b.scale(2);
                     }
                 }
 
@@ -235,10 +235,10 @@ export class ArcSegment extends Path {
                         v.controls.b.x = amp * Math.cos(theta - HALF_PI);
                         v.controls.b.y = amp * Math.sin(theta - HALF_PI);
                         if (i === 1) {
-                            v.controls.a.mulByNumber(2);
+                            v.controls.a.scale(2);
                         }
                         if (i === last) {
-                            v.controls.b.mulByNumber(2);
+                            v.controls.b.scale(2);
                         }
                     }
 
@@ -272,7 +272,7 @@ export class ArcSegment extends Path {
 
     }
 
-    override flagReset(dirtyFlag=false) {
+    override flagReset(dirtyFlag = false) {
         super.flagReset(dirtyFlag);
 
         this._flagStartAngle = this._flagEndAngle

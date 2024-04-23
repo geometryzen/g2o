@@ -9,7 +9,7 @@ import { G20 } from './math/G20.js';
 import { Disposable } from './reactive/Disposable';
 import { variable } from './reactive/variable';
 import { get_svg_element_defs, set_defs_dirty_flag, svg, SVGAttributes, transform_value_of_matrix } from './renderers/SVGView';
-import { PositionLike, Shape } from './shape';
+import { PositionLike, Shape } from './Shape';
 import { getComponentOnCubicBezier, getCurveBoundingBox, getCurveFromPoints } from './utils/curves';
 import { lerp, mod } from './utils/math';
 import { Commands } from './utils/path-commands';
@@ -81,7 +81,7 @@ export class Path extends Shape implements PathAttributes {
     /**
      * stroke-miterlimit
      */
-    #miter = 4;
+    readonly #miter = variable(4);
 
     #closed = true;
     #curved = false;
@@ -946,17 +946,17 @@ export class Path extends Shape implements PathAttributes {
                                     v.controls.b.clear();
                                 }
                                 else {
-                                    v.controls.b.copy(v.origin);
+                                    v.controls.b.copyVector(v.origin);
                                 }
 
                                 if (prev.relative) {
                                     this.#anchors[i - 1].controls.b
-                                        .copy(prev.controls.b)
+                                        .copyVector(prev.controls.b)
                                         .lerp(G20.zero, 1 - v.t);
                                 }
                                 else {
                                     this.#anchors[i - 1].controls.b
-                                        .copy(prev.controls.b)
+                                        .copyVector(prev.controls.b)
                                         .lerp(prev.origin, 1 - v.t);
                                 }
                             }
@@ -973,7 +973,7 @@ export class Path extends Shape implements PathAttributes {
                                         right.controls.b.clear();
                                     }
                                     else {
-                                        right.controls.b.copy(right.origin);
+                                        right.controls.b.copyVector(right.origin);
                                     }
                                 }
                             }
@@ -985,7 +985,7 @@ export class Path extends Shape implements PathAttributes {
                                         left.controls.a.clear();
                                     }
                                     else {
-                                        left.controls.a.copy(left.origin);
+                                        left.controls.a.copyVector(left.origin);
                                     }
                                 }
                             }
@@ -1013,13 +1013,13 @@ export class Path extends Shape implements PathAttributes {
 
                         if (next.relative) {
                             this.#anchors[i + 1].controls.a
-                                .copy(next.controls.a)
+                                .copyVector(next.controls.a)
                                 .lerp(G20.zero, v.t);
                         }
                         else {
-                            vector.copy(next.origin);
+                            vector.copyVector(next.origin);
                             this.#anchors[i + 1].controls.a
-                                .copy(next.controls.a)
+                                .copyVector(next.controls.a)
                                 .lerp(next.origin, v.t);
                         }
                     }
@@ -1167,10 +1167,10 @@ export class Path extends Shape implements PathAttributes {
         }
     }
     get miter(): number {
-        return this.#miter;
+        return this.#miter.get();
     }
     set miter(miter: number) {
-        this.#miter = miter;
+        this.#miter.set(miter);
         this.zzz.flags[Flag.Miter] = true;
     }
     get stroke(): Color {

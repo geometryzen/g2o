@@ -28,12 +28,6 @@ export function getPoT(value: number) {
     return pots[i];
 }
 
-/**
- * @param {Number} v - The value to modulo
- * @param {Number} l - The value to modulo by
- * @returns {Number}
- * @description Modulo with added functionality to handle negative values in a positive manner.
- */
 export function mod(v: number, l: number): number {
     while (v < 0) {
         v += l;

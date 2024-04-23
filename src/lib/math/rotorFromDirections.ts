@@ -1,15 +1,9 @@
-import { dotVectorE2 as dot } from './dotVectorE2';
 import { G20 } from './G20';
-import { quadVectorE2 as quad } from './quadVectorE2';
 import { Vector } from './Vector';
 
-/**
- * @hidden
- */
 const sqrt = Math.sqrt;
 
 /**
- * @hidden
  * Sets this multivector to a rotor representing a rotation from a to b.
  * R = (|b||a| + b * a) / sqrt(2 * |b||a|(|b||a| + b << a))
  * Returns undefined (void 0) if the vectors are anti-parallel.
@@ -19,17 +13,20 @@ const sqrt = Math.sqrt;
  * @param m The output multivector.
  */
 export function rotorFromDirections(a: Readonly<Vector>, b: Readonly<Vector>, m: G20): void {
-    const aa = quad(a);
+    const ax = a.x;
+    const ay = a.y;
+    const bx = b.x;
+    const by = b.y;
+    const aa = ax * ax + ay * ay;
     const absA = sqrt(aa);
-    const bb = quad(b);
+    const bb = bx * bx + by * by;
     const absB = sqrt(bb);
     const BA = absB * absA;
-    const dotBA = dot(b, a);    // inline?
+    const dotBA = ax * bx + ay * by;
     const denom = sqrt(2 * (bb * aa + BA * dotBA));
     if (denom !== 0) {
-        const A = a.x * b.x + a.y * b.y;    // Looks like dotBA again.
-        const B = a.y * b.x - a.x * b.y;
-        m.set(0, 0, (BA + A) / denom, B / denom);
+        const B = ay * bx - ax * by;
+        m.set(0, 0, (BA + dotBA) / denom, B / denom);
     }
     else {
         // The denominator is zero when |a||b| + a << b = 0.

@@ -5,7 +5,7 @@ import { IBoard } from './IBoard';
 import { IShape } from './IShape';
 import { Disposable, dispose } from './reactive/Disposable';
 import { DomContext, svg, SVGAttributes, transform_value_of_matrix } from './renderers/SVGView';
-import { Parent, Shape, ShapeAttributes } from './shape';
+import { Parent, Shape, ShapeAttributes } from './Shape';
 
 export interface IGroup extends Parent {
     remove(...shapes: Shape[]): void;

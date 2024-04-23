@@ -102,21 +102,21 @@ export abstract class Shape extends ElementBase<unknown> implements IShape<unkno
      * The API provides more convenient access for uniform scaling.
      * Make the easy things easy...
      */
-    #scale: G20 = new G20(1, 1);
-    #scale_change: Disposable | null = null;
+    readonly #scale: G20 = new G20(1, 1);
+    readonly #scale_change = this.#scale.change$.subscribe(() => {
+        this.zzz.flags[Flag.Matrix] = true;
+    });
 
-    #skewX = 0;
 
-    #skewY = 0;
+    readonly #skewX = variable(0);
+
+    readonly #skewY = variable(0);
 
     readonly #opacity = variable(1);
     readonly #visibility = variable('visible' as 'visible' | 'hidden' | 'collapse');
 
     readonly #compensate: boolean;
 
-    /**
-     * The mask property is better named as the cliiPath
-     */
     #clipPath: Shape | null = null;
 
     abstract automatic: boolean;
@@ -207,6 +207,7 @@ export abstract class Shape extends ElementBase<unknown> implements IShape<unkno
     }
 
     override dispose(): void {
+        this.#scale_change.dispose();
         this.#position_change_unbind();
         this.#attitude_change_unbind();
         super.dispose();
@@ -339,18 +340,8 @@ export abstract class Shape extends ElementBase<unknown> implements IShape<unkno
         }
     }
     set scale(scale: number) {
-        // TODO: We need another API to support non-uniform scaling.
-        if (this.#scale_change) {
-            this.#scale_change.dispose();
-            this.#scale_change = null;
-        }
         this.#scale.x = scale;
         this.#scale.y = scale;
-        if (this.#scale instanceof G20) {
-            this.#scale_change = this.#scale.change$.subscribe(() => {
-                this.zzz.flags[Flag.Matrix] = true;
-            });
-        }
         this.#update_matrix(this.#compensate);
         this.zzz.flags[Flag.Matrix] = true;
         this.zzz.flags[Flag.Scale] = true;
@@ -359,33 +350,22 @@ export abstract class Shape extends ElementBase<unknown> implements IShape<unkno
         return this.#scale;
     }
     set scaleXY(scale: G20) {
-        // TODO: We need another API to support non-uniform scaling.
-        // TODO: Why bother to do all this? Make it readonly.
-        if (this.#scale_change) {
-            this.#scale_change.dispose();
-            this.#scale_change = null;
-        }
         this.#scale.set(scale.x, scale.y, 0, 0);
-        if (this.#scale instanceof G20) {
-            this.#scale_change = this.#scale.change$.subscribe(() => {
-                this.zzz.flags[Flag.Matrix] = true;
-            });
-        }
         this.zzz.flags[Flag.Matrix] = true;
         this.zzz.flags[Flag.Scale] = true;
     }
     get skewX(): number {
-        return this.#skewX;
+        return this.#skewX.get();
     }
-    set skewX(v: number) {
-        this.#skewX = v;
+    set skewX(skewX: number) {
+        this.#skewX.set(skewX);
         this.zzz.flags[Flag.Matrix] = true;
     }
     get skewY(): number {
-        return this.#skewY;
+        return this.#skewY.get();
     }
-    set skewY(v: number) {
-        this.#skewY = v;
+    set skewY(skewY: number) {
+        this.#skewY.set(skewY);
         this.zzz.flags[Flag.Matrix] = true;
     }
     get clipPath(): Shape | null {

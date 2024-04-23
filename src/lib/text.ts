@@ -7,7 +7,7 @@ import { Disposable } from './reactive/Disposable';
 import { Observable } from './reactive/Observable';
 import { variable } from './reactive/variable';
 import { get_svg_element_defs, set_defs_dirty_flag, svg, SVGAttributes, transform_value_of_matrix } from './renderers/SVGView';
-import { PositionLike, Shape, ShapeAttributes } from './shape';
+import { PositionLike, Shape, ShapeAttributes } from './Shape';
 
 const min = Math.min, max = Math.max;
 
@@ -15,7 +15,7 @@ export type TextDecoration = 'none' | 'underline' | 'overline' | 'line-through';
 
 export interface TextAttributes {
     anchor: 'start' | 'middle' | 'end';
-    dominantBaseline: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top';
+    baseline: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top';
     decoration: TextDecoration[];
     direction: 'ltr' | 'rtl';
     dx: number | string;
@@ -36,7 +36,7 @@ export interface TextAttributes {
 
 export interface TextProperties {
     anchor: 'start' | 'middle' | 'end';
-    dominantBaseline: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top';
+    baseline: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top';
     decoration: TextDecoration[];
     direction: 'ltr' | 'rtl';
     dx: number | string;
@@ -139,8 +139,8 @@ export class Text extends Shape implements TextProperties {
         if (attributes.anchor) {
             this.anchor = attributes.anchor;
         }
-        if (attributes.dominantBaseline) {
-            this.dominantBaseline = attributes.dominantBaseline;
+        if (attributes.baseline) {
+            this.baseline = attributes.baseline;
         }
         if (attributes.decoration) {
             this.decoration = attributes.decoration;
@@ -519,7 +519,7 @@ export class Text extends Shape implements TextProperties {
             }
         }
 
-        switch (this.dominantBaseline) {
+        switch (this.baseline) {
             case 'middle':
                 top = - (height / 2 + border);
                 bottom = height / 2 + border;
@@ -575,12 +575,12 @@ export class Text extends Shape implements TextProperties {
             }
         }
     }
-    get dominantBaseline(): 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top' {
+    get baseline(): 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top' {
         return this.#baseline.get();
     }
-    set dominantBaseline(dominantBaseline: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top') {
-        if (typeof dominantBaseline === 'string') {
-            switch (dominantBaseline) {
+    set baseline(baseline: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top') {
+        if (typeof baseline === 'string') {
+            switch (baseline) {
                 case 'alphabetic':
                 case 'auto':
                 case 'central':
@@ -590,7 +590,7 @@ export class Text extends Shape implements TextProperties {
                 case 'middle':
                 case 'text-bottom':
                 case 'text-top': {
-                    this.#baseline.set(dominantBaseline);
+                    this.#baseline.set(baseline);
                 }
             }
         }

@@ -4,7 +4,7 @@ import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
 import { Matrix } from '../matrix';
 import { variable } from '../reactive/variable';
-import { Shape } from '../shape';
+import { Shape } from '../Shape';
 import { mod, toFixed } from '../utils/math';
 import { Commands } from '../utils/path-commands';
 import { View } from './View';

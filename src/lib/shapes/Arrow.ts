@@ -5,7 +5,7 @@ import { IBoard } from "../IBoard";
 import { G20 } from "../math/G20";
 import { Path, PathAttributes } from "../path";
 import { Disposable, dispose } from '../reactive/Disposable';
-import { PositionLike, position_from_like } from "../shape";
+import { PositionLike, position_from_like } from "../Shape";
 import { Commands } from "../utils/path-commands";
 
 export interface ArrowAttributes {

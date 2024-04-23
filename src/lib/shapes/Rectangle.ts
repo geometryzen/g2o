@@ -7,7 +7,7 @@ import { G20 } from '../math/G20';
 import { Path, PathAttributes } from '../path';
 import { Disposable, dispose } from '../reactive/Disposable';
 import { variable } from '../reactive/variable';
-import { PositionLike } from '../shape';
+import { PositionLike } from '../Shape';
 
 export interface RectangleAPI<X> {
     id: string;

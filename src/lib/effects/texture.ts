@@ -416,8 +416,7 @@ export class Texture extends ElementBase<Group> implements ColorProvider {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    update(bubbles = false): this {
+    update(): this {
         if (this._flagSrc || this._flagImage) {
 
             this.#change.set(this);

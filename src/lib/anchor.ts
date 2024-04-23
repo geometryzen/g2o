@@ -104,18 +104,16 @@ export class Anchor {
     }
 
     copy(v: Anchor): this {
-
-        this.origin.copy(v.origin);
+        this.origin.copyVector(v.origin);
         this.command = v.command;
-        this.controls.a.copy(v.controls.a);
-        this.controls.b.copy(v.controls.b);
+        this.controls.a.copyVector(v.controls.a);
+        this.controls.b.copyVector(v.controls.b);
         this.relative = v.relative;
         this.rx = v.rx;
         this.ry = v.ry;
         this.xAxisRotation = v.xAxisRotation;
         this.largeArcFlag = v.largeArcFlag;
         this.sweepFlag = v.sweepFlag;
-
         return this;
     }
 

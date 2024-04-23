@@ -5,7 +5,7 @@ import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
 import { Path, PathAttributes } from '../path';
 import { variable } from '../reactive/variable';
-import { PositionLike } from '../shape';
+import { PositionLike } from '../Shape';
 import { HALF_PI, TWO_PI } from '../utils/math';
 import { Commands } from '../utils/path-commands';
 

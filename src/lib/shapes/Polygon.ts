@@ -2,7 +2,7 @@ import { Anchor } from "../anchor";
 import { Color } from "../effects/ColorProvider";
 import { IBoard } from "../IBoard";
 import { Path, PathAttributes } from "../path";
-import { PositionLike, position_from_like } from "../shape";
+import { PositionLike, position_from_like } from "../Shape";
 
 export interface PolygonAttributes {
     id: string;

@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const textA = board.text("A", {
         id: 'text-A',
         anchor: 'end',
-        dominantBaseline: 'middle',
+        baseline: 'middle',
         dx: -5,
         fontFamily: 'Lato',
         fontSize: 20,
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const textB = board.text("B", {
         id: 'text-B',
         anchor: 'start',
-        dominantBaseline: 'middle',
+        baseline: 'middle',
         dx: 5,
         fontFamily: 'Lato',
         fontSize: 20,
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const textC = board.text("C", {
         id: 'text-C',
         anchor: 'start',
-        dominantBaseline: 'middle',
+        baseline: 'middle',
         dx: 5,
         fontFamily: 'Lato',
         fontSize: 20,
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const textD = board.text("Box", {
         id: 'text-D',
         anchor: 'middle',
-        dominantBaseline: 'middle',
+        baseline: 'middle',
         fontFamily: 'Lato',
         fontSize: 20,
         position: box.X
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const textE = board.text("Ramp", {
         id: 'text-E',
         anchor: 'middle',
-        dominantBaseline: 'hanging',
+        baseline: 'hanging',
         fontFamily: 'Lato',
         fontSize: 20,
         position: ramp.X
@@ -96,31 +96,31 @@ document.addEventListener('DOMContentLoaded', function () {
     box.fill = "#FFFF00";
     box.fillOpacity = 0.3;
 
-    const Fg = board.arrow(G20.ey.mulByNumber(-2), {
+    const Fg = board.arrow(G20.ey.scale(-2), {
         position: box.X,
         strokeWidth: 2
     });
     Fg.strokeOpacity = 0.4;
 
-    const Fn = board.arrow(N.mulByNumber(1.5), {
+    const Fn = board.arrow(N.scale(1.5), {
         position: box.X,
         strokeOpacity: 0.4
     });
     Fn.strokeWidth = 2;
 
-    const Fs = board.arrow(S.mulByNumber(1.5), {
+    const Fs = board.arrow(S.scale(1.5), {
         position: box.X
     });
     Fs.strokeOpacity = 0.4;
     Fs.strokeWidth = 2;
 
-    const arrow = board.arrow(G20.ex.mulByNumber(1), {
+    const arrow = board.arrow(G20.ex.scale(1), {
         id: 'arrow',
         strokeWidth: 4
     });
     arrow.axis = G20.ey;
     arrow.headLength = 0.25;
-    arrow.origin = G20.ey.mulByNumber(1 / 2);
+    arrow.origin = G20.ey.scale(1 / 2);
 
     // Now move the box
     box.position.copyVector(A.position).add(AC.__mul__(0.75)).add(N.__mul__(box.height / 2));

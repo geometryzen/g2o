@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fontFamily: 'Lato',
         fontSize: 20,
         anchor: 'end',
-        dominantBaseline: 'middle',
+        baseline: 'middle',
         dx: -10,
         position: A
     });
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fontFamily: 'Lato',
         fontSize: 20,
         anchor: 'start',
-        dominantBaseline: 'middle',
+        baseline: 'middle',
         dx: 10,
         position: B
     });
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fontFamily: 'Lato',
         fontSize: 20,
         anchor: 'end',
-        dominantBaseline: 'middle',
+        baseline: 'middle',
         dx: -5,
         position: G20.vector(A.position.x - BCD.radius, B.position.y)
     });
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fontFamily: 'Lato',
         fontSize: 20,
         anchor: 'start',
-        dominantBaseline: 'middle',
+        baseline: 'middle',
         dx: 5,
         position: G20.vector(B.position.x + ACE.radius, B.position.y)
     });

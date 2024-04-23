@@ -3,7 +3,7 @@ import { Flag } from '../Flag.js';
 import { IBoard } from '../IBoard.js';
 import { G20 } from '../math/G20.js';
 import { Path, PathAttributes } from '../path.js';
-import { PositionLike } from '../shape.js';
+import { PositionLike } from '../Shape.js';
 import { HALF_PI, TWO_PI } from '../utils/math.js';
 import { Commands } from '../utils/path-commands.js';
 

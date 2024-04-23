@@ -1,7 +1,7 @@
 import { Flag } from '../Flag.js';
 import { IBoard } from '../IBoard.js';
 import { G20 } from '../math/G20.js';
-import { Rectangle } from '../shapes/rectangle.js';
+import { Rectangle } from '../shapes/Rectangle.js';
 import { lerp } from '../utils/math.js';
 import { dateTime } from '../utils/performance.js';
 import { Texture } from './texture.js';
