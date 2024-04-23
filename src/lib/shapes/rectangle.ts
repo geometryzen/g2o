@@ -67,8 +67,6 @@ export class Rectangle extends Path implements RectangleProperties, Disposable {
         this.zzz.width$ = this.#width.asObservable();
         this.zzz.height$ = this.#height.asObservable();
 
-        this.zzz.radius$
-
         if (typeof attributes.width === 'number') {
             this.width = attributes.width;
         }
