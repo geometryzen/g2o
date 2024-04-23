@@ -1,4 +1,3 @@
-import { effect } from '@geometryzen/reactive';
 import { Children } from './children';
 import { Color } from './effects/ColorProvider';
 import { Flag } from './Flag';
@@ -18,8 +17,6 @@ export interface GroupAttributes {
 
 export class Group extends Shape {
 
-    #fill: Color = '#fff';
-    #stroke: Color = '#000';
     #strokeWidth = 1.0;
     #cap: 'butt' | 'round' | 'square' = 'round';
     #join: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' = 'round';
@@ -103,8 +100,7 @@ export class Group extends Shape {
             }));
 
             // opacity
-            this.zzz.disposables.push(effect(() => {
-                const opacity = this.opacity;
+            this.zzz.disposables.push(this.zzz.opacity$.subscribe((opacity) => {
                 const change: SVGAttributes = { opacity: `${opacity}` };
                 if (opacity === 1) {
                     svg.removeAttributes(this.zzz.elem, change);
@@ -118,8 +114,7 @@ export class Group extends Shape {
             }));
 
             // visibility
-            this.zzz.disposables.push(effect(() => {
-                const visibility = this.visibility;
+            this.zzz.disposables.push(this.zzz.visibility$.subscribe((visibility) => {
                 switch (visibility) {
                     case 'visible': {
                         const change: SVGAttributes = { visibility };
@@ -613,10 +608,9 @@ export class Group extends Shape {
         }
     }
     get fill(): Color {
-        return this.#fill;
+        throw new Error();
     }
     set fill(fill: Color) {
-        this.#fill = fill;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             child.fill = fill;
@@ -666,10 +660,9 @@ export class Group extends Shape {
         }
     }
     get stroke(): Color {
-        return this.#stroke;
+        throw new Error();
     }
     set stroke(stroke: Color) {
-        this.#stroke = stroke;
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children.getAt(i);
             child.stroke = stroke;

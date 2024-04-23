@@ -1,4 +1,3 @@
-import { effect, state } from '@geometryzen/reactive';
 import { Anchor } from './anchor';
 import { Collection } from './collection';
 import { Color, is_color_provider, serialize_color } from './effects/ColorProvider';
@@ -58,14 +57,14 @@ export class Path extends Shape implements PathAttributes {
 
     readonly #lengths: number[] = [];
 
-    #fill = state('none' as Color);
+    readonly #fill = variable('none' as Color);
     #fill_change: Disposable | null = null;
-    #fill_opacity = state(1.0);
+    readonly #fillOpacity = variable(1.0);
 
-    #stroke = state('#000000' as Color);
+    readonly #stroke = variable('#000000' as Color);
     #stroke_change: Disposable | null = null;
-    #stroke_width = state(1);
-    #stroke_opacity = state(1.0);
+    readonly #strokeWidth = variable(1);
+    readonly #strokeOpacity = variable(1.0);
 
     #vectorEffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position' = 'non-scaling-stroke';
 
@@ -116,6 +115,12 @@ export class Path extends Shape implements PathAttributes {
     constructor(board: IBoard, vertices: Anchor[] = [], closed?: boolean, curved?: boolean, manual?: boolean, attributes: Partial<PathAttributes> = {}) {
 
         super(board, attributes);
+
+        this.zzz.fill$ = this.#fill.asObservable();
+        this.zzz.fillOpacity$ = this.#fillOpacity.asObservable();
+        this.zzz.stroke$ = this.#stroke.asObservable();
+        this.zzz.strokeOpacity$ = this.#strokeOpacity.asObservable();
+        this.zzz.strokeWidth$ = this.#strokeWidth.asObservable();
 
         this.flagReset(true);
         this.zzz.flags[Flag.ClipPath] = false;
@@ -313,12 +318,12 @@ export class Path extends Shape implements PathAttributes {
             }));
 
             // fill
-            this.zzz.disposables.push(effect(() => {
+            this.zzz.disposables.push(this.zzz.fill$.subscribe((fill) => {
                 const change: SVGAttributes = {};
-                change.fill = serialize_color(this.fill);
+                change.fill = serialize_color(fill);
                 svg.setAttributes(this.zzz.elem, change);
 
-                if (this.zzz.hasFillEffect && typeof this.fill === 'string') {
+                if (this.zzz.hasFillEffect && typeof fill === 'string') {
                     set_defs_dirty_flag(get_svg_element_defs(svgElement), true);
                     delete this.zzz.hasFillEffect;
                 }
@@ -329,9 +334,9 @@ export class Path extends Shape implements PathAttributes {
             }));
 
             // fillOpacity
-            this.zzz.disposables.push(effect(() => {
+            this.zzz.disposables.push(this.zzz.fillOpacity$.subscribe((fillOpacity) => {
                 const change: SVGAttributes = {};
-                change['fill-opacity'] = `${this.fillOpacity}`;
+                change['fill-opacity'] = `${fillOpacity}`;
                 svg.setAttributes(this.zzz.elem, change);
                 return function () {
                     // No cleanup to be done.
@@ -339,8 +344,7 @@ export class Path extends Shape implements PathAttributes {
             }));
 
             // opacity
-            this.zzz.disposables.push(effect(() => {
-                const opacity = this.opacity;
+            this.zzz.disposables.push(this.zzz.opacity$.subscribe((opacity) => {
                 const change: SVGAttributes = { opacity: `${opacity}` };
                 if (opacity === 1) {
                     svg.removeAttributes(this.zzz.elem, change);
@@ -354,12 +358,12 @@ export class Path extends Shape implements PathAttributes {
             }));
 
             // stroke
-            this.zzz.disposables.push(effect(() => {
+            this.zzz.disposables.push(this.zzz.stroke$.subscribe((stroke) => {
                 const change: SVGAttributes = {};
-                change.stroke = serialize_color(this.stroke);
+                change.stroke = serialize_color(stroke);
                 svg.setAttributes(this.zzz.elem, change);
 
-                if (this.zzz.hasStrokeEffect && typeof this.stroke === 'string') {
+                if (this.zzz.hasStrokeEffect && typeof stroke === 'string') {
                     set_defs_dirty_flag(get_svg_element_defs(svgElement), true);
                     delete this.zzz.hasStrokeEffect;
                 }
@@ -370,9 +374,9 @@ export class Path extends Shape implements PathAttributes {
             }));
 
             // strokeOpacity
-            this.zzz.disposables.push(effect(() => {
+            this.zzz.disposables.push(this.zzz.strokeOpacity$.subscribe((strokeOpacity) => {
                 const change: SVGAttributes = {};
-                change['stroke-opacity'] = `${this.strokeOpacity}`;
+                change['stroke-opacity'] = `${strokeOpacity}`;
                 svg.setAttributes(this.zzz.elem, change);
                 return function () {
                     // No cleanup to be done.
@@ -380,9 +384,9 @@ export class Path extends Shape implements PathAttributes {
             }));
 
             // strokeWidth
-            this.zzz.disposables.push(effect(() => {
+            this.zzz.disposables.push(this.zzz.strokeWidth$.subscribe((strokeWidth) => {
                 const change: SVGAttributes = {};
-                change['stroke-width'] = `${this.strokeWidth}`;
+                change['stroke-width'] = `${strokeWidth}`;
                 svg.setAttributes(this.zzz.elem, change);
                 return function () {
                     // No cleanup to be done.
@@ -390,8 +394,7 @@ export class Path extends Shape implements PathAttributes {
             }));
 
             // visibility
-            this.zzz.disposables.push(effect(() => {
-                const visibility = this.visibility;
+            this.zzz.disposables.push(this.zzz.visibility$.subscribe((visibility) => {
                 switch (visibility) {
                     case 'visible': {
                         const change: SVGAttributes = { visibility };
@@ -1131,10 +1134,10 @@ export class Path extends Shape implements PathAttributes {
         }
     }
     get fillOpacity(): number {
-        return this.#fill_opacity.get();
+        return this.#fillOpacity.get();
     }
     set fillOpacity(fillOpacity: number) {
-        this.#fill_opacity.set(fillOpacity);
+        this.#fillOpacity.set(fillOpacity);
     }
     get join(): 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round' {
         return this.#join.get();
@@ -1153,12 +1156,12 @@ export class Path extends Shape implements PathAttributes {
         return this.#lengths;
     }
     get strokeWidth(): number {
-        return this.#stroke_width.get();
+        return this.#strokeWidth.get();
     }
     set strokeWidth(stroeWidth: number) {
         if (typeof stroeWidth === 'number') {
             if (this.strokeWidth !== stroeWidth) {
-                this.#stroke_width.set(stroeWidth);
+                this.#strokeWidth.set(stroeWidth);
                 this.zzz.flags[Flag.Linewidth] = true;
             }
         }
@@ -1189,10 +1192,10 @@ export class Path extends Shape implements PathAttributes {
         }
     }
     get strokeOpacity(): number {
-        return this.#stroke_opacity.get();
+        return this.#strokeOpacity.get();
     }
     set strokeOpacity(strokeOpacity: number) {
-        this.#stroke_opacity.set(strokeOpacity);
+        this.#strokeOpacity.set(strokeOpacity);
     }
     get vertices(): Collection<Anchor> {
         return this.#vertices;

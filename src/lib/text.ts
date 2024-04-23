@@ -1,4 +1,3 @@
-import { effect, state } from '@geometryzen/reactive';
 import { Color, is_color_provider, serialize_color } from './effects/ColorProvider';
 import { ElementBase } from './element';
 import { Flag } from './Flag';
@@ -66,7 +65,7 @@ export class Text extends Shape implements TextProperties {
     length: number;
     miter: number;
 
-    readonly #value = state('');
+    readonly #textContent = variable('');
 
     readonly #fontFamily = variable('sans-serif');
     readonly fontFamily$: Observable<string> = this.#fontFamily.asObservable();
@@ -74,44 +73,57 @@ export class Text extends Shape implements TextProperties {
     readonly #fontSize = variable(13);
     readonly fontSize$: Observable<number> = this.#fontSize.asObservable();
 
-    readonly #anchor = state('start' as 'start' | 'middle' | 'end');
+    readonly #anchor = variable('start' as 'start' | 'middle' | 'end');
 
-    readonly #dominant_baseline = state('auto' as 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top');
+    readonly #baseline = variable('auto' as 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top');
 
-    readonly #fontStyle = state('normal' as 'normal' | 'italic' | 'oblique');
+    readonly #fontStyle = variable('normal' as 'normal' | 'italic' | 'oblique');
 
-    readonly #fontWeight = state('normal' as 'normal' | 'bold' | 'bolder' | 'lighter' | number);
+    readonly #fontWeight = variable('normal' as 'normal' | 'bold' | 'bolder' | 'lighter' | number);
 
-    readonly #decoration = state(['none' as TextDecoration]);
+    readonly #decoration = variable(['none' as TextDecoration]);
 
     /**
      * determine what direction the text should run.
      * Possibly values are `'ltr'` for left-to-right and `'rtl'` for right-to-left. Defaults to `'ltr'`.
      */
-    readonly #direction = state('ltr' as 'ltr' | 'rtl');
+    readonly #direction = variable('ltr' as 'ltr' | 'rtl');
 
-    readonly #dx = state(0 as number | string);
-    readonly #dy = state(0 as number | string);
+    readonly #dx = variable(0 as number | string);
+    readonly #dy = variable(0 as number | string);
 
     /**
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
-    #fill: Color = '#000';
+    readonly #fill = variable('#000000' as Color);
     #fill_change: Disposable | null = null;
 
     /**
      * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/color_value} for more information on CSS's colors as `String`.
      */
-    #stroke: Color = 'none';
+    readonly #stroke = variable('none' as Color);
     #stroke_change: Disposable | null = null;
 
-    readonly #stroke_width = state(1);
+    readonly #strokeWidth = variable(1);
 
     #dashes: number[] | null = null;
 
     constructor(board: IBoard, value: string, attributes: Partial<TextAttributes> = {}) {
 
         super(board, shape_attributes_from_text_attributes(attributes));
+
+        this.zzz.anchor$ = this.#anchor.asObservable();
+        this.zzz.baseline$ = this.#baseline.asObservable();
+        this.zzz.decoration$ = this.#decoration.asObservable();
+        this.zzz.direction$ = this.#direction.asObservable();
+        this.zzz.dx$ = this.#dx.asObservable();
+        this.zzz.dy$ = this.#dy.asObservable();
+        this.zzz.fill$ = this.#fill.asObservable();
+        this.zzz.fontStyle$ = this.#fontStyle.asObservable();
+        this.zzz.fontWeight$ = this.#fontWeight.asObservable();
+        this.zzz.stroke$ = this.#stroke.asObservable();
+        this.zzz.strokeWidth$ = this.#strokeWidth.asObservable();
+        this.zzz.textContent$ = this.#textContent.asObservable();
 
         this.zzz.flags[Flag.Stroke] = true;
 
@@ -247,8 +259,7 @@ export class Text extends Shape implements TextProperties {
             }));
 
             // anchor
-            this.zzz.disposables.push(effect(() => {
-                const anchor = this.anchor;
+            this.zzz.disposables.push(this.zzz.anchor$.subscribe((anchor) => {
                 switch (anchor) {
                     case 'start': {
                         svg.removeAttributes(this.zzz.elem, { 'text-anchor': anchor });
@@ -266,9 +277,9 @@ export class Text extends Shape implements TextProperties {
             }));
 
             // decoration
-            this.zzz.disposables.push(effect(() => {
+            this.zzz.disposables.push(this.zzz.decoration$.subscribe((decoration) => {
                 const change: SVGAttributes = {};
-                change['text-decoration'] = this.decoration.join(' ');
+                change['text-decoration'] = decoration.join(' ');
                 svg.setAttributes(this.zzz.elem, change);
                 return function () {
                     // No cleanup to be done.
@@ -276,8 +287,7 @@ export class Text extends Shape implements TextProperties {
             }));
 
             // direction
-            this.zzz.disposables.push(effect(() => {
-                const direction = this.direction;
+            this.zzz.disposables.push(this.zzz.direction$.subscribe((direction) => {
                 if (direction === 'rtl') {
                     svg.setAttributes(this.zzz.elem, { direction });
                 }
@@ -290,15 +300,14 @@ export class Text extends Shape implements TextProperties {
             }));
 
             // dominant-baseline
-            this.zzz.disposables.push(effect(() => {
-                const dominantBaseline = this.dominantBaseline;
-                switch (dominantBaseline) {
+            this.zzz.disposables.push(this.zzz.baseline$.subscribe((baseline) => {
+                switch (baseline) {
                     case 'auto': {
-                        svg.removeAttributes(this.zzz.elem, { 'dominant-baseline': dominantBaseline });
+                        svg.removeAttributes(this.zzz.elem, { 'dominant-baseline': baseline });
                         break;
                     }
                     default: {
-                        svg.setAttributes(this.zzz.elem, { 'dominant-baseline': dominantBaseline });
+                        svg.setAttributes(this.zzz.elem, { 'dominant-baseline': baseline });
                         break;
                     }
                 }
@@ -308,8 +317,7 @@ export class Text extends Shape implements TextProperties {
             }));
 
             // dx
-            this.zzz.disposables.push(effect(() => {
-                const dx = this.dx;
+            this.zzz.disposables.push(this.zzz.dx$.subscribe((dx) => {
                 if (typeof dx === 'number' && dx === 0) {
                     svg.removeAttributes(this.zzz.elem, { dx: "" });
                 }
@@ -322,8 +330,7 @@ export class Text extends Shape implements TextProperties {
             }));
 
             // dy
-            this.zzz.disposables.push(effect(() => {
-                const dy = this.dy;
+            this.zzz.disposables.push(this.zzz.dy$.subscribe((dy) => {
                 if (typeof dy === 'number' && dy === 0) {
                     svg.removeAttributes(this.zzz.elem, { dy: "" });
                 }
@@ -346,8 +353,8 @@ export class Text extends Shape implements TextProperties {
             }));
 
             // font-style
-            this.zzz.disposables.push(effect(() => {
-                const change: SVGAttributes = { 'font-style': this.fontStyle };
+            this.zzz.disposables.push(this.zzz.fontStyle$.subscribe((fontStyle) => {
+                const change: SVGAttributes = { 'font-style': fontStyle };
                 if (change['font-style'] === 'normal') {
                     svg.removeAttributes(this.zzz.elem, change);
                 }
@@ -360,8 +367,8 @@ export class Text extends Shape implements TextProperties {
             }));
 
             // font-weight
-            this.zzz.disposables.push(effect(() => {
-                const change: SVGAttributes = { 'font-weight': `${this.fontWeight}` };
+            this.zzz.disposables.push(this.zzz.fontWeight$.subscribe((fontWeight) => {
+                const change: SVGAttributes = { 'font-weight': `${fontWeight}` };
                 if (change['font-weight'] === 'normal') {
                     svg.removeAttributes(this.zzz.elem, change);
                 }
@@ -374,8 +381,7 @@ export class Text extends Shape implements TextProperties {
             }));
 
             // opacity
-            this.zzz.disposables.push(effect(() => {
-                const opacity = this.opacity;
+            this.zzz.disposables.push(this.zzz.opacity$.subscribe((opacity) => {
                 const change: SVGAttributes = { opacity: `${opacity}` };
                 if (opacity === 1) {
                     svg.removeAttributes(this.zzz.elem, change);
@@ -389,9 +395,9 @@ export class Text extends Shape implements TextProperties {
             }));
 
             // stroke-width
-            this.zzz.disposables.push(effect(() => {
+            this.zzz.disposables.push(this.zzz.strokeWidth$.subscribe((strokeWidth) => {
                 const change: SVGAttributes = {};
-                change['stroke-width'] = `${this.strokeWidth}`;
+                change['stroke-width'] = `${strokeWidth}`;
                 svg.setAttributes(this.zzz.elem, change);
                 return function () {
                     // No cleanup to be done.
@@ -399,13 +405,12 @@ export class Text extends Shape implements TextProperties {
             }));
 
             // textContent
-            this.zzz.disposables.push(effect(() => {
-                this.zzz.elem.textContent = this.value;
+            this.zzz.disposables.push(this.zzz.textContent$.subscribe((textContent) => {
+                this.zzz.elem.textContent = textContent;
             }));
 
             // visibility
-            this.zzz.disposables.push(effect(() => {
-                const visibility = this.visibility;
+            this.zzz.disposables.push(this.zzz.visibility$.subscribe((visibility) => {
                 switch (visibility) {
                     case 'visible': {
                         const change: SVGAttributes = { visibility };
@@ -571,7 +576,7 @@ export class Text extends Shape implements TextProperties {
         }
     }
     get dominantBaseline(): 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top' {
-        return this.#dominant_baseline.get();
+        return this.#baseline.get();
     }
     set dominantBaseline(dominantBaseline: 'auto' | 'text-bottom' | 'alphabetic' | 'ideographic' | 'middle' | 'central' | 'mathematical' | 'hanging' | 'text-top') {
         if (typeof dominantBaseline === 'string') {
@@ -585,7 +590,7 @@ export class Text extends Shape implements TextProperties {
                 case 'middle':
                 case 'text-bottom':
                 case 'text-top': {
-                    this.#dominant_baseline.set(dominantBaseline);
+                    this.#baseline.set(dominantBaseline);
                 }
             }
         }
@@ -647,15 +652,15 @@ export class Text extends Shape implements TextProperties {
             }
         }
     }
-    get fill() {
-        return this.#fill;
+    get fill(): Color {
+        return this.#fill.get();
     }
-    set fill(f) {
+    set fill(fill) {
         if (this.#fill_change) {
             this.#fill_change.dispose();
             this.#fill_change = null;
         }
-        this.#fill = f;
+        this.#fill.set(fill);
         this.zzz.flags[Flag.Fill] = true;
         if (is_color_provider(this.fill)) {
             this.#fill_change = this.fill.change$.subscribe(() => {
@@ -664,12 +669,12 @@ export class Text extends Shape implements TextProperties {
         }
     }
     get strokeWidth(): number {
-        return this.#stroke_width.get();
+        return this.#strokeWidth.get();
     }
     set strokeWidth(strokeWidth: number) {
         if (typeof strokeWidth === 'number') {
             if (this.strokeWidth !== strokeWidth) {
-                this.#stroke_width.set(strokeWidth);
+                this.#strokeWidth.set(strokeWidth);
             }
         }
     }
@@ -684,15 +689,15 @@ export class Text extends Shape implements TextProperties {
             }
         }
     }
-    get stroke() {
-        return this.#stroke;
+    get stroke(): Color {
+        return this.#stroke.get();
     }
-    set stroke(f) {
+    set stroke(stroke: Color) {
         if (this.#stroke_change) {
             this.#stroke_change.dispose();
             this.#stroke_change = null;
         }
-        this.#stroke = f;
+        this.#stroke.set(stroke);
         this.zzz.flags[Flag.Stroke] = true;
         if (is_color_provider(this.stroke)) {
             this.#stroke_change = this.stroke.change$.subscribe(() => {
@@ -709,12 +714,12 @@ export class Text extends Shape implements TextProperties {
         }
     }
     get value(): string {
-        return this.#value.get();
+        return this.#textContent.get();
     }
     set value(value: string) {
         if (typeof value === 'string') {
             if (this.value !== value) {
-                this.#value.set(value);
+                this.#textContent.set(value);
             }
         }
     }

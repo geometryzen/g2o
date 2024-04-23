@@ -1,6 +1,4 @@
-import { state } from '@geometryzen/reactive';
-import { State } from '../reactive/types';
-import { variable } from '../reactive/variable';
+import { Variable, variable } from '../reactive/variable';
 import { Bivector } from './Bivector';
 import { gauss } from './gauss';
 import { rotorFromDirections } from './rotorFromDirections';
@@ -48,10 +46,11 @@ function lock(m: G20): G20 {
 function isScalar(m: G20): boolean {
     return m.x === 0 && m.y === 0 && m.b === 0;
 }
-
+/*
 function equals(P: [a: number, x: number, y: number, b: number], Q: [a: number, x: number, y: number, b: number]): boolean {
     return P[0] === Q[0] && P[1] === Q[1] && P[2] === Q[2] && P[3] === Q[3];
 }
+*/
 
 const COORD_A = 0;
 const COORD_X = 1;
@@ -63,7 +62,7 @@ const COORD_B = 3;
  */
 export class G20 {
 
-    readonly #coords: State<[a: number, x: number, y: number, b: number]>;
+    readonly #coords: Variable<[a: number, x: number, y: number, b: number]>;
 
     #lock = UNLOCKED;
 
@@ -71,7 +70,7 @@ export class G20 {
     readonly change$ = this.#change.asObservable();
 
     constructor(x = 0, y = 0, a = 0, b = 0) {
-        this.#coords = state([a, x, y, b], { equals });
+        this.#coords = variable([a, x, y, b]/*, { equals }*/);
     }
 
     static scalar(a: number): G20 {

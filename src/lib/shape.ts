@@ -1,4 +1,3 @@
-import { state } from '@geometryzen/reactive';
 import { Anchor } from './anchor';
 import { Constants } from './constants';
 import { Color } from './effects/ColorProvider';
@@ -10,6 +9,7 @@ import { compose_2d_3x3_transform } from './math/compose_2d_3x3_transform';
 import { G20 } from './math/G20';
 import { Matrix } from './matrix';
 import { Disposable } from './reactive/Disposable';
+import { variable } from './reactive/variable';
 import { computed_world_matrix } from './utils/compute_world_matrix';
 
 export type PositionLike = Anchor | G20 | Shape | [x: number, y: number];
@@ -109,8 +109,8 @@ export abstract class Shape extends ElementBase<unknown> implements IShape<unkno
 
     #skewY = 0;
 
-    readonly #opacity = state(1);
-    readonly #visibility = state('visible' as 'visible' | 'hidden' | 'collapse');
+    readonly #opacity = variable(1);
+    readonly #visibility = variable('visible' as 'visible' | 'hidden' | 'collapse');
 
     readonly #compensate: boolean;
 
@@ -141,6 +141,9 @@ export abstract class Shape extends ElementBase<unknown> implements IShape<unkno
     constructor(readonly board: IBoard, attributes: Partial<ShapeAttributes> = {}) {
 
         super(ensure_identifier(attributes));
+
+        this.zzz.opacity$ = this.#opacity.asObservable();
+        this.zzz.visibility$ = this.#visibility.asObservable();
 
         this.flagReset(true);
 

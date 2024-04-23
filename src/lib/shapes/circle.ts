@@ -1,10 +1,10 @@
-import { state } from '@geometryzen/reactive';
 import { Anchor } from '../anchor';
 import { Color } from '../effects/ColorProvider';
 import { Flag } from '../Flag';
 import { IBoard } from '../IBoard';
 import { G20 } from '../math/G20';
 import { Path, PathAttributes } from '../path';
+import { variable } from '../reactive/variable';
 import { PositionLike } from '../shape';
 import { HALF_PI, TWO_PI } from '../utils/math';
 import { Commands } from '../utils/path-commands';
@@ -35,7 +35,7 @@ export interface CircleProperties extends CircleAPI<G20> {
 
 export class Circle extends Path implements CircleProperties {
 
-    readonly #radius = state(1);
+    readonly #radius = variable(1);
 
     constructor(board: IBoard, options: CircleAttributes = {}) {
 
@@ -48,6 +48,8 @@ export class Circle extends Path implements CircleProperties {
         }
 
         super(board, points, true, true, true, path_attributes(options));
+
+        this.zzz.radius$ = this.#radius.asObservable();
 
         if (typeof options.radius === 'number') {
             this.#radius.set(options.radius);
